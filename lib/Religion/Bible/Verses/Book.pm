@@ -2,10 +2,15 @@ package Religion::Bible::Verses::Book;
 use strict;
 use warnings;
 use Moose;
+use Moose::Util::TypeConstraints qw(enum);
 
-has verseCount => (is => 'ro', isa => 'Int');
+has ordinal => (is => 'ro', isa => 'Int');
 
-has testament => (is => 'ro', isa => enum(['old', 'new']));
+has [qw(shortName longName)] => (is => 'ro', isa => 'Str');
+
+has [qw(chapterCount verseCount)] => (is => 'ro', isa => 'Int');
+
+has testament => (is => 'ro', isa => enum(['old', 'new', 'unknown'])); # FIXME: unknown will go away in the future
 
 sub BUILD {
 }
