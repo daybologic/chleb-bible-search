@@ -20,7 +20,12 @@ sub getBookByOrdinal {
 }
 
 sub newSearchQuery {
-	my ($self, %params) = @_;
+	my ($self, @args) = @_;
+
+	return Religion::Bible::Verses::Search::Query->new({ text => $args[0] })
+	    if (scalar(@args) == 1);
+
+	my %params = @args;
 	return Religion::Bible::Verses::Search::Query->new(\%params);
 }
 

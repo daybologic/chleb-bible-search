@@ -11,7 +11,7 @@ use Religion::Bible::Verses;
 sub main {
 	my $bible = Religion::Bible::Verses->new();
 
-	my $query = $bible->newSearchQuery(text => 'dwelt')->setLimit(10);
+	my $query = $bible->newSearchQuery('dwelt')->setLimit(10);
 	# FIXME: Need to limit to one book?  should be able to do this via Query.pm
 
 	my $results = $query->run();
