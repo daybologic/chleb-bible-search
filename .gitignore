@@ -1,0 +1,15 @@
+cover_db
+.sw?
+.*.sw?
+@eaDir
+MANIFEST.bak
+MYMETA.*
+Makefile
+Makefile.old
+blib
+pm_to_blib
+*.tar.gz
+*.tar
+.DS_Store
+*.orig
+*~
