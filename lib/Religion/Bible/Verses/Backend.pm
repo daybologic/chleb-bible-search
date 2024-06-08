@@ -91,6 +91,7 @@ sub getBooks { # returns ARRAY of Religion::Bible::Verses::Book
 sub __fsck {
 	my ($self) = @_;
 	return EXIT_FAILURE if ($self->__validateSig());
+	return EXIT_FAILURE if ($self->__validateVersion());
 	return EXIT_SUCCESS;
 }
 
@@ -98,6 +99,15 @@ sub __validateSig {
 	my ($self) = @_;
 	my $sig = $self->data->[$MAIN_OFFSET_SIG];
 	return EXIT_SUCCESS if (defined($sig) && $sig eq $FILE_SIG);
+	return EXIT_FAILURE;
+}
+
+sub __validateVersion {
+	my ($self) = @_;
+	my $version = $self->data->[$MAIN_OFFSET_VERSION];
+	# Until we reach version 1.0.0 of the package (stable release), we only accept the exact correct version of the file!
+	# this gives us more flexibility to make changes.
+	return EXIT_SUCCESS if (defined($version) && length($version) <= 5 && $version =~ m/^\d+$/ && $version == $FILE_VERSION);
 	return EXIT_FAILURE;
 }
 
