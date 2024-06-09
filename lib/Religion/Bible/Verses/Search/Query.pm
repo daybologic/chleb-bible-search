@@ -37,8 +37,7 @@ sub run {
 
 	foreach my $book (@booksToQuery) {
 		next if ($self->testament && $self->testament ne $book->testament);
-		warn $book->toString();
-		die $book->searchText($self->text);
+		$book->searchText($self->text);
 	}
 
 	return Religion::Bible::Verses::Search::Results->new({

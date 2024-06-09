@@ -95,9 +95,12 @@ sub getBooks { # returns ARRAY of Religion::Bible::Verses::Book
 
 sub getVerseDataByKey {
 	my ($self, $key) = @_;
-
-	#die $key;
 	return $self->{data}->[$MAIN_OFFSET_DATA]->{$key};
+}
+
+sub getBookInfoByShortName {
+	my ($self, $shortName) = @_;
+	return $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortName};
 }
 
 sub __fsck {

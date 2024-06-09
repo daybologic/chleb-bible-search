@@ -25,18 +25,22 @@ sub getVerseByOrdinal {
 }
 
 sub searchText {
-	my ($self, $text) = @_;
+	my ($self, $critereonText) = @_;
 	# TODO: Return list of Verse.pm objects
 	# Actually, return Search::Result ?
 	for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
-		my $verseKey = $self->__makeVerseKey($chapterOrdinal, 1); # TODO: How do we get the verse count by chapter here?
+		my $chapter = $self->getChapterByOrdinal($chapterOrdinal);
 
-		die $self->getChapterByOrdinal($chapterOrdinal);
-#		die $self->getVerseCountByChapter
-		# TODO: You shouldn't access __backend here
-		# but you need some more methods in the library to avoid it
-		my $text = $self->_library->__backend->getVerseDataByKey($verseKey); # TODO: Perhaps have a getVerseByKey in _library?
-		warn $text;
+		for (my $verseOrdinal = 1; $verseOrdinal <= $chapter->verseCount; $verseOrdinal++) {
+			my $verseKey = $self->__makeVerseKey($chapterOrdinal, $verseOrdinal);
+			# TODO: You shouldn't access __backend here
+			# but you need some more methods in the library to avoid it
+			# Perhaps have a getVerseByKey in _library?
+			my $text = $self->_library->__backend->getVerseDataByKey($verseKey);
+			if ($text =~ m/$critereonText/) {
+				warn $text;
+			}
+		}
 	}
 }
 
@@ -47,8 +51,11 @@ sub toString {
 
 sub getChapterByOrdinal {
 	my ($self, $ordinal) = @_;
-	#use Religion::Bible::Verses::Chapter;
-	die 'TODO: make new Chapter object for ' . $self->toString();
+	my $chapter = Religion::Bible::Verses::Chapter->new({
+		_library => $self->_library,
+		book     => $self,
+		ordinal  => $ordinal,
+	});
 }
 
 sub __makeVerseKey {
