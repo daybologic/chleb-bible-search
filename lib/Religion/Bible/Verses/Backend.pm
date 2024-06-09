@@ -15,7 +15,9 @@ Readonly my $DATA_DIR => 'data';
 Readonly my $BIBLE    => 'kjv.bin';
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
-Readonly my $FILE_VERSION => 1;
+Readonly my $FILE_VERSION => 7;
+
+Readonly my $OT_COUNT => 39;
 
 my $offsetMaster = -1;
 Readonly my $MAIN_OFFSET_SIG     => ++$offsetMaster; # string
@@ -32,6 +34,8 @@ Readonly my $BOOK_OFFSET_BOOK_INFO   => ++$offsetMaster; # hash of book info key
 # n - bookLongName
 # t - testamentEnum ('N', 'O')
 # v - verse count map (keys are the chapter number, there is no zero, and values are the verse counts)
+
+has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
 
 #has __file => (is => 'rw', isa => 'IO::File', lazy => 1, default => \&__makeFile);
 
@@ -76,6 +80,7 @@ sub getBooks { # returns ARRAY of Religion::Bible::Verses::Book
 		my $bookInfo = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortName};
 		my $bookOrdinal = $bookIndex + 1;
 		$books[$bookIndex] = Religion::Bible::Verses::Book->new({
+			_library   => $self->_library,
 			ordinal    => $bookOrdinal,
 			shortName  => $shortName,
 			longName   => $bookInfo->{n},
@@ -86,6 +91,13 @@ sub getBooks { # returns ARRAY of Religion::Bible::Verses::Book
 	}
 
 	return \@books;
+}
+
+sub getVerseDataByKey {
+	my ($self, $key) = @_;
+
+	#die $key;
+	return $self->{data}->[$MAIN_OFFSET_DATA]->{$key};
 }
 
 sub __fsck {

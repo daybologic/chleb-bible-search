@@ -9,7 +9,9 @@ use Religion::Bible::Verses::Search::Query;
 
 has __backend => (is => 'ro', isa => 'Religion::Bible::Verses::Backend', lazy => 1, default => \&__makeBackend);
 
-has bookCount => (is => 'ro', isa => 'Int');
+has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCount);
+
+has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
 sub BUILD {
 }
@@ -17,26 +19,34 @@ sub BUILD {
 sub getBookByShortName {
 	my ($self, $shortName) = @_;
 
-	die Dumper $self->__backend->getBooks();
-	return $self->getBookByOrdinal(1) if ($shortName eq 'Gen');
-	return $self->getBookByOrdinal(39 + 4) if ($shortName eq 'John');
-	return $self->getBookByOrdinal(73) if ($shortName eq 'Rev');
+	foreach my $book (@{ $self->books }) {
+		next if ($book->shortName ne $shortName);
+		return $book;
+	}
 
-	return 0;
+	die("Short book name '$shortName' is not a book in the bible");
 }
 
 sub getBookByLongName {
 	my ($self, $longName) = @_;
 
-	return $self->getBookByOrdinal(1) if ($longName eq 'Genesis');
-	return $self->getBookByOrdinal(39 + 4) if ($longName eq 'John');
+	foreach my $book (@{ $self->books }) {
+		next if ($book->longName ne $longName);
+		return $book;
+	}
 
-	return 0;
+	die("Long book name '$longName' is not a book in the bible");
 }
 
 sub getBookByOrdinal {
 	my ($self, $ordinal) = @_;
-	die $ordinal;
+
+	if ($ordinal > $self->bookCount) {
+		die(sprintf('Book ordinal %d out of range, there are %d books in the bible',
+		    $ordinal, $self->bookCount));
+	}
+
+	return $self->books->[$ordinal - 1];
 }
 
 sub newSearchQuery {
@@ -54,7 +64,18 @@ sub newSearchQuery {
 sub __makeBackend {
 	my ($self) = @_;
 	return Religion::Bible::Verses::Backend->new({
+		_library => $self,
 	});
+}
+
+sub __makeBookCount {
+	my ($self) = @_;
+	return scalar(@{ $self->books });
+}
+
+sub __makeBooks {
+	my ($self) = @_;
+	return $self->__backend->getBooks();
 }
 
 1;
