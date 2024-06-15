@@ -33,14 +33,63 @@ sub testPeaceSearch {
 			bookShortName => undef,
 			text          => 'peace on earth',
 		),
-	), 'query inspection');
+	), 'query inspection') or diag(explain($query));
 
 	my $results = $query->run();
 	cmp_deeply($results, all(
 		isa('Religion::Bible::Verses::Search::Results'),
 		methods(
-			count  => 0,
-			verses => [],
+			count  => 2,
+			verses => [
+				all(
+					isa('Religion::Bible::Verses::Verse'),
+					methods(
+						book    => all(
+							isa('Religion::Bible::Verses::Book'),
+							methods(
+								ordinal      => 40,
+								shortName    => 'Mat',
+								chapterCount => 28,
+								verseCount   => 1071,
+								testament    => 'new',
+							),
+						),
+						chapter => all(
+							isa('Religion::Bible::Verses::Chapter'),
+							methods(
+								ordinal    => 10,
+								verseCount => 42,
+							),
+						),
+						ordinal => 34,
+						text    => "\"Think not that I am come to send peace on earth: I came not to send peace, but a sword.\"\n",
+					),
+				),
+				all(
+					isa('Religion::Bible::Verses::Verse'),
+					methods(
+						book    => all(
+							isa('Religion::Bible::Verses::Book'),
+							methods(
+								ordinal      => 42,
+								shortName    => 'Luke',
+								chapterCount => 24,
+								verseCount   => 1151,
+								testament    => 'new',
+							),
+						),
+						chapter => all(
+							isa('Religion::Bible::Verses::Chapter'),
+							methods(
+								ordinal    => 12,
+								verseCount => 59,
+							),
+						),
+						ordinal => 51,
+						text    => "\"Suppose ye that I am come to give peace on earth? I tell you, Nay; but rather division:\"\n",
+					),
+				),
+			],
 		),
 	), 'results inspection');
 

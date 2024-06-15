@@ -35,13 +35,16 @@ sub run {
 		@booksToQuery = @{ $self->_library->books };
 	}
 
+	my @verses = ( );
 	foreach my $book (@booksToQuery) {
 		next if ($self->testament && $self->testament ne $book->testament);
-		$book->searchText($self->text);
+		my $bookVerses = $book->searchText($self->text);
+		push(@verses, @$bookVerses);
 	}
 
 	return Religion::Bible::Verses::Search::Results->new({
-		verses => [],
+		coun   => scalar(@verses),
+		verses => \@verses,
 	});
 }
 

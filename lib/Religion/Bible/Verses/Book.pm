@@ -5,6 +5,7 @@ use Moose;
 use Moose::Util::TypeConstraints qw(enum);
 use Readonly;
 use Religion::Bible::Verses::Chapter;
+use Religion::Bible::Verses::Verse;
 
 Readonly my $TRANSLATION => 'kjv';
 
@@ -26,8 +27,8 @@ sub getVerseByOrdinal {
 
 sub searchText {
 	my ($self, $critereonText) = @_;
-	# TODO: Return list of Verse.pm objects
-	# Actually, return Search::Result ?
+	my @verses;
+
 	for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
 		my $chapter = $self->getChapterByOrdinal($chapterOrdinal);
 
@@ -38,10 +39,17 @@ sub searchText {
 			# Perhaps have a getVerseByKey in _library?
 			my $text = $self->_library->__backend->getVerseDataByKey($verseKey);
 			if ($text =~ m/$critereonText/) {
-				warn $text;
+				push(@verses, Religion::Bible::Verses::Verse->new({
+					book    => $self,
+					chapter => $chapter,
+					ordinal => $verseOrdinal,
+					text    => $text,
+				}));
 			}
 		}
 	}
+
+	return \@verses;
 }
 
 sub toString {
