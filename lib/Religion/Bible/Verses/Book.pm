@@ -68,7 +68,7 @@ sub searchText {
 			# but you need some more methods in the library to avoid it
 			# Perhaps have a getVerseByKey in _library?
 			my $text = $self->_library->__backend->getVerseDataByKey($verseKey);
-			if ($text =~ m/$critereonText/) {
+			if ($text =~ m/$critereonText/i) {
 				push(@verses, Religion::Bible::Verses::Verse->new({
 					book    => $self,
 					chapter => $chapter,
