@@ -77,7 +77,7 @@ sub testPeaceSearch {
 							),
 						),
 						ordinal => 34,
-						text    => "\"Think not that I am come to send peace on earth: I came not to send peace, but a sword.\"\n",
+						text    => 'Think not that I am come to send peace on earth: I came not to send peace, but a sword.',
 					),
 				),
 				all(
@@ -93,7 +93,7 @@ sub testPeaceSearch {
 							),
 						),
 						ordinal => 51,
-						text    => "\"Suppose ye that I am come to give peace on earth? I tell you, Nay; but rather division:\"\n",
+						text    => 'Suppose ye that I am come to give peace on earth? I tell you, Nay; but rather division:',
 					),
 				),
 			],
