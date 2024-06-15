@@ -35,6 +35,29 @@ sub testPeaceSearch {
 		),
 	), 'query inspection') or diag(explain($query));
 
+	my @bookExpect = (
+		all(
+			isa('Religion::Bible::Verses::Book'),
+			methods(
+				ordinal      => 40,
+				shortName    => 'Mat',
+				chapterCount => 28,
+				verseCount   => 1071,
+				testament    => 'new',
+			),
+		),
+		all(
+			isa('Religion::Bible::Verses::Book'),
+			methods(
+				ordinal      => 42,
+				shortName    => 'Luke',
+				chapterCount => 24,
+				verseCount   => 1151,
+				testament    => 'new',
+			),
+		),
+	);
+
 	my $results = $query->run();
 	cmp_deeply($results, all(
 		isa('Religion::Bible::Verses::Search::Results'),
@@ -44,19 +67,11 @@ sub testPeaceSearch {
 				all(
 					isa('Religion::Bible::Verses::Verse'),
 					methods(
-						book    => all(
-							isa('Religion::Bible::Verses::Book'),
-							methods(
-								ordinal      => 40,
-								shortName    => 'Mat',
-								chapterCount => 28,
-								verseCount   => 1071,
-								testament    => 'new',
-							),
-						),
+						book    => $bookExpect[0],
 						chapter => all(
 							isa('Religion::Bible::Verses::Chapter'),
 							methods(
+								book       => $bookExpect[0],
 								ordinal    => 10,
 								verseCount => 42,
 							),
@@ -68,19 +83,11 @@ sub testPeaceSearch {
 				all(
 					isa('Religion::Bible::Verses::Verse'),
 					methods(
-						book    => all(
-							isa('Religion::Bible::Verses::Book'),
-							methods(
-								ordinal      => 42,
-								shortName    => 'Luke',
-								chapterCount => 24,
-								verseCount   => 1151,
-								testament    => 'new',
-							),
-						),
+						book    => $bookExpect[1],
 						chapter => all(
 							isa('Religion::Bible::Verses::Chapter'),
 							methods(
+								book       => $bookExpect[1],
 								ordinal    => 12,
 								verseCount => 59,
 							),
