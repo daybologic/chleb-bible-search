@@ -33,7 +33,9 @@ use strict;
 use warnings;
 use Data::Dumper;
 use English qw(-no_match_vars);
+use File::Temp;
 use IO::File;
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use List::Util qw(sum);
 use Moose;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
@@ -41,8 +43,9 @@ use Readonly;
 use Religion::Bible::Verses::Book;
 use Storable;
 
-Readonly my $DATA_DIR => 'data';
 Readonly my $BIBLE    => 'kjv.bin';
+Readonly my $BIBLE_GZ => 'kjv.bin.gz';
+Readonly my $DATA_DIR => 'data';
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
 Readonly my $FILE_VERSION => 7;
@@ -67,25 +70,43 @@ Readonly my $BOOK_OFFSET_BOOK_INFO   => ++$offsetMaster; # hash of book info key
 
 has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
 
-#has __file => (is => 'rw', isa => 'IO::File', lazy => 1, default => \&__makeFile);
+has tmpPath => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeTmpPath);
 
-has path => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makePath);
+has compressedPath => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeCompressedPath);
 
 has data => (is => 'ro', isa => 'ArrayRef', lazy => 1, default => \&__makeData);
 
-sub __makePath {
-#	my ($self) = @_;
-	return join('/', $DATA_DIR, $BIBLE);
+has tmpDir => (is => 'rw', isa => 'File::Temp::Dir', lazy => 1, default => \&__makeTmpDir);
+
+sub __makeCompressedPath {
+	return join('/', $DATA_DIR, $BIBLE_GZ);
 }
 
-#sub __makeFile {
-#	my ($self) = @_;
-#	return retrieve($self->path);
-#}
+sub __makeTmpDir {
+	my ($self) = @_;
+
+	my $template = join('.', ref($self), 'XXXXXXXXXX');
+	if (my $dir = File::Temp->newdir($template, CLEANUP => 1, TMPDIR => 1)) {
+		return $dir;
+	}
+
+	die('Cannot create temporary directory');
+}
+
+sub __makeTmpPath {
+	my ($self) = @_;
+
+	my $path = join('/', $self->tmpDir, $BIBLE);
+
+	gunzip $self->compressedPath => $path
+	   or die("gunzip \"" . $self->compressedPath . "\" failed: $GunzipError\n");
+
+	return $path;
+}
 
 sub __makeData {
 	my ($self) = @_;
-	return retrieve($self->path);
+	return retrieve($self->tmpPath);
 }
 
 sub BUILD {
@@ -93,7 +114,7 @@ sub BUILD {
 	Dumper $self->data;
 
 	if ($self->__fsck() != EXIT_SUCCESS) {
-		die(sprintf("'%s' is corrupt", $self->path));
+		die(sprintf("'%s' is corrupt", $self->tmpPath));
 	}
 
 	return;
@@ -104,7 +125,7 @@ sub getBooks { # returns ARRAY of Religion::Bible::Verses::Book
 
 	my @books = ( );
 	my $bookCount = scalar(@{ $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES] });
-	#die Dumper $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES];
+
 	for (my $bookIndex = 0; $bookIndex < $bookCount; $bookIndex++) {
 		my $shortName = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES]->[$bookIndex];
 		my $bookInfo = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortName};
