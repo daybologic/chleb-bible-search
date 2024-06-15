@@ -9,9 +9,10 @@ use POSIX qw(EXIT_SUCCESS);
 use Religion::Bible::Verses;
 
 sub main {
+	my ($query) = (@ARGV);
 	my $bible = Religion::Bible::Verses->new();
 
-	my $query = $bible->newSearchQuery('peace on earth')->setLimit(10);
+	$query = $bible->newSearchQuery($query)->setLimit(5);
 	# FIXME: Need to limit to one book?  should be able to do this via Query.pm
 
 	my $results = $query->run();
