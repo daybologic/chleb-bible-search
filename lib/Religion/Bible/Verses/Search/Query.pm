@@ -72,8 +72,9 @@ sub run {
 		push(@verses, @$bookVerses);
 	}
 
+	splice(@verses, $self->limit);
 	return Religion::Bible::Verses::Search::Results->new({
-		coun   => scalar(@verses),
+		count  => scalar(@verses),
 		verses => \@verses,
 	});
 }

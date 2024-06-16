@@ -60,7 +60,7 @@ sub search {
 	my @verses;
 
 	my $critereonText = $query->text;
-	for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
+	CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
 		my $chapter = $self->getChapterByOrdinal($chapterOrdinal);
 
 		for (my $verseOrdinal = 1; $verseOrdinal <= $chapter->verseCount; $verseOrdinal++) {
@@ -76,6 +76,7 @@ sub search {
 					ordinal => $verseOrdinal,
 					text    => $text,
 				}));
+				last CHAPTER if (scalar(@verses) == $query->limit);
 			}
 		}
 	}
