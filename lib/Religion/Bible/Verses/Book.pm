@@ -55,11 +55,12 @@ sub BUILD {
 sub getVerseByOrdinal {
 }
 
-sub searchText {
-	my ($self, $critereonText) = @_;
+sub search {
+	my ($self, $query) = @_;
 	my @verses;
 
-	for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
+	my $critereonText = $query->text;
+	CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
 		my $chapter = $self->getChapterByOrdinal($chapterOrdinal);
 
 		for (my $verseOrdinal = 1; $verseOrdinal <= $chapter->verseCount; $verseOrdinal++) {
@@ -75,6 +76,7 @@ sub searchText {
 					ordinal => $verseOrdinal,
 					text    => $text,
 				}));
+				last CHAPTER if (scalar(@verses) == $query->limit);
 			}
 		}
 	}

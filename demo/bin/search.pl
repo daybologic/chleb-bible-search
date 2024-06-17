@@ -12,7 +12,7 @@ sub main {
 	my ($query) = (@ARGV);
 	my $bible = Religion::Bible::Verses->new();
 
-	$query = $bible->newSearchQuery($query)->setLimit(5);
+	$query = $bible->newSearchQuery($query)->setLimit(2);
 	# FIXME: Need to limit to one book?  should be able to do this via Query.pm
 
 	my $results = $query->run();

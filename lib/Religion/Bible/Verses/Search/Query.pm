@@ -68,12 +68,13 @@ sub run {
 	my @verses = ( );
 	foreach my $book (@booksToQuery) {
 		next if ($self->testament && $self->testament ne $book->testament);
-		my $bookVerses = $book->searchText($self->text);
+		my $bookVerses = $book->search($self);
 		push(@verses, @$bookVerses);
 	}
 
+	splice(@verses, $self->limit);
 	return Religion::Bible::Verses::Search::Results->new({
-		coun   => scalar(@verses),
+		count  => scalar(@verses),
 		verses => \@verses,
 	});
 }
