@@ -44,4 +44,8 @@ has text => (is => 'ro', isa => 'Str', required => 1);
 sub BUILD {
 }
 
+sub toString {
+	return 'FIXME';
+}
+
 1;
