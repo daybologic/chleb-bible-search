@@ -10,6 +10,7 @@ extends 'Test::Module::Runnable';
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
 use Religion::Bible::Verses;
+use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
@@ -35,6 +36,16 @@ sub testPride {
 		),
 	), 'verse inspection') or diag(explain($verse));
 	diag(explain($verse->text));
+
+	return EXIT_SUCCESS;
+}
+
+sub testBadBook {
+	my ($self) = @_;
+	plan tests => 1;
+
+	throws_ok { $self->sut->fetch('Mormon', 16, 18) } qr/Long book name 'Mormon' is not a book in the bible/,
+	    'exception thrown';
 
 	return EXIT_SUCCESS;
 }

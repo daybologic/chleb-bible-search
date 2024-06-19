@@ -101,8 +101,11 @@ sub resolveBook {
 		if (looks_like_number($book)) {
 			$book = $self->getBookByOrdinal($book);
 		} else {
-			$book = $self->getBookByShortName($book, 1);
-			$book = $self->getBookByLongName($book) unless ($book);
+			if (my $shortBook = $self->getBookByShortName($book, 1)) {
+				return $shortBook;
+			} else {
+				$book = $self->getBookByLongName($book);
+			}
 		}
 	}
 
