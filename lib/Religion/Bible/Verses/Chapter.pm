@@ -61,8 +61,8 @@ sub getVerseByOrdinal {
 	}
 
 	# TODO: Make more use of toString here
-	die(sprintf("Chapter %d not found in the book of '%s'",
-	    $self->ordinal, $self->book->longName));
+	die(sprintf("Verse %d not found in Chapter %d of book '%s'",
+	    $ordinal, $self->ordinal, $self->book->longName));
 }
 
 sub toString {

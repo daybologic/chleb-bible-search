@@ -60,6 +60,16 @@ sub testBadChapter {
 	return EXIT_SUCCESS;
 }
 
+sub testBadVerse {
+	my ($self) = @_;
+	plan tests => 1;
+
+	throws_ok { $self->sut->fetch('Luke', 24, 54) } qr/Verse 54 not found in Chapter 24 of book 'Luke'/,
+	    'exception thrown';
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;

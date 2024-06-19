@@ -91,7 +91,13 @@ sub toString {
 
 sub getChapterByOrdinal {
 	my ($self, $ordinal) = @_;
-	my $chapter = Religion::Bible::Verses::Chapter->new({
+
+	if ($ordinal > $self->chapterCount) {
+		die(sprintf("Chapter %d not found in the book of '%s'",
+		    $ordinal, $self->longName));
+	}
+
+	return Religion::Bible::Verses::Chapter->new({
 		_library => $self->_library,
 		book     => $self,
 		ordinal  => $ordinal,
