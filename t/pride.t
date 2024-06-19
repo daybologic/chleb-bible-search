@@ -50,6 +50,16 @@ sub testBadBook {
 	return EXIT_SUCCESS;
 }
 
+sub testBadChapter {
+	my ($self) = @_;
+	plan tests => 1;
+
+	throws_ok { $self->sut->fetch('Prov', 36, 1) } qr/Chapter 36 not found in the book of 'Proverbs'/,
+	    'exception thrown';
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;

@@ -51,13 +51,18 @@ sub getVerseByOrdinal {
 	# TODO: You shouldn't access __backend here
 	# but you need some more methods in the library to avoid it
 	# Perhaps have a getVerseByKey in _library?
-	my $text = $self->_library->__backend->getVerseDataByKey($verseKey);
-	return Religion::Bible::Verses::Verse->new({
-		book    => $self->book,
-		chapter => $self,
-		ordinal => $ordinal,
-		text    => $text,
-	});
+	if (my $text = $self->_library->__backend->getVerseDataByKey($verseKey)) {
+		return Religion::Bible::Verses::Verse->new({
+			book    => $self->book,
+			chapter => $self,
+			ordinal => $ordinal,
+			text    => $text,
+		});
+	}
+
+	# TODO: Make more use of toString here
+	die(sprintf("Chapter %d not found in the book of '%s'",
+	    $self->ordinal, $self->book->longName));
 }
 
 sub toString {
