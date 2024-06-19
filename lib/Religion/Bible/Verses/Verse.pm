@@ -45,7 +45,8 @@ sub BUILD {
 }
 
 sub toString {
-	return 'FIXME';
+	my ($self) = @_;
+	return sprintf('%s:%d - %s', $self->chapter->toString(), $self->ordinal, $self->text);
 }
 
 1;

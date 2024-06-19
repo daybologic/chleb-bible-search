@@ -35,7 +35,8 @@ sub testPride {
 			text          => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
 		),
 	), 'verse inspection') or diag(explain($verse));
-	diag(explain($verse->text));
+	#diag(explain($verse->text));
+	diag(explain($verse->toString()));
 
 	return EXIT_SUCCESS;
 }
@@ -54,7 +55,7 @@ sub testBadChapter {
 	my ($self) = @_;
 	plan tests => 1;
 
-	throws_ok { $self->sut->fetch('Prov', 36, 1) } qr/Chapter 36 not found in the book of 'Proverbs'/,
+	throws_ok { $self->sut->fetch('Prov', 36, 1) } qr/Chapter 36 not found in Prov/,
 	    'exception thrown';
 
 	return EXIT_SUCCESS;
@@ -64,7 +65,7 @@ sub testBadVerse {
 	my ($self) = @_;
 	plan tests => 1;
 
-	throws_ok { $self->sut->fetch('Luke', 24, 54) } qr/Verse 54 not found in Chapter 24 of book 'Luke'/,
+	throws_ok { $self->sut->fetch('Luke', 24, 54) } qr/Verse 54 not found in Luke 24/,
 	    'exception thrown';
 
 	return EXIT_SUCCESS;

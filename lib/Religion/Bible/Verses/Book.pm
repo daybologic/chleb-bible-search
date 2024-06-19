@@ -86,15 +86,14 @@ sub search {
 
 sub toString {
 	my ($self) = @_;
-	return 'Book ' . $self->shortName;
+	return $self->shortName;
 }
 
 sub getChapterByOrdinal {
 	my ($self, $ordinal) = @_;
 
 	if ($ordinal > $self->chapterCount) {
-		die(sprintf("Chapter %d not found in the book of '%s'",
-		    $ordinal, $self->longName));
+		die(sprintf('Chapter %d not found in %s', $ordinal, $self->toString()));
 	}
 
 	return Religion::Bible::Verses::Chapter->new({
