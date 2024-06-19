@@ -29,13 +29,19 @@ sub testPride {
 	cmp_deeply($verse, all(
 		isa('Religion::Bible::Verses::Verse'),
 		methods(
-			#limit         => 3,
-			#testament     => undef,
-			#bookShortName => undef,
-			text          => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
+			book    => methods(
+				ordinal   => 20,
+				longName  => 'Proverbs',
+				shortName => 'Prov',
+				testament => 'old',
+			),
+			chapter => methods(
+				ordinal => 16,
+			),
+			ordinal => 18,
+			text    => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
 		),
 	), 'verse inspection') or diag(explain($verse));
-	#diag(explain($verse->text));
 	diag(explain($verse->toString()));
 
 	return EXIT_SUCCESS;
