@@ -33,9 +33,11 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Moose;
+use Scalar::Util qw(looks_like_number);
 
 use Religion::Bible::Verses::Backend;
 use Religion::Bible::Verses::Search::Query;
+use Religion::Bible::Verses::Verse;
 
 has __backend => (is => 'ro', isa => 'Religion::Bible::Verses::Backend', lazy => 1, default => \&__makeBackend);
 
@@ -47,14 +49,15 @@ sub BUILD {
 }
 
 sub getBookByShortName {
-	my ($self, $shortName) = @_;
+	my ($self, $shortName, $unfatal) = @_;
 
 	foreach my $book (@{ $self->books }) {
 		next if ($book->shortName ne $shortName);
 		return $book;
 	}
 
-	die("Short book name '$shortName' is not a book in the bible");
+	die("Short book name '$shortName' is not a book in the bible") unless ($unfatal);
+	return undef;
 }
 
 sub getBookByLongName {
@@ -89,6 +92,35 @@ sub newSearchQuery {
 
 	my %params = @args;
 	return Religion::Bible::Verses::Search::Query->new({ %defaults, %params });
+}
+
+sub resolveBook {
+	my ($self, $book) = @_;
+
+	unless (blessed($book)) {
+		if (looks_like_number($book)) {
+			$book = $self->getBookByOrdinal($book);
+		} else {
+			if (my $shortBook = $self->getBookByShortName($book, 1)) {
+				return $shortBook;
+			} else {
+				$book = $self->getBookByLongName($book);
+			}
+		}
+	}
+
+	return $book;
+}
+
+sub fetch {
+	my ($self, $book, $chapterOrdinal, $verseOrdinal) = @_;
+
+	$book = $self->resolveBook($book);
+	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+
+	#warn $verse->toString(); # TODO: use log4perl
+	return $verse;
 }
 
 sub __makeBackend {

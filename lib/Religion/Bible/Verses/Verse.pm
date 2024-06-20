@@ -44,4 +44,9 @@ has text => (is => 'ro', isa => 'Str', required => 1);
 sub BUILD {
 }
 
+sub toString {
+	my ($self) = @_;
+	return sprintf('%s:%d - %s', $self->chapter->toString(), $self->ordinal, $self->text);
+}
+
 1;

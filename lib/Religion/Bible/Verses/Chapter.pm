@@ -44,6 +44,25 @@ has verseCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeVerse
 sub BUILD {
 }
 
+sub getVerseByOrdinal {
+	my ($self, $ordinal) = @_;
+
+	my $verseKey = $self->book->__makeVerseKey($self->ordinal, $ordinal);
+	# TODO: You shouldn't access __backend here
+	# but you need some more methods in the library to avoid it
+	# Perhaps have a getVerseByKey in _library?
+	if (my $text = $self->_library->__backend->getVerseDataByKey($verseKey)) {
+		return Religion::Bible::Verses::Verse->new({
+			book    => $self->book,
+			chapter => $self,
+			ordinal => $ordinal,
+			text    => $text,
+		});
+	}
+
+	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
+}
+
 sub toString {
 	my ($self) = @_;
 	return sprintf('%s %d', $self->book->shortName, $self->ordinal);
