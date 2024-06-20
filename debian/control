@@ -1,0 +1,24 @@
+Source: libreligion-bible-verses-perl
+Section: perl
+Priority: optional
+Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
+Build-Depends: debhelper (>= 13),
+Build-Depends-Indep:
+ libmoose-perl,
+ libreadonly-perl,
+ libtest-deep-perl,
+ libtest-exception-perl,
+ libtest-mockmodule-perl,
+Standards-Version: 4.3.0
+Homepage: https://bitbucket.org/2E0EOL/libreligion-bible-verses-perl
+
+Package: libtest-module-runnable-perl
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends},
+ libmoose-perl,
+ libreadonly-perl,
+Description: Religion::Bible::Verses - Bible Query Verses Framework
+ For further information see:
+ .
+ https://github.com/daybologic/libreligion-bible-verses-perl
+ https://bitbucket.org/2E0EOL/libreligion-bible-verses-perl
