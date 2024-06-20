@@ -1,11 +1,43 @@
+# Bible Query Verses Framework
+# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+#     * Neither the name of the Daybo Logic nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 package Religion::Bible::Verses;
 use strict;
 use warnings;
 use Data::Dumper;
 use Moose;
+use Scalar::Util qw(looks_like_number);
 
 use Religion::Bible::Verses::Backend;
 use Religion::Bible::Verses::Search::Query;
+use Religion::Bible::Verses::Verse;
 
 has __backend => (is => 'ro', isa => 'Religion::Bible::Verses::Backend', lazy => 1, default => \&__makeBackend);
 
@@ -13,18 +45,23 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 
 has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
+BEGIN {
+	our $VERSION = '0.2.0';
+}
+
 sub BUILD {
 }
 
 sub getBookByShortName {
-	my ($self, $shortName) = @_;
+	my ($self, $shortName, $unfatal) = @_;
 
 	foreach my $book (@{ $self->books }) {
 		next if ($book->shortName ne $shortName);
 		return $book;
 	}
 
-	die("Short book name '$shortName' is not a book in the bible");
+	die("Short book name '$shortName' is not a book in the bible") unless ($unfatal);
+	return undef;
 }
 
 sub getBookByLongName {
@@ -59,6 +96,35 @@ sub newSearchQuery {
 
 	my %params = @args;
 	return Religion::Bible::Verses::Search::Query->new({ %defaults, %params });
+}
+
+sub resolveBook {
+	my ($self, $book) = @_;
+
+	unless (blessed($book)) {
+		if (looks_like_number($book)) {
+			$book = $self->getBookByOrdinal($book);
+		} else {
+			if (my $shortBook = $self->getBookByShortName($book, 1)) {
+				return $shortBook;
+			} else {
+				$book = $self->getBookByLongName($book);
+			}
+		}
+	}
+
+	return $book;
+}
+
+sub fetch {
+	my ($self, $book, $chapterOrdinal, $verseOrdinal) = @_;
+
+	$book = $self->resolveBook($book);
+	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+
+	#warn $verse->toString(); # TODO: use log4perl
+	return $verse;
 }
 
 sub __makeBackend {

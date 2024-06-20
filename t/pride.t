@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Bible Query Verses Framework
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,53 +29,85 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Chapter;
+package PrideTests;
 use strict;
 use warnings;
 use Moose;
 
-has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
+extends 'Test::Module::Runnable';
 
-has book => (is => 'ro', isa => 'Religion::Bible::Verses::Book', required => 1);
+use Test::Deep qw(all cmp_deeply isa methods);
+use POSIX qw(EXIT_SUCCESS);
+use Religion::Bible::Verses;
+use Test::Exception;
+use Test::More 0.96;
 
-has ordinal => (is => 'ro', isa => 'Int', required => 1);
-
-has verseCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeVerseCount);
-
-sub BUILD {
-}
-
-sub getVerseByOrdinal {
-	my ($self, $ordinal) = @_;
-
-	my $verseKey = $self->book->__makeVerseKey($self->ordinal, $ordinal);
-	# TODO: You shouldn't access __backend here
-	# but you need some more methods in the library to avoid it
-	# Perhaps have a getVerseByKey in _library?
-	if (my $text = $self->_library->__backend->getVerseDataByKey($verseKey)) {
-		return Religion::Bible::Verses::Verse->new({
-			book    => $self->book,
-			chapter => $self,
-			ordinal => $ordinal,
-			text    => $text,
-		});
-	}
-
-	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
-}
-
-sub toString {
+sub setUp {
 	my ($self) = @_;
-	return sprintf('%s %d', $self->book->shortName, $self->ordinal);
+
+	$self->sut(Religion::Bible::Verses->new());
+
+	return EXIT_SUCCESS;
 }
 
-sub __makeVerseCount {
+sub testPride {
 	my ($self) = @_;
-	my $bookInfo = $self->_library->__backend->getBookInfoByShortName($self->book->shortName);
-	die 'FIXME' unless ($bookInfo);
-	my $count = $bookInfo->{v}->{ $self->ordinal };
-	die("FIXME: $count") unless ($count);
-	return $count;
+	plan tests => 1;
+
+	my $verse = $self->sut->fetch('Prov', 16, 18);
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => methods(
+				ordinal   => 20,
+				longName  => 'Proverbs',
+				shortName => 'Prov',
+				testament => 'old',
+			),
+			chapter => methods(
+				ordinal => 16,
+			),
+			ordinal => 18,
+			text    => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
+		),
+	), 'verse inspection') or diag(explain($verse));
+	diag(explain($verse->toString()));
+
+	return EXIT_SUCCESS;
 }
 
-1;
+sub testBadBook {
+	my ($self) = @_;
+	plan tests => 1;
+
+	throws_ok { $self->sut->fetch('Mormon', 16, 18) } qr/Long book name 'Mormon' is not a book in the bible/,
+	    'exception thrown';
+
+	return EXIT_SUCCESS;
+}
+
+sub testBadChapter {
+	my ($self) = @_;
+	plan tests => 1;
+
+	throws_ok { $self->sut->fetch('Prov', 36, 1) } qr/Chapter 36 not found in Prov/,
+	    'exception thrown';
+
+	return EXIT_SUCCESS;
+}
+
+sub testBadVerse {
+	my ($self) = @_;
+	plan tests => 1;
+
+	throws_ok { $self->sut->fetch('Luke', 24, 54) } qr/Verse 54 not found in Luke 24/,
+	    'exception thrown';
+
+	return EXIT_SUCCESS;
+}
+
+package main;
+use strict;
+use warnings;
+
+exit(PrideTests->new->run());

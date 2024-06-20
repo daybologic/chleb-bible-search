@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 # Bible Query Verses Framework
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,53 +29,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Chapter;
+package main;
+
+use ExtUtils::MakeMaker;
 use strict;
 use warnings;
-use Moose;
 
-has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
+WriteMakefile(
+	NAME         => 'Religion::Bible::Verses',
+	VERSION_FROM => 'lib/Religion/Bible/Verses.pm', # finds $VERSION
+	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
+	ABSTRACT     => 'Bible Query Verses Framework',
 
-has book => (is => 'ro', isa => 'Religion::Bible::Verses::Book', required => 1);
-
-has ordinal => (is => 'ro', isa => 'Int', required => 1);
-
-has verseCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeVerseCount);
-
-sub BUILD {
-}
-
-sub getVerseByOrdinal {
-	my ($self, $ordinal) = @_;
-
-	my $verseKey = $self->book->__makeVerseKey($self->ordinal, $ordinal);
-	# TODO: You shouldn't access __backend here
-	# but you need some more methods in the library to avoid it
-	# Perhaps have a getVerseByKey in _library?
-	if (my $text = $self->_library->__backend->getVerseDataByKey($verseKey)) {
-		return Religion::Bible::Verses::Verse->new({
-			book    => $self->book,
-			chapter => $self,
-			ordinal => $ordinal,
-			text    => $text,
-		});
-	}
-
-	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
-}
-
-sub toString {
-	my ($self) = @_;
-	return sprintf('%s %d', $self->book->shortName, $self->ordinal);
-}
-
-sub __makeVerseCount {
-	my ($self) = @_;
-	my $bookInfo = $self->_library->__backend->getBookInfoByShortName($self->book->shortName);
-	die 'FIXME' unless ($bookInfo);
-	my $count = $bookInfo->{v}->{ $self->ordinal };
-	die("FIXME: $count") unless ($count);
-	return $count;
-}
-
-1;
+	PREREQ_PM => {
+		'Moose'            => 0,
+		'Test::MockModule' => 0,
+		'Test::More'       => 0,
+	}, BUILD_REQUIRES => {
+		'Moose'           => 0,
+		'Test::More'      => 0,
+		'Readonly'        => 0,
+		'Test::Deep'      => 0,
+		'Test::Exception' => 0,
+	},
+);
