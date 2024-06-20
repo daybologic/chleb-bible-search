@@ -45,6 +45,10 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 
 has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
+BEGIN {
+	our $VERSION = '0.1.0';
+}
+
 sub BUILD {
 }
 
