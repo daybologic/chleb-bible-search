@@ -55,6 +55,7 @@ sub BUILD {
 sub getBookByShortName {
 	my ($self, $shortName, $unfatal) = @_;
 
+	$shortName ||= '';
 	foreach my $book (@{ $self->books }) {
 		next if ($book->shortName ne $shortName);
 		return $book;
@@ -67,6 +68,7 @@ sub getBookByShortName {
 sub getBookByLongName {
 	my ($self, $longName) = @_;
 
+	$longName ||= '';
 	foreach my $book (@{ $self->books }) {
 		next if ($book->longName ne $longName);
 		return $book;
