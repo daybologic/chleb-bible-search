@@ -39,14 +39,8 @@ sub __search {
 		},
 	);
 
-	# TODO: Write a TO_JSON method
 	for (my $i = 0; $i < $results->count; $i++) {
-		push(@{ $hash{result}->{verses} }, {
-			book => $results->verses->[$i]->book->shortName,
-			chapter => $results->verses->[$i]->chapter->ordinal,
-			verse   => $results->verses->[$i]->ordinal,
-			text    => $results->verses->[$i]->text,
-		});
+		push(@{ $hash{result}->{verses} }, $results->verses->[$i]);
 	}
 
 	return \%hash;
