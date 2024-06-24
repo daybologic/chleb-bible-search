@@ -49,4 +49,15 @@ sub toString {
 	return sprintf('%s:%d - %s', $self->chapter->toString(), $self->ordinal, $self->text);
 }
 
+sub TO_JSON {
+	my ($self) = @_;
+
+	return {
+		book    => $self->book->shortName,
+		chapter => $self->chapter->ordinal,
+		ordinal => $self->ordinal,
+		text    => $self->text,
+	};
+}
+
 1;
