@@ -129,6 +129,19 @@ sub fetch {
 	return $verse;
 }
 
+sub votd {
+	my ($self) = @_;
+
+	my $bookOrdinal = int(rand($self->bookCount)) + 1;
+	my $book = $self->getBookByOrdinal($bookOrdinal);
+
+	my $chapterOrdinal = int(rand($book->chapterCount)) + 1;
+	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+
+	my $verseOrdinal = int(rand($chapter->verseCount)) + 1;
+	return $chapter->getVerseByOrdinal($verseOrdinal);
+}
+
 sub __makeBackend {
 	my ($self) = @_;
 	return Religion::Bible::Verses::Backend->new({
