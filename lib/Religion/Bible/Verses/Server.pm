@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w -T
+#!/usr/bin/perl
 # Bible Query Verses Framework
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
