@@ -70,7 +70,7 @@ sub __search {
 	);
 
 	for (my $i = 0; $i < $results->count; $i++) {
-		push(@{ $hash{result}->{verses} }, $results->verses->[$i]);
+		push(@{ $hash{result}->{verses} }, $results->verses->[$i]->TO_JSON());
 	}
 
 	return \%hash;
