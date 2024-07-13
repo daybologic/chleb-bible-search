@@ -31,4 +31,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 
-echo '{"lookup":{"book":"Proverbs","chapter":16,"verse":18}}' | nc localhost 22662
+echo '{"lookup":{"book":"Proverbs","chapter":16,"verse":18}}' | nc localhost 22662 | jq .
