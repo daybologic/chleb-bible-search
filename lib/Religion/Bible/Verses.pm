@@ -46,7 +46,7 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
 BEGIN {
-	our $VERSION = '0.2.0';
+	our $VERSION = '0.3.0';
 }
 
 sub BUILD {
@@ -55,6 +55,7 @@ sub BUILD {
 sub getBookByShortName {
 	my ($self, $shortName, $unfatal) = @_;
 
+	$shortName ||= '';
 	foreach my $book (@{ $self->books }) {
 		next if ($book->shortName ne $shortName);
 		return $book;
@@ -67,6 +68,7 @@ sub getBookByShortName {
 sub getBookByLongName {
 	my ($self, $longName) = @_;
 
+	$longName ||= '';
 	foreach my $book (@{ $self->books }) {
 		next if ($book->longName ne $longName);
 		return $book;
@@ -125,6 +127,19 @@ sub fetch {
 
 	#warn $verse->toString(); # TODO: use log4perl
 	return $verse;
+}
+
+sub votd {
+	my ($self) = @_;
+
+	my $bookOrdinal = int(rand($self->bookCount)) + 1;
+	my $book = $self->getBookByOrdinal($bookOrdinal);
+
+	my $chapterOrdinal = int(rand($book->chapterCount)) + 1;
+	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+
+	my $verseOrdinal = int(rand($chapter->verseCount)) + 1;
+	return $chapter->getVerseByOrdinal($verseOrdinal);
 }
 
 sub __makeBackend {
