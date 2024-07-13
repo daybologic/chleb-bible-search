@@ -46,7 +46,7 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
 BEGIN {
-	our $VERSION = '0.2.0';
+	our $VERSION = '0.3.0';
 }
 
 sub BUILD {
@@ -127,6 +127,19 @@ sub fetch {
 
 	#warn $verse->toString(); # TODO: use log4perl
 	return $verse;
+}
+
+sub votd {
+	my ($self) = @_;
+
+	my $bookOrdinal = int(rand($self->bookCount)) + 1;
+	my $book = $self->getBookByOrdinal($bookOrdinal);
+
+	my $chapterOrdinal = int(rand($book->chapterCount)) + 1;
+	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+
+	my $verseOrdinal = int(rand($chapter->verseCount)) + 1;
+	return $chapter->getVerseByOrdinal($verseOrdinal);
 }
 
 sub __makeBackend {
