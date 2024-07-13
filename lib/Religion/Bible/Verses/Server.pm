@@ -76,6 +76,11 @@ sub __search {
 	return \%hash;
 }
 
+sub __votd {
+	my ($self) = @_;
+	return { result => $self->__bible->votd()->TO_JSON() };
+}
+
 sub process_request {
 	my ($self) = @_;
 
@@ -90,12 +95,14 @@ sub process_request {
 		next unless (defined($json));
 
 		my $result;
-		my ($lookup, $search) = @{$json}{qw(lookup search)};
+		my ($lookup, $search, $votd) = @{$json}{qw(lookup search votd)};
 
 		if ($lookup) {
 			$result = $self->__lookup($lookup);
 		} elsif ($search) {
 			$result = $self->__search($search);
+		} elsif ($votd) {
+			$result = $self->__votd();
 		} else {
 			printf("400\015\012Missing lookup or search stanza\015\012");
 			last;
