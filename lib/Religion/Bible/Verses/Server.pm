@@ -63,14 +63,39 @@ sub __search {
 	my $results = $query->run();
 
 	my %hash = (
-		result => {
-			count  => $results->count,
-			verses => [ ],
-		},
+		#result => {
+	#		count  => $results->count,
+#		},
+		data => [ ],
 	);
 
 	for (my $i = 0; $i < $results->count; $i++) {
-		push(@{ $hash{result}->{verses} }, $results->verses->[$i]->TO_JSON());
+		my $verse = $results->verses->[$i];
+
+		my %attributes = ( %{ $verse->TO_JSON() } );
+		$attributes{title} = sprintf("Result %d/%d from bible search '%s'", $i+1, $results->count, $search->{term});
+
+		push(@{ $hash{data} }, {
+			type => $verse->type,
+			id => $verse->id,
+			attributes => \%attributes,
+			relationships => {
+				chapter => {
+					links => { },
+					data => {
+						type => $verse->chapter->type,
+						id => $verse->chapter->id,
+					},
+				},
+				book => {
+					links => { },
+					data => {
+						type => $verse->book->type,
+						id => $verse->book->id,
+					},
+				},
+			},
+		});
 	}
 
 	return \%hash;

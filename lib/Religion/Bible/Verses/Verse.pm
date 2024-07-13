@@ -41,6 +41,10 @@ has ordinal => (is => 'ro', isa => 'Int', required => 1);
 
 has text => (is => 'ro', isa => 'Str', required => 1);
 
+has type => (is => 'ro', isa => 'Str', default => sub { 'verse' });
+
+has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
+
 sub BUILD {
 }
 
@@ -58,6 +62,11 @@ sub TO_JSON {
 		ordinal => $self->ordinal,
 		text    => $self->text,
 	};
+}
+
+sub __makeId {
+	my ($self) = @_;
+	return join('/', $self->book->ordinal, $self->chapter->ordinal, $self->ordinal);
 }
 
 1;

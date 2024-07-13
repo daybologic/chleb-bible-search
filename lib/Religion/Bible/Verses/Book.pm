@@ -49,6 +49,10 @@ has [qw(chapterCount verseCount)] => (is => 'ro', isa => 'Int');
 
 has testament => (is => 'ro', isa => enum(['old', 'new']));
 
+has type => (is => 'ro', isa => 'Str', default => sub { 'book' });
+
+has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
+
 sub BUILD {
 }
 
@@ -106,6 +110,11 @@ sub getChapterByOrdinal {
 sub __makeVerseKey {
 	my ($self, $chapterOrdinal, $verseOrdinal) = @_;
 	return join(':', $TRANSLATION, $self->shortName, $chapterOrdinal, $verseOrdinal);
+}
+
+sub __makeId {
+       my ($self) = @_;
+       return $self->ordinal;
 }
 
 1;
