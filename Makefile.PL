@@ -45,6 +45,7 @@ WriteMakefile(
 		'Moose'            => 0,
 		'Test::MockModule' => 0,
 		'Test::More'       => 0,
+		'UUID::Tiny'       => 0,
 	}, BUILD_REQUIRES => {
 		'Moose'           => 0,
 		'Test::More'      => 0,

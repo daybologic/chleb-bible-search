@@ -17,6 +17,7 @@ Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
  libmoose-perl,
  libreadonly-perl,
+ libuuid-tiny-perl,
 Description: Religion::Bible::Verses - Bible Query Verses Framework
  For further information see:
  .

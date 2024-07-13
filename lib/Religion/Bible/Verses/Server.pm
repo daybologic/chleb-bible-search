@@ -35,6 +35,7 @@ use warnings;
 use Data::Dumper;
 use JSON;
 use Religion::Bible::Verses;
+use UUID::Tiny ':std';
 
 use base qw(Net::Server::PreForkSimple);
 
@@ -63,10 +64,9 @@ sub __search {
 	my $results = $query->run();
 
 	my %hash = (
-		#result => {
-	#		count  => $results->count,
-#		},
 		data => [ ],
+		included => [ ],
+		links => { },
 	);
 
 	for (my $i = 0; $i < $results->count; $i++) {
@@ -97,6 +97,15 @@ sub __search {
 			},
 		});
 	}
+
+	push(@{ $hash{included} }, {
+		type => 'results_summary',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			count => $results->count,
+		},
+		links => { },
+	});
 
 	return \%hash;
 }
