@@ -28,16 +28,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::Container;
+package Religion::Bible::Verses::DI::MockLogger;
 use Moose;
+use strict;
+use warnings;
 
-use Log::Log4perl;
+sub BUILD {
+}
 
-has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
-
-sub _makeLogger {
-	Log::Log4perl->init('etc/log4perl.conf');
-	return Log::Log4perl->get_logger('bible');
+sub debug {
 }
 
 1;
