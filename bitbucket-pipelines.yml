@@ -40,4 +40,4 @@ pipelines:
           - apt-get update
           - apt-get install -y libmoose-perl libjson-perl libjson-maybexs-perl libwww-perl libreadonly-perl liburi-encode-perl libconfig-ini-perl libdatetime-perl libdbd-mysql-perl libdbi-perl libuniversal-require-perl libtest-deep-perl libtest-mockmodule-perl libtest-exception-perl libcache-cache-perl gzip
           - perl Makefile.PL
-          - TEST_VERBOSE=1 make && make test
+          - make && make test
