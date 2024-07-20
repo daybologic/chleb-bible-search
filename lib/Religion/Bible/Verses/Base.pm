@@ -33,8 +33,6 @@ use Moose;
 
 use Religion::Bible::Verses::DI::Container;
 
-has _quiet => (isa => 'Bool', is => 'rw', default => 0);
-
 # TODO: Do we need a trap to ensure a fatal error occurs if the dic is constructed more than once?
 has dic => (isa => 'Religion::Bible::Verses::DI::Container', is => 'rw', lazy => 1, default => \&__makeDIContainer);
 
