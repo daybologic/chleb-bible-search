@@ -4,6 +4,7 @@ Priority: optional
 Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
 Build-Depends-Indep:
+ liblog-log4perl-perl,
  libmoose-perl,
  libreadonly-perl,
  libtest-deep-perl,
@@ -15,6 +16,7 @@ Homepage: https://bitbucket.org/2E0EOL/libreligion-bible-verses-perl
 Package: libtest-module-runnable-perl
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
+ liblog-log4perl-perl,
  libmoose-perl,
  libreadonly-perl,
  libuuid-tiny-perl,

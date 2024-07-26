@@ -1,4 +1,3 @@
-#!/usr/bin/env perl
 # Bible Query Verses Framework
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,46 +28,15 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package VotdTests;
-use strict;
-use warnings;
+package Religion::Bible::Verses::DI::MockLogger;
 use Moose;
-
-use lib 'externals/libtest-module-runnable-perl/lib';
-
-extends 'Test::Module::Runnable';
-
-use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
-use Test::More 0.96;
-
-sub setUp {
-	my ($self) = @_;
-	$self->sut(Religion::Bible::Verses->new());
-	return EXIT_SUCCESS;
-}
-
-sub test {
-	my ($self) = @_;
-	plan tests => 1;
-
-	my $verse = $self->sut->votd();
-	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
-		methods(
-			book    => isa('Religion::Bible::Verses::Book'),
-			chapter => isa('Religion::Bible::Verses::Chapter'),
-			ordinal => re(qr/^\d+$/),
-			text    => ignore(),
-		),
-	), 'verse inspection') or diag(explain($verse->toString()));
-
-	return EXIT_SUCCESS;
-}
-
-package main;
 use strict;
 use warnings;
 
-exit(VotdTests->new->run());
+sub BUILD {
+}
+
+sub debug {
+}
+
+1;
