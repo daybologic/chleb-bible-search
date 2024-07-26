@@ -144,7 +144,11 @@ sub votd {
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 
 	my $verseOrdinal = int(rand($chapter->verseCount)) + 1;
-	return $chapter->getVerseByOrdinal($verseOrdinal);
+	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+
+	$self->dic->logger->debug($verse->toString());
+
+	return $verse;
 }
 
 sub __makeBackend {
