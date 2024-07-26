@@ -84,6 +84,12 @@ sub __search {
 			id => $verse->chapter->id,
 			attributes => $verse->chapter->TO_JSON(),
 			relationships => {
+				book => {
+					data => {
+						type => $verse->book->type,
+						id => $verse->book->id,
+					},
+				}
 			},
 		});
 
@@ -91,8 +97,7 @@ sub __search {
 			type => $verse->book->type,
 			id => $verse->book->id,
 			attributes => $verse->book->TO_JSON(),
-			relationships => {
-			},
+			relationships => { },
 		});
 
 		push(@{ $hash{data} }, {
