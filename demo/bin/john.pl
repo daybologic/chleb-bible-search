@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Bible Query Verses Framework
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -27,8 +28,6 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
-#!/usr/bin/env perl
 
 package main;
 use strict;
