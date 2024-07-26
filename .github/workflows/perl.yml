@@ -2,7 +2,7 @@ name: Perl CI
 
 on:
   push:
-    branches: [ "develop", "master" ]
+    branches: [ "develop", "master", "f/202407-log4perl" ]
   pull_request:
     branches: [ "develop" ]
 
@@ -30,6 +30,12 @@ jobs:
 
     - name: make
       run: make
+
+    - name: local setup
+      run: |
+        ln -sf `pwd`/.github/etc/log4perl.conf etc/log4perl.conf
+        mkdir -p build/var/log
+        touch build/var/log/default.log
 
     - name: make test
       run: make test
