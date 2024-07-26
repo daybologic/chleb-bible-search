@@ -39,14 +39,6 @@ use UUID::Tiny ':std';
 
 use base qw(Net::Server::PreForkSimple);
 
-sub __makeJsonApi {
-	return (
-		data => [ ],
-		included => [ ],
-		links => { },
-	);
-}
-
 sub __json {
 	my ($self) = @_;
 	$self->{__json} ||= JSON->new();
@@ -59,11 +51,18 @@ sub __bible {
 	return $self->{__bible};
 }
 
-sub __lookup {
-	my ($self, $params) = @_;
-	my $verse = $self->__bible->fetch($params->{book}, $params->{chapter}, $params->{verse});
+sub __makeJsonApi {
+	return (
+		data => [ ],
+		included => [ ],
+		links => { },
+	);
+}
 
+sub __verseToJsonApi {
+	my ($verse) = @_;
 	my %hash = __makeJsonApi();
+
 	push(@{ $hash{included} }, {
 		type => $verse->chapter->type,
 		id => $verse->chapter->id,
@@ -108,6 +107,18 @@ sub __lookup {
 	});
 
 	return \%hash;
+}
+
+sub __lookup {
+	my ($self, $params) = @_;
+	my $verse = $self->__bible->fetch($params->{book}, $params->{chapter}, $params->{verse});
+	return __verseToJsonApi($verse);
+}
+
+sub __votd {
+	my ($self) = @_;
+	my $verse = $self->__bible->votd();
+	return __verseToJsonApi($verse);
 }
 
 sub __search {
@@ -178,11 +189,6 @@ sub __search {
 	});
 
 	return \%hash;
-}
-
-sub __votd {
-	my ($self) = @_;
-	return { result => $self->__bible->votd()->TO_JSON() };
 }
 
 sub process_request {
