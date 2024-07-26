@@ -29,95 +29,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package PrideTests;
-use strict;
-use warnings;
-use Moose;
-
-use lib 'externals/libtest-module-runnable-perl/lib';
-
-extends 'Test::Module::Runnable';
-
-use Test::Deep qw(all cmp_deeply isa methods);
-use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
-use Religion::Bible::Verses::DI::MockLogger;
-use Test::Exception;
-use Test::More 0.96;
-
-sub setUp {
-	my ($self) = @_;
-
-	$self->sut(Religion::Bible::Verses->new());
-	$self->__mockLogger();
-
-	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
-	return;
-}
-
-sub testPride {
-	my ($self) = @_;
-	plan tests => 1;
-
-	my $verse = $self->sut->fetch('Prov', 16, 18);
-	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
-		methods(
-			book    => methods(
-				ordinal   => 20,
-				longName  => 'Proverbs',
-				shortName => 'Prov',
-				testament => 'old',
-			),
-			chapter => methods(
-				ordinal => 16,
-			),
-			ordinal => 18,
-			text    => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
-		),
-	), 'verse inspection') or diag(explain($verse));
-	diag(explain($verse->toString()));
-
-	return EXIT_SUCCESS;
-}
-
-sub testBadBook {
-	my ($self) = @_;
-	plan tests => 1;
-
-	throws_ok { $self->sut->fetch('Mormon', 16, 18) } qr/Long book name 'Mormon' is not a book in the bible/,
-	    'exception thrown';
-
-	return EXIT_SUCCESS;
-}
-
-sub testBadChapter {
-	my ($self) = @_;
-	plan tests => 1;
-
-	throws_ok { $self->sut->fetch('Prov', 36, 1) } qr/Chapter 36 not found in Prov/,
-	    'exception thrown';
-
-	return EXIT_SUCCESS;
-}
-
-sub testBadVerse {
-	my ($self) = @_;
-	plan tests => 1;
-
-	throws_ok { $self->sut->fetch('Luke', 24, 54) } qr/Verse 54 not found in Luke 24/,
-	    'exception thrown';
-
-	return EXIT_SUCCESS;
-}
-
 package main;
 use strict;
 use warnings;
+use lib 'lib';
 
-exit(PrideTests->new->run());
+use POSIX qw(EXIT_SUCCESS);
+use Religion::Bible::Verses;
+
+sub main {
+	my $bible = Religion::Bible::Verses->new();
+
+	my $verse = $bible->votd();
+	printf("%s\n", $verse->toString()); # TODO: Use Log4Perl
+
+	return EXIT_SUCCESS;
+}
+
+exit(main()) unless (caller());

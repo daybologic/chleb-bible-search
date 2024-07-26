@@ -31,11 +31,15 @@
 package Religion::Bible::Verses;
 use strict;
 use warnings;
-use Data::Dumper;
 use Moose;
+
+extends 'Religion::Bible::Verses::Base';
+
+use Data::Dumper;
 use Scalar::Util qw(looks_like_number);
 
 use Religion::Bible::Verses::Backend;
+use Religion::Bible::Verses::DI::Container;
 use Religion::Bible::Verses::Search::Query;
 use Religion::Bible::Verses::Verse;
 
@@ -46,7 +50,7 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
 BEGIN {
-	our $VERSION = '0.2.0';
+	our $VERSION = '0.3.0';
 }
 
 sub BUILD {
@@ -125,8 +129,22 @@ sub fetch {
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
-	#warn $verse->toString(); # TODO: use log4perl
+	$self->dic->logger->debug($verse->toString());
+
 	return $verse;
+}
+
+sub votd {
+	my ($self) = @_;
+
+	my $bookOrdinal = int(rand($self->bookCount)) + 1;
+	my $book = $self->getBookByOrdinal($bookOrdinal);
+
+	my $chapterOrdinal = int(rand($book->chapterCount)) + 1;
+	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+
+	my $verseOrdinal = int(rand($chapter->verseCount)) + 1;
+	return $chapter->getVerseByOrdinal($verseOrdinal);
 }
 
 sub __makeBackend {
