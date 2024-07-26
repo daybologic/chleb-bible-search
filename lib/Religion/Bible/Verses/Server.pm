@@ -62,7 +62,52 @@ sub __bible {
 sub __lookup {
 	my ($self, $params) = @_;
 	my $verse = $self->__bible->fetch($params->{book}, $params->{chapter}, $params->{verse});
-	return { result => $verse->toString() };
+
+	my %hash = __makeJsonApi();
+	push(@{ $hash{included} }, {
+		type => $verse->chapter->type,
+		id => $verse->chapter->id,
+		attributes => $verse->chapter->TO_JSON(),
+		relationships => {
+			book => {
+				data => {
+					type => $verse->book->type,
+					id => $verse->book->id,
+				},
+			}
+		},
+	});
+
+	push(@{ $hash{included} }, {
+		type => $verse->book->type,
+		id => $verse->book->id,
+		attributes => $verse->book->TO_JSON(),
+		relationships => { },
+	});
+
+	push(@{ $hash{data} }, {
+		type => $verse->type,
+		id => $verse->id,
+		attributes => $verse->TO_JSON(),
+		relationships => {
+			chapter => {
+				links => { },
+				data => {
+					type => $verse->chapter->type,
+					id => $verse->chapter->id,
+				},
+			},
+			book => {
+				links => { },
+				data => {
+					type => $verse->book->type,
+					id => $verse->book->id,
+				},
+			},
+		},
+	});
+
+	return \%hash;
 }
 
 sub __search {
