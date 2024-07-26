@@ -34,6 +34,8 @@ use strict;
 use warnings;
 use Moose;
 
+use lib 'externals/libtest-module-runnable-perl/lib';
+
 extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
