@@ -85,7 +85,10 @@ sub __makeCompressedPath {
 sub __makeTmpDir {
 	my ($self) = @_;
 
-	my $template = join('.', ref($self), 'XXXXXXXXXX');
+	my $tmpSubDir = ref($self);
+	$tmpSubDir =~ s/::/_/g;
+
+	my $template = join('.', $tmpSubDir, 'XXXXXXXXXX');
 	if (my $dir = File::Temp->newdir($template, CLEANUP => 1, TMPDIR => 1)) {
 		return $dir;
 	}
