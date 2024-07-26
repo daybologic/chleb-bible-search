@@ -31,4 +31,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 term="$1"
+if [ -z "$term" ]; then
+	>&2 echo "ERROR: Usage $0 <term>"
+	exit 2
+fi
+
 echo "{\"search\":{\"term\":\"$term\"}}" | nc localhost 22662 | jq .
