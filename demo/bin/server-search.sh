@@ -30,4 +30,5 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-echo '{"search":{"term":"haughty"}}' | nc localhost 22662 | jq .
+term="$1"
+echo "{\"search\":{\"term\":\"$term\"}}" | nc localhost 22662 | jq .
