@@ -93,6 +93,15 @@ sub toString {
 	return $self->shortName;
 }
 
+sub TO_JSON {
+	my ($self) = @_;
+
+	return {
+		testament => $self->testament,
+		ordinal   => $self->ordinal,
+	};
+}
+
 sub getChapterByOrdinal {
 	my ($self, $ordinal) = @_;
 

@@ -39,6 +39,14 @@ use UUID::Tiny ':std';
 
 use base qw(Net::Server::PreForkSimple);
 
+sub __makeJsonApi {
+	return (
+		data => [ ],
+		included => [ ],
+		links => { },
+	);
+}
+
 sub __json {
 	my ($self) = @_;
 	$self->{__json} ||= JSON->new();
@@ -63,17 +71,29 @@ sub __search {
 	my $query = $self->__bible->newSearchQuery($search->{term})->setLimit(5);
 	my $results = $query->run();
 
-	my %hash = (
-		data => [ ],
-		included => [ ],
-		links => { },
-	);
+	my %hash = __makeJsonApi();
 
 	for (my $i = 0; $i < $results->count; $i++) {
 		my $verse = $results->verses->[$i];
 
 		my %attributes = ( %{ $verse->TO_JSON() } );
 		$attributes{title} = sprintf("Result %d/%d from bible search '%s'", $i+1, $results->count, $search->{term});
+
+		push(@{ $hash{included} }, {
+			type => $verse->chapter->type,
+			id => $verse->chapter->id,
+			attributes => $verse->chapter->TO_JSON(),
+			relationships => {
+			},
+		});
+
+		push(@{ $hash{included} }, {
+			type => $verse->book->type,
+			id => $verse->book->id,
+			attributes => $verse->book->TO_JSON(),
+			relationships => {
+			},
+		});
 
 		push(@{ $hash{data} }, {
 			type => $verse->type,

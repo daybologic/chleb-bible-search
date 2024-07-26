@@ -72,6 +72,15 @@ sub toString {
 	return sprintf('%s %d', $self->book->shortName, $self->ordinal);
 }
 
+sub TO_JSON {
+	my ($self) = @_;
+
+	return {
+		book    => $self->book->shortName,
+		ordinal => $self->ordinal,
+	};
+}
+
 sub __makeVerseCount {
 	my ($self) = @_;
 	my $bookInfo = $self->_library->__backend->getBookInfoByShortName($self->book->shortName);
