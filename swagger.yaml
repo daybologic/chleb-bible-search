@@ -1,24 +1,54 @@
 openapi: 3.0.0
 info:
-  title: Sample API
-  description: Optional multiline or single-line description in [CommonMark](http://commonmark.org/help/) or HTML.
-  version: 0.1.9
+  title: Online Bible querying engine
+  description: Query the bible, or get a verse of the day.
+  version: 0.1.0
 servers:
-  - url: http://api.example.com/v1
-    description: Optional server description, e.g. Main (production) server
-  - url: http://staging-api.example.com
-    description: Optional server description, e.g. Internal staging server for testing
+  - url: http://FIXME.api.example.com/v1
+    description: Published API, production
 paths:
-  /users:
+  /votd:
     get:
-      summary: Returns a list of users.
-      description: Optional extended description in CommonMark or HTML.
+      summary: Verse of The Day
+      description: Retrieve one verse from The Bible, at random.
       responses:
-        '200':    # status code
-          description: A JSON array of user names
+        '200':
+          description: Successfully retrieved verse
           content:
             application/json:
-              schema: 
-                type: array
-                items: 
-                  type: string
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+components:
+  schemas:
+    Verse:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: ["verse"]
+        attributes:
+          type: object
+          properties:
+            book:
+              type: string
+              description: Book in which this verse appears
+              example: "Gen"
+            chapter:
+              type: integer
+              description: Chapter number in which verse appears
+              example: 6
+            ordinal:
+              type: integer
+              description: Verse number within chapter
+              example: 22
+            text:
+              type: string
+              description: Verbatim and unedited text from the Holy Bible.
+              example: Thus did Noah; according to all that God commanded him, so did he.
