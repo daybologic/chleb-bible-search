@@ -30,4 +30,4 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-echo '{"votd":1}' | nc localhost 22662 | jq .
+lynx -dump http://localhost:3000/votd | jq .

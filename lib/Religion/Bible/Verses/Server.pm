@@ -32,12 +32,14 @@
 package Religion::Bible::Verses::Server;
 use strict;
 use warnings;
-use Data::Dumper;
 use JSON;
 use Religion::Bible::Verses;
 use UUID::Tiny ':std';
 
-use base qw(Net::Server::PreForkSimple);
+sub new {
+	my ($class) = @_;
+	return bless({}, $class);
+}
 
 sub __json {
 	my ($self) = @_;
@@ -224,4 +226,26 @@ sub process_request {
 	}
 }
 
-Religion::Bible::Verses::Server->run(port => 22662, ipv => '*');
+package main;
+use strict;
+use warnings;
+
+use Dancer2;
+use POSIX qw(EXIT_SUCCESS);
+
+my $server;
+
+set serializer => 'JSON'; # or any other serializer
+
+get '/votd' => sub {
+	return $server->__votd();
+};
+
+unless (caller()) {
+	$server = Religion::Bible::Verses::Server->new();
+	dance;
+
+	exit(EXIT_SUCCESS);
+}
+
+1;
