@@ -60,6 +60,8 @@ sub getBookByShortName {
 	my ($self, $shortName, $unfatal) = @_;
 
 	$shortName ||= '';
+	$shortName = "\u$shortName";
+
 	foreach my $book (@{ $self->books }) {
 		next if ($book->shortName ne $shortName);
 		return $book;
