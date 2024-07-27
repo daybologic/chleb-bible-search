@@ -126,7 +126,10 @@ sub __votd {
 sub __search {
 	my ($self, $search) = @_;
 
-	my $query = $self->__bible->newSearchQuery($search->{term})->setLimit(5);
+	my $limit = int($search->{limit});
+	$limit ||= 5;
+
+	my $query = $self->__bible->newSearchQuery($search->{term})->setLimit($limit);
 	my $results = $query->run();
 
 	my %hash = __makeJsonApi();
@@ -247,6 +250,12 @@ get '/lookup/:book/:chapter/:verse' => sub {
 	my $verse = param('verse');
 
 	return $server->__lookup({ book => $book, chapter => $chapter, verse => $verse });
+};
+
+get '/search' => sub {
+	my $limit = param('limit');
+	my $term = param('term');
+	return $server->__search({ limit => $limit, term => $term });
 };
 
 unless (caller()) {
