@@ -23,6 +23,108 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items: {}
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
+  /search:
+    get:
+      summary: Bible search
+      description: Search for criteria in the whole bible
+      parameters:
+        - in: query
+          name: term
+          schema:
+            type: string
+          required: true
+          description: Critereon for search
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 5
+          required: false
+          description: Maximum number of results
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items: {}
+        '400':
+          description: Bad request
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
+  /lookup/{book}/{chapter}/{verse}:
+    get:
+      summary: Bible lookup
+      description: Look up a specific verse
+      parameters:
+        - in: path
+          name: book
+          schema:
+            oneOf:
+              - type: string
+              - type: integer
+          required: true
+          description: Book of the bible
+        - in: path
+          name: chapter
+          schema:
+            type: integer
+          required: true
+          description: Chapter within book (ordinal)
+        - in: path
+          name: verse
+          schema:
+            type: integer
+          required: true
+          description: Verse within chapter (ordinal)
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items: {}
+        '400':
+          description: Bad request
+        '404':
+          description: Verse not found
         '429':
           description: Rate-limited
         '500':
