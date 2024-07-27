@@ -1,0 +1,166 @@
+openapi: 3.0.0
+info:
+  title: Online Bible querying engine
+  description: Query the bible, or get a verse of the day.
+  version: 0.1.0
+servers:
+  - url: http://FIXME.api.example.com/v1
+    description: Published API, production
+paths:
+  /votd:
+    get:
+      summary: Verse of The Day
+      description: Retrieve one verse from The Bible, at random.
+      responses:
+        '200':
+          description: Successfully retrieved verse
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items: {}
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
+  /search:
+    get:
+      summary: Bible search
+      description: Search for criteria in the whole bible
+      parameters:
+        - in: query
+          name: term
+          schema:
+            type: string
+          required: true
+          description: Critereon for search
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 5
+          required: false
+          description: Maximum number of results
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items: {}
+        '400':
+          description: Bad request
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
+  /lookup/{book}/{chapter}/{verse}:
+    get:
+      summary: Bible lookup
+      description: Look up a specific verse
+      parameters:
+        - in: path
+          name: book
+          schema:
+            oneOf:
+              - type: string
+              - type: integer
+          required: true
+          description: Book of the bible
+        - in: path
+          name: chapter
+          schema:
+            type: integer
+          required: true
+          description: Chapter within book (ordinal)
+        - in: path
+          name: verse
+          schema:
+            type: integer
+          required: true
+          description: Verse within chapter (ordinal)
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items: {}
+        '400':
+          description: Bad request
+        '404':
+          description: Verse not found
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
+components:
+  schemas:
+    Verse:
+      type: object
+      properties:
+        id:
+          type: integer
+        type:
+          type: string
+          enum: ["verse"]
+        attributes:
+          type: object
+          properties:
+            book:
+              type: string
+              description: Book in which this verse appears
+              example: "Gen"
+            chapter:
+              type: integer
+              description: Chapter number in which verse appears
+              example: 6
+            ordinal:
+              type: integer
+              description: Verse number within chapter
+              example: 22
+            text:
+              type: string
+              description: Verbatim and unedited text from the Holy Bible.
+              example: Thus did Noah; according to all that God commanded him, so did he.
