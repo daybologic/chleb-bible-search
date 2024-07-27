@@ -23,6 +23,16 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Verse'
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
 components:
   schemas:
     Verse:
