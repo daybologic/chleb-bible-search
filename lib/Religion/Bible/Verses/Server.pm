@@ -241,6 +241,14 @@ get '/votd' => sub {
 	return $server->__votd();
 };
 
+get '/lookup/:book/:chapter/:verse' => sub {
+	my $book = param('book');
+	my $chapter = param('chapter');
+	my $verse = param('verse');
+
+	return $server->__lookup({ book => $book, chapter => $chapter, verse => $verse });
+};
+
 unless (caller()) {
 	$server = Religion::Bible::Verses::Server->new();
 	dance;
