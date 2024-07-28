@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Bible Query Verses Framework
+# Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
@@ -138,7 +138,7 @@ sub __search {
 		my $verse = $results->verses->[$i];
 
 		my %attributes = ( %{ $verse->TO_JSON() } );
-		$attributes{title} = sprintf("Result %d/%d from bible search '%s'", $i+1, $results->count, $search->{term});
+		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $i+1, $results->count, $search->{term});
 
 		push(@{ $hash{included} }, {
 			type => $verse->chapter->type,
