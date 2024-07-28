@@ -31,11 +31,15 @@
 package Religion::Bible::Verses;
 use strict;
 use warnings;
-use Data::Dumper;
 use Moose;
+
+extends 'Religion::Bible::Verses::Base';
+
+use Data::Dumper;
 use Scalar::Util qw(looks_like_number);
 
 use Religion::Bible::Verses::Backend;
+use Religion::Bible::Verses::DI::Container;
 use Religion::Bible::Verses::Search::Query;
 use Religion::Bible::Verses::Verse;
 
@@ -56,6 +60,8 @@ sub getBookByShortName {
 	my ($self, $shortName, $unfatal) = @_;
 
 	$shortName ||= '';
+	$shortName = "\u$shortName";
+
 	foreach my $book (@{ $self->books }) {
 		next if ($book->shortName ne $shortName);
 		return $book;
@@ -125,7 +131,8 @@ sub fetch {
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
-	#warn $verse->toString(); # TODO: use log4perl
+	$self->dic->logger->debug($verse->toString());
+
 	return $verse;
 }
 
@@ -139,7 +146,11 @@ sub votd {
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 
 	my $verseOrdinal = int(rand($chapter->verseCount)) + 1;
-	return $chapter->getVerseByOrdinal($verseOrdinal);
+	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+
+	$self->dic->logger->debug($verse->toString());
+
+	return $verse;
 }
 
 sub __makeBackend {

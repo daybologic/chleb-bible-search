@@ -29,25 +29,87 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
+package VerseTests;
 use strict;
 use warnings;
-use lib 'lib';
+use Moose;
 
+use lib 'externals/libtest-module-runnable-perl/lib';
+
+extends 'Test::Module::Runnable';
+
+use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
 use Religion::Bible::Verses;
+use Religion::Bible::Verses::Book;
+use Religion::Bible::Verses::Verse;
+use Test::Deep qw(cmp_deeply);
+use Test::Exception;
+use Test::More 0.96;
 
-sub main {
-	my $bible = Religion::Bible::Verses->new();
+sub setUp {
+	my ($self) = @_;
+	$self->sut(Religion::Bible::Verses->new());
+	return EXIT_SUCCESS;
+}
 
-	my $query = $bible->newSearchQuery('dwelt')->setLimit(10);
-	# FIXME: Need to limit to one book?  should be able to do this via Query.pm
+sub test {
+	my ($self) = @_;
+	plan tests => 3;
 
-	my $results = $query->run();
-	printf("There were %d results for query %s\n", $results->count, $query->toString()); # TODO: Use Log4Perl
+	my $book = Religion::Bible::Verses::Book->new({
+		_library  => $self->sut,
+		longName  => 'Book of Morman',
+		ordinal   => 21,
+		shortName => 'Susana',
+		testament => 'old',
+	});
+
+	my $text = 'Blessed are the peacemakers, because they will be called sons of God';
+
+	my $verse = Religion::Bible::Verses::Verse->new({
+		book    => $book,
+		chapter => Religion::Bible::Verses::Chapter->new({
+			_library => $self->sut,
+			book     => $book,
+			ordinal  => 1121,
+		}),
+		ordinal => 5,
+		text    => $text,
+	});
+
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => methods(
+				ordinal   => 21,
+				longName  => 'Book of Morman',
+				shortName => 'Susana',
+				testament => 'old',
+			),
+			chapter => methods(
+				ordinal => 1121,
+			),
+			ordinal => 5,
+			text    => $text,
+		),
+	), 'verse inspection') or diag(explain($verse));
+
+	is($verse->toString(), 'Susana 1121:5 - Blessed are the peacemakers, because they will be called sons of God', 'toString');
+
+	my $json = $verse->TO_JSON();
+	cmp_deeply($json, {
+		book    => 'Susana',
+		chapter => 1121,
+		ordinal => 5,
+		text    => 'Blessed are the peacemakers, because they will be called sons of God',
+	}, 'TO_JSON') or diag(explain($json));
 
 	return EXIT_SUCCESS;
 }
 
+package main;
+use strict;
+use warnings;
 
-exit(main()) unless (caller());
+exit(VerseTests->new->run());

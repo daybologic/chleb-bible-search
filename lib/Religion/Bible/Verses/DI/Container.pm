@@ -1,4 +1,3 @@
-#!/usr/bin/env perl
 # Bible Query Verses Framework
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,25 +28,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
-use strict;
-use warnings;
-use lib 'lib';
+package Religion::Bible::Verses::DI::Container;
+use Moose;
 
-use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
+use Log::Log4perl;
 
-sub main {
-	my $bible = Religion::Bible::Verses->new();
+has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
 
-	my $query = $bible->newSearchQuery('dwelt')->setLimit(10);
-	# FIXME: Need to limit to one book?  should be able to do this via Query.pm
-
-	my $results = $query->run();
-	printf("There were %d results for query %s\n", $results->count, $query->toString()); # TODO: Use Log4Perl
-
-	return EXIT_SUCCESS;
+sub _makeLogger {
+	Log::Log4perl->init('etc/log4perl.conf');
+	return Log::Log4perl->get_logger('bible');
 }
 
-
-exit(main()) unless (caller());
+1;

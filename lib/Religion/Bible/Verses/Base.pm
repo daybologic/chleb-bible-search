@@ -1,4 +1,3 @@
-#!/usr/bin/env perl
 # Bible Query Verses Framework
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,25 +28,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
-use strict;
-use warnings;
-use lib 'lib';
+package Religion::Bible::Verses::Base;
+use Moose;
 
-use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
+use Religion::Bible::Verses::DI::Container;
 
-sub main {
-	my $bible = Religion::Bible::Verses->new();
+# TODO: Do we need a trap to ensure a fatal error occurs if the dic is constructed more than once?
+has dic => (isa => 'Religion::Bible::Verses::DI::Container', is => 'rw', lazy => 1, default => \&__makeDIContainer);
 
-	my $query = $bible->newSearchQuery('dwelt')->setLimit(10);
-	# FIXME: Need to limit to one book?  should be able to do this via Query.pm
-
-	my $results = $query->run();
-	printf("There were %d results for query %s\n", $results->count, $query->toString()); # TODO: Use Log4Perl
-
-	return EXIT_SUCCESS;
+sub __makeDIContainer {
+	my ($self) = @_;
+	return Religion::Bible::Verses::DI::Container->new();
 }
 
-
-exit(main()) unless (caller());
+1;

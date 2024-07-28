@@ -1,4 +1,5 @@
-#!/usr/bin/env perl
+#!/bin/sh
+#
 # Bible Query Verses Framework
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,25 +30,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
-use strict;
-use warnings;
-use lib 'lib';
+term="$1"
+if [ -z "$term" ]; then
+	>&2 echo "ERROR: Usage $0 <term>"
+	exit 2
+fi
 
-use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
-
-sub main {
-	my $bible = Religion::Bible::Verses->new();
-
-	my $query = $bible->newSearchQuery('dwelt')->setLimit(10);
-	# FIXME: Need to limit to one book?  should be able to do this via Query.pm
-
-	my $results = $query->run();
-	printf("There were %d results for query %s\n", $results->count, $query->toString()); # TODO: Use Log4Perl
-
-	return EXIT_SUCCESS;
-}
-
-
-exit(main()) unless (caller());
+lynx -dump "http://localhost:3000/search?term=${term}&limit=10" | jq .
