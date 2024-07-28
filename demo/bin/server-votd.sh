@@ -1,6 +1,5 @@
 #!/bin/sh
-#
-# Bible Query Verses Framework
+# Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #

@@ -11,7 +11,7 @@ Build-Depends-Indep:
  libtest-exception-perl,
  libtest-mockmodule-perl,
 Standards-Version: 4.3.0
-Homepage: https://bitbucket.org/2E0EOL/libreligion-bible-verses-perl
+Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
 Package: libtest-module-runnable-perl
 Architecture: all
@@ -21,8 +21,8 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
  libmoose-perl,
  libreadonly-perl,
  libuuid-tiny-perl,
-Description: Religion::Bible::Verses - Bible Query Verses Framework
+Description: Chleb Bible Search - Bible Query Service
  For further information see:
  .
- https://github.com/daybologic/libreligion-bible-verses-perl
- https://bitbucket.org/2E0EOL/libreligion-bible-verses-perl
+ https://github.com/daybologic/chleb-bible-search
+ https://bitbucket.org/2E0EOL/chleb-bible-search
