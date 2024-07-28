@@ -1,13 +1,14 @@
-# Religion::Bible::Verses
+# Chleb Bible Search
 
-[GitHub release](https://github.com/daybologic/libreligion-bible-verses-perl)
+[GitHub release](https://github.com/daybologic/chleb-bible-search)
 
-Welcome to the bible verse browser for Perl by Rev. Duncan Ross Palmer
+Welcome to the Chleb Bible Search by Rev. Duncan Ross Palmer
 
-## What is Religion::Bible::Verses?
+## What is Chleb Bible Search
 
-This module provides an easy way to look up random bible verses, specific verses, and full text searches. using a small decompressed temporary file.
+A self-hostable microservice for querying the bible and searching for content, using a small, compressed, binary file.
+The backend Perl library is also designed to be easily integrated with applications.
 
 ## Documentation
 
-For up to date documentation, please ensure you are viewing the latest copy at [GitHub](https://github.com/daybologic/libreligion-bible-verses-perl/blob/master/README.md)
+For up to date documentation, please ensure you are viewing the latest copy at [GitHub](https://github.com/daybologic/chleb-bible-search/blob/master/README.md)
