@@ -41,12 +41,32 @@ has ordinal => (is => 'ro', isa => 'Int', required => 1);
 
 has text => (is => 'ro', isa => 'Str', required => 1);
 
+has type => (is => 'ro', isa => 'Str', default => sub { 'verse' });
+
+has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
+
 sub BUILD {
 }
 
 sub toString {
 	my ($self) = @_;
 	return sprintf('%s:%d - %s', $self->chapter->toString(), $self->ordinal, $self->text);
+}
+
+sub TO_JSON {
+	my ($self) = @_;
+
+	return {
+		book    => $self->book->shortName,
+		chapter => $self->chapter->ordinal,
+		ordinal => $self->ordinal,
+		text    => $self->text,
+	};
+}
+
+sub __makeId {
+	my ($self) = @_;
+	return join('/', $self->book->ordinal, $self->chapter->ordinal, $self->ordinal);
 }
 
 1;

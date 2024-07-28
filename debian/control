@@ -16,9 +16,11 @@ Homepage: https://bitbucket.org/2E0EOL/libreligion-bible-verses-perl
 Package: libtest-module-runnable-perl
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
+ libdancer2-perl,
  liblog-log4perl-perl,
  libmoose-perl,
  libreadonly-perl,
+ libuuid-tiny-perl,
 Description: Religion::Bible::Verses - Bible Query Verses Framework
  For further information see:
  .

@@ -41,6 +41,10 @@ has ordinal => (is => 'ro', isa => 'Int', required => 1);
 
 has verseCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeVerseCount);
 
+has type => (is => 'ro', isa => 'Str', default => sub { 'chapter' });
+
+has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
+
 sub BUILD {
 }
 
@@ -68,6 +72,15 @@ sub toString {
 	return sprintf('%s %d', $self->book->shortName, $self->ordinal);
 }
 
+sub TO_JSON {
+	my ($self) = @_;
+
+	return {
+		book    => $self->book->shortName,
+		ordinal => $self->ordinal,
+	};
+}
+
 sub __makeVerseCount {
 	my ($self) = @_;
 	my $bookInfo = $self->_library->__backend->getBookInfoByShortName($self->book->shortName);
@@ -75,6 +88,11 @@ sub __makeVerseCount {
 	my $count = $bookInfo->{v}->{ $self->ordinal };
 	die("FIXME: $count") unless ($count);
 	return $count;
+}
+
+sub __makeId {
+	my ($self) = @_;
+	return join('/', $self->book->ordinal, $self->ordinal);
 }
 
 1;

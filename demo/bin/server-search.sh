@@ -1,4 +1,5 @@
-#!/usr/bin/perl
+#!/bin/sh
+#
 # Bible Query Verses Framework
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,28 +30,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
+term="$1"
+if [ -z "$term" ]; then
+	>&2 echo "ERROR: Usage $0 <term>"
+	exit 2
+fi
 
-use ExtUtils::MakeMaker;
-use strict;
-use warnings;
-
-WriteMakefile(
-	NAME         => 'Religion::Bible::Verses',
-	VERSION_FROM => 'lib/Religion/Bible/Verses.pm', # finds $VERSION
-	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Bible Query Verses Framework',
-
-	PREREQ_PM => {
-		'Moose'            => 0,
-		'Test::MockModule' => 0,
-		'Test::More'       => 0,
-		'UUID::Tiny'       => 0,
-	}, BUILD_REQUIRES => {
-		'Moose'           => 0,
-		'Test::More'      => 0,
-		'Readonly'        => 0,
-		'Test::Deep'      => 0,
-		'Test::Exception' => 0,
-	},
-);
+lynx -dump "http://localhost:3000/search?term=${term}&limit=10" | jq .
