@@ -1,3 +1,10 @@
+libreligion-bible-verses-perl (0.4.0) stable; urgency=medium
+
+  * Server component introduced, using the Dancer2 framework,
+    proper RESTful usage and JSON:API output.  Demo scripts updated.
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 28 Jul 2024 10:34:26 +0100
+
 libreligion-bible-verses-perl (0.3.0) stable; urgency=low
 
   * Verse of The Day support
