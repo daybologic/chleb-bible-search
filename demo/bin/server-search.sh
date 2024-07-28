@@ -36,4 +36,4 @@ if [ -z "$term" ]; then
 	exit 2
 fi
 
-echo "{\"search\":{\"term\":\"$term\"}}" | nc localhost 22662 | jq .
+lynx -dump "http://localhost:3000/search?term=${term}&limit=10" | jq .

@@ -32,12 +32,14 @@
 package Religion::Bible::Verses::Server;
 use strict;
 use warnings;
-use Data::Dumper;
 use JSON;
 use Religion::Bible::Verses;
 use UUID::Tiny ':std';
 
-use base qw(Net::Server::PreForkSimple);
+sub new {
+	my ($class) = @_;
+	return bless({}, $class);
+}
 
 sub __json {
 	my ($self) = @_;
@@ -124,7 +126,10 @@ sub __votd {
 sub __search {
 	my ($self, $search) = @_;
 
-	my $query = $self->__bible->newSearchQuery($search->{term})->setLimit(5);
+	my $limit = int($search->{limit});
+	$limit ||= 5;
+
+	my $query = $self->__bible->newSearchQuery($search->{term})->setLimit($limit);
 	my $results = $query->run();
 
 	my %hash = __makeJsonApi();
@@ -224,4 +229,40 @@ sub process_request {
 	}
 }
 
-Religion::Bible::Verses::Server->run(port => 22662, ipv => '*');
+package main;
+use strict;
+use warnings;
+
+use Dancer2;
+use POSIX qw(EXIT_SUCCESS);
+
+my $server;
+
+set serializer => 'JSON'; # or any other serializer
+
+get '/votd' => sub {
+	return $server->__votd();
+};
+
+get '/lookup/:book/:chapter/:verse' => sub {
+	my $book = param('book');
+	my $chapter = param('chapter');
+	my $verse = param('verse');
+
+	return $server->__lookup({ book => $book, chapter => $chapter, verse => $verse });
+};
+
+get '/search' => sub {
+	my $limit = param('limit');
+	my $term = param('term');
+	return $server->__search({ limit => $limit, term => $term });
+};
+
+unless (caller()) {
+	$server = Religion::Bible::Verses::Server->new();
+	dance;
+
+	exit(EXIT_SUCCESS);
+}
+
+1;
