@@ -29,7 +29,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Religion::Bible::Verses;
-use v5.14;
 use strict;
 use warnings;
 use Moose;
