@@ -145,7 +145,7 @@ sub votd {
 	$when = $self->__resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
-	$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->rfc3339));
+	$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
 	$self->dic->logger->trace(sprintf('Using random seed %d', srand($when->epoch)));
 
 	my $bookOrdinal = int(rand($self->bookCount)) + 1;
