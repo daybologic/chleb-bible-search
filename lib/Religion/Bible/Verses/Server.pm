@@ -118,8 +118,8 @@ sub __lookup {
 }
 
 sub __votd {
-	my ($self) = @_;
-	my $verse = $self->__bible->votd();
+	my ($self, $params) = @_;
+	my $verse = $self->__bible->votd($params->{when});
 	return __verseToJsonApi($verse);
 }
 
@@ -208,7 +208,8 @@ my $server;
 set serializer => 'JSON'; # or any other serializer
 
 get '/votd' => sub {
-	return $server->__votd();
+	my $when = param('when');
+	return $server->__votd({ when => $when });
 };
 
 get '/lookup/:book/:chapter/:verse' => sub {

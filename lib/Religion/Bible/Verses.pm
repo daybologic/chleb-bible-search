@@ -29,6 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Religion::Bible::Verses;
+use v5.14;
 use strict;
 use warnings;
 use Moose;
@@ -136,8 +137,16 @@ sub fetch {
 	return $verse;
 }
 
+# BUG: the first time votd runs per process, you get a different VoTD.
+# I haven't been able to fix this yet because I don't know why
 sub votd {
-	my ($self) = @_;
+	my ($self, $when) = @_;
+
+	$when = $self->__resolveISO8601($when);
+	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
+
+	$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->rfc3339));
+	$self->dic->logger->trace(sprintf('Using random seed %d', srand($when->epoch)));
 
 	my $bookOrdinal = int(rand($self->bookCount)) + 1;
 	my $book = $self->getBookByOrdinal($bookOrdinal);
