@@ -196,39 +196,6 @@ sub __search {
 	return \%hash;
 }
 
-sub process_request {
-	my ($self) = @_;
-
-	while (my $line = <STDIN>) {
-		$line =~ s/[\r\n]+$//;
-
-		my $json;
-		eval {
-			$json = $self->__json()->decode($line);
-		};
-
-		next unless (defined($json));
-
-		my $result;
-		my ($lookup, $search, $votd) = @{$json}{qw(lookup search votd)};
-
-		if ($lookup) {
-			$result = $self->__lookup($lookup);
-		} elsif ($search) {
-			$result = $self->__search($search);
-		} elsif ($votd) {
-			$result = $self->__votd();
-		} else {
-			printf("400\015\012Missing lookup or search stanza\015\012");
-			last;
-		}
-
-		$result = $self->__json()->encode($result);
-		print("200\015\012$result\015\012");
-		last;
-	}
-}
-
 package main;
 use strict;
 use warnings;
