@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Bible Query Verses Framework
+# Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
@@ -118,8 +118,8 @@ sub __lookup {
 }
 
 sub __votd {
-	my ($self) = @_;
-	my $verse = $self->__bible->votd();
+	my ($self, $params) = @_;
+	my $verse = $self->__bible->votd($params->{when});
 	return __verseToJsonApi($verse);
 }
 
@@ -138,7 +138,7 @@ sub __search {
 		my $verse = $results->verses->[$i];
 
 		my %attributes = ( %{ $verse->TO_JSON() } );
-		$attributes{title} = sprintf("Result %d/%d from bible search '%s'", $i+1, $results->count, $search->{term});
+		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $i+1, $results->count, $search->{term});
 
 		push(@{ $hash{included} }, {
 			type => $verse->chapter->type,
@@ -196,39 +196,6 @@ sub __search {
 	return \%hash;
 }
 
-sub process_request {
-	my ($self) = @_;
-
-	while (my $line = <STDIN>) {
-		$line =~ s/[\r\n]+$//;
-
-		my $json;
-		eval {
-			$json = $self->__json()->decode($line);
-		};
-
-		next unless (defined($json));
-
-		my $result;
-		my ($lookup, $search, $votd) = @{$json}{qw(lookup search votd)};
-
-		if ($lookup) {
-			$result = $self->__lookup($lookup);
-		} elsif ($search) {
-			$result = $self->__search($search);
-		} elsif ($votd) {
-			$result = $self->__votd();
-		} else {
-			printf("400\015\012Missing lookup or search stanza\015\012");
-			last;
-		}
-
-		$result = $self->__json()->encode($result);
-		print("200\015\012$result\015\012");
-		last;
-	}
-}
-
 package main;
 use strict;
 use warnings;
@@ -241,7 +208,8 @@ my $server;
 set serializer => 'JSON'; # or any other serializer
 
 get '/votd' => sub {
-	return $server->__votd();
+	my $when = param('when');
+	return $server->__votd({ when => $when });
 };
 
 get '/lookup/:book/:chapter/:verse' => sub {

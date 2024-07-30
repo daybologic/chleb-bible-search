@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Online Bible querying engine
+  title: Chleb Bible Search
   description: Query the bible, or get a verse of the day.
   version: 0.1.0
 servers:
@@ -11,6 +11,15 @@ paths:
     get:
       summary: Verse of The Day
       description: Retrieve one verse from The Bible, at random.
+      parameters:
+        - in: query
+          name: when
+          schema:
+            type: string
+            default: (current date)
+            example: 2024-07-29T23:35:31+0100
+          required: false
+          description: Date in ISO-8601, for viewing previous verses of the day
       responses:
         '200':
           description: Successfully retrieved verse

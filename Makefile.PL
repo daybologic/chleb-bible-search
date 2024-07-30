@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Bible Query Verses Framework
+# Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
@@ -39,7 +39,7 @@ WriteMakefile(
 	NAME         => 'Religion::Bible::Verses',
 	VERSION_FROM => 'lib/Religion/Bible/Verses.pm', # finds $VERSION
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Bible Query Verses Framework',
+	ABSTRACT     => 'Chleb Bible Search',
 
 	PREREQ_PM => {
 		'Moose'            => 0,
@@ -47,6 +47,7 @@ WriteMakefile(
 		'Test::More'       => 0,
 		'UUID::Tiny'       => 0,
 	}, BUILD_REQUIRES => {
+		'DateTime::Format::Strptime' => 0,
 		'Moose'           => 0,
 		'Test::More'      => 0,
 		'Readonly'        => 0,

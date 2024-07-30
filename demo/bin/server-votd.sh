@@ -1,6 +1,5 @@
 #!/bin/sh
-#
-# Bible Query Verses Framework
+# Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
@@ -30,4 +29,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-lynx -dump http://localhost:3000/votd | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
+#now='2024-07-27T09:00:00%2B0100'
+
+lynx -dump "http://localhost:3000/votd?when=$now" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
