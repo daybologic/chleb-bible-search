@@ -33,12 +33,41 @@ use Moose;
 
 use Religion::Bible::Verses::DI::Container;
 
+use DateTime;
+use DateTime::Format::Strptime;
+use English qw(-no_match_vars);
+use Scalar::Util qw(blessed);
+
 # TODO: Do we need a trap to ensure a fatal error occurs if the dic is constructed more than once?
 has dic => (isa => 'Religion::Bible::Verses::DI::Container', is => 'rw', lazy => 1, default => \&__makeDIContainer);
 
 sub __makeDIContainer {
 	my ($self) = @_;
 	return Religion::Bible::Verses::DI::Container->new();
+}
+
+sub __resolveISO8601 {
+	my ($self, $iso8601) = @_;
+
+	$iso8601 ||= DateTime->now; # The default is the current time
+	if (my $ref = blessed($iso8601)) {
+		if ($ref->isa('DateTime')) {
+			return $iso8601;
+		} else {
+			die('Unsupported blessed time format');
+		}
+	}
+
+	my $format = DateTime::Format::Strptime->new(pattern => '%FT%T%z');
+	eval {
+		$iso8601 = $format->parse_datetime($iso8601);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		die('Unsupported ISO-8601 time format: ' . $evalError);
+	}
+
+	return $iso8601;
 }
 
 1;

@@ -4,6 +4,8 @@ Priority: optional
 Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
 Build-Depends-Indep:
+ libdatetime-format-strptime-perl,
+ libdigest-crc-perl,
  liblog-log4perl-perl,
  libmoose-perl,
  libreadonly-perl,
@@ -16,6 +18,8 @@ Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 Package: libtest-module-runnable-perl
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
+ libdatetime-format-strptime-perl,
+ libdigest-crc-perl,
  libdancer2-perl,
  liblog-log4perl-perl,
  libmoose-perl,

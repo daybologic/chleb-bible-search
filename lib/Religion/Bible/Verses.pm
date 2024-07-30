@@ -36,6 +36,7 @@ use Moose;
 extends 'Religion::Bible::Verses::Base';
 
 use Data::Dumper;
+use Digest::CRC qw(crc32);
 use Scalar::Util qw(looks_like_number);
 
 use Religion::Bible::Verses::Backend;
@@ -137,15 +138,22 @@ sub fetch {
 }
 
 sub votd {
-	my ($self) = @_;
+	my ($self, $when) = @_;
 
-	my $bookOrdinal = int(rand($self->bookCount)) + 1;
+	$when = $self->__resolveISO8601($when);
+	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
+
+	my $seed = crc32($when->epoch);
+	$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
+	$self->dic->logger->trace(sprintf('Using seed %d', $seed));
+
+	my $bookOrdinal = 1 + ($seed % $self->bookCount);
 	my $book = $self->getBookByOrdinal($bookOrdinal);
 
-	my $chapterOrdinal = int(rand($book->chapterCount)) + 1;
+	my $chapterOrdinal = 1 + ($seed % $book->chapterCount);
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 
-	my $verseOrdinal = int(rand($chapter->verseCount)) + 1;
+	my $verseOrdinal = 1 + ($seed % $chapter->verseCount);
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
 	$self->dic->logger->debug($verse->toString());

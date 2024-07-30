@@ -47,6 +47,7 @@ WriteMakefile(
 		'Test::More'       => 0,
 		'UUID::Tiny'       => 0,
 	}, BUILD_REQUIRES => {
+		'DateTime::Format::Strptime' => 0,
 		'Moose'           => 0,
 		'Test::More'      => 0,
 		'Readonly'        => 0,
