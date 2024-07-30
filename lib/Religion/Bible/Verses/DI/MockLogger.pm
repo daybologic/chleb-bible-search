@@ -39,4 +39,7 @@ sub BUILD {
 sub debug {
 }
 
+sub warn {
+}
+
 1;

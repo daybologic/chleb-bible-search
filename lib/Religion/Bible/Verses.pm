@@ -68,7 +68,13 @@ sub getBookByShortName {
 		return $book;
 	}
 
-	die("Short book name '$shortName' is not a book in the bible") unless ($unfatal);
+	my $errorMsg = "Short book name '$shortName' is not a book in the bible";
+	if ($unfatal) {
+		$self->dic->logger->warn($errorMsg);
+	} else {
+		die($errorMsg);
+	}
+
 	return undef;
 }
 
