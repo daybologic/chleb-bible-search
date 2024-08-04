@@ -4,7 +4,7 @@ info:
   description: Query the bible, or get a verse of the day.
   version: 0.1.0
 servers:
-  - url: http://FIXME.api.example.com/v1
+  - url: chleb-api.daybologic.co.uk
     description: Published API, production
 paths:
   /votd:
