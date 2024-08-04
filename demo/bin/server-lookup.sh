@@ -29,4 +29,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-lynx -dump http://localhost:3000/lookup/prov/16/18 | jq .
+H=chleb-api.daybologic.co.uk
+
+lynx -dump http://$H:3000/lookup/prov/16/18 | jq .
