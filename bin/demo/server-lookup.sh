@@ -31,4 +31,4 @@
 
 H=chleb-api.daybologic.co.uk
 
-lynx -dump http://$H:3000/lookup/prov/16/18 | jq .
+curl -s https://$H/1/lookup/prov/16/18 | jq .

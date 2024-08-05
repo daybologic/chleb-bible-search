@@ -37,4 +37,4 @@ if [ -z "$term" ]; then
 	exit 2
 fi
 
-lynx -dump "http://$H/search?term=${term}&limit=10" | jq .
+curl -s "https://$H/1/search?term=${term}&limit=10" | jq .
