@@ -29,10 +29,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+H=chleb-api.daybologic.co.uk
+
 term="$1"
 if [ -z "$term" ]; then
 	>&2 echo "ERROR: Usage $0 <term>"
 	exit 2
 fi
 
-lynx -dump "http://localhost:3000/search?term=${term}&limit=10" | jq .
+lynx -dump "http://$H/search?term=${term}&limit=10" | jq .

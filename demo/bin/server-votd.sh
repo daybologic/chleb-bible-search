@@ -30,5 +30,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 #now='2024-07-27T09:00:00%2B0100'
+H=chleb-api.daybologic.co.uk
 
-lynx -dump "http://localhost:3000/votd?when=$now" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
+lynx -dump "http://$H:3000/votd?when=$now" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'

@@ -4,12 +4,13 @@ info:
   description: Query the bible, or get a verse of the day.
   version: 0.1.0
 servers:
-  - url: http://FIXME.api.example.com/v1
+  - url: chleb-api.daybologic.co.uk
     description: Published API, production
 paths:
-  /votd:
+  /1/votd:
     get:
       summary: Verse of The Day
+      operationId: getVotd
       description: Retrieve one verse from The Bible, at random.
       parameters:
         - in: query
@@ -20,6 +21,7 @@ paths:
             example: 2024-07-29T23:35:31+0100
           required: false
           description: Date in ISO-8601, for viewing previous verses of the day
+      security: [] # No security
       responses:
         '200':
           description: Successfully retrieved verse
@@ -45,9 +47,10 @@ paths:
           description: Service Unavailable
         '504':
           description: Gateway Timeout
-  /search:
+  /1/search:
     get:
       summary: Bible search
+      operationId: search
       description: Search for criteria in the whole bible
       parameters:
         - in: query
@@ -63,6 +66,7 @@ paths:
             default: 5
           required: false
           description: Maximum number of results
+      security: [] # No security
       responses:
         '200':
           description: Success
@@ -90,9 +94,10 @@ paths:
           description: Service Unavailable
         '504':
           description: Gateway Timeout
-  /lookup/{book}/{chapter}/{verse}:
+  /1/lookup/{book}/{chapter}/{verse}:
     get:
       summary: Bible lookup
+      operationId: getVerse
       description: Look up a specific verse
       parameters:
         - in: path
@@ -115,6 +120,7 @@ paths:
             type: integer
           required: true
           description: Verse within chapter (ordinal)
+      security: [] # No security
       responses:
         '200':
           description: Success
