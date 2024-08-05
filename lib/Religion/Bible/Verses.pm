@@ -104,7 +104,7 @@ sub getBookByOrdinal {
 sub newSearchQuery {
 	my ($self, @args) = @_;
 
-	my %defaults = ( _library => $self );
+	my %defaults = ( _library => $self, dic => $self->dic );
 
 	return Religion::Bible::Verses::Search::Query->new({ %defaults, text => $args[0] })
 	    if (scalar(@args) == 1);
