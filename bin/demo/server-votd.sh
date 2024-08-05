@@ -32,4 +32,11 @@
 #now='2024-07-27T09:00:00%2B0100'
 H=chleb-api.daybologic.co.uk
 
-lynx -dump "http://$H:3000/votd?when=$now" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
+if [ -x /usr/bin/curl ]; then
+	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
+		curl -s "https://$H/1/votd?when=$now" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
+	else
+		curl -s "https://$H/1/votd?when=$now" | tr -d '\n' | grep -o '"text":[^"]*"[^"]*"'
+	fi
+
+fi
