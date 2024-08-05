@@ -207,12 +207,12 @@ my $server;
 
 set serializer => 'JSON'; # or any other serializer
 
-get '/votd' => sub {
+get '/1/votd' => sub {
 	my $when = param('when');
 	return $server->__votd({ when => $when });
 };
 
-get '/lookup/:book/:chapter/:verse' => sub {
+get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $book = param('book');
 	my $chapter = param('chapter');
 	my $verse = param('verse');
@@ -220,7 +220,7 @@ get '/lookup/:book/:chapter/:verse' => sub {
 	return $server->__lookup({ book => $book, chapter => $chapter, verse => $verse });
 };
 
-get '/search' => sub {
+get '/1/search' => sub {
 	my $limit = param('limit');
 	my $term = param('term');
 	return $server->__search({ limit => $limit, term => $term });
