@@ -7,7 +7,7 @@ servers:
   - url: chleb-api.daybologic.co.uk
     description: Published API, production
 paths:
-  /votd:
+  /1/votd:
     get:
       summary: Verse of The Day
       description: Retrieve one verse from The Bible, at random.
@@ -45,7 +45,7 @@ paths:
           description: Service Unavailable
         '504':
           description: Gateway Timeout
-  /search:
+  /1/search:
     get:
       summary: Bible search
       description: Search for criteria in the whole bible
@@ -90,7 +90,7 @@ paths:
           description: Service Unavailable
         '504':
           description: Gateway Timeout
-  /lookup/{book}/{chapter}/{verse}:
+  /1/lookup/{book}/{chapter}/{verse}:
     get:
       summary: Bible lookup
       description: Look up a specific verse
