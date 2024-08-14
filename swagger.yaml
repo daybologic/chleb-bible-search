@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Chleb Bible Search
   description: Query the bible, or get a verse of the day.
-  version: 0.1.0
+  version: 0.5.0
 servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
