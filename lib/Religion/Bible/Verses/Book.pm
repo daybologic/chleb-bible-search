@@ -123,7 +123,7 @@ sub __makeVerseKey {
 
 sub __makeId {
        my ($self) = @_;
-       return $self->ordinal;
+       return $self->shortName;
 }
 
 1;

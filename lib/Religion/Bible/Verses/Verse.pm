@@ -66,7 +66,7 @@ sub TO_JSON {
 
 sub __makeId {
 	my ($self) = @_;
-	return join('/', $self->book->ordinal, $self->chapter->ordinal, $self->ordinal);
+	return join('/', $self->chapter->id, $self->ordinal);
 }
 
 1;

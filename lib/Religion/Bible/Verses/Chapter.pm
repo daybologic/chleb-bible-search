@@ -92,7 +92,7 @@ sub __makeVerseCount {
 
 sub __makeId {
 	my ($self) = @_;
-	return join('/', $self->book->ordinal, $self->ordinal);
+	return join('/', $self->book->id, $self->ordinal);
 }
 
 1;
