@@ -90,16 +90,27 @@ sub __verseToJsonApi {
 		type => $verse->type,
 		id => $verse->id,
 		attributes => $verse->TO_JSON(),
+		links => {
+			# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
+			#self => '/' . join('/', 1, 'lookup', $verse->id),
+			self => '/' . join('/', 1, 'votd'),
+		},
 		relationships => {
 			chapter => {
-				links => { },
+				links => {
+					# TODO: It should be possible to look up an entire chapter
+					#self => '/' . join('/', 1, 'lookup', $verse->chapter->id),
+				},
 				data => {
 					type => $verse->chapter->type,
 					id => $verse->chapter->id,
 				},
 			},
 			book => {
-				links => { },
+				links => {
+					# TODO: It should be possible to look up an entire book
+					#self => '/' . join('/', 1, 'lookup', $verse->book->id),
+				},
 				data => {
 					type => $verse->book->type,
 					id => $verse->book->id,
