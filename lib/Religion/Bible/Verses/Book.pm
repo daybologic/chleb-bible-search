@@ -57,6 +57,9 @@ sub BUILD {
 }
 
 sub getVerseByOrdinal {
+	my ($self, $ordinal) = @_;
+
+	# TODO: I think I need to regenerate the binary so we have a relative index to a proper key
 	...
 }
 
