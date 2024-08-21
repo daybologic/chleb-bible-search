@@ -75,7 +75,7 @@ sub writeOutput {
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
-		print "Error writing to file: $evalError" if ($evalError);
+		print("Error writing to file: $evalError");
 		return EXIT_FAILURE;
 	}
 
