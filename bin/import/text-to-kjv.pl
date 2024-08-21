@@ -49,7 +49,7 @@ Readonly my $INPUT      => 'kjv-verses.txt';
 Readonly my $OUTPUT     => 'kjv.bin';
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
-Readonly my $FILE_VERSION => 7;
+Readonly my $FILE_VERSION => 8;
 
 my $offsetMaster = -1;
 Readonly my $MAIN_OFFSET_SIG     => ++$offsetMaster; # string
@@ -58,8 +58,9 @@ Readonly my $MAIN_OFFSET_BOOKS   => ++$offsetMaster; # array, see $BOOK_*
 Readonly my $MAIN_OFFSET_DATA    => ++$offsetMaster; # main verse map
 
 $offsetMaster = -1;
-Readonly my $BOOK_OFFSET_SHORT_NAMES => ++$offsetMaster; # array of book names in canon order
-Readonly my $BOOK_OFFSET_BOOK_INFO   => ++$offsetMaster; # hash of book info keyed by short book name
+Readonly my $BOOK_OFFSET_SHORT_NAMES    => ++$offsetMaster; # array of book names in canon order
+Readonly my $BOOK_OFFSET_BOOK_INFO      => ++$offsetMaster; # hash of book info keyed by short book name
+Readonly my $BOOK_OFFSET_VERSES_TO_KEYS => ++$offsetMaster; # Relative book verse offsets to keys ($MAIN_OFFSET_DATA) ie. 'Gen:1533' -> 'Gen:50:26'
 
 # nb. book info structure is as follows:
 # c - chapterCount
@@ -109,11 +110,21 @@ sub main {
 	$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES] = \@bookShortNames;
 
 	if (my $fh = IO::File->new(join('/', $DATA_DIR, $INPUT), 'r')) {
+		my $verseOrdinalRelativeBook;
+		my $previousBook = '';
+
 		while (my $line = <$fh>) {
 			my @verseData = split(m/::/, $line, 2);
 			my ($verseKey, $verseText) = @verseData;
 			my ($translation, $bookShortName, $chapterNumber, $verseNumber)
 			    = split(m/:/, $verseKey, 4);
+
+			if ($bookShortName eq $previousBook) {
+				$verseOrdinalRelativeBook++;
+			} else {
+				$verseOrdinalRelativeBook = 1;
+				$previousBook = $bookShortName;
+			}
 
 			# initialization, TODO: Separate function?
 			$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName} = {
@@ -131,6 +142,10 @@ sub main {
 
 			$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName}->{v}->{$chapterNumber} = $verseNumber
 			    if ($data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName}->{v}->{$chapterNumber} < $verseNumber);
+
+			my $verseKeyRelativeBook = join(':', $bookShortName, $verseOrdinalRelativeBook);
+			$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_VERSES_TO_KEYS]->{$verseKeyRelativeBook} = $verseKey;
+			warn(sprintf("%s -> %s\n", $verseKeyRelativeBook, $verseKey));
 
 			chomp($verseText);
 			$data->[$MAIN_OFFSET_DATA]->{$verseKey} = $verseText;
