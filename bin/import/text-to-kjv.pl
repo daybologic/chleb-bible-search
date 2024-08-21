@@ -143,7 +143,7 @@ sub main {
 			$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName}->{v}->{$chapterNumber} = $verseNumber
 			    if ($data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName}->{v}->{$chapterNumber} < $verseNumber);
 
-			my $verseKeyRelativeBook = join(':', $bookShortName, $verseOrdinalRelativeBook);
+			my $verseKeyRelativeBook = join(':', $translation, $bookShortName, $verseOrdinalRelativeBook);
 			$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_VERSES_TO_KEYS]->{$verseKeyRelativeBook} = $verseKey;
 			warn(sprintf("%s -> %s\n", $verseKeyRelativeBook, $verseKey));
 
