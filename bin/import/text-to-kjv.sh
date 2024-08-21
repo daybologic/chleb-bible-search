@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (2E0EOL),
 # All rights reserved.
@@ -30,9 +30,5 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-set -xeuo pipefail
-
-rm -f data/kjv-verses.txt
-find data/static/kjv/ -mindepth 1 -maxdepth 1 -type d -exec bin/import/book.sh "{}" \;
-
-bin/import/text-to-kjv.sh
+bin/import/text-to-kjv.pl
+gzip data/kjv.bin
