@@ -92,7 +92,8 @@ sub main {
 	my %bookNameMap = ( );
 	my $bookIndex = -1;
 	my %bookShortNameToOrdinal = ( );
-	if (my $fh = IO::File->new(join('/', $DATA_DIR, $BOOK_INPUT), 'r')) {
+	my $fileName = join('/', $DATA_DIR, $BOOK_INPUT);
+	if (my $fh = IO::File->new($fileName, 'r')) {
 		while (my $line = <$fh>) {
 			my @bookData = split(m/;/, $line);
 			my ($bookShortName, undef, $bookLongName) = @bookData;
@@ -101,6 +102,8 @@ sub main {
 			$bookShortNameToOrdinal{$bookShortName} = $bookIndex + 1;
 		}
 		undef($fh);
+	} else {
+		die(sprintf("Failed to open '%s' -- %s", $fileName, $ERRNO));
 	}
 
 	$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES] = \@bookShortNames;
