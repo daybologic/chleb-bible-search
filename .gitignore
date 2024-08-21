@@ -12,4 +12,5 @@ pm_to_blib
 .DS_Store
 *.orig
 *~
-data/kjv-verses.txt
+data/*-verses.txt
+data/*.bin
