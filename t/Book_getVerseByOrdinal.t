@@ -161,6 +161,17 @@ sub testSuccess {
 	return EXIT_SUCCESS;
 }
 
+sub testPastEndOfBible {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $book = $self->sut->getBookByShortName('Rev');
+	my $msg = 'Verse 405 not found in Rev';
+	throws_ok { $book->getVerseByOrdinal(405) } qr/^$msg /, $msg;
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;

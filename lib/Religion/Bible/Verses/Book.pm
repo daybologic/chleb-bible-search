@@ -75,7 +75,6 @@ sub getVerseByOrdinal {
 		}
 	}
 
-	# are you sure you can reach this?
 	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
 }
 
