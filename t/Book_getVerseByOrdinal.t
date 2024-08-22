@@ -70,7 +70,7 @@ sub testSuccess {
 		isa('Religion::Bible::Verses::Verse'),
 		methods(
 			book    => methods(
-				ordinal   => 20,
+				ordinal   => 32, # 32nd book is 'Jonah'
 				longName  => 'Jonah',
 				shortName => 'Jonah',
 				testament => 'old',
@@ -79,10 +79,9 @@ sub testSuccess {
 				ordinal => 4,
 			),
 			ordinal => 11,
-			text    => 'And should not I spare Nineveh, that great city, wherein are more than sixscore thousand persons that cannot discern between their right hand and their left hand; and also much cattle?',
+			text    => 'And should not I spare Nineveh, that great city, wherein are more than sixscore thousand persons that cannot discern between their right hand and their left hand; and [also] much cattle?',
 		),
-	), 'verse inspection') or diag(explain($verse));
-	diag(explain($verse->toString()));
+	), 'verse inspection') or diag(explain($verse->toString()));
 
 	return EXIT_SUCCESS;
 }
