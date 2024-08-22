@@ -110,21 +110,11 @@ sub main {
 	$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES] = \@bookShortNames;
 
 	if (my $fh = IO::File->new(join('/', $DATA_DIR, $INPUT), 'r')) {
-		my $verseOrdinalRelativeBook;
-		my $previousBook = '';
-
 		while (my $line = <$fh>) {
 			my @verseData = split(m/::/, $line, 2);
 			my ($verseKey, $verseText) = @verseData;
 			my ($translation, $bookShortName, $chapterNumber, $verseNumber)
 			    = split(m/:/, $verseKey, 4);
-
-			if ($bookShortName eq $previousBook) {
-				$verseOrdinalRelativeBook++;
-			} else {
-				$verseOrdinalRelativeBook = 1;
-				$previousBook = $bookShortName;
-			}
 
 			# initialization, TODO: Separate function?
 			$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName} = {
@@ -143,14 +133,29 @@ sub main {
 			$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName}->{v}->{$chapterNumber} = $verseNumber
 			    if ($data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName}->{v}->{$chapterNumber} < $verseNumber);
 
-			my $verseKeyRelativeBook = join(':', $translation, $bookShortName, $verseOrdinalRelativeBook);
-			$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_VERSES_TO_KEYS]->{$verseKeyRelativeBook} = $verseKey;
-			warn(sprintf("%s -> %s\n", $verseKeyRelativeBook, $verseKey));
-
 			chomp($verseText);
 			$data->[$MAIN_OFFSET_DATA]->{$verseKey} = $verseText;
 		}
 		undef($fh);
+
+		my $translation = 'kjv'; # TODO: What about other translations?
+		BOOK: foreach my $bookShortName (@bookShortNames) {
+			my $verseOrdinalRelativeBook = 0;
+			CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal > 0; $chapterOrdinal++) {
+				VERSE: for (my $verseOrdinal = 1; $verseOrdinal > 0; $verseOrdinal++) {
+					my $verseKey = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
+					last VERSE unless ($data->[$MAIN_OFFSET_DATA]->{$verseKey});
+					my $verseKeyRelativeBook = join(':', $translation, $bookShortName, ++$verseOrdinalRelativeBook);
+					warn(sprintf("%s -> %s\n", $verseKeyRelativeBook, $verseKey));
+					$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_VERSES_TO_KEYS]->{$verseKeyRelativeBook} = $verseKey;
+				}
+
+				# if the chapter ordinal is out of range, the first verse of that chapter won't exist
+				my $firstVerseKey = join(':', $translation, $bookShortName, $chapterOrdinal, 1);
+				last CHAPTER unless ($data->[$MAIN_OFFSET_DATA]->{$firstVerseKey});
+			}
+		}
+
 	}
 
 	return writeOutput($data);
