@@ -161,13 +161,17 @@ sub testSuccess {
 	return EXIT_SUCCESS;
 }
 
-sub testPastEndOfBible {
+sub testOutOfBounds {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $book = $self->sut->getBookByShortName('Rev');
 	my $msg = 'Verse 405 not found in Rev';
 	throws_ok { $book->getVerseByOrdinal(405) } qr/^$msg /, $msg;
+
+	$book = $self->sut->getBookByShortName('Gen');
+	$msg = 'Verse 1534 not found in Gen';
+	throws_ok { $book->getVerseByOrdinal(1534) } qr/^$msg /, $msg;
 
 	return EXIT_SUCCESS;
 }
