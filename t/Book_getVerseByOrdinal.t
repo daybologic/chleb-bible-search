@@ -62,7 +62,7 @@ sub __mockLogger {
 
 sub testSuccess {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 5;
 
 	my $book = $self->sut->getBookByShortName('Jonah');
 	my $verse = $book->getVerseByOrdinal(48);
@@ -81,7 +81,82 @@ sub testSuccess {
 			ordinal => 11,
 			text    => 'And should not I spare Nineveh, that great city, wherein are more than sixscore thousand persons that cannot discern between their right hand and their left hand; and [also] much cattle?',
 		),
-	), 'verse inspection') or diag(explain($verse->toString()));
+	), 'verse inspection (Jonah)') or diag(explain($verse->toString()));
+
+	$book = $self->sut->getBookByOrdinal(20);
+	$verse = $book->getVerseByOrdinal(458);
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => methods(
+				ordinal   => 20,
+				longName  => 'Proverbs',
+				shortName => 'Prov',
+				testament => 'old',
+			),
+			chapter => methods(
+				ordinal => 16,
+			),
+			ordinal => 18,
+			text    => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
+		),
+	), 'verse inspection (Proverbs)') or diag(explain($verse->toString()));
+
+	$book = $self->sut->getBookByOrdinal(1);
+	$verse = $book->getVerseByOrdinal(1);
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => methods(
+				ordinal   => 1,
+				longName  => 'Genesis',
+				shortName => 'Gen',
+				testament => 'old',
+			),
+			chapter => methods(
+				ordinal => 1,
+			),
+			ordinal => 1,
+			text    => 'In the beginning God created the heaven and the earth.',
+		),
+	), 'verse inspection (Genesis, creation)') or diag(explain($verse->toString()));
+
+	$verse = $book->getVerseByOrdinal(1533);
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => methods(
+				ordinal   => 1,
+				longName  => 'Genesis',
+				shortName => 'Gen',
+				testament => 'old',
+			),
+			chapter => methods(
+				ordinal => 50,
+			),
+			ordinal => 26,
+			text    => 'So Joseph died, [being] an hundred and ten years old: and they embalmed him, and he was put in a coffin in Egypt.',
+		),
+	), 'verse inspection (Genesis)') or diag(explain($verse->toString()));
+
+	$book = $self->sut->getBookByShortName('Rev');
+	$verse = $book->getVerseByOrdinal(404);
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => methods(
+				ordinal   => 66,
+				longName  => 'Revelation of John',
+				shortName => 'Rev',
+				testament => 'new',
+			),
+			chapter => methods(
+				ordinal => 22,
+			),
+			ordinal => 21,
+			text    => 'The grace of our Lord Jesus Christ [be] with you all. Amen.',
+		),
+	), 'verse inspection (Revelation)') or diag(explain($verse->toString()));
 
 	return EXIT_SUCCESS;
 }
