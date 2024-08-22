@@ -146,7 +146,6 @@ sub main {
 					my $verseKey = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
 					last VERSE unless ($data->[$MAIN_OFFSET_DATA]->{$verseKey});
 					my $verseKeyRelativeBook = join(':', $translation, $bookShortName, ++$verseOrdinalRelativeBook);
-					warn(sprintf("%s -> %s\n", $verseKeyRelativeBook, $verseKey));
 					$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_VERSES_TO_KEYS]->{$verseKeyRelativeBook} = $verseKey;
 				}
 
