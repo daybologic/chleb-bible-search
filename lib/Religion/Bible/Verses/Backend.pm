@@ -45,7 +45,6 @@ use Storable;
 
 Readonly my $BIBLE    => 'kjv.bin';
 Readonly my $BIBLE_GZ => 'kjv.bin.gz';
-Readonly my $DATA_DIR => 'data';
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
 Readonly my $FILE_VERSION => 8;
@@ -79,8 +78,11 @@ has data => (is => 'ro', isa => 'ArrayRef', lazy => 1, default => \&__makeData);
 
 has tmpDir => (is => 'rw', isa => 'File::Temp::Dir', lazy => 1, default => \&__makeTmpDir);
 
+has dataDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDataDir);
+
 sub __makeCompressedPath {
-	return join('/', $DATA_DIR, $BIBLE_GZ);
+	my ($self) = @_;
+	return join('/', $self->dataDir, $BIBLE_GZ);
 }
 
 sub __makeTmpDir {
@@ -184,6 +186,21 @@ sub __validateVersion {
 	# this gives us more flexibility to make changes.
 	return EXIT_SUCCESS if (defined($version) && length($version) <= 5 && $version =~ m/^\d+$/ && $version == $FILE_VERSION);
 	return EXIT_FAILURE;
+}
+
+sub __makeDataDir {
+	Readonly my @PATHS => ('data', '/usr/share/chleb-bible-search');
+
+	foreach my $path (@PATHS) {
+		if (-d $path) {
+			my $testFile = join('/', $path, 'kjv.bin.gz'); # TODO: File always exists?  Might need a master file
+			if (-f $testFile) {
+				return $path;
+			}
+		}
+	}
+
+	return $PATHS[0];
 }
 
 1;
