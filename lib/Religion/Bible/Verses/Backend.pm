@@ -35,7 +35,6 @@ use Moose;
 
 extends 'Religion::Bible::Verses::Base';
 
-use Data::Dumper;
 use English qw(-no_match_vars);
 use File::Temp;
 use IO::File;
@@ -114,12 +113,22 @@ sub __makeTmpPath {
 
 sub __makeData {
 	my ($self) = @_;
-	return retrieve($self->tmpPath);
+
+	my $data;
+	eval {
+		$data = retrieve($self->tmpPath);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->error("Storable backend failure -- probably not a bible data file in '" . $self->tmpPath . "'");
+		die($evalError);
+	}
+
+	return $data;
 }
 
 sub BUILD {
 	my ($self) = @_;
-	Dumper $self->data;
 
 	if ($self->__fsck() != EXIT_SUCCESS) {
 		die(sprintf("'%s' is corrupt or otherwise cannot be handled", $self->tmpPath));
