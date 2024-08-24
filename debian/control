@@ -15,7 +15,7 @@ Build-Depends-Indep:
 Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
-Package: libtest-module-runnable-perl
+Package: libreligion-bible-verses-perl
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
  libdatetime-format-strptime-perl,
