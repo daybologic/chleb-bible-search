@@ -12,7 +12,7 @@ Build-Depends-Indep:
  libtest-deep-perl,
  libtest-exception-perl,
  libtest-mockmodule-perl,
-Standards-Version: 4.3.0
+Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
 Package: libtest-module-runnable-perl
