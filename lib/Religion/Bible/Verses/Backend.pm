@@ -31,6 +31,10 @@
 package Religion::Bible::Verses::Backend;
 use strict;
 use warnings;
+use Moose;
+
+extends 'Religion::Bible::Verses::Base';
+
 use Data::Dumper;
 use English qw(-no_match_vars);
 use File::Temp;
@@ -118,7 +122,7 @@ sub BUILD {
 	Dumper $self->data;
 
 	if ($self->__fsck() != EXIT_SUCCESS) {
-		die(sprintf("'%s' is corrupt", $self->tmpPath));
+		die(sprintf("'%s' is corrupt or otherwise cannot be handled", $self->tmpPath));
 	}
 
 	return;
@@ -165,8 +169,17 @@ sub getBookInfoByShortName {
 
 sub __fsck {
 	my ($self) = @_;
-	return EXIT_FAILURE if ($self->__validateSig());
-	return EXIT_FAILURE if ($self->__validateVersion());
+
+	if ($self->__validateSig()) {
+		$self->dic->logger->error('File signature is bad -- probably not a bible data file');
+		return EXIT_FAILURE;
+	}
+
+	if ($self->__validateVersion()) {
+		$self->dic->logger->error('File version is unexpected or cannot be handled');
+		return EXIT_FAILURE;
+	}
+
 	return EXIT_SUCCESS;
 }
 
@@ -182,7 +195,14 @@ sub __validateVersion {
 	my $version = $self->data->[$MAIN_OFFSET_VERSION];
 	# Until we reach version 1.0.0 of the package (stable release), we only accept the exact correct version of the file!
 	# this gives us more flexibility to make changes.
-	return EXIT_SUCCESS if (defined($version) && length($version) <= 5 && $version =~ m/^\d+$/ && $version == $FILE_VERSION);
+	if (defined($version) && length($version) <= 5 && $version =~ m/^\d+$/) {
+		if ($version == $FILE_VERSION) {
+			return EXIT_SUCCESS;
+		} else {
+			$self->dic->logger->error(sprintf('File version: %d, code expects version %d', $version, $FILE_VERSION));
+		}
+	}
+
 	return EXIT_FAILURE;
 }
 
