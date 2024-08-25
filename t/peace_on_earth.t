@@ -41,12 +41,14 @@ extends 'Test::Module::Runnable';
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
 use Religion::Bible::Verses;
+use Religion::Bible::Verses::DI::MockLogger;
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
 	$self->sut(Religion::Bible::Verses->new());
+	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
@@ -132,6 +134,12 @@ sub testPeaceSearch {
 	), 'results inspection');
 
 	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	return;
 }
 
 package main;

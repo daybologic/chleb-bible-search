@@ -35,11 +35,17 @@ use ExtUtils::MakeMaker;
 use strict;
 use warnings;
 
+eval {
+	import Sys::CPU;
+};
+
 WriteMakefile(
 	NAME         => 'Religion::Bible::Verses',
 	VERSION_FROM => 'lib/Religion/Bible/Verses.pm', # finds $VERSION
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
 	ABSTRACT     => 'Chleb Bible Search',
+	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
+	EXE_FILES    => [glob q('data/*.bin.gz')],
 
 	PREREQ_PM => {
 		'Moose'            => 0,
@@ -55,3 +61,25 @@ WriteMakefile(
 		'Test::Exception' => 0,
 	},
 );
+
+package MY;
+use strict;
+use warnings;
+
+sub test {
+	my $inherited = shift;
+
+	my $njobs;
+	eval {
+		$njobs = 2 * Sys::CPU::cpu_count();
+	};
+	if ($@) {
+		$njobs = 2;
+	}
+
+	$inherited = sprintf('export HARNESS_OPTIONS=$(shell if echo $$PERL5OPT | grep -qe "-MDevel::Cover"; then echo ""; else echo j%u; fi)', $njobs) . "\n" . $inherited;
+
+	return $inherited;
+}
+
+1;
