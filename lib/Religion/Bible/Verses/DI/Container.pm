@@ -29,6 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Religion::Bible::Verses::DI::Container;
+use MooseX::Singleton;
 use Moose;
 
 use Log::Log4perl;

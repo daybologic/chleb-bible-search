@@ -144,7 +144,8 @@ sub fetch {
 }
 
 sub votd {
-	my ($self, $when) = @_;
+	my ($self, $params) = @_;
+	my ($when, $version) = @{$params}{qw(when version)};
 
 	$when = $self->__resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
@@ -163,6 +164,14 @@ sub votd {
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
 	$self->dic->logger->debug($verse->toString());
+
+	# handle ARRAY verses where more than one compound Verse may be returned
+	if ($version && looks_like_number($version) && $version == 2) {
+		$verse = [ $verse ]; # make it an ARRAY
+		while ($verse->[-1]->continues) {
+			push(@$verse, $verse->[-1]->getNext());
+		}
+	}
 
 	return $verse;
 }
