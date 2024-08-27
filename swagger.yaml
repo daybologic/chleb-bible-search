@@ -106,6 +106,13 @@ paths:
             default: 5
           required: false
           description: Maximum number of results
+        - in: query
+          name: wholeword
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Require whitespace or end of verse after the requested term
       security: [] # No security
       responses:
         '200':
