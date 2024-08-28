@@ -130,7 +130,22 @@ sub __lookup {
 
 sub __votd {
 	my ($self, $params) = @_;
-	my $verse = $self->__bible->votd($params->{when});
+
+	my $verse = $self->__bible->votd($params);
+	if (ref($verse) eq 'ARRAY') {
+		my @json;
+
+		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
+			push(@json, __verseToJsonApi($verse->[$verseI]));
+		}
+
+		for (my $verseI = 1; $verseI < scalar(@$verse); $verseI++) {
+			push(@{ $json[0]->{data} },  $json[$verseI]->{data}->[0]);
+		}
+
+		return $json[0];
+	}
+
 	return __verseToJsonApi($verse);
 }
 
@@ -221,6 +236,11 @@ set serializer => 'JSON'; # or any other serializer
 get '/1/votd' => sub {
 	my $when = param('when');
 	return $server->__votd({ when => $when });
+};
+
+get '/2/votd' => sub {
+	my $when = param('when');
+	return $server->__votd({ version => 2, when => $when });
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {

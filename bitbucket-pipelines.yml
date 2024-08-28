@@ -38,7 +38,7 @@ pipelines:
         script:
           - git submodule update --init --recursive
           - apt-get update
-          - apt-get install -y libmoose-perl libjson-perl libjson-maybexs-perl libwww-perl libreadonly-perl liburi-encode-perl libconfig-ini-perl libdatetime-perl libdbd-mysql-perl libdbi-perl libuniversal-require-perl libtest-deep-perl libtest-mockmodule-perl libtest-exception-perl libcache-cache-perl liblog-log4perl-perl libdatetime-format-strptime-perl libdigest-crc-perl libuuid-tiny-perl
+          - apt-get install -y libmoose-perl libjson-perl libjson-maybexs-perl libwww-perl libreadonly-perl liburi-encode-perl libconfig-ini-perl libdatetime-perl libdbd-mysql-perl libdbi-perl libuniversal-require-perl libtest-deep-perl libtest-mockmodule-perl libtest-exception-perl libcache-cache-perl liblog-log4perl-perl libdatetime-format-strptime-perl libdigest-crc-perl libuuid-tiny-perl libmoosex-singleton-perl libdancer2-perl
           - perl Makefile.PL
           - ln -sf `pwd`/.github/etc/log4perl.conf etc/log4perl.conf
           - mkdir -p build/var/log
