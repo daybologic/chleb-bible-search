@@ -1,3 +1,15 @@
+libreligion-bible-verses-perl (0.6.0) stable; urgency=low
+
+  * Introduced /2/votd (multi-verse support)
+  * Debian Package fixes to ensure bible translation installed
+  * JSON:API 'self' links for VoTD
+  * Book/getVerseByOrdinal() introduced
+  * Bible binary format changes
+  * Better handling of corrupt translation data files
+  * Added translation import scripts for developers
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Wed, 28 Aug 2024 18:59:33 +0100
+
 libreligion-bible-verses-perl (0.5.0) stable; urgency=medium
 
   * Support 'when' to VoTD feature with deterministic outcomes.
