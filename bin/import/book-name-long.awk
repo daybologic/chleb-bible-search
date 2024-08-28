@@ -1,3 +1,4 @@
+#!/usr/bin/awk -f
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (2E0EOL),
 # All rights reserved.
@@ -29,18 +30,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-clone:
-  lfs: true
+BEGIN {
+	FS=";"
+}
 
-pipelines:
-  default:
-    - step:
-        script:
-          - git submodule update --init --recursive
-          - apt-get update
-          - apt-get install -y libmoose-perl libjson-perl libjson-maybexs-perl libwww-perl libreadonly-perl liburi-encode-perl libconfig-ini-perl libdatetime-perl libdbd-mysql-perl libdbi-perl libuniversal-require-perl libtest-deep-perl libtest-mockmodule-perl libtest-exception-perl libcache-cache-perl liblog-log4perl-perl libdatetime-format-strptime-perl libdigest-crc-perl libuuid-tiny-perl libmoosex-singleton-perl libdancer2-perl
-          - perl Makefile.PL
-          - ln -sf `pwd`/.github/etc/log4perl.conf etc/log4perl.conf
-          - mkdir -p build/var/log
-          - touch build/var/log/default.log
-          - make && make test
+$1==BOOK_NAME_SHORT{
+	printf "%s\n", $3
+}

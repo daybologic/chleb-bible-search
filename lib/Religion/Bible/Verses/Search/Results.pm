@@ -35,6 +35,8 @@ use Moose;
 
 has count => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeCount);
 
+has query => (is => 'ro', isa => 'Religion::Bible::Verses::Search::Query', required => 1);
+
 has verses => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Verse]', required => 1);
 
 sub BUILD {
@@ -43,6 +45,11 @@ sub BUILD {
 sub __makeCount {
 	my ($self) = @_;
 	return scalar(@{ $self->verses });
+}
+
+sub toString {
+	my ($self) = @_;
+	return sprintf("%s count %d for term '%s'", 'Results', $self->count, $self->query->text);
 }
 
 1;

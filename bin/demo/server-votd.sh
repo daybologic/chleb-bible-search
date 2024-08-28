@@ -29,4 +29,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-lynx -dump http://localhost:3000/lookup/prov/16/18 | jq .
+#now='2024-07-27T09:00:00%2B0100'
+H=chleb-api.daybologic.co.uk
+
+if [ -x /usr/bin/curl ]; then
+	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
+		curl -s "https://$H/1/votd?when=$now" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
+	else
+		curl -s "https://$H/1/votd?when=$now" | tr -d '\n' | grep -o '"text":[^"]*"[^"]*"'
+	fi
+
+fi

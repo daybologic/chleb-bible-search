@@ -40,12 +40,16 @@ extends 'Test::Module::Runnable';
 
 use POSIX qw(EXIT_SUCCESS);
 use Religion::Bible::Verses;
+use Religion::Bible::Verses::DI::MockLogger;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
+
 	$self->sut(Religion::Bible::Verses->new());
+	$self->__mockLogger();
+
 	return EXIT_SUCCESS;
 }
 
@@ -65,6 +69,59 @@ sub test {
 	), 'verse inspection') or diag(explain($verse->toString()));
 
 	return EXIT_SUCCESS;
+}
+
+sub testV2 {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $verse = $self->sut->votd({ version => 2, when => '2024-08-19T12:00:00+0100' });
+	cmp_deeply($verse, [
+		all(
+			isa('Religion::Bible::Verses::Verse'),
+			methods(
+				book    => isa('Religion::Bible::Verses::Book'),
+				chapter => isa('Religion::Bible::Verses::Chapter'),
+				ordinal => 11,
+				text    => 'For the grace of God that bringeth salvation hath appeared to all men,',
+			),
+		),
+		all(
+			isa('Religion::Bible::Verses::Verse'),
+			methods(
+				book    => isa('Religion::Bible::Verses::Book'),
+				chapter => isa('Religion::Bible::Verses::Chapter'),
+				ordinal => 12,
+				text    => 'Teaching us that, denying ungodliness and worldly lusts, we should live soberly, righteously, and godly, in this present world;',
+			),
+		),
+		all(
+			isa('Religion::Bible::Verses::Verse'),
+			methods(
+				book    => isa('Religion::Bible::Verses::Book'),
+				chapter => isa('Religion::Bible::Verses::Chapter'),
+				ordinal => 13,
+				text    => 'Looking for that blessed hope, and the glorious appearing of the great God and our Saviour Jesus Christ;',
+			),
+		),
+		all(
+			isa('Religion::Bible::Verses::Verse'),
+			methods(
+				book    => isa('Religion::Bible::Verses::Book'),
+				chapter => isa('Religion::Bible::Verses::Chapter'),
+				ordinal => 14,
+				text    => 'Who gave himself for us, that he might redeem us from all iniquity, and purify unto himself a peculiar people, zealous of good works.',
+			),
+		)
+	], 'specific verses inspection');
+
+	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	return;
 }
 
 package main;

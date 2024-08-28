@@ -40,6 +40,8 @@ WriteMakefile(
 	VERSION_FROM => 'lib/Religion/Bible/Verses.pm', # finds $VERSION
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
 	ABSTRACT     => 'Chleb Bible Search',
+	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
+	EXE_FILES    => [glob q('data/*.bin.gz')],
 
 	PREREQ_PM => {
 		'Moose'            => 0,

@@ -31,7 +31,10 @@
 package Religion::Bible::Verses::Backend;
 use strict;
 use warnings;
-use Data::Dumper;
+use Moose;
+
+extends 'Religion::Bible::Verses::Base';
+
 use English qw(-no_match_vars);
 use File::Temp;
 use IO::File;
@@ -45,10 +48,9 @@ use Storable;
 
 Readonly my $BIBLE    => 'kjv.bin';
 Readonly my $BIBLE_GZ => 'kjv.bin.gz';
-Readonly my $DATA_DIR => 'data';
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
-Readonly my $FILE_VERSION => 7;
+Readonly my $FILE_VERSION => 8;
 
 Readonly my $OT_COUNT => 39;
 
@@ -59,8 +61,9 @@ Readonly my $MAIN_OFFSET_BOOKS   => ++$offsetMaster; # array, see $BOOK_*
 Readonly my $MAIN_OFFSET_DATA    => ++$offsetMaster; # main verse map
 
 $offsetMaster = -1;
-Readonly my $BOOK_OFFSET_SHORT_NAMES => ++$offsetMaster; # array of book names in canon order
-Readonly my $BOOK_OFFSET_BOOK_INFO   => ++$offsetMaster; # hash of book info keyed by short book name
+Readonly my $BOOK_OFFSET_SHORT_NAMES    => ++$offsetMaster; # array of book names in canon order
+Readonly my $BOOK_OFFSET_BOOK_INFO      => ++$offsetMaster; # hash of book info keyed by short book name
+Readonly my $BOOK_OFFSET_VERSES_TO_KEYS => ++$offsetMaster; # Relative book verse offsets to keys ($MAIN_OFFSET_DATA) ie. 'Gen:1533' -> 'Gen:50:26'
 
 # nb. book info structure is as follows:
 # c - chapterCount
@@ -78,8 +81,11 @@ has data => (is => 'ro', isa => 'ArrayRef', lazy => 1, default => \&__makeData);
 
 has tmpDir => (is => 'rw', isa => 'File::Temp::Dir', lazy => 1, default => \&__makeTmpDir);
 
+has dataDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDataDir);
+
 sub __makeCompressedPath {
-	return join('/', $DATA_DIR, $BIBLE_GZ);
+	my ($self) = @_;
+	return join('/', $self->dataDir, $BIBLE_GZ);
 }
 
 sub __makeTmpDir {
@@ -109,15 +115,25 @@ sub __makeTmpPath {
 
 sub __makeData {
 	my ($self) = @_;
-	return retrieve($self->tmpPath);
+
+	my $data;
+	eval {
+		$data = retrieve($self->tmpPath);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->error("Storable backend failure -- probably not a bible data file in '" . $self->tmpPath . "'");
+		die($evalError);
+	}
+
+	return $data;
 }
 
 sub BUILD {
 	my ($self) = @_;
-	Dumper $self->data;
 
 	if ($self->__fsck() != EXIT_SUCCESS) {
-		die(sprintf("'%s' is corrupt", $self->tmpPath));
+		die(sprintf("'%s' is corrupt or otherwise cannot be handled", $self->tmpPath));
 	}
 
 	return;
@@ -152,6 +168,11 @@ sub getVerseDataByKey {
 	return $self->{data}->[$MAIN_OFFSET_DATA]->{$key};
 }
 
+sub getVerseKeyByBookVerseKey {
+	my ($self, $key) = @_;
+	return $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_VERSES_TO_KEYS]->{$key};
+}
+
 sub getBookInfoByShortName {
 	my ($self, $shortName) = @_;
 	return $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortName};
@@ -159,8 +180,17 @@ sub getBookInfoByShortName {
 
 sub __fsck {
 	my ($self) = @_;
-	return EXIT_FAILURE if ($self->__validateSig());
-	return EXIT_FAILURE if ($self->__validateVersion());
+
+	if ($self->__validateSig()) {
+		$self->dic->logger->error('File signature is bad -- probably not a bible data file');
+		return EXIT_FAILURE;
+	}
+
+	if ($self->__validateVersion()) {
+		$self->dic->logger->error('File version is unexpected or cannot be handled');
+		return EXIT_FAILURE;
+	}
+
 	return EXIT_SUCCESS;
 }
 
@@ -176,8 +206,30 @@ sub __validateVersion {
 	my $version = $self->data->[$MAIN_OFFSET_VERSION];
 	# Until we reach version 1.0.0 of the package (stable release), we only accept the exact correct version of the file!
 	# this gives us more flexibility to make changes.
-	return EXIT_SUCCESS if (defined($version) && length($version) <= 5 && $version =~ m/^\d+$/ && $version == $FILE_VERSION);
+	if (defined($version) && length($version) <= 5 && $version =~ m/^\d+$/) {
+		if ($version == $FILE_VERSION) {
+			return EXIT_SUCCESS;
+		} else {
+			$self->dic->logger->error(sprintf('File version: %d, code expects version %d', $version, $FILE_VERSION));
+		}
+	}
+
 	return EXIT_FAILURE;
+}
+
+sub __makeDataDir {
+	Readonly my @PATHS => ('data', '/usr/share/chleb-bible-search');
+
+	foreach my $path (@PATHS) {
+		if (-d $path) {
+			my $testFile = join('/', $path, 'kjv.bin.gz'); # TODO: File always exists?  Might need a master file
+			if (-f $testFile) {
+				return $path;
+			}
+		}
+	}
+
+	return $PATHS[0];
 }
 
 1;

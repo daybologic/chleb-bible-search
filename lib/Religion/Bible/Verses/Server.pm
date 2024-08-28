@@ -90,16 +90,27 @@ sub __verseToJsonApi {
 		type => $verse->type,
 		id => $verse->id,
 		attributes => $verse->TO_JSON(),
+		links => {
+			# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
+			#self => '/' . join('/', 1, 'lookup', $verse->id),
+			self => '/' . join('/', 1, 'votd'),
+		},
 		relationships => {
 			chapter => {
-				links => { },
+				links => {
+					# TODO: It should be possible to look up an entire chapter
+					#self => '/' . join('/', 1, 'lookup', $verse->chapter->id),
+				},
 				data => {
 					type => $verse->chapter->type,
 					id => $verse->chapter->id,
 				},
 			},
 			book => {
-				links => { },
+				links => {
+					# TODO: It should be possible to look up an entire book
+					#self => '/' . join('/', 1, 'lookup', $verse->book->id),
+				},
 				data => {
 					type => $verse->book->type,
 					id => $verse->book->id,
@@ -119,7 +130,22 @@ sub __lookup {
 
 sub __votd {
 	my ($self, $params) = @_;
-	my $verse = $self->__bible->votd($params->{when});
+
+	my $verse = $self->__bible->votd($params);
+	if (ref($verse) eq 'ARRAY') {
+		my @json;
+
+		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
+			push(@json, __verseToJsonApi($verse->[$verseI]));
+		}
+
+		for (my $verseI = 1; $verseI < scalar(@$verse); $verseI++) {
+			push(@{ $json[0]->{data} },  $json[$verseI]->{data}->[0]);
+		}
+
+		return $json[0];
+	}
+
 	return __verseToJsonApi($verse);
 }
 
@@ -207,12 +233,17 @@ my $server;
 
 set serializer => 'JSON'; # or any other serializer
 
-get '/votd' => sub {
+get '/1/votd' => sub {
 	my $when = param('when');
 	return $server->__votd({ when => $when });
 };
 
-get '/lookup/:book/:chapter/:verse' => sub {
+get '/2/votd' => sub {
+	my $when = param('when');
+	return $server->__votd({ version => 2, when => $when });
+};
+
+get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $book = param('book');
 	my $chapter = param('chapter');
 	my $verse = param('verse');
@@ -220,7 +251,7 @@ get '/lookup/:book/:chapter/:verse' => sub {
 	return $server->__lookup({ book => $book, chapter => $chapter, verse => $verse });
 };
 
-get '/search' => sub {
+get '/1/search' => sub {
 	my $limit = param('limit');
 	my $term = param('term');
 	return $server->__search({ limit => $limit, term => $term });

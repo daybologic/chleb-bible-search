@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (2E0EOL),
 # All rights reserved.
@@ -29,18 +30,19 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-clone:
-  lfs: true
+set -xeuo pipefail
 
-pipelines:
-  default:
-    - step:
-        script:
-          - git submodule update --init --recursive
-          - apt-get update
-          - apt-get install -y libmoose-perl libjson-perl libjson-maybexs-perl libwww-perl libreadonly-perl liburi-encode-perl libconfig-ini-perl libdatetime-perl libdbd-mysql-perl libdbi-perl libuniversal-require-perl libtest-deep-perl libtest-mockmodule-perl libtest-exception-perl libcache-cache-perl liblog-log4perl-perl libdatetime-format-strptime-perl libdigest-crc-perl libuuid-tiny-perl libmoosex-singleton-perl libdancer2-perl
-          - perl Makefile.PL
-          - ln -sf `pwd`/.github/etc/log4perl.conf etc/log4perl.conf
-          - mkdir -p build/var/log
-          - touch build/var/log/default.log
-          - make && make test
+bookPath="$1"
+
+bookNameShort=$(basename $bookPath)
+commands=$(mktemp bible-master-book-${bookNameShort}-commands.XXXXXX.sh --tmpdir)
+
+bookNameLong=$(./bin/import/book-name-long.awk -v BOOK_NAME_SHORT="$bookNameShort" data/static/kjv/index.cvs)
+echo "set bookNameLong: $bookNameLong"
+
+echo "#!/bin/sh" > "$commands"
+echo "set -xe" >> "$commands"
+find "$bookPath" -mindepth 1 -maxdepth 1 -name "*.cvs" -type f -exec bin/import/chapter.awk -v BOOK_NAME_LONG="$bookNameLong" "{}" \; >> "$commands"
+
+chmod +x "$commands"
+"$commands"

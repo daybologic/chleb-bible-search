@@ -51,7 +51,7 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
 BEGIN {
-	our $VERSION = '0.5.0';
+	our $VERSION = '0.6.0';
 }
 
 sub BUILD {
@@ -68,7 +68,13 @@ sub getBookByShortName {
 		return $book;
 	}
 
-	die("Short book name '$shortName' is not a book in the bible") unless ($unfatal);
+	my $errorMsg = "Short book name '$shortName' is not a book in the bible";
+	if ($unfatal) {
+		$self->dic->logger->warn($errorMsg);
+	} else {
+		die($errorMsg);
+	}
+
 	return undef;
 }
 
@@ -98,7 +104,7 @@ sub getBookByOrdinal {
 sub newSearchQuery {
 	my ($self, @args) = @_;
 
-	my %defaults = ( _library => $self );
+	my %defaults = ( _library => $self, dic => $self->dic );
 
 	return Religion::Bible::Verses::Search::Query->new({ %defaults, text => $args[0] })
 	    if (scalar(@args) == 1);
@@ -138,7 +144,8 @@ sub fetch {
 }
 
 sub votd {
-	my ($self, $when) = @_;
+	my ($self, $params) = @_;
+	my ($when, $version) = @{$params}{qw(when version)};
 
 	$when = $self->__resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
@@ -157,6 +164,14 @@ sub votd {
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
 	$self->dic->logger->debug($verse->toString());
+
+	# handle ARRAY verses where more than one compound Verse may be returned
+	if ($version && looks_like_number($version) && $version == 2) {
+		$verse = [ $verse ]; # make it an ARRAY
+		while ($verse->[-1]->continues) {
+			push(@$verse, $verse->[-1]->getNext());
+		}
+	}
 
 	return $verse;
 }

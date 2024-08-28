@@ -45,6 +45,8 @@ has type => (is => 'ro', isa => 'Str', default => sub { 'verse' });
 
 has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
 
+has continues => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeContinues);
+
 sub BUILD {
 }
 
@@ -66,7 +68,25 @@ sub TO_JSON {
 
 sub __makeId {
 	my ($self) = @_;
-	return join('/', $self->book->ordinal, $self->chapter->ordinal, $self->ordinal);
+	return join('/', $self->chapter->id, $self->ordinal);
+}
+
+sub __makeContinues {
+	my ($self) = @_;
+	my $lastChar = substr($self->text, -1);
+	my @continuing = (',', ':', ';');
+	for (my $i = 0; $i < scalar(@continuing); $i++) {
+		if ($lastChar eq $continuing[$i]) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+sub getNext {
+	my ($self) = @_;
+	return $self->chapter->getVerseByOrdinal($self->ordinal + 1);
 }
 
 1;

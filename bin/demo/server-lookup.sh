@@ -29,10 +29,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-term="$1"
-if [ -z "$term" ]; then
-	>&2 echo "ERROR: Usage $0 <term>"
-	exit 2
-fi
+H=chleb-api.daybologic.co.uk
 
-lynx -dump "http://localhost:3000/search?term=${term}&limit=10" | jq .
+curl -s https://$H/1/lookup/prov/16/18 | jq .

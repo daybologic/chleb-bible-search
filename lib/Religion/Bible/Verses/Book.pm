@@ -57,6 +57,25 @@ sub BUILD {
 }
 
 sub getVerseByOrdinal {
+	my ($self, $ordinal) = @_;
+
+	my $bookVerseKey = join(':', $TRANSLATION, $self->shortName, $ordinal);
+	if (my $verseKey = $self->_library->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
+		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
+		if (my $text = $self->_library->__backend->getVerseDataByKey($verseKey)) {
+			my $chapter = $self->getChapterByOrdinal($chapterNumber);
+			return Religion::Bible::Verses::Verse->new({
+				book    => $self,
+				chapter => $chapter,
+				ordinal => $verseNumber,
+				text    => $text,
+			});
+		} else {
+			die "I don't think you can reach this";
+		}
+	}
+
+	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
 }
 
 sub search {
@@ -123,7 +142,7 @@ sub __makeVerseKey {
 
 sub __makeId {
        my ($self) = @_;
-       return $self->ordinal;
+       return $self->shortName;
 }
 
 1;

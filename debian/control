@@ -6,23 +6,29 @@ Build-Depends: debhelper (>= 13),
 Build-Depends-Indep:
  libdatetime-format-strptime-perl,
  libdigest-crc-perl,
+ libjson-perl,
+ libdancer2-perl,
  liblog-log4perl-perl,
  libmoose-perl,
+ libmoosex-singleton-perl,
  libreadonly-perl,
  libtest-deep-perl,
  libtest-exception-perl,
  libtest-mockmodule-perl,
-Standards-Version: 4.3.0
+ libuuid-tiny-perl,
+Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
-Package: libtest-module-runnable-perl
+Package: libreligion-bible-verses-perl
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
  libdatetime-format-strptime-perl,
  libdigest-crc-perl,
+ libjson-perl,
  libdancer2-perl,
  liblog-log4perl-perl,
  libmoose-perl,
+ libmoosex-singleton-perl,
  libreadonly-perl,
  libuuid-tiny-perl,
 Description: Chleb Bible Search - Bible Query Service

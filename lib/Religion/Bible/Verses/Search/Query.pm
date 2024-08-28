@@ -31,8 +31,11 @@
 package Religion::Bible::Verses::Search::Query;
 use strict;
 use warnings;
-use Data::Dumper;
 use Moose;
+
+extends 'Religion::Bible::Verses::Base';
+
+use Data::Dumper;
 use Moose::Util::TypeConstraints qw(enum);
 use Religion::Bible::Verses::Search::Results;
 
@@ -73,14 +76,21 @@ sub run {
 	}
 
 	splice(@verses, $self->limit);
-	return Religion::Bible::Verses::Search::Results->new({
+
+	my $results = Religion::Bible::Verses::Search::Results->new({
 		count  => scalar(@verses),
+		query  => $self,
 		verses => \@verses,
 	});
+
+	$self->dic->logger->debug(sprintf("Ran search %s and received %s", $self->toString(), $results->toString()));
+
+	return $results;
 }
 
 sub toString {
-	return 'TODO';
+	my ($self) = @_;
+	return sprintf("%s text '%s'", 'Query', $self->text);
 }
 
 1;
