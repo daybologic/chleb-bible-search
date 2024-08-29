@@ -118,6 +118,30 @@ sub testV2 {
 	return EXIT_SUCCESS;
 }
 
+sub testParental {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $verse = $self->sut->votd({ version => 1, when => '1973-01-12T12:00:00+0100', parental => 1 });
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => all(
+				isa('Religion::Bible::Verses::Book'),
+				methods(shortName => 'Jonah'),
+			),
+			chapter => all(
+				isa('Religion::Bible::Verses::Chapter'),
+				methods(ordinal => 4),
+			),
+			ordinal => 10,
+			text    => ignore(),
+		),
+	), 'verse inspection') or diag(explain($verse->toString()));
+
+	return EXIT_SUCCESS;
+}
+
 sub __mockLogger {
 	my ($self) = @_;
 	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());

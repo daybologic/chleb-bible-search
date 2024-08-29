@@ -47,6 +47,8 @@ has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
 
 has continues => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeContinues);
 
+has parental => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeParental);
+
 sub BUILD {
 }
 
@@ -83,6 +85,13 @@ sub __makeContinues {
 		}
 	}
 
+	return 0;
+}
+
+sub __makeParental {
+	my ($self) = @_;
+	my $index = index($self->text, 'circumcised');
+	return 1 if ($index > -1);
 	return 0;
 }
 

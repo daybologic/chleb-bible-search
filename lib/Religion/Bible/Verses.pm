@@ -145,23 +145,31 @@ sub fetch {
 
 sub votd {
 	my ($self, $params) = @_;
-	my ($when, $version) = @{$params}{qw(when version)};
+	my ($when, $version, $parental) = @{$params}{qw(when version parental)};
 
 	$when = $self->__resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
-	my $seed = crc32($when->epoch);
-	$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
-	$self->dic->logger->trace(sprintf('Using seed %d', $seed));
+	my $verse;
+	for (my $offset = 0; $offset > -1; $offset++) {
+		my $seed = crc32($when->epoch + $offset);
+		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
+		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-	my $bookOrdinal = 1 + ($seed % $self->bookCount);
-	my $book = $self->getBookByOrdinal($bookOrdinal);
+		my $bookOrdinal = 1 + ($seed % $self->bookCount);
+		my $book = $self->getBookByOrdinal($bookOrdinal);
 
-	my $chapterOrdinal = 1 + ($seed % $book->chapterCount);
-	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+		my $chapterOrdinal = 1 + ($seed % $book->chapterCount);
+		my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 
-	my $verseOrdinal = 1 + ($seed % $chapter->verseCount);
-	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+		my $verseOrdinal = 1 + ($seed % $chapter->verseCount);
+		$verse = $chapter->getVerseByOrdinal($verseOrdinal);
+
+		if (!$parental || !$verse->parental) {
+			$self->dic->logger->trace('Skipping ' . $verse->toString() . ' because of parental mode');
+			last;
+		}
+	}
 
 	$self->dic->logger->debug($verse->toString());
 
