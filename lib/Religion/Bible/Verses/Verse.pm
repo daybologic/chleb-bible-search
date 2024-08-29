@@ -51,8 +51,10 @@ sub BUILD {
 }
 
 sub toString {
-	my ($self) = @_;
-	return sprintf('%s:%d - %s', $self->chapter->toString(), $self->ordinal, $self->text);
+	my ($self, $verbose) = @_;
+	my $str = sprintf('%s:%d', $self->chapter->toString(), $self->ordinal);
+	$str = sprintf('%s - %s', $str, $self->text) if ($verbose);
+	return $str;
 }
 
 sub TO_JSON {

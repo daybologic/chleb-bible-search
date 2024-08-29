@@ -55,7 +55,7 @@ sub setUp {
 
 sub test {
 	my ($self) = @_;
-	plan tests => 3;
+	plan tests => 5;
 
 	my $book = Religion::Bible::Verses::Book->new({
 		_library  => $self->sut,
@@ -95,7 +95,9 @@ sub test {
 		),
 	), 'verse inspection') or diag(explain($verse));
 
-	is($verse->toString(), 'Susana 1121:5 - Blessed are the peacemakers, because they will be called sons of God', 'toString');
+	is($verse->toString(), 'Susana 1121:5', 'toString default verbosity');
+	is($verse->toString(0), 'Susana 1121:5', 'toString non-verbose');
+	is($verse->toString(1), 'Susana 1121:5 - Blessed are the peacemakers, because they will be called sons of God', 'toString verbose');
 
 	my $json = $verse->TO_JSON();
 	cmp_deeply($json, {
