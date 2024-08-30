@@ -1,1 +1,2 @@
 etc/chleb.service /etc/systemd/system/
+etc/log4perl.conf /etc/chleb/
