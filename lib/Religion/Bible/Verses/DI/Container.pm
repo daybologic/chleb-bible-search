@@ -37,7 +37,12 @@ use Log::Log4perl;
 has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
 
 sub _makeLogger {
-	Log::Log4perl->init('etc/log4perl.conf');
+	foreach my $path ('etc/log4perl.conf', '/etc/chleb/log4perl.conf') {
+		next unless (-e $path);
+		Log::Log4perl->init($path);
+		last;
+	}
+
 	return Log::Log4perl->get_logger('bible');
 }
 
