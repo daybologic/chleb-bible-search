@@ -259,6 +259,7 @@ get '/1/search' => sub {
 
 unless (caller()) {
 	$server = Religion::Bible::Verses::Server->new();
+	$0 = 'chleb-bible-search [server]';
 	dance;
 
 	exit(EXIT_SUCCESS);
