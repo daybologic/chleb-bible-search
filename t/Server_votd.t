@@ -48,8 +48,8 @@ use Test::More 0.96;
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Religion::Bible::Verses::Server->new());
 	$self->__mockLogger();
+	$self->sut(Religion::Bible::Verses::Server->new());
 
 	return EXIT_SUCCESS;
 }
