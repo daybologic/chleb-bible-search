@@ -1,2 +1,2 @@
-etc/chleb.service /etc/systemd/system/
-etc/log4perl.conf /etc/chleb/
+etc/chleb-bible-search.service /etc/systemd/system/
+etc/log4perl.conf /etc/chleb-bible-search/

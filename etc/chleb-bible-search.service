@@ -3,7 +3,7 @@ Description=Chleb Bible Search
 After=network.target
 
 [Service]
-EnvironmentFile=-/etc/default/chleb
+EnvironmentFile=-/etc/default/chleb-bible-search
 ExecStart=/usr/bin/perl /usr/share/perl5/Religion/Bible/Verses/Server.pm
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
@@ -17,4 +17,4 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-Alias=chleb.service
+Alias=chleb-bible-search.service
