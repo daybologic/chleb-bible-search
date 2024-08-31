@@ -52,7 +52,7 @@ sub dic {
 
 sub __title {
 	my ($self) = @_;
-	$self->dic->logger->info("Started Chleb Bible Server: \"But he answered and said, It is written, Man shall not live by bread alone, but by every word that proceedeth out of the mouth of God.\" (Matthew 4:4)");
+	$self->dic->logger->info("Started Chleb Bible Server: \"Man shall not live by bread alone, but by every word that proceedeth out of the mouth of God.\" (Matthew 4:4)");
 	return;
 }
 
