@@ -1,11 +1,6 @@
 #!/bin/sh
 
-if test "$EUID" = "0"
-	>&2 echo "ERROR: Run this script as root"
-	exit 1
-then
-	/usr/bin/systemctl disable chleb-bible-search
-	/usr/bin/systemctl stop chleb-bible-search
-fi
+/usr/bin/systemctl disable chleb-bible-search
+/usr/bin/systemctl stop chleb-bible-search
 
 exit 0
