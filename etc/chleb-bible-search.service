@@ -14,6 +14,7 @@ RuntimeDirectoryMode=0755
 Type=exec
 Nice=15
 Restart=always
+User=chleb
 
 [Install]
 WantedBy=multi-user.target
