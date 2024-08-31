@@ -1,0 +1,6 @@
+#!/bin/sh
+
+/usr/bin/systemctl start chleb-bible-search
+/usr/bin/systemctl enable chleb-bible-search
+
+exit 0
