@@ -34,11 +34,26 @@ use strict;
 use warnings;
 use JSON;
 use Religion::Bible::Verses;
+use Religion::Bible::Verses::DI::Container;
 use UUID::Tiny ':std';
 
 sub new {
 	my ($class) = @_;
-	return bless({}, $class);
+	my $object = bless({}, $class);
+
+	$object->__title();
+
+	return $object;
+}
+
+sub dic {
+	return Religion::Bible::Verses::DI::Container->instance;
+}
+
+sub __title {
+	my ($self) = @_;
+	$self->dic->logger->info('Started Chleb Server');
+	return;
 }
 
 sub __json {
