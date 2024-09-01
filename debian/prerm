@@ -1,0 +1,6 @@
+#!/bin/sh
+
+/usr/bin/systemctl disable chleb-bible-search
+/usr/bin/systemctl stop chleb-bible-search
+
+exit 0

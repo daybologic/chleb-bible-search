@@ -36,13 +36,16 @@ use warnings;
 sub BUILD {
 }
 
+sub info {
+}
+
+sub warn {
+}
+
 sub debug {
 }
 
 sub trace {
-}
-
-sub warn {
 }
 
 1;

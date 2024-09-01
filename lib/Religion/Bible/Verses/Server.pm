@@ -34,11 +34,26 @@ use strict;
 use warnings;
 use JSON;
 use Religion::Bible::Verses;
+use Religion::Bible::Verses::DI::Container;
 use UUID::Tiny ':std';
 
 sub new {
 	my ($class) = @_;
-	return bless({}, $class);
+	my $object = bless({}, $class);
+
+	$object->__title();
+
+	return $object;
+}
+
+sub dic {
+	return Religion::Bible::Verses::DI::Container->instance;
+}
+
+sub __title {
+	my ($self) = @_;
+	$self->dic->logger->info("Started Chleb Bible Server: \"Man shall not live by bread alone, but by every word that proceedeth out of the mouth of God.\" (Matthew 4:4)");
+	return;
 }
 
 sub __json {
@@ -259,6 +274,7 @@ get '/1/search' => sub {
 
 unless (caller()) {
 	$server = Religion::Bible::Verses::Server->new();
+	$0 = 'chleb-bible-search [server]';
 	dance;
 
 	exit(EXIT_SUCCESS);
