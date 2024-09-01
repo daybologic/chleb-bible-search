@@ -1,0 +1,20 @@
+[Unit]
+Description=Chleb Bible Search
+After=network.target
+
+[Service]
+EnvironmentFile=-/etc/default/chleb-bible-search
+ExecStart=/usr/bin/perl /usr/share/perl5/Religion/Bible/Verses/Server.pm
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+RestartPreventExitStatus=255
+RuntimeDirectory=chleb
+RuntimeDirectoryMode=0755
+Type=exec
+Nice=15
+Restart=always
+User=chleb
+
+[Install]
+WantedBy=multi-user.target
+Alias=chleb-bible-search.service
