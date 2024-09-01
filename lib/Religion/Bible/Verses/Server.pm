@@ -170,7 +170,9 @@ sub __search {
 	my $limit = int($search->{limit});
 	$limit ||= 5;
 
-	my $query = $self->__bible->newSearchQuery($search->{term})->setLimit($limit);
+	my $wholeword = int($search->{wholeword});
+
+	my $query = $self->__bible->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
 	my $results = $query->run();
 
 	my %hash = __makeJsonApi();
@@ -269,7 +271,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 get '/1/search' => sub {
 	my $limit = param('limit');
 	my $term = param('term');
-	return $server->__search({ limit => $limit, term => $term });
+	my $wholeword = param('wholeword');
+	return $server->__search({ limit => $limit, term => $term, wholeword => $wholeword });
 };
 
 unless (caller()) {

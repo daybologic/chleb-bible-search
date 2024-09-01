@@ -49,12 +49,20 @@ has bookShortName => (is => 'ro', isa => 'Str', required => 0);
 
 has text => (is => 'ro', isa => 'Str', required => 1);
 
+has wholeword => (is => 'rw', isa => 'Bool', default => 0);
+
 sub BUILD {
 }
 
 sub setLimit {
 	my ($self, $limit) = @_;
 	$self->limit($limit);
+	return $self;
+}
+
+sub setWholeword {
+	my ($self, $wholeword) = @_;
+	$self->wholeword($wholeword);
 	return $self;
 }
 
