@@ -28,36 +28,37 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::Container;
-use MooseX::Singleton;
+package Religion::Bible::Verses::DI::Config;
+use strict;
+use warnings;
 use Moose;
 
-use Log::Log4perl;
-use Religion::Bible::Verses::DI::Config;
+extends 'Religion::Bible::Verses::Base';
 
-has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
+use Config::INI::Reader;
+use English qw(-no_match_vars);
+use IO::File;
+use Readonly;
 
-has config => (is => 'rw', lazy => 1, builder => '_makeConfig');
+has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
 
-sub _makeLogger {
-	foreach my $path ('etc/log4perl.conf', '/etc/chleb-bible-search/log4perl.conf') {
-		next unless (-e $path);
-		Log::Log4perl->init($path);
-		last;
-	}
+has path => (is => 'ro', isa => 'Str', required => 1);
 
-	return Log::Log4perl->get_logger('chleb');
+sub BUILD {
+	my ($self) = @_;
+	return;
 }
 
-sub _makeConfig {
+sub __makeData {
 	my ($self) = @_;
+	return Config::INI::Reader->read_file($self->path);
+}
 
-	foreach my $path ('etc/main.conf', '/etc/chleb-bible-search/main.conf') {
-		next unless (-e $path);
-		return Religion::Bible::Verses::DI::Config->new({ dic => $self, path => $path });
-	}
+sub get {
+	my ($self, $section, $key, $default) = @_;
 
-	die('No config available!');
+	return $self->__data->{$section}->{$key} if (defined($self->__data->{$section}->{$key}));
+	return $default;
 }
 
 1;
