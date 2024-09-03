@@ -28,44 +28,51 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::Container;
-use MooseX::Singleton;
+package Religion::Bible::Verses::Exclusions; # TODO: Should it be under Config:: ?  But that's under DI, which is a problem, hmm
+use strict;
+use warnings;
 use Moose;
 
-use Log::Log4perl;
-use Religion::Bible::Verses::DI::Config;
-use Religion::Bible::Verses::Exclusions;
+extends 'Religion::Bible::Verses::Base';
 
-has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
+use Readonly;
 
-has config => (is => 'rw', lazy => 1, builder => '_makeConfig');
+Readonly my $SECTION_NAME => 'votd_exclude';
 
-has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
+has list => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Verse]', lazy => 1, default => \&__makeList);
+has terms => (is => 'ro', isa => 'ArrayRef[Str]', lazy => 1, default => \&__makeTerms);
 
-sub _makeLogger {
-	foreach my $path ('etc/log4perl.conf', '/etc/chleb-bible-search/log4perl.conf') {
-		next unless (-e $path);
-		Log::Log4perl->init($path);
-		last;
-	}
-
-	return Log::Log4perl->get_logger('chleb');
+sub BUILD {
+	my ($self) = @_;
+	#$self->list;
+	$self->terms;
+	return;
 }
 
-sub _makeConfig {
+sub __makeTerms {
 	my ($self) = @_;
 
-	foreach my $path ('etc/main.conf', '/etc/chleb-bible-search/main.conf') {
-		next unless (-e $path);
-		return Religion::Bible::Verses::DI::Config->new({ dic => $self, path => $path });
-	}
+	my @terms;
+	my $i = 0;
+	my $term = '';
+	my $length = 0;
+	do {
+		my $key = sprintf('term%d', ++$i);
+		$term = $self->dic->config->get($SECTION_NAME, $key, '');
+		if ($length = length($term)) {
+			push(@terms, $term);
+		}
+	} while ($length > 0);
 
-	die('No config available!');
+	$self->dic->logger->debug(sprintf('Loaded %d excluded VoTD terms', scalar(@terms)));
+	return \@terms;
 }
 
-sub _makeExclusions {
+sub __makeList {
 	my ($self) = @_;
-	return Religion::Bible::Verses::Exclusions->new({ dic => $self });
+
+	$self->dic->logger->debug('TODO: Excluded verses not loaded');
+	return [ ]; # FIXME
 }
 
 1;

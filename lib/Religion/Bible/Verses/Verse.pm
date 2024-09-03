@@ -33,6 +33,8 @@ use strict;
 use warnings;
 use Moose;
 
+extends 'Religion::Bible::Verses::Base';
+
 has book => (is => 'ro', isa => 'Religion::Bible::Verses::Book', required => 1);
 
 has chapter => (is => 'ro', isa => 'Religion::Bible::Verses::Chapter', required => 1);
@@ -90,6 +92,7 @@ sub __makeContinues {
 
 sub __makeParental {
 	my ($self) = @_;
+	$self->dic->exclusions; # TODO
 	my $index = index($self->text, 'circumcised');
 	return 1 if ($index > -1);
 	return 0;
