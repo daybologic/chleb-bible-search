@@ -35,6 +35,7 @@ use Moose;
 
 extends 'Religion::Bible::Verses::Base';
 
+use English qw(-no_match_vars);
 use Readonly;
 
 Readonly my $SECTION_NAME => 'votd_exclude';
@@ -79,7 +80,20 @@ sub __makeRefs {
 		my $key = sprintf('ref%d', ++$i);
 		$string = $self->dic->config->get($SECTION_NAME, $key, '');
 		if ($length = length($string)) {
-			#push(@refs, $string); # TODO yeah but?
+			if ($string =~ m/^(\w+)\s+(\d+):(\d+)$/) {
+				my ($bookName, $chapterOrdinal, $verseOrdinal) = ($1, $2, $3);
+				my $verse;
+				eval {
+					$verse = $self->dic->bible->fetch($bookName, $chapterOrdinal, $verseOrdinal);
+				};
+				if (my $evalError = $EVAL_ERROR) {
+					$self->dic->logger->error(sprintf('%s load failed: %s', $key, $evalError));
+				} else {
+					push(@refs, $verse);
+				}
+			} else {
+				$self->dic->logger->warn(sprintf('%s has been ignored because the format was not recognized', $key));
+			}
 		}
 	} while ($length > 0);
 

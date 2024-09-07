@@ -36,6 +36,8 @@ use Log::Log4perl;
 use Religion::Bible::Verses::DI::Config;
 use Religion::Bible::Verses::Exclusions;
 
+has bible => (is => 'rw');
+
 has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
 
 has config => (is => 'rw', lazy => 1, builder => '_makeConfig');

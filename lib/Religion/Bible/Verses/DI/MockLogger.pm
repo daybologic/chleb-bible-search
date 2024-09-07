@@ -39,6 +39,9 @@ sub BUILD {
 sub info {
 }
 
+sub error {
+}
+
 sub warn {
 }
 

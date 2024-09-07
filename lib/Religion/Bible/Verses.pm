@@ -55,6 +55,9 @@ BEGIN {
 }
 
 sub BUILD {
+	my ($self) = @_;
+	$self->dic->bible($self); # self registration
+	return;
 }
 
 sub getBookByShortName {
