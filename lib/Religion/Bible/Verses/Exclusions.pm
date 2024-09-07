@@ -93,7 +93,7 @@ sub __makeRefs {
 
 			if ($bookName) {
 				my $verse;
-				$verseOrdinalEnd = $verseOrdinalStart if (!$verseOrdinalEnd || $verseOrdinalEnd > $verseOrdinalStart);
+				$verseOrdinalEnd = $verseOrdinalStart if (!$verseOrdinalEnd || $verseOrdinalEnd < $verseOrdinalStart);
 				$self->dic->logger->trace(sprintf('Loop %d -> %d', $verseOrdinalStart, $verseOrdinalEnd));
 				for (my $verseOrdinal = $verseOrdinalStart; $verseOrdinal <= $verseOrdinalEnd; $verseOrdinal++) {
 					$self->dic->logger->trace(sprintf('Loop iteration %d', $verseOrdinal));
