@@ -81,10 +81,12 @@ sub __makeRefs {
 		$string = $self->dic->config->get($SECTION_NAME, $key, '');
 		if ($length = length($string)) {
 			my ($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd);
-			if ($string =~ m/^(\w+)\s+(\d+):(\d+)$/) {
-				($bookName, $chapterOrdinal, $verseOrdinalStart) = ($1, $2, $3);
-			} elsif ($string =~ m/^(\w+)\s+(\d+):(\d+)-(\d+)$/) {
+			if ($string =~ m/^(\w+)\s+(\d+):(\d+)-(\d+)$/) {
 				($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd) = ($1, $2, $3, $4);
+				$self->dic->logger->trace("multi-part match: $string");
+			} elsif ($string =~ m/^(\w+)\s+(\d+):(\d+)$/) {
+				($bookName, $chapterOrdinal, $verseOrdinalStart) = ($1, $2, $3);
+				$self->dic->logger->trace("single-part match: $string");
 			} else {
 				$self->dic->logger->error(sprintf('%s has been ignored because the format was not recognized', $key));
 			}
@@ -92,7 +94,9 @@ sub __makeRefs {
 			if ($bookName) {
 				my $verse;
 				$verseOrdinalEnd = $verseOrdinalStart if (!$verseOrdinalEnd || $verseOrdinalEnd > $verseOrdinalStart);
+				$self->dic->logger->trace(sprintf('Loop %d -> %d', $verseOrdinalStart, $verseOrdinalEnd));
 				for (my $verseOrdinal = $verseOrdinalStart; $verseOrdinal <= $verseOrdinalEnd; $verseOrdinal++) {
+					$self->dic->logger->trace(sprintf('Loop iteration %d', $verseOrdinal));
 					eval {
 						$verse = $self->dic->bible->fetch($bookName, $chapterOrdinal, $verseOrdinal);
 					};
