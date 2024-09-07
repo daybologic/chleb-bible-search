@@ -39,12 +39,12 @@ use Readonly;
 
 Readonly my $SECTION_NAME => 'votd_exclude';
 
-has list => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Verse]', lazy => 1, default => \&__makeList);
+has refs => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Verse]', lazy => 1, default => \&__makeRefs);
 has terms => (is => 'ro', isa => 'ArrayRef[Str]', lazy => 1, default => \&__makeTerms);
 
 sub BUILD {
 	my ($self) = @_;
-	#$self->list;
+	$self->refs;
 	$self->terms;
 	return;
 }
@@ -68,11 +68,23 @@ sub __makeTerms {
 	return \@terms;
 }
 
-sub __makeList {
+sub __makeRefs {
 	my ($self) = @_;
 
-	$self->dic->logger->debug('TODO: Excluded verses not loaded');
-	return [ ]; # FIXME
+	my @refs;
+	my $i = 0;
+	my $string = '';
+	my $length = 0;
+	do {
+		my $key = sprintf('ref%d', ++$i);
+		$string = $self->dic->config->get($SECTION_NAME, $key, '');
+		if ($length = length($string)) {
+			#push(@refs, $string); # TODO yeah but?
+		}
+	} while ($length > 0);
+
+	$self->dic->logger->debug(sprintf('Loaded %d excluded VoTD references', scalar(@refs)));
+	return \@refs;
 }
 
 1;
