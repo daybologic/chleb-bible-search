@@ -80,19 +80,28 @@ sub __makeRefs {
 		my $key = sprintf('ref%d', ++$i);
 		$string = $self->dic->config->get($SECTION_NAME, $key, '');
 		if ($length = length($string)) {
+			my ($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd);
 			if ($string =~ m/^(\w+)\s+(\d+):(\d+)$/) {
-				my ($bookName, $chapterOrdinal, $verseOrdinal) = ($1, $2, $3);
-				my $verse;
-				eval {
-					$verse = $self->dic->bible->fetch($bookName, $chapterOrdinal, $verseOrdinal);
-				};
-				if (my $evalError = $EVAL_ERROR) {
-					$self->dic->logger->error(sprintf('%s load failed: %s', $key, $evalError));
-				} else {
-					push(@refs, $verse);
-				}
+				($bookName, $chapterOrdinal, $verseOrdinalStart) = ($1, $2, $3);
+			} elsif ($string =~ m/^(\w+)\s+(\d+):(\d+)-(\d+)$/) {
+				($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd) = ($1, $2, $3, $4);
 			} else {
-				$self->dic->logger->warn(sprintf('%s has been ignored because the format was not recognized', $key));
+				$self->dic->logger->error(sprintf('%s has been ignored because the format was not recognized', $key));
+			}
+
+			if ($bookName) {
+				my $verse;
+				$verseOrdinalEnd = $verseOrdinalStart if (!$verseOrdinalEnd || $verseOrdinalEnd > $verseOrdinalStart);
+				for (my $verseOrdinal = $verseOrdinalStart; $verseOrdinal <= $verseOrdinalEnd; $verseOrdinal++) {
+					eval {
+						$verse = $self->dic->bible->fetch($bookName, $chapterOrdinal, $verseOrdinal);
+					};
+					if (my $evalError = $EVAL_ERROR) {
+						$self->dic->logger->error(sprintf('%s load failed: %s', $key, $evalError));
+					} else {
+						push(@refs, $verse);
+					}
+				}
 			}
 		}
 	} while ($length > 0);
