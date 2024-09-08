@@ -137,12 +137,15 @@ sub resolveBook {
 
 sub fetch {
 	my ($self, $book, $chapterOrdinal, $verseOrdinal) = @_;
+	my $startTiming = Time::HiRes::time();
 
 	$book = $self->resolveBook($book);
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
-	$self->dic->logger->debug($verse->toString());
+	my $endTiming = Time::HiRes::time();
+	my $d = int(1000 * ($endTiming - $startTiming));
+	$self->dic->logger->debug(sprintf('%s sought in %dms', $verse->toString(), $d));
 
 	return $verse;
 }
