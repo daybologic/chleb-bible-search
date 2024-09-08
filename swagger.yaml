@@ -21,6 +21,13 @@ paths:
             example: 2024-07-29T23:35:31+0100
           required: false
           description: Date in ISO-8601, for viewing previous verses of the day
+        - in: query
+          name: parental
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
       security: [] # No security
       responses:
         '200':
@@ -61,6 +68,13 @@ paths:
             example: 2024-07-29T23:35:31+0100
           required: false
           description: Date in ISO-8601, for viewing previous verses of the day
+        - in: query
+          name: parental
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
       security: [] # No security
       responses:
         '200':
