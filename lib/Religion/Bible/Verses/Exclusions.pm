@@ -28,7 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Exclusions; # TODO: Should it be under Config:: ?  But that's under DI, which is a problem, hmm
+package Religion::Bible::Verses::Exclusions;
 use strict;
 use warnings;
 use Moose;
