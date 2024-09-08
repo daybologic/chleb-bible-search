@@ -11,6 +11,7 @@ extends 'Test::Module::Runnable';
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Religion::Bible::Verses::Base;
+use Religion::Bible::Verses::DI::MockLogger;
 use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
 use Test::More;
@@ -19,6 +20,7 @@ sub setUp {
 	my ($self) = @_;
 
 	$self->sut(Religion::Bible::Verses::Base->new());
+	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
@@ -75,6 +77,12 @@ sub testDefault {
 	'object');
 
 	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	return;
 }
 
 package main;
