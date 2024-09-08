@@ -150,7 +150,7 @@ sub votd {
 	my ($self, $params) = @_;
 	my ($when, $version, $parental) = @{$params}{qw(when version parental)};
 
-	$when = $self->__resolveISO8601($when);
+	$when = $self->_resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
 	my $verse;

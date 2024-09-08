@@ -31,7 +31,7 @@ sub testDateString {
 
 	my $str = '1810-09-14T12:00:00+0000';
 	cmp_deeply(
-		$self->sut->__resolveISO8601($str),
+		$self->sut->_resolveISO8601($str),
 		all(
 			isa('DateTime'),
 			methods(
@@ -51,7 +51,7 @@ sub testDateObject {
 
 	my $object = DateTime->new(year => 2011, month => 3, day => 5);
 	cmp_deeply(
-		$self->sut->__resolveISO8601($object),
+		$self->sut->_resolveISO8601($object),
 		all(
 			isa('DateTime'),
 			methods(
@@ -70,11 +70,31 @@ sub testDefault {
 	plan tests => 1;
 
 	cmp_deeply(
-		$self->sut->__resolveISO8601(undef),
+		$self->sut->_resolveISO8601(undef),
 		all(
 			isa('DateTime'),
 		),
 	'object');
+
+	return EXIT_SUCCESS;
+}
+
+sub testMangledPlus {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $str = '1810-09-14T12:00:00 0000';
+	cmp_deeply(
+		$self->sut->_resolveISO8601($str),
+		all(
+			isa('DateTime'),
+			methods(
+				year  => 1810,
+				month => 9,
+				day   => 14,
+			),
+		),
+	$str);
 
 	return EXIT_SUCCESS;
 }
