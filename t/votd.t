@@ -118,11 +118,29 @@ sub testV2 {
 	return EXIT_SUCCESS;
 }
 
-sub testParental {
+sub testParentalTerm {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
-	my $verse = $self->sut->votd({ version => 1, when => '1973-01-12T12:00:00+0100', parental => 1 });
+	my $when = '1973-01-12T12:00:00+0100';
+	my $verse = $self->sut->votd({ version => 1, when => $when, parental => 0 });
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => all(
+				isa('Religion::Bible::Verses::Book'),
+				methods(shortName => 'Gal'),
+			),
+			chapter => all(
+				isa('Religion::Bible::Verses::Chapter'),
+				methods(ordinal => 6),
+			),
+			ordinal => 12,
+			text    => ignore(),
+		),
+	), 'verse inspection') or diag(explain($verse->toString()));
+
+	$verse = $self->sut->votd({ version => 1, when => $when, parental => 1 });
 	cmp_deeply($verse, all(
 		isa('Religion::Bible::Verses::Verse'),
 		methods(
@@ -137,7 +155,49 @@ sub testParental {
 			ordinal => 10,
 			text    => ignore(),
 		),
+	), 'verse inspection, parental') or diag(explain($verse->toString()));
+
+	return EXIT_SUCCESS;
+}
+
+sub testParentalRef {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $when = '1810-09-14T12:00:00+0000';
+	my $verse = $self->sut->votd({ version => 1, when => $when, parental => 0 });
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => all(
+				isa('Religion::Bible::Verses::Book'),
+				methods(shortName => 'Judg'),
+			),
+			chapter => all(
+				isa('Religion::Bible::Verses::Chapter'),
+				methods(ordinal => 19),
+			),
+			ordinal => 25,
+			text    => ignore(),
+		),
 	), 'verse inspection') or diag(explain($verse->toString()));
+
+	$verse = $self->sut->votd({ version => 1, when => $when, parental => 1 });
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book    => all(
+				isa('Religion::Bible::Verses::Book'),
+				methods(shortName => '2Th'),
+			),
+			chapter => all(
+				isa('Religion::Bible::Verses::Chapter'),
+				methods(ordinal => 2),
+			),
+			ordinal => 17,
+			text    => ignore(),
+		),
+	), 'verse inspection, parental') or diag(explain($verse->toString()));
 
 	return EXIT_SUCCESS;
 }

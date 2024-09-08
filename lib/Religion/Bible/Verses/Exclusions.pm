@@ -122,7 +122,17 @@ sub isExcluded {
 
 sub __isExcludedRef {
 	my ($self, $verse) = @_;
-	return 0; # TODO
+
+	my $excluded = 0;
+	foreach my $ref (@{ $self->refs }) {
+		if ($verse->equals($ref)) {
+			$excluded = 1;
+			$self->dic->logger->trace('VERSE REF MATCH! ' . $ref->toString());
+			last;
+		}
+	}
+
+	return $excluded;
 }
 
 sub __isExcludedTerm {

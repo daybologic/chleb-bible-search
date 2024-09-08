@@ -59,6 +59,11 @@ sub getNext {
 	return $self->chapter->getVerseByOrdinal($self->ordinal + 1);
 }
 
+sub equals {
+	my ($self, $other) = @_;
+	return ($self->id eq $other->id);
+}
+
 sub toString {
 	my ($self, $verbose) = @_;
 	my $str = sprintf('%s:%d', $self->chapter->toString(), $self->ordinal);
