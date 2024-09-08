@@ -92,10 +92,7 @@ sub __makeContinues {
 
 sub __makeParental {
 	my ($self) = @_;
-	$self->dic->exclusions; # TODO
-	my $index = index($self->text, 'circumcised');
-	return 1 if ($index > -1);
-	return 0;
+	return $self->dic->exclusions->isExcluded($self);
 }
 
 sub getNext {

@@ -114,4 +114,32 @@ sub __makeRefs {
 	return \@refs;
 }
 
+sub isExcluded {
+	my ($self, $verse) = @_;
+	return 1 if ($self->__isExcludedRef($verse));
+	return $self->__isExcludedTerm($verse->text);
+}
+
+sub __isExcludedRef {
+	my ($self, $verse) = @_;
+	return 0; # TODO
+}
+
+sub __isExcludedTerm {
+	my ($self, $text) = @_;
+
+	my $excluded = 0;
+	foreach my $term (@{ $self->terms }) {
+		if (index($text, $term) > -1) {
+			$excluded = 1;
+			$self->dic->logger->trace("term '$term', text '$text': MATCH");
+			last;
+		} else {
+			$self->dic->logger->trace("term '$term', text '$text': MISMATCH");
+		}
+	}
+
+	return $excluded;
+}
+
 1;
