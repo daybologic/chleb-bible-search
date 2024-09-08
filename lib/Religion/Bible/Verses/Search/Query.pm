@@ -94,8 +94,9 @@ sub run {
 	});
 
 	my $endTiming = Time::HiRes::time();
-	my $d = int(1000 * ($endTiming - $startTiming));
-	$self->dic->logger->debug(sprintf("Ran search %s and received %s in %dms", $self->toString(), $results->toString(), $d));
+	my $msec = int(1000 * ($endTiming - $startTiming));
+	$results->msec($msec);
+	$self->dic->logger->debug(sprintf("Ran search %s and received %s in %dms", $self->toString(), $results->toString(), $msec));
 
 	return $results;
 }

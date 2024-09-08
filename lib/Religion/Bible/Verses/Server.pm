@@ -236,14 +236,24 @@ sub __search {
 		});
 	}
 
-	push(@{ $hash{included} }, {
-		type => 'results_summary',
-		id => uuid_to_string(create_uuid()),
-		attributes => {
-			count => $results->count,
+	push(@{ $hash{included} },
+		{
+			type => 'results_summary',
+			id => uuid_to_string(create_uuid()),
+			attributes => {
+				count => $results->count,
+			},
+			links => { },
 		},
-		links => { },
-	});
+		{
+			type => 'stats',
+			id => uuid_to_string(create_uuid()),
+			attributes => {
+				msec => int($results->msec),
+			},
+			links => { },
+		},
+	);
 
 	return \%hash;
 }
