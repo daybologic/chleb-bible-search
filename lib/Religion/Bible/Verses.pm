@@ -168,10 +168,8 @@ sub votd {
 		my $verseOrdinal = 1 + ($seed % $chapter->verseCount);
 		$verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
-		if (!$parental || !$verse->parental) {
-			$self->dic->logger->trace('Skipping ' . $verse->toString() . ' because of parental mode');
-			last;
-		}
+		last if (!$parental || !$verse->parental);
+		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
 	}
 
 	$self->dic->logger->debug($verse->toString());
