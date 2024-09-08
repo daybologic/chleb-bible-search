@@ -38,6 +38,7 @@ extends 'Religion::Bible::Verses::Base';
 use Data::Dumper;
 use Digest::CRC qw(crc32);
 use Scalar::Util qw(looks_like_number);
+use Time::HiRes ();
 
 use Religion::Bible::Verses::Backend;
 use Religion::Bible::Verses::DI::Container;
@@ -148,6 +149,7 @@ sub fetch {
 
 sub votd {
 	my ($self, $params) = @_;
+	my $startTiming = Time::HiRes::time();
 	my ($when, $version, $parental) = @{$params}{qw(when version parental)};
 
 	$when = $self->_resolveISO8601($when);
@@ -181,6 +183,10 @@ sub votd {
 			push(@$verse, $verse->[-1]->getNext());
 		}
 	}
+
+	my $endTiming = Time::HiRes::time();
+	my $d = int(1000 * ($endTiming - $startTiming));
+	$self->dic->logger->debug(sprintf('VoTD sought in %dms', $d));
 
 	return $verse;
 }
