@@ -54,6 +54,11 @@ has parental => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeParenta
 sub BUILD {
 }
 
+sub getNext {
+	my ($self) = @_;
+	return $self->chapter->getVerseByOrdinal($self->ordinal + 1);
+}
+
 sub toString {
 	my ($self, $verbose) = @_;
 	my $str = sprintf('%s:%d', $self->chapter->toString(), $self->ordinal);
@@ -93,11 +98,6 @@ sub __makeContinues {
 sub __makeParental {
 	my ($self) = @_;
 	return $self->dic->exclusions->isExcluded($self);
-}
-
-sub getNext {
-	my ($self) = @_;
-	return $self->chapter->getVerseByOrdinal($self->ordinal + 1);
 }
 
 1;
