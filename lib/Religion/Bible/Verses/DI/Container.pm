@@ -34,10 +34,15 @@ use Moose;
 
 use Log::Log4perl;
 use Religion::Bible::Verses::DI::Config;
+use Religion::Bible::Verses::Exclusions;
+
+has bible => (is => 'rw');
 
 has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
 
 has config => (is => 'rw', lazy => 1, builder => '_makeConfig');
+
+has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
 
 sub _makeLogger {
 	foreach my $path ('etc/log4perl.conf', '/etc/chleb-bible-search/log4perl.conf') {
@@ -58,6 +63,11 @@ sub _makeConfig {
 	}
 
 	die('No config available!');
+}
+
+sub _makeExclusions {
+	my ($self) = @_;
+	return Religion::Bible::Verses::Exclusions->new({ dic => $self });
 }
 
 1;

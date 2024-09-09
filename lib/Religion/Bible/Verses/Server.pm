@@ -261,12 +261,14 @@ set serializer => 'JSON'; # or any other serializer
 
 get '/1/votd' => sub {
 	my $when = param('when');
-	return $server->__votd({ when => $when });
+	my $parental = int(param('parental'));
+	return $server->__votd({ when => $when, parental => $parental });
 };
 
 get '/2/votd' => sub {
 	my $when = param('when');
-	return $server->__votd({ version => 2, when => $when });
+	my $parental = int(param('parental'));
+	return $server->__votd({ version => 2, when => $when, parental => $parental });
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {

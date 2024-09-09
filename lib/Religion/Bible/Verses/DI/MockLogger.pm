@@ -33,19 +33,42 @@ use Moose;
 use strict;
 use warnings;
 
+use Test::More;
+
 sub BUILD {
+	return;
+}
+
+sub log {
+	my ($self, $msg) = @_;
+	return unless ($ENV{TEST_VERBOSE});
+	diag($msg);
+	return;
 }
 
 sub info {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
+}
+
+sub error {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
 }
 
 sub warn {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
 }
 
 sub debug {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
 }
 
 sub trace {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
 }
 
 1;

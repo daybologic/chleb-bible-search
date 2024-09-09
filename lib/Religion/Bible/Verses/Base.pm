@@ -46,17 +46,21 @@ sub __makeDIContainer {
 	return Religion::Bible::Verses::DI::Container->new();
 }
 
-sub __resolveISO8601 {
+sub _resolveISO8601 {
 	my ($self, $iso8601) = @_;
 
 	$iso8601 ||= DateTime->now; # The default is the current time
 	if (my $ref = blessed($iso8601)) {
 		if ($ref->isa('DateTime')) {
+			$self->dic->logger->error('NULL in _resolveISO8601!') unless (defined($iso8601));
 			return $iso8601;
 		} else {
 			die('Unsupported blessed time format');
 		}
 	}
+
+	$iso8601 =~ s/ /+/g; # Fix bad client behavior
+	$self->dic->logger->trace("parsing date string '$iso8601'");
 
 	my $format = DateTime::Format::Strptime->new(pattern => '%FT%T%z');
 	eval {
@@ -67,6 +71,7 @@ sub __resolveISO8601 {
 		die('Unsupported ISO-8601 time format: ' . $evalError);
 	}
 
+	$self->dic->logger->error('NULL in _resolveISO8601!') unless (defined($iso8601));
 	return $iso8601;
 }
 

@@ -33,6 +33,8 @@ use strict;
 use warnings;
 use Moose;
 
+extends 'Religion::Bible::Verses::Base';
+
 has book => (is => 'ro', isa => 'Religion::Bible::Verses::Book', required => 1);
 
 has chapter => (is => 'ro', isa => 'Religion::Bible::Verses::Chapter', required => 1);
@@ -47,7 +49,19 @@ has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
 
 has continues => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeContinues);
 
+has parental => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeParental);
+
 sub BUILD {
+}
+
+sub getNext {
+	my ($self) = @_;
+	return $self->chapter->getVerseByOrdinal($self->ordinal + 1);
+}
+
+sub equals {
+	my ($self, $other) = @_;
+	return ($self->id eq $other->id);
 }
 
 sub toString {
@@ -86,9 +100,9 @@ sub __makeContinues {
 	return 0;
 }
 
-sub getNext {
+sub __makeParental {
 	my ($self) = @_;
-	return $self->chapter->getVerseByOrdinal($self->ordinal + 1);
+	return $self->dic->exclusions->isExcluded($self);
 }
 
 1;
