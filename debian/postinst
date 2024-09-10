@@ -8,6 +8,7 @@ if ! getent passwd | grep -q "^$SERVER_USER:"; then
 	adduser --quiet \
 		--system \
 		--no-create-home \
+		--home /nonexistent \
 		--disabled-password \
 		$SERVER_USER 2>/dev/null || true
 	echo "..done"
