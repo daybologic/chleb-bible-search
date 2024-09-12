@@ -110,6 +110,16 @@ sub __verseToJsonApi {
 		relationships => { },
 	});
 
+	my $dic = Religion::Bible::Verses::DI::Container->instance;
+	push(@{ $hash{included} }, {
+		type => 'stats',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			msec => int($verse->msec),
+		},
+		links => { },
+	});
+
 	push(@{ $hash{data} }, {
 		type => $verse->type,
 		id => $verse->id,
@@ -163,8 +173,19 @@ sub __votd {
 			push(@json, __verseToJsonApi($verse->[$verseI]));
 		}
 
+		my $secondary_total_msec = 0;
 		for (my $verseI = 1; $verseI < scalar(@$verse); $verseI++) {
 			push(@{ $json[0]->{data} },  $json[$verseI]->{data}->[0]);
+			for (my $includedI = 0; $includedI < scalar(@{ $json[$verseI]->{included} }); $includedI++) {
+				my $inclusion = $json[$verseI]->{included}->[$includedI];
+				next if ($inclusion->{type} ne 'stats');
+				$secondary_total_msec += $inclusion->{attributes}->{msec};
+			}
+		}
+
+		for (my $includedI = 0; $includedI < scalar(@{ $json[0]->{included} }); $includedI++) {
+			next if ($json[0]->{included}->[$includedI]->{type} ne 'stats');
+			$json[0]->{included}->[$includedI]->{attributes}->{msec} += $secondary_total_msec;
 		}
 
 		return $json[0];

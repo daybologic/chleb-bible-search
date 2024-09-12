@@ -45,6 +45,8 @@ has text => (is => 'ro', isa => 'Str', required => 1);
 
 has type => (is => 'ro', isa => 'Str', default => sub { 'verse' });
 
+has msec => (is => 'rw', isa => 'Int', default => 0);
+
 has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
 
 has continues => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeContinues);

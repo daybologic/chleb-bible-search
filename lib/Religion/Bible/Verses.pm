@@ -144,8 +144,10 @@ sub fetch {
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
 	my $endTiming = Time::HiRes::time();
-	my $d = int(1000 * ($endTiming - $startTiming));
-	$self->dic->logger->debug(sprintf('%s sought in %dms', $verse->toString(), $d));
+	my $msec = int(1000 * ($endTiming - $startTiming));
+
+	$self->dic->logger->debug(sprintf('%s sought in %dms', $verse->toString(), $msec));
+	$verse->msec($msec);
 
 	return $verse;
 }
@@ -179,18 +181,30 @@ sub votd {
 
 	$self->dic->logger->debug($verse->toString());
 
+	my $msecAll = 0;
 	# handle ARRAY verses where more than one compound Verse may be returned
 	if ($version && looks_like_number($version) && $version == 2) {
 		$verse = [ $verse ]; # make it an ARRAY
+		my $endTiming = Time::HiRes::time();
+		my $msec = int(1000 * ($endTiming - $startTiming));
+		$verse->[0]->msec($msec);
+		$msecAll += $msec;
 		while ($verse->[-1]->continues) {
 			push(@$verse, $verse->[-1]->getNext());
+			$endTiming = Time::HiRes::time();
+			$msec = int(1000 * ($endTiming - $startTiming));
+			$verse->[-1]->msec($msec);
+			$msecAll += $msec;
+			$startTiming = Time::HiRes::time();
 		}
+	} else {
+		my $endTiming = Time::HiRes::time();
+		$msecAll = int(1000 * ($endTiming - $startTiming));
+
+		$verse->msec($msecAll);
 	}
 
-	my $endTiming = Time::HiRes::time();
-	my $d = int(1000 * ($endTiming - $startTiming));
-	$self->dic->logger->debug(sprintf('VoTD sought in %dms', $d));
-
+	$self->dic->logger->debug(sprintf('VoTD sought in %dms', $msecAll));
 	return $verse;
 }
 
