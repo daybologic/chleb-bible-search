@@ -254,5 +254,5 @@ components:
           properties:
             msec:
               type: integer
-              description: ms for core request resolution, without overhead, for debugging core algorithm degredation and loading only
+              description: ms for core request resolution, without overhead, for debugging core algorithm degradation and loading only
               example: 189
