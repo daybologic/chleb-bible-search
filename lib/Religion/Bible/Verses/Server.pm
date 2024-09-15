@@ -126,8 +126,7 @@ sub __verseToJsonApi {
 		attributes => $verse->TO_JSON(),
 		links => {
 			# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
-			#self => '/' . join('/', 1, 'lookup', $verse->id),
-			self => '/' . join('/', 1, 'votd'),
+			self => '/' . join('/', 1, 'lookup', $verse->id),
 		},
 		relationships => {
 			chapter => {
@@ -159,12 +158,17 @@ sub __verseToJsonApi {
 sub __lookup {
 	my ($self, $params) = @_;
 	my $verse = $self->__bible->fetch($params->{book}, $params->{chapter}, $params->{verse});
-	return __verseToJsonApi($verse);
+
+	my $json = __verseToJsonApi($verse);
+	$json->{links}->{self} = '/' . join('/', 1, 'lookup', $verse->id);
+
+	return $json;
 }
 
 sub __votd {
 	my ($self, $params) = @_;
 
+	my $version = $params->{version} || 1;
 	my $verse = $self->__bible->votd($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
@@ -188,10 +192,14 @@ sub __votd {
 			$json[0]->{included}->[$includedI]->{attributes}->{msec} += $secondary_total_msec;
 		}
 
+		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd');
 		return $json[0];
 	}
 
-	return __verseToJsonApi($verse);
+	my $json = __verseToJsonApi($verse);
+	$json->{links}->{self} =  '/' . join('/', $version, 'votd');
+
+	return $json;
 }
 
 sub __search {

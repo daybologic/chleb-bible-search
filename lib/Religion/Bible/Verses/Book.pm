@@ -153,7 +153,7 @@ sub __makeVerseKey {
 
 sub __makeId {
        my ($self) = @_;
-       return $self->shortName;
+       return lc($self->shortName);
 }
 
 1;
