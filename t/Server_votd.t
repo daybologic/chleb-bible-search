@@ -73,6 +73,7 @@ sub test {
 				type => 'verse',
 				links => {
 					self => '/1/lookup/hab/2/15',
+					next => '/1/lookup/hab/2/16',
 				},
 				relationships => {
 					book => {
@@ -154,6 +155,7 @@ sub testV2 {
 				type => 'verse',
 				links => {
 					self => '/1/lookup/titus/2/11',
+					next => '/1/lookup/titus/2/12',
 				},
 				relationships => {
 					book => {
@@ -183,6 +185,7 @@ sub testV2 {
 				type => 'verse',
 				links => {
 					self => '/1/lookup/titus/2/12',
+					next => '/1/lookup/titus/2/13',
 				},
 				relationships => {
 					book => {
@@ -212,6 +215,7 @@ sub testV2 {
 				type => 'verse',
 				links => {
 					self => '/1/lookup/titus/2/13',
+					next => '/1/lookup/titus/2/14',
 				},
 				relationships => {
 					book => {
@@ -241,6 +245,7 @@ sub testV2 {
 				type => 'verse',
 				links => {
 					self => '/1/lookup/titus/2/14',
+					next => '/1/lookup/titus/2/15',
 				},
 				relationships => {
 					book => {

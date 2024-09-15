@@ -127,6 +127,7 @@ sub __verseToJsonApi {
 		links => {
 			# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
 			self => '/' . join('/', 1, 'lookup', $verse->id),
+			next => '/' . join('/', 1, 'lookup', $verse->getNext()->id),
 		},
 		relationships => {
 			chapter => {
