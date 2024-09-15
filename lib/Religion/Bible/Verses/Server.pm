@@ -284,6 +284,8 @@ sub __search {
 		},
 	);
 
+	$hash{links}->{self} = '/1/search?term=' . $search->{term} . '&wholeword=' . $wholeword .'&limit=' . $limit;
+
 	return \%hash;
 }
 
