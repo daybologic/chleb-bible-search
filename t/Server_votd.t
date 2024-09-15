@@ -118,6 +118,14 @@ sub test {
 				relationships => {},
 				type => 'book'
 			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
+			},
 		],
 		links => {},
 	}, "single verse JSON for $when") or diag(explain($json));
@@ -275,6 +283,14 @@ sub testV2 {
 				id => 'Titus',
 				relationships => {},
 				type => 'book'
+			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
 			},
 		],
 		links => {},

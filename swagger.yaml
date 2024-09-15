@@ -43,7 +43,8 @@ paths:
                       $ref: '#/components/schemas/Verse'
                   included:
                     type: array
-                    items: {}
+                    items:
+                      $ref: '#/components/schemas/Stats'
         '429':
           description: Rate-limited
         '500':
@@ -90,7 +91,8 @@ paths:
                       $ref: '#/components/schemas/Verse'
                   included:
                     type: array
-                    items: {}
+                    items:
+                      $ref: '#/components/schemas/Stats'
         '429':
           description: Rate-limited
         '500':
@@ -142,7 +144,8 @@ paths:
                       $ref: '#/components/schemas/Verse'
                   included:
                     type: array
-                    items: {}
+                    items:
+                      $ref: '#/components/schemas/Stats'
         '400':
           description: Bad request
         '429':
@@ -196,7 +199,8 @@ paths:
                       $ref: '#/components/schemas/Verse'
                   included:
                     type: array
-                    items: {}
+                    items:
+                      $ref: '#/components/schemas/Stats'
         '400':
           description: Bad request
         '404':
@@ -240,3 +244,15 @@ components:
               type: string
               description: Verbatim and unedited text from the Holy Bible.
               example: Thus did Noah; according to all that God commanded him, so did he.
+    Stats:
+      type: object
+      properties:
+        id:
+          type: string
+        attributes:
+          type: object
+          properties:
+            msec:
+              type: integer
+              description: ms for core request resolution, without overhead, for debugging core algorithm degradation and loading only
+              example: 189

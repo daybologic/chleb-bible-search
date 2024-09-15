@@ -38,6 +38,7 @@ extends 'Religion::Bible::Verses::Base';
 use Data::Dumper;
 use Moose::Util::TypeConstraints qw(enum);
 use Religion::Bible::Verses::Search::Results;
+use Time::HiRes ();
 
 has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
 
@@ -68,6 +69,7 @@ sub setWholeword {
 
 sub run {
 	my ($self) = @_;
+	my $startTiming = Time::HiRes::time();
 
 	my @booksToQuery = ( );
 	if ($self->bookShortName) {
@@ -91,7 +93,10 @@ sub run {
 		verses => \@verses,
 	});
 
-	$self->dic->logger->debug(sprintf("Ran search %s and received %s", $self->toString(), $results->toString()));
+	my $endTiming = Time::HiRes::time();
+	my $msec = int(1000 * ($endTiming - $startTiming));
+	$results->msec($msec);
+	$self->dic->logger->debug(sprintf("Ran search %s and received %s in %dms", $self->toString(), $results->toString(), $msec));
 
 	return $results;
 }

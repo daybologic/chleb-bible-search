@@ -39,6 +39,8 @@ has query => (is => 'ro', isa => 'Religion::Bible::Verses::Search::Query', requi
 
 has verses => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Verse]', required => 1);
 
+has msec => (is => 'rw', isa => 'Int', default => 0);
+
 sub BUILD {
 }
 
