@@ -95,11 +95,15 @@ sub getBookByLongName {
 }
 
 sub getBookByOrdinal {
-	my ($self, $ordinal) = @_;
+	my ($self, $ordinal, $args) = @_;
 
 	if ($ordinal > $self->bookCount) {
-		die(sprintf('Book ordinal %d out of range, there are %d books in the bible',
-		    $ordinal, $self->bookCount));
+		if ($args->{nonFatal}) {
+			return undef;
+		} else {
+			die(sprintf('Book ordinal %d out of range, there are %d books in the bible',
+			    $ordinal, $self->bookCount));
+		}
 	}
 
 	return $self->books->[$ordinal - 1];

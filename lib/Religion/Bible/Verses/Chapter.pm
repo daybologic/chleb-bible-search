@@ -49,7 +49,7 @@ sub BUILD {
 }
 
 sub getVerseByOrdinal {
-	my ($self, $ordinal) = @_;
+	my ($self, $ordinal, $args) = @_;
 
 	my $verseKey = $self->book->__makeVerseKey($self->ordinal, $ordinal);
 	# TODO: You shouldn't access __backend here
@@ -64,7 +64,21 @@ sub getVerseByOrdinal {
 		});
 	}
 
+	return undef if ($args->{nonFatal});
 	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
+}
+
+sub getNext {
+	my ($self) = @_;
+
+	my $nextChapter = $self->book->getChapterByOrdinal($self->ordinal + 1, { nonFatal => 1 });
+	unless ($nextChapter) {
+		if (my $book = $self->book->getNext()) {
+			$nextChapter = $book->getChapterByOrdinal(1);
+		}
+	}
+
+	return $nextChapter;
 }
 
 sub toString {
