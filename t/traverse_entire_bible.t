@@ -55,13 +55,13 @@ sub setUp {
 
 sub testTraversal {
 	my ($self) = @_;
-	plan tests => 3;
+	plan tests => 4;
 
 	my $book = $self->sut->getBookByOrdinal(1);
 	cmp_deeply($book, all(
 		isa('Religion::Bible::Verses::Book'),
 		methods(shortName => 'Gen'),
-	), 'Start at Genesis');
+	), 'Book lookup for Genesis');
 
 	my $verse = $book->getVerseByOrdinal(1);
 	cmp_deeply($verse, all(
@@ -70,10 +70,12 @@ sub testTraversal {
 			chapter => methods(ordinal => 1),
 			ordinal => 1,
 		),
-	), 'First verse in bible correct');
+	), 'First verse in bible correct: ' . $verse->toString());
 
 	my $previousVerse;
+	my $actualBibleVerseCount = 0;
 	do {
+		$actualBibleVerseCount++;
 		$previousVerse = $verse;
 		$verse = $verse->getNext();
 	} while ($verse);
@@ -87,6 +89,9 @@ sub testTraversal {
 			ordinal => 21,
 		),
 	), 'Last verse in bible correct: ' . $verse->toString());
+
+	my $expectBibleVerseCount = 31_102;
+	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
 
 	return EXIT_SUCCESS;
 }
