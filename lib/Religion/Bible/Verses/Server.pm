@@ -120,15 +120,19 @@ sub __verseToJsonApi {
 		links => { },
 	});
 
+	my %links = (
+		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
+		self => '/' . join('/', 1, 'lookup', $verse->id),
+	);
+
+	my $nextVerse = $verse->getNext();
+	$links{next} = '/' . join('/', 1, 'lookup', $verse->getNext()->id) if ($nextVerse);
+
 	push(@{ $hash{data} }, {
 		type => $verse->type,
 		id => $verse->id,
 		attributes => $verse->TO_JSON(),
-		links => {
-			# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
-			self => '/' . join('/', 1, 'lookup', $verse->id),
-			next => '/' . join('/', 1, 'lookup', $verse->getNext()->id),
-		},
+		links =>  \%links,
 		relationships => {
 			chapter => {
 				links => {
