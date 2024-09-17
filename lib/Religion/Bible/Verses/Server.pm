@@ -132,7 +132,7 @@ sub __verseToJsonApi {
 		type => $verse->type,
 		id => $verse->id,
 		attributes => $verse->TO_JSON(),
-		links =>  \%links,
+		links => \%links,
 		relationships => {
 			chapter => {
 				links => {
@@ -165,7 +165,9 @@ sub __lookup {
 	my $verse = $self->__bible->fetch($params->{book}, $params->{chapter}, $params->{verse});
 
 	my $json = __verseToJsonApi($verse);
+
 	$json->{links}->{self} = '/' . join('/', 1, 'lookup', $verse->id);
+	$json->{links}->{next} = $json->{data}->[0]->{links}->{next} if ($json->{data}->[0]->{links}->{next});
 
 	return $json;
 }
