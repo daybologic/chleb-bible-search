@@ -78,6 +78,11 @@ sub getVerseByOrdinal {
 	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
 }
 
+sub getNext {
+	my ($self) = @_;
+	return $self->_library->getBookByOrdinal($self->ordinal + 1, { nonFatal => 1 });
+}
+
 sub search {
 	my ($self, $query) = @_;
 	my @verses;
@@ -133,10 +138,14 @@ sub TO_JSON {
 }
 
 sub getChapterByOrdinal {
-	my ($self, $ordinal) = @_;
+	my ($self, $ordinal, $args) = @_;
 
 	if ($ordinal > $self->chapterCount) {
-		die(sprintf('Chapter %d not found in %s', $ordinal, $self->toString()));
+		if ($args->{nonFatal}) {
+			return undef;
+		} else {
+			die(sprintf('Chapter %d not found in %s', $ordinal, $self->toString()));
+		}
 	}
 
 	return Religion::Bible::Verses::Chapter->new({
@@ -153,7 +162,7 @@ sub __makeVerseKey {
 
 sub __makeId {
        my ($self) = @_;
-       return $self->shortName;
+       return lc($self->shortName);
 }
 
 1;

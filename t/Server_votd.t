@@ -69,22 +69,23 @@ sub test {
 					ordinal => 15,
 					text => 'Woe unto him that giveth his neighbour drink, that puttest thy bottle to [him], and makest [him] drunken also, that thou mayest look on their nakedness!',
 				},
-				id => 'Hab/2/15',
+				id => 'hab/2/15',
 				type => 'verse',
 				links => {
-					self => '/1/votd',
+					self => '/1/lookup/hab/2/15',
+					next => '/1/lookup/hab/2/16',
 				},
 				relationships => {
 					book => {
 						data => {
-							id => 'Hab',
+							id => 'hab',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'Hab/2',
+							id => 'hab/2',
 							type => 'chapter',
 						},
 						links => {},
@@ -98,12 +99,12 @@ sub test {
 					book => 'Hab',
 					ordinal => 2,
 				},
-				id => 'Hab/2',
+				id => 'hab/2',
 				type => 'chapter',
 				relationships => {
 					book => {
 						data => {
-							id => 'Hab',
+							id => 'hab',
 							type => 'book',
 						},
 					},
@@ -114,7 +115,7 @@ sub test {
 					ordinal => 35,
 					testament => 'old',
 				},
-				id => 'Hab',
+				id => 'hab',
 				relationships => {},
 				type => 'book'
 			},
@@ -127,7 +128,9 @@ sub test {
 				links => {},
 			},
 		],
-		links => {},
+		links => {
+			self => '/1/votd',
+		},
 	}, "single verse JSON for $when") or diag(explain($json));
 
 	return EXIT_SUCCESS;
@@ -148,22 +151,23 @@ sub testV2 {
 					ordinal => 11,
 					text => 'For the grace of God that bringeth salvation hath appeared to all men,',
 				},
-				id => 'Titus/2/11',
+				id => 'titus/2/11',
 				type => 'verse',
 				links => {
-					self => '/1/votd',
+					self => '/1/lookup/titus/2/11',
+					next => '/1/lookup/titus/2/12',
 				},
 				relationships => {
 					book => {
 						data => {
-							id => 'Titus',
+							id => 'titus',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'Titus/2',
+							id => 'titus/2',
 							type => 'chapter',
 						},
 						links => {},
@@ -177,22 +181,23 @@ sub testV2 {
 					ordinal => 12,
 					text => 'Teaching us that, denying ungodliness and worldly lusts, we should live soberly, righteously, and godly, in this present world;',
 				},
-				id => 'Titus/2/12',
+				id => 'titus/2/12',
 				type => 'verse',
 				links => {
-					self => '/1/votd',
+					self => '/1/lookup/titus/2/12',
+					next => '/1/lookup/titus/2/13',
 				},
 				relationships => {
 					book => {
 						data => {
-							id => 'Titus',
+							id => 'titus',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'Titus/2',
+							id => 'titus/2',
 							type => 'chapter',
 						},
 						links => {},
@@ -206,22 +211,23 @@ sub testV2 {
 					ordinal => 13,
 					text => 'Looking for that blessed hope, and the glorious appearing of the great God and our Saviour Jesus Christ;',
 				},
-				id => 'Titus/2/13',
+				id => 'titus/2/13',
 				type => 'verse',
 				links => {
-					self => '/1/votd',
+					self => '/1/lookup/titus/2/13',
+					next => '/1/lookup/titus/2/14',
 				},
 				relationships => {
 					book => {
 						data => {
-							id => 'Titus',
+							id => 'titus',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'Titus/2',
+							id => 'titus/2',
 							type => 'chapter',
 						},
 						links => {},
@@ -235,22 +241,23 @@ sub testV2 {
 					ordinal => 14,
 					text => 'Who gave himself for us, that he might redeem us from all iniquity, and purify unto himself a peculiar people, zealous of good works.',
 				},
-				id => 'Titus/2/14',
+				id => 'titus/2/14',
 				type => 'verse',
 				links => {
-					self => '/1/votd',
+					self => '/1/lookup/titus/2/14',
+					next => '/1/lookup/titus/2/15',
 				},
 				relationships => {
 					book => {
 						data => {
-							id => 'Titus',
+							id => 'titus',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'Titus/2',
+							id => 'titus/2',
 							type => 'chapter',
 						},
 						links => {},
@@ -264,12 +271,12 @@ sub testV2 {
 					book => 'Titus',
 					ordinal => 2,
 				},
-				id => 'Titus/2',
+				id => 'titus/2',
 				type => 'chapter',
 				relationships => {
 					book => {
 						data => {
-							id => 'Titus',
+							id => 'titus',
 							type => 'book',
 						},
 					},
@@ -280,7 +287,7 @@ sub testV2 {
 					ordinal => 56,
 					testament => 'new',
 				},
-				id => 'Titus',
+				id => 'titus',
 				relationships => {},
 				type => 'book'
 			},
@@ -293,7 +300,9 @@ sub testV2 {
 				links => {},
 			},
 		],
-		links => {},
+		links => {
+			self => '/2/votd',
+		},
 	}, "specific JSON verses inspection for $when") or diag(explain($json));
 
 	return EXIT_SUCCESS;

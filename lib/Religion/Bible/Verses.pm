@@ -65,7 +65,11 @@ sub getBookByShortName {
 	my ($self, $shortName, $unfatal) = @_;
 
 	$shortName ||= '';
-	$shortName = "\u$shortName";
+	if ($shortName =~ m/^(\d)(\w+)$/) {
+		$shortName = "$1\u$2";
+	} else {
+		$shortName = "\u$shortName";
+	}
 
 	foreach my $book (@{ $self->books }) {
 		next if ($book->shortName ne $shortName);
@@ -95,11 +99,15 @@ sub getBookByLongName {
 }
 
 sub getBookByOrdinal {
-	my ($self, $ordinal) = @_;
+	my ($self, $ordinal, $args) = @_;
 
 	if ($ordinal > $self->bookCount) {
-		die(sprintf('Book ordinal %d out of range, there are %d books in the bible',
-		    $ordinal, $self->bookCount));
+		if ($args->{nonFatal}) {
+			return undef;
+		} else {
+			die(sprintf('Book ordinal %d out of range, there are %d books in the bible',
+			    $ordinal, $self->bookCount));
+		}
 	}
 
 	return $self->books->[$ordinal - 1];

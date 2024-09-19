@@ -58,7 +58,14 @@ sub BUILD {
 
 sub getNext {
 	my ($self) = @_;
-	return $self->chapter->getVerseByOrdinal($self->ordinal + 1);
+	my $nextVerse = $self->chapter->getVerseByOrdinal($self->ordinal + 1, { nonFatal => 1 });
+	unless ($nextVerse) { # Must have reached the end of the Chapter
+		if (my $chapter = $self->chapter->getNext()) {
+			$nextVerse = $chapter->getVerseByOrdinal(1);
+		}
+	}
+
+	return $nextVerse;
 }
 
 sub equals {
