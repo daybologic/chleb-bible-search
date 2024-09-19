@@ -52,7 +52,16 @@ sub dic {
 
 sub __title {
 	my ($self) = @_;
+
 	$self->dic->logger->info("Started Chleb Bible Server: \"Man shall not live by bread alone, but by every word that proceedeth out of the mouth of God.\" (Matthew 4:4)");
+
+	$self->dic->logger->info(sprintf(
+		"Server %s administrator: %s <%s>",
+		$self->dic->config->get('server', 'domain', 'localhost'),
+		$self->dic->config->get('server', 'admin_name', 'Unknown'),
+		$self->dic->config->get('server', 'admin_email', 'example@example.org'),
+	));
+
 	return;
 }
 
@@ -101,15 +110,29 @@ sub __verseToJsonApi {
 		relationships => { },
 	});
 
+	my $dic = Religion::Bible::Verses::DI::Container->instance;
+	push(@{ $hash{included} }, {
+		type => 'stats',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			msec => int($verse->msec),
+		},
+		links => { },
+	});
+
+	my %links = (
+		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
+		self => '/' . join('/', 1, 'lookup', $verse->id),
+	);
+
+	my $nextVerse = $verse->getNext();
+	$links{next} = '/' . join('/', 1, 'lookup', $verse->getNext()->id) if ($nextVerse);
+
 	push(@{ $hash{data} }, {
 		type => $verse->type,
 		id => $verse->id,
 		attributes => $verse->TO_JSON(),
-		links => {
-			# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
-			#self => '/' . join('/', 1, 'lookup', $verse->id),
-			self => '/' . join('/', 1, 'votd'),
-		},
+		links => \%links,
 		relationships => {
 			chapter => {
 				links => {
@@ -140,12 +163,19 @@ sub __verseToJsonApi {
 sub __lookup {
 	my ($self, $params) = @_;
 	my $verse = $self->__bible->fetch($params->{book}, $params->{chapter}, $params->{verse});
-	return __verseToJsonApi($verse);
+
+	my $json = __verseToJsonApi($verse);
+
+	$json->{links}->{self} = '/' . join('/', 1, 'lookup', $verse->id);
+	$json->{links}->{next} = $json->{data}->[0]->{links}->{next} if ($json->{data}->[0]->{links}->{next});
+
+	return $json;
 }
 
 sub __votd {
 	my ($self, $params) = @_;
 
+	my $version = $params->{version} || 1;
 	my $verse = $self->__bible->votd($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
@@ -154,14 +184,29 @@ sub __votd {
 			push(@json, __verseToJsonApi($verse->[$verseI]));
 		}
 
+		my $secondary_total_msec = 0;
 		for (my $verseI = 1; $verseI < scalar(@$verse); $verseI++) {
 			push(@{ $json[0]->{data} },  $json[$verseI]->{data}->[0]);
+			for (my $includedI = 0; $includedI < scalar(@{ $json[$verseI]->{included} }); $includedI++) {
+				my $inclusion = $json[$verseI]->{included}->[$includedI];
+				next if ($inclusion->{type} ne 'stats');
+				$secondary_total_msec += $inclusion->{attributes}->{msec};
+			}
 		}
 
+		for (my $includedI = 0; $includedI < scalar(@{ $json[0]->{included} }); $includedI++) {
+			next if ($json[0]->{included}->[$includedI]->{type} ne 'stats');
+			$json[0]->{included}->[$includedI]->{attributes}->{msec} += $secondary_total_msec;
+		}
+
+		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd');
 		return $json[0];
 	}
 
-	return __verseToJsonApi($verse);
+	my $json = __verseToJsonApi($verse);
+	$json->{links}->{self} =  '/' . join('/', $version, 'votd');
+
+	return $json;
 }
 
 sub __search {
@@ -227,14 +272,26 @@ sub __search {
 		});
 	}
 
-	push(@{ $hash{included} }, {
-		type => 'results_summary',
-		id => uuid_to_string(create_uuid()),
-		attributes => {
-			count => $results->count,
+	push(@{ $hash{included} },
+		{
+			type => 'results_summary',
+			id => uuid_to_string(create_uuid()),
+			attributes => {
+				count => $results->count,
+			},
+			links => { },
 		},
-		links => { },
-	});
+		{
+			type => 'stats',
+			id => uuid_to_string(create_uuid()),
+			attributes => {
+				msec => int($results->msec),
+			},
+			links => { },
+		},
+	);
+
+	$hash{links}->{self} = '/1/search?term=' . $search->{term} . '&wholeword=' . $wholeword .'&limit=' . $limit;
 
 	return \%hash;
 }
@@ -252,12 +309,14 @@ set serializer => 'JSON'; # or any other serializer
 
 get '/1/votd' => sub {
 	my $when = param('when');
-	return $server->__votd({ when => $when });
+	my $parental = int(param('parental'));
+	return $server->__votd({ when => $when, parental => $parental });
 };
 
 get '/2/votd' => sub {
 	my $when = param('when');
-	return $server->__votd({ version => 2, when => $when });
+	my $parental = int(param('parental'));
+	return $server->__votd({ version => 2, when => $when, parental => $parental });
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {

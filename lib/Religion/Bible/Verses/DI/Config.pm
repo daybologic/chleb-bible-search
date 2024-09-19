@@ -28,47 +28,37 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::MockLogger;
-use Moose;
+package Religion::Bible::Verses::DI::Config;
 use strict;
 use warnings;
+use Moose;
 
-use Test::More;
+extends 'Religion::Bible::Verses::Base';
+
+use Config::INI::Reader;
+use English qw(-no_match_vars);
+use IO::File;
+use Readonly;
+
+has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
+
+has path => (is => 'ro', isa => 'Str', required => 1);
 
 sub BUILD {
+	my ($self) = @_;
 	return;
 }
 
-sub log {
-	my ($self, $msg) = @_;
-	return unless ($ENV{TEST_VERBOSE});
-	diag($msg);
-	return;
+sub __makeData {
+	my ($self) = @_;
+	return Config::INI::Reader->read_file($self->path);
 }
 
-sub info {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
+sub get {
+	my ($self, $section, $key, $default) = @_;
 
-sub error {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub warn {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub debug {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub trace {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
+	return $self->__data->{$section}->{$key} if (defined($self->__data->{$section}->{$key}));
+	return $default;
 }
 
 1;

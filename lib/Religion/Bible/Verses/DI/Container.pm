@@ -33,8 +33,16 @@ use MooseX::Singleton;
 use Moose;
 
 use Log::Log4perl;
+use Religion::Bible::Verses::DI::Config;
+use Religion::Bible::Verses::Exclusions;
+
+has bible => (is => 'rw');
 
 has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
+
+has config => (is => 'rw', lazy => 1, builder => '_makeConfig');
+
+has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
 
 sub _makeLogger {
 	foreach my $path ('etc/log4perl.conf', '/etc/chleb-bible-search/log4perl.conf') {
@@ -44,6 +52,22 @@ sub _makeLogger {
 	}
 
 	return Log::Log4perl->get_logger('chleb');
+}
+
+sub _makeConfig {
+	my ($self) = @_;
+
+	foreach my $path ('etc/main.conf', '/etc/chleb-bible-search/main.conf') {
+		next unless (-e $path);
+		return Religion::Bible::Verses::DI::Config->new({ dic => $self, path => $path });
+	}
+
+	die('No config available!');
+}
+
+sub _makeExclusions {
+	my ($self) = @_;
+	return Religion::Bible::Verses::Exclusions->new({ dic => $self });
 }
 
 1;

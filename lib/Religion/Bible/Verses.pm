@@ -38,6 +38,7 @@ extends 'Religion::Bible::Verses::Base';
 use Data::Dumper;
 use Digest::CRC qw(crc32);
 use Scalar::Util qw(looks_like_number);
+use Time::HiRes ();
 
 use Religion::Bible::Verses::Backend;
 use Religion::Bible::Verses::DI::Container;
@@ -51,17 +52,24 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
 BEGIN {
-	our $VERSION = '0.7.0';
+	our $VERSION = '0.8.0';
 }
 
 sub BUILD {
+	my ($self) = @_;
+	$self->dic->bible($self); # self registration
+	return;
 }
 
 sub getBookByShortName {
 	my ($self, $shortName, $unfatal) = @_;
 
 	$shortName ||= '';
-	$shortName = "\u$shortName";
+	if ($shortName =~ m/^(\d)(\w+)$/) {
+		$shortName = "$1\u$2";
+	} else {
+		$shortName = "\u$shortName";
+	}
 
 	foreach my $book (@{ $self->books }) {
 		next if ($book->shortName ne $shortName);
@@ -91,11 +99,15 @@ sub getBookByLongName {
 }
 
 sub getBookByOrdinal {
-	my ($self, $ordinal) = @_;
+	my ($self, $ordinal, $args) = @_;
 
 	if ($ordinal > $self->bookCount) {
-		die(sprintf('Book ordinal %d out of range, there are %d books in the bible',
-		    $ordinal, $self->bookCount));
+		if ($args->{nonFatal}) {
+			return undef;
+		} else {
+			die(sprintf('Book ordinal %d out of range, there are %d books in the bible',
+			    $ordinal, $self->bookCount));
+		}
 	}
 
 	return $self->books->[$ordinal - 1];
@@ -133,46 +145,74 @@ sub resolveBook {
 
 sub fetch {
 	my ($self, $book, $chapterOrdinal, $verseOrdinal) = @_;
+	my $startTiming = Time::HiRes::time();
 
 	$book = $self->resolveBook($book);
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
-	$self->dic->logger->debug($verse->toString());
+	my $endTiming = Time::HiRes::time();
+	my $msec = int(1000 * ($endTiming - $startTiming));
+
+	$self->dic->logger->debug(sprintf('%s sought in %dms', $verse->toString(), $msec));
+	$verse->msec($msec);
 
 	return $verse;
 }
 
 sub votd {
 	my ($self, $params) = @_;
-	my ($when, $version) = @{$params}{qw(when version)};
+	my $startTiming = Time::HiRes::time();
+	my ($when, $version, $parental) = @{$params}{qw(when version parental)};
 
-	$when = $self->__resolveISO8601($when);
+	$when = $self->_resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
-	my $seed = crc32($when->epoch);
-	$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
-	$self->dic->logger->trace(sprintf('Using seed %d', $seed));
+	my $verse;
+	for (my $offset = 0; $offset > -1; $offset++) {
+		my $seed = crc32($when->epoch + $offset);
+		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
+		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-	my $bookOrdinal = 1 + ($seed % $self->bookCount);
-	my $book = $self->getBookByOrdinal($bookOrdinal);
+		my $bookOrdinal = 1 + ($seed % $self->bookCount);
+		my $book = $self->getBookByOrdinal($bookOrdinal);
 
-	my $chapterOrdinal = 1 + ($seed % $book->chapterCount);
-	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+		my $chapterOrdinal = 1 + ($seed % $book->chapterCount);
+		my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 
-	my $verseOrdinal = 1 + ($seed % $chapter->verseCount);
-	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+		my $verseOrdinal = 1 + ($seed % $chapter->verseCount);
+		$verse = $chapter->getVerseByOrdinal($verseOrdinal);
+
+		last if (!$parental || !$verse->parental);
+		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
+	}
 
 	$self->dic->logger->debug($verse->toString());
 
+	my $msecAll = 0;
 	# handle ARRAY verses where more than one compound Verse may be returned
 	if ($version && looks_like_number($version) && $version == 2) {
 		$verse = [ $verse ]; # make it an ARRAY
+		my $endTiming = Time::HiRes::time();
+		my $msec = int(1000 * ($endTiming - $startTiming));
+		$verse->[0]->msec($msec);
+		$msecAll += $msec;
 		while ($verse->[-1]->continues) {
 			push(@$verse, $verse->[-1]->getNext());
+			$endTiming = Time::HiRes::time();
+			$msec = int(1000 * ($endTiming - $startTiming));
+			$verse->[-1]->msec($msec);
+			$msecAll += $msec;
+			$startTiming = Time::HiRes::time();
 		}
+	} else {
+		my $endTiming = Time::HiRes::time();
+		$msecAll = int(1000 * ($endTiming - $startTiming));
+
+		$verse->msec($msecAll);
 	}
 
+	$self->dic->logger->debug(sprintf('VoTD sought in %dms', $msecAll));
 	return $verse;
 }
 

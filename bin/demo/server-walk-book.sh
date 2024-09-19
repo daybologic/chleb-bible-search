@@ -1,3 +1,4 @@
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,47 +29,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::MockLogger;
-use Moose;
-use strict;
-use warnings;
+#!/usr/bin/env bash
 
-use Test::More;
+#set -x
 
-sub BUILD {
-	return;
-}
+p="/1/lookup/gen/1/1"
+scheme=http
+host=localhost
+port=3000
+base="${scheme}://${host}:${port}"
 
-sub log {
-	my ($self, $msg) = @_;
-	return unless ($ENV{TEST_VERBOSE});
-	diag($msg);
-	return;
-}
+while [ ! -z "$p" ]; do
+	json=$(curl -s "${base}${p}");
+	p=$(echo "$json" | jq -r .links.next);
+	text=$(echo "$json" | jq -r .data[0].attributes.text);
+	echo "$text"
+done
 
-sub info {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub error {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub warn {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub debug {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub trace {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-1;
+exit 0

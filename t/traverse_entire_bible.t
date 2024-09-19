@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,30 +29,81 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Search::Results;
+package TraverseEntireBibleTests;
 use strict;
 use warnings;
 use Moose;
 
-has count => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeCount);
+use lib 'externals/libtest-module-runnable-perl/lib';
 
-has query => (is => 'ro', isa => 'Religion::Bible::Verses::Search::Query', required => 1);
+extends 'Test::Module::Runnable';
 
-has verses => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Verse]', required => 1);
+use Test::Deep qw(all cmp_deeply isa methods);
+use POSIX qw(EXIT_SUCCESS);
+use Religion::Bible::Verses;
+use Religion::Bible::Verses::DI::MockLogger;
+use Test::More 0.96;
 
-has msec => (is => 'rw', isa => 'Int', default => 0);
-
-sub BUILD {
-}
-
-sub __makeCount {
+sub setUp {
 	my ($self) = @_;
-	return scalar(@{ $self->verses });
+
+	$self->sut(Religion::Bible::Verses->new());
+	$self->__mockLogger();
+
+	return EXIT_SUCCESS;
 }
 
-sub toString {
+sub testTraversal {
 	my ($self) = @_;
-	return sprintf("%s count %d for term '%s'", 'Results', $self->count, $self->query->text);
+	plan tests => 4;
+
+	my $book = $self->sut->getBookByOrdinal(1);
+	cmp_deeply($book, all(
+		isa('Religion::Bible::Verses::Book'),
+		methods(shortName => 'Gen'),
+	), 'Book lookup for Genesis');
+
+	my $verse = $book->getVerseByOrdinal(1);
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			chapter => methods(ordinal => 1),
+			ordinal => 1,
+		),
+	), 'First verse in bible correct: ' . $verse->toString());
+
+	my $previousVerse;
+	my $actualBibleVerseCount = 0;
+	do {
+		$actualBibleVerseCount++;
+		$previousVerse = $verse;
+		$verse = $verse->getNext();
+	} while ($verse);
+
+	$verse = $previousVerse;
+	cmp_deeply($verse, all(
+		isa('Religion::Bible::Verses::Verse'),
+		methods(
+			book => methods(ordinal => 66),
+			chapter => methods(ordinal => 22),
+			ordinal => 21,
+		),
+	), 'Last verse in bible correct: ' . $verse->toString());
+
+	my $expectBibleVerseCount = 31_102;
+	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
+
+	return EXIT_SUCCESS;
 }
 
-1;
+sub __mockLogger {
+	my ($self) = @_;
+	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	return;
+}
+
+package main;
+use strict;
+use warnings;
+
+exit(TraverseEntireBibleTests->new->run());
