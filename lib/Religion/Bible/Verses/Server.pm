@@ -209,6 +209,21 @@ sub __votd {
 	return $json;
 }
 
+sub __ping {
+	my ($self) = @_;
+	my %hash = __makeJsonApi();
+
+	push(@{ $hash{data} }, {
+		type => 'ping_response',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			message => 'Ahoy-hoy!',
+		},
+	});
+
+	return \%hash;
+}
+
 sub __search {
 	my ($self, $search) = @_;
 
@@ -332,6 +347,10 @@ get '/1/search' => sub {
 	my $term = param('term');
 	my $wholeword = param('wholeword');
 	return $server->__search({ limit => $limit, term => $term, wholeword => $wholeword });
+};
+
+get '/1/ping' => sub {
+	return $server->__ping();
 };
 
 unless (caller()) {
