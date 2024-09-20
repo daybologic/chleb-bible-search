@@ -218,7 +218,7 @@ sub __ping {
 		id => uuid_to_string(create_uuid()),
 		attributes => {
 			message => 'Ahoy-hoy!',
-			uptime => __getUptime(),
+			uptime => $self->__getUptime(),
 		},
 	});
 
@@ -239,7 +239,7 @@ sub __version {
 			admin_email => $self->dic->config->get('server', 'admin_email', 'example@example.org'),
 			admin_name => $self->dic->config->get('server', 'admin_name', 'Unknown'),
 			server_host => $self->dic->config->get('server', 'domain', 'localhost'),
-			uptime => __getUptime(),
+			uptime => $self->__getUptime(),
 		},
 	});
 
@@ -254,7 +254,7 @@ sub __uptime {
 		type => 'uptime',
 		id => uuid_to_string(create_uuid()),
 		attributes => {
-			uptime => __getUptime(),
+			uptime => $self->__getUptime(),
 		},
 	});
 
@@ -262,7 +262,8 @@ sub __uptime {
 }
 
 sub __getUptime {
-	return 1; # TODO
+	my ($self) = @_;
+	return time() - $self->__bible->constructionTime;
 }
 
 sub __search {

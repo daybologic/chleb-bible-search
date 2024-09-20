@@ -51,13 +51,18 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 
 has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
+has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeConstructionTime);
+
 BEGIN {
 	our $VERSION = '0.8.1';
 }
 
 sub BUILD {
 	my ($self) = @_;
+
 	$self->dic->bible($self); # self registration
+	$self->constructionTime();
+
 	return;
 }
 
@@ -231,6 +236,10 @@ sub __makeBookCount {
 sub __makeBooks {
 	my ($self) = @_;
 	return $self->__backend->getBooks();
+}
+
+sub __makeConstructionTime {
+	return time();
 }
 
 1;
