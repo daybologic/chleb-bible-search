@@ -15,17 +15,17 @@ The service also provides a determinsitic verse of the day lookup.
 
 For up to date documentation, please ensure you are viewing the latest copy at [GitHub](https://github.com/daybologic/chleb-bible-search/blob/master/README.md)
 
-For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible_search/0.8.0)
+For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible_search/0.8.1)
 
 ## Availability
 
 The primary hosting for Chleb Bible Search is GitHub, but a backup is also provided at [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/commits/branch/master)
 
-The latest release is version 0.8.0, which is available for download at the following sites:
+The latest release is version 0.8.1, which is available for download at the following sites:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v0.8.0.tar.gz)
-  * [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/get/19d1a7360d0e404bbfbb946729a44b4653c8c3cb.tar.gz)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v0.8.1.tar.gz)
 
 The latest release is available as a Debian package from the following locations:
 
-  TODO: We will provide these links very soon!
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v0.8.1/libreligion-bible-verses-perl_0.8.1_all.deb)
+  * [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/downloads/libreligion-bible-verses-perl_0.8.1_all.deb)
