@@ -1,3 +1,10 @@
+libreligion-bible-verses-perl (0.8.1) stable; urgency=high
+
+  * fixed ownership of /var/log/chleb-bible-search
+  * fixed various documentation links to downloads
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Fri, 20 Sep 2024 12:45:03 +0100
+
 libreligion-bible-verses-perl (0.8.0) stable; urgency=medium
 
   * Improvements to 'self' and 'next' links in JSON
