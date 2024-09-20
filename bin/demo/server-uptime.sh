@@ -37,7 +37,9 @@ SCHEME=http
 
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		curl -s "${SCHEME}://${H}/1/uptime" | jq -r '.data[0].attributes | .uptime'
+		uptime=$(curl -s "${SCHEME}://${H}/1/uptime")
+		echo "$uptime" | jq -r '.data[0].attributes | .uptime'
+		echo "$uptime" | jq -r '.data[0].attributes | .text'
 	else
 		curl -s "${SCHEME}://${H}/1/uptime" | tr -d '\n' | grep -o '"uptime":[^"]*"[^"]*"'
 	fi

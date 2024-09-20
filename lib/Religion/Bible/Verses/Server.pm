@@ -35,6 +35,7 @@ use warnings;
 use JSON;
 use Religion::Bible::Verses;
 use Religion::Bible::Verses::DI::Container;
+use Time::Duration;
 use UUID::Tiny ':std';
 
 sub new {
@@ -250,11 +251,14 @@ sub __uptime {
 	my ($self) = @_;
 	my %hash = __makeJsonApi();
 
+	my $uptime = $self->__getUptime();
+
 	push(@{ $hash{data} }, {
 		type => 'uptime',
 		id => uuid_to_string(create_uuid()),
 		attributes => {
-			uptime => $self->__getUptime(),
+			uptime => $uptime,
+			text => duration_exact($uptime),
 		},
 	});
 
