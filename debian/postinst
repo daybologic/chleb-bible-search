@@ -14,7 +14,7 @@ if ! getent passwd | grep -q "^$SERVER_USER:"; then
 fi
 
 usermod -c "$SERVER_NAME" $SERVER_USER
-chown $SERVER_USER /var/log/chleb-bible-search/default.log
+chown $SERVER_USER /var/log/chleb-bible-search /var/log/chleb-bible-search/default.log
 
 /usr/bin/systemctl start chleb-bible-search
 /usr/bin/systemctl enable chleb-bible-search
