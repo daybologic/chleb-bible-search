@@ -317,7 +317,7 @@ components:
           type: string
         type:
           type: string
-          enum: ["ping_response"]
+          enum: ["pong"]
         attributes:
           type: object
           properties:

@@ -215,7 +215,7 @@ sub __ping {
 	my %hash = __makeJsonApi();
 
 	push(@{ $hash{data} }, {
-		type => 'ping_response',
+		type => 'pong',
 		id => uuid_to_string(create_uuid()),
 		attributes => {
 			message => 'Ahoy-hoy!',
