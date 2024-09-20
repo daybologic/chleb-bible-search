@@ -7,6 +7,68 @@ servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
 paths:
+  /1/uptime:
+    get:
+      summary: Get server uptime
+      operationId: getUptime
+      description: The server uptime, as opposed to the service, ie. if the service is clustered, this value may not be a monotonically increasing number
+      security: [] # No security
+      responses:
+        '200':
+          description: Successfully retrieved server uptime
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Uptime'
+        '429':
+          description: Rate-limited
+  /1/ping:
+    get:
+      summary: Ping the server to check if it is alive
+      operationId: getPing
+      description: Ping the server just to receive a very simple response, to check if it alive, with low overhead
+      security: [] # No security
+      responses:
+        '200':
+          description: Successfully retrieved pong
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Pong'
+        '429':
+          description: Rate-limited
+  /1/version:
+    get:
+      summary: Get server version
+      operationId: getVersion
+      description: Get the version from the server.  The operation may be restricted by the server administrator
+      security: [] # No security
+      responses:
+        '200':
+          description: Successfully retrieved server version
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Version'
+        '403':
+          description: Forbidden
+        '429':
+          description: Rate-limited
   /1/votd:
     get:
       summary: Verse of The Day
@@ -217,6 +279,75 @@ paths:
           description: Gateway Timeout
 components:
   schemas:
+    Version:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["version"]
+        attributes:
+          type: object
+          properties:
+            version:
+              type: string
+              description: Version string in opaque, non-processable format
+              example: 1.2.3-prerelease
+            admin_email:
+              type: string
+              description: Email address to contact the server administrator
+              example: example@example.org
+            admin_name:
+              type: string
+              description: Nam of the server administrator
+              example: Rev. Duncan Ross Palmer
+            server_host:
+              type: string
+              description: Machine name
+              example: sprat.example.org
+            uptime:
+              type: integer
+              description: Number of seconds since startup
+              example: 90
+    Pong:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["ping_response"]
+        attributes:
+          type: object
+          properties:
+            message:
+              type: string
+              description: a message whose content doesn't really matter
+              example: Ahoy-hoy!
+            uptime:
+              type: integer
+              description: Number of seconds since startup
+              example: 90
+    Uptime:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["uptime"]
+        attributes:
+          type: object
+          properties:
+            uptime:
+              type: integer
+              description: Number of seconds since startup
+              example: 90
+            text:
+              type: string
+              description: Description of uptime in human-readable text
+              example: 1 minute and 30 seconds
     Verse:
       type: object
       properties:
