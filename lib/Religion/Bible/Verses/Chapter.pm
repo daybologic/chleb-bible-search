@@ -46,6 +46,9 @@ has type => (is => 'ro', isa => 'Str', default => sub { 'chapter' });
 has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
 
 sub BUILD {
+	my ($self) = @_;
+	#$self->verseCount;
+	return;
 }
 
 sub getVerseByOrdinal {
@@ -113,9 +116,9 @@ sub TO_JSON {
 sub __makeVerseCount {
 	my ($self) = @_;
 	my $bookInfo = $self->_library->__backend->getBookInfoByShortName($self->book->shortName);
-	die 'FIXME' unless ($bookInfo);
+	die 'FIXME: ' . $self->book->shortName unless ($bookInfo);
 	my $count = $bookInfo->{v}->{ $self->ordinal };
-	die("FIXME: $count") unless ($count);
+	die("FIXME: ${count}, " . $self->ordinal) unless ($count);
 	return $count;
 }
 
