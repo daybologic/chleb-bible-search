@@ -46,9 +46,6 @@ has type => (is => 'ro', isa => 'Str', default => sub { 'chapter' });
 has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
 
 sub BUILD {
-	my ($self) = @_;
-	#$self->verseCount;
-	return;
 }
 
 sub getVerseByOrdinal {
