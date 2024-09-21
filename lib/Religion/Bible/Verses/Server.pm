@@ -231,6 +231,8 @@ sub __version {
 
 	my $version = $Religion::Bible::Verses::VERSION;
 
+	return 403 unless ($self->dic->config->get('features', 'version', 'true', 1));
+
 	push(@{ $hash{data} }, {
 		type => 'version',
 		id => uuid_to_string(create_uuid()),
@@ -398,7 +400,14 @@ get '/1/ping' => sub {
 };
 
 get '/1/version' => sub {
-	return $server->__version();
+	my $version = $server->__version();
+	if (ref($version) eq 'HASH') {
+		return $version;
+	} elsif ($version == 403) {
+		send_error('Disabled by server administrator', $version);
+	} else {
+		send_error('Unknown error', 500);
+	}
 };
 
 get '/1/uptime' => sub {

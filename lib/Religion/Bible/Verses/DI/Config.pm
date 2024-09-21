@@ -55,10 +55,31 @@ sub __makeData {
 }
 
 sub get {
-	my ($self, $section, $key, $default) = @_;
+	my ($self, $section, $key, $default, $isBoolean) = @_;
 
-	return $self->__data->{$section}->{$key} if (defined($self->__data->{$section}->{$key}));
+	if (defined($self->__data->{$section}->{$key})) {
+		my $value = $self->__data->{$section}->{$key};
+		return __boolean($value) if ($isBoolean);
+		return $value;
+	}
+
+	return __boolean($default) if ($isBoolean);
 	return $default;
+}
+
+sub __boolean {
+	my ($value) = @_;
+
+	if (defined($value)) {
+		$value = lc($value);
+
+		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
+		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
+
+		die("Invalid boolean value in config: $value");
+	}
+
+	return 0;
 }
 
 1;
