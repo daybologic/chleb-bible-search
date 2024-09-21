@@ -59,8 +59,6 @@ sub BUILD {
 sub getVerseByOrdinal {
 	my ($self, $ordinal) = @_;
 
-	$ordinal = $self->chapterCount if ($ordinal == -1);
-
 	my $bookVerseKey = join(':', $TRANSLATION, $self->shortName, $ordinal);
 	if (my $verseKey = $self->_library->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
 		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
@@ -150,6 +148,8 @@ sub TO_JSON {
 
 sub getChapterByOrdinal {
 	my ($self, $ordinal, $args) = @_;
+
+	$ordinal = $self->chapterCount if ($ordinal == -1);
 
 	if ($ordinal > $self->chapterCount) {
 		if ($args->{nonFatal}) {
