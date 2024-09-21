@@ -87,6 +87,7 @@ sub getNext {
 
 sub getPrev {
 	my ($self) = @_;
+	return undef if ($self->ordinal == 1);
 	return $self->_library->getBookByOrdinal($self->ordinal - 1, { nonFatal => 1 });
 }
 
