@@ -44,7 +44,6 @@ while [ ! -z "$p" ]; do
 	p=$(echo "$json" | jq -r .links.prev);
 	text=$(echo "$json" | jq -r .data[0].attributes.text);
 	echo "$text"
-	echo "$json"
 done
 
 exit 0
