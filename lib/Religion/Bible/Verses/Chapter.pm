@@ -51,6 +51,8 @@ sub BUILD {
 sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
+	$ordinal = $self->verseCount if ($ordinal == -1);
+
 	my $verseKey = $self->book->__makeVerseKey($self->ordinal, $ordinal);
 	# TODO: You shouldn't access __backend here
 	# but you need some more methods in the library to avoid it
@@ -81,6 +83,20 @@ sub getNext {
 	return $nextChapter;
 }
 
+sub getPrev {
+	my ($self) = @_;
+
+	if ($self->ordinal == 1) {
+		if (my $book = $self->book->getPrev()) {
+			return $book->getChapterByOrdinal(-1);
+		}
+	} else {
+		return $self->book->getChapterByOrdinal($self->ordinal - 1, { nonFatal => 1 });
+	}
+
+	return undef;
+}
+
 sub toString {
 	my ($self) = @_;
 	return sprintf('%s %d', $self->book->shortName, $self->ordinal);
@@ -98,9 +114,9 @@ sub TO_JSON {
 sub __makeVerseCount {
 	my ($self) = @_;
 	my $bookInfo = $self->_library->__backend->getBookInfoByShortName($self->book->shortName);
-	die 'FIXME' unless ($bookInfo);
+	die 'FIXME: ' . $self->book->shortName unless ($bookInfo);
 	my $count = $bookInfo->{v}->{ $self->ordinal };
-	die("FIXME: $count") unless ($count);
+	die("FIXME: ${count}, " . $self->ordinal) unless ($count);
 	return $count;
 }
 
