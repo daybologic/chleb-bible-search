@@ -89,15 +89,15 @@ sub getNext {
 sub getPrev {
 	my ($self) = @_;
 
-	return undef if ($self->ordinal == 1);
-	my $prevChapter = $self->book->getChapterByOrdinal($self->ordinal - 1, { nonFatal => 1 });
-	unless ($prevChapter) {
+	if ($self->ordinal == 1) {
 		if (my $book = $self->book->getPrev()) {
-			$prevChapter = $book->getChapterByOrdinal(-1);
+			return $book->getChapterByOrdinal(-1);
 		}
+	} else {
+		return $self->book->getChapterByOrdinal($self->ordinal - 1, { nonFatal => 1 });
 	}
 
-	return $prevChapter;
+	return undef;
 }
 
 sub toString {
