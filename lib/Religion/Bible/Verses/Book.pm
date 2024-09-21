@@ -83,6 +83,11 @@ sub getNext {
 	return $self->_library->getBookByOrdinal($self->ordinal + 1, { nonFatal => 1 });
 }
 
+sub getPrev {
+	my ($self) = @_;
+	return $self->_library->getBookByOrdinal($self->ordinal - 1, { nonFatal => 1 });
+}
+
 sub search {
 	my ($self, $query) = @_;
 	my @verses;

@@ -71,6 +71,12 @@ sub getNext {
 sub getPrev {
 	my ($self) = @_;
 	my $prevVerse = $self->chapter->getVerseByOrdinal($self->ordinal - 1, { nonFatal => 1 });
+	unless ($prevVerse) { # Must have reached the beginning of the Chapter
+		if (my $chapter = $self->chapter->getPrev()) {
+			$prevVerse = $chapter->getVerseByOrdinal(-1);
+		}
+	}
+
 	return $prevVerse;
 }
 

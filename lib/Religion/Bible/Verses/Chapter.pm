@@ -81,6 +81,19 @@ sub getNext {
 	return $nextChapter;
 }
 
+sub getPrev {
+	my ($self) = @_;
+
+	my $prevChapter = $self->book->getChapterByOrdinal($self->ordinal - 1, { nonFatal => 1 });
+	unless ($prevChapter) {
+		if (my $book = $self->book->getPrev()) {
+			$prevChapter = $book->getChapterByOrdinal(-1);
+		}
+	}
+
+	return $prevChapter;
+}
+
 sub toString {
 	my ($self) = @_;
 	return sprintf('%s %d', $self->book->shortName, $self->ordinal);
