@@ -51,6 +51,8 @@ sub BUILD {
 sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
+	$ordinal = $self->verseCount if ($ordinal == -1);
+
 	my $verseKey = $self->book->__makeVerseKey($self->ordinal, $ordinal);
 	# TODO: You shouldn't access __backend here
 	# but you need some more methods in the library to avoid it
