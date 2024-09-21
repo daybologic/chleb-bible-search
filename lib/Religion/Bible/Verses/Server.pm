@@ -126,8 +126,13 @@ sub __verseToJsonApi {
 		self => '/' . join('/', 1, 'lookup', $verse->id),
 	);
 
-	my $nextVerse = $verse->getNext();
-	$links{next} = '/' . join('/', 1, 'lookup', $verse->getNext()->id) if ($nextVerse);
+	if (my $nextVerse = $verse->getNext()) {
+		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->id);
+	}
+
+	if (my $prevVerse = $verse->getPrev()) {
+		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->id);
+	}
 
 	push(@{ $hash{data} }, {
 		type => $verse->type,
@@ -168,7 +173,10 @@ sub __lookup {
 	my $json = __verseToJsonApi($verse);
 
 	$json->{links}->{self} = '/' . join('/', 1, 'lookup', $verse->id);
-	$json->{links}->{next} = $json->{data}->[0]->{links}->{next} if ($json->{data}->[0]->{links}->{next});
+	foreach my $type (qw(next prev)) {
+		next unless ($json->{data}->[0]->{links}->{$type});
+		$json->{links}->{$type} = $json->{data}->[0]->{links}->{$type};
+	}
 
 	return $json;
 }
