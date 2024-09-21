@@ -106,6 +106,8 @@ sub getBookByLongName {
 sub getBookByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
+	$ordinal = $self->bookCount if ($ordinal == -1);
+
 	if ($ordinal > $self->bookCount) {
 		if ($args->{nonFatal}) {
 			return undef;

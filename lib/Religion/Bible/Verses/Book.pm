@@ -59,6 +59,8 @@ sub BUILD {
 sub getVerseByOrdinal {
 	my ($self, $ordinal) = @_;
 
+	$ordinal = $self->verseCount if ($ordinal == -1);
+
 	my $bookVerseKey = join(':', $TRANSLATION, $self->shortName, $ordinal);
 	if (my $verseKey = $self->_library->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
 		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
