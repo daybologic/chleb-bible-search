@@ -306,10 +306,6 @@ components:
               type: string
               description: Machine name
               example: sprat.example.org
-            uptime:
-              type: integer
-              description: Number of seconds since startup
-              example: 90
     Pong:
       type: object
       properties:
@@ -325,10 +321,6 @@ components:
               type: string
               description: a message whose content doesn't really matter
               example: Ahoy-hoy!
-            uptime:
-              type: integer
-              description: Number of seconds since startup
-              example: 90
     Uptime:
       type: object
       properties:
