@@ -35,6 +35,7 @@ use warnings;
 use JSON;
 use Religion::Bible::Verses;
 use Religion::Bible::Verses::DI::Container;
+use Time::Duration;
 use UUID::Tiny ':std';
 
 sub new {
@@ -209,6 +210,66 @@ sub __votd {
 	return $json;
 }
 
+sub __ping {
+	my ($self) = @_;
+	my %hash = __makeJsonApi();
+
+	push(@{ $hash{data} }, {
+		type => 'pong',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			message => 'Ahoy-hoy!',
+		},
+	});
+
+	return \%hash;
+}
+
+sub __version {
+	my ($self) = @_;
+	my %hash = __makeJsonApi();
+
+	my $version = $Religion::Bible::Verses::VERSION;
+
+	return 403 unless ($self->dic->config->get('features', 'version', 'true', 1));
+
+	push(@{ $hash{data} }, {
+		type => 'version',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			version => $version,
+			admin_email => $self->dic->config->get('server', 'admin_email', 'example@example.org'),
+			admin_name => $self->dic->config->get('server', 'admin_name', 'Unknown'),
+			server_host => $self->dic->config->get('server', 'domain', 'localhost'),
+		},
+	});
+
+	return \%hash;
+}
+
+sub __uptime {
+	my ($self) = @_;
+	my %hash = __makeJsonApi();
+
+	my $uptime = $self->__getUptime();
+
+	push(@{ $hash{data} }, {
+		type => 'uptime',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			uptime => $uptime,
+			text => duration_exact($uptime),
+		},
+	});
+
+	return \%hash;
+}
+
+sub __getUptime {
+	my ($self) = @_;
+	return time() - $self->__bible->constructionTime;
+}
+
 sub __search {
 	my ($self, $search) = @_;
 
@@ -332,6 +393,25 @@ get '/1/search' => sub {
 	my $term = param('term');
 	my $wholeword = param('wholeword');
 	return $server->__search({ limit => $limit, term => $term, wholeword => $wholeword });
+};
+
+get '/1/ping' => sub {
+	return $server->__ping();
+};
+
+get '/1/version' => sub {
+	my $version = $server->__version();
+	if (ref($version) eq 'HASH') {
+		return $version;
+	} elsif ($version == 403) {
+		send_error('Disabled by server administrator', $version);
+	} else {
+		send_error('Unknown error', 500);
+	}
+};
+
+get '/1/uptime' => sub {
+	return $server->__uptime();
 };
 
 unless (caller()) {
