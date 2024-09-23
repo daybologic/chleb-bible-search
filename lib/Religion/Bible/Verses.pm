@@ -54,7 +54,7 @@ has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy
 has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeConstructionTime);
 
 BEGIN {
-	our $VERSION = '0.8.1';
+	our $VERSION = '0.9.0';
 }
 
 sub BUILD {

@@ -1,3 +1,11 @@
+libreligion-bible-verses-perl (0.9.0) stable; urgency=medium
+
+  * added 'prev' links
+  * /version, /uptime, /ping endpoints
+  * -1 has special meaning to get last entry in books and chapters
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Mon, 23 Sep 2024 08:21:42 +0100
+
 libreligion-bible-verses-perl (0.8.1) stable; urgency=high
 
   * fixed ownership of /var/log/chleb-bible-search
