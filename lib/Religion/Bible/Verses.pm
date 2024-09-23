@@ -51,13 +51,18 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 
 has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
 
+has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeConstructionTime);
+
 BEGIN {
-	our $VERSION = '0.8.1';
+	our $VERSION = '0.9.0';
 }
 
 sub BUILD {
 	my ($self) = @_;
+
 	$self->dic->bible($self); # self registration
+	$self->constructionTime();
+
 	return;
 }
 
@@ -100,6 +105,8 @@ sub getBookByLongName {
 
 sub getBookByOrdinal {
 	my ($self, $ordinal, $args) = @_;
+
+	$ordinal = $self->bookCount if ($ordinal == -1);
 
 	if ($ordinal > $self->bookCount) {
 		if ($args->{nonFatal}) {
@@ -231,6 +238,10 @@ sub __makeBookCount {
 sub __makeBooks {
 	my ($self) = @_;
 	return $self->__backend->getBooks();
+}
+
+sub __makeConstructionTime {
+	return time();
 }
 
 1;

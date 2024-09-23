@@ -1,3 +1,4 @@
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,58 +29,21 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::Config;
-use strict;
-use warnings;
-use Moose;
+#!/usr/bin/env bash
 
-extends 'Religion::Bible::Verses::Base';
+#set -x
 
-use Config::INI::Reader;
-use English qw(-no_match_vars);
-use IO::File;
-use Readonly;
+p="/1/lookup/rev/22/21"
+scheme=http
+host=localhost
+port=3000
+base="${scheme}://${host}:${port}"
 
-has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
+while [ ! -z "$p" ]; do
+	json=$(curl -s "${base}${p}");
+	p=$(echo "$json" | jq -r .links.prev);
+	text=$(echo "$json" | jq -r .data[0].attributes.text);
+	echo "$text"
+done
 
-has path => (is => 'ro', isa => 'Str', required => 1);
-
-sub BUILD {
-	my ($self) = @_;
-	return;
-}
-
-sub __makeData {
-	my ($self) = @_;
-	return Config::INI::Reader->read_file($self->path);
-}
-
-sub get {
-	my ($self, $section, $key, $default, $isBoolean) = @_;
-
-	if (defined($self->__data->{$section}->{$key})) {
-		my $value = $self->__data->{$section}->{$key};
-		return __boolean($value) if ($isBoolean);
-		return $value;
-	}
-
-	return __boolean($default) if ($isBoolean);
-	return $default;
-}
-
-sub __boolean {
-	my ($value) = @_;
-
-	if (defined($value)) {
-		$value = lc($value);
-
-		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
-		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
-
-		die("Invalid boolean value in config: $value");
-	}
-
-	return 0;
-}
-
-1;
+exit 0

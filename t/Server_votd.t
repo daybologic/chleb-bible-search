@@ -72,6 +72,7 @@ sub test {
 				id => 'hab/2/15',
 				type => 'verse',
 				links => {
+					prev => '/1/lookup/hab/2/14',
 					self => '/1/lookup/hab/2/15',
 					next => '/1/lookup/hab/2/16',
 				},
@@ -154,6 +155,7 @@ sub testV2 {
 				id => 'titus/2/11',
 				type => 'verse',
 				links => {
+					prev => '/1/lookup/titus/2/10',
 					self => '/1/lookup/titus/2/11',
 					next => '/1/lookup/titus/2/12',
 				},
@@ -184,6 +186,7 @@ sub testV2 {
 				id => 'titus/2/12',
 				type => 'verse',
 				links => {
+					prev => '/1/lookup/titus/2/11',
 					self => '/1/lookup/titus/2/12',
 					next => '/1/lookup/titus/2/13',
 				},
@@ -214,6 +217,7 @@ sub testV2 {
 				id => 'titus/2/13',
 				type => 'verse',
 				links => {
+					prev => '/1/lookup/titus/2/12',
 					self => '/1/lookup/titus/2/13',
 					next => '/1/lookup/titus/2/14',
 				},
@@ -244,6 +248,7 @@ sub testV2 {
 				id => 'titus/2/14',
 				type => 'verse',
 				links => {
+					prev => '/1/lookup/titus/2/13',
 					self => '/1/lookup/titus/2/14',
 					next => '/1/lookup/titus/2/15',
 				},

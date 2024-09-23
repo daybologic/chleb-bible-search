@@ -68,6 +68,20 @@ sub getNext {
 	return $nextVerse;
 }
 
+sub getPrev {
+	my ($self) = @_;
+
+	if ($self->ordinal == 1) {
+		if (my $chapter = $self->chapter->getPrev()) {
+			return $chapter->getVerseByOrdinal(-1);
+		}
+	} else {
+		return $self->chapter->getVerseByOrdinal($self->ordinal - 1, { nonFatal => 1 });
+	}
+
+	return undef;
+}
+
 sub equals {
 	my ($self, $other) = @_;
 	return ($self->id eq $other->id);
