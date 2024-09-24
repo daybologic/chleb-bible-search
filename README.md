@@ -27,5 +27,5 @@ The latest release is version 0.9.0, which is available for download at the foll
 
 The latest release is available as a Debian package from the following locations:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v0.8.1/libreligion-bible-verses-perl_0.9.0_all.deb)
-  * [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/downloads/libreligion-bible-verses-perl_0.9.0_all.deb)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v0.9.1/chleb-bible-search_0.9.1_all.deb)
+  * [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/downloads/chleb-bible-search_0.9.1_all.deb)
