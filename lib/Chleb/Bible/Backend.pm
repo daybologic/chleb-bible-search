@@ -28,12 +28,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Backend;
+package Chleb::Bible::Backend;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Religion::Bible::Verses::Base';
+extends 'Chleb::Bible::Base';
 
 use English qw(-no_match_vars);
 use File::Temp;
@@ -43,7 +43,7 @@ use List::Util qw(sum);
 use Moose;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
-use Religion::Bible::Verses::Book;
+use Chleb::Bible::Book;
 use Storable;
 
 Readonly my $BIBLE    => 'kjv.bin';
@@ -71,7 +71,7 @@ Readonly my $BOOK_OFFSET_VERSES_TO_KEYS => ++$offsetMaster; # Relative book vers
 # t - testamentEnum ('N', 'O')
 # v - verse count map (keys are the chapter number, there is no zero, and values are the verse counts)
 
-has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
+has _library => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
 has tmpPath => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeTmpPath);
 
@@ -139,7 +139,7 @@ sub BUILD {
 	return;
 }
 
-sub getBooks { # returns ARRAY of Religion::Bible::Verses::Book
+sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	my ($self) = @_;
 
 	my @books = ( );
@@ -149,7 +149,7 @@ sub getBooks { # returns ARRAY of Religion::Bible::Verses::Book
 		my $shortName = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES]->[$bookIndex];
 		my $bookInfo = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortName};
 		my $bookOrdinal = $bookIndex + 1;
-		$books[$bookIndex] = Religion::Bible::Verses::Book->new({
+		$books[$bookIndex] = Chleb::Bible::Book->new({
 			_library   => $self->_library,
 			ordinal    => $bookOrdinal,
 			shortName  => $shortName,

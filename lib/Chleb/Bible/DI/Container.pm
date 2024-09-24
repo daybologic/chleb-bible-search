@@ -28,13 +28,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::Container;
+package Chleb::Bible::DI::Container;
 use MooseX::Singleton;
 use Moose;
 
 use Log::Log4perl;
-use Religion::Bible::Verses::DI::Config;
-use Religion::Bible::Verses::Exclusions;
+use Chleb::Bible::DI::Config;
+use Chleb::Bible::Exclusions;
 
 has bible => (is => 'rw');
 
@@ -59,7 +59,7 @@ sub _makeConfig {
 
 	foreach my $path ('etc/main.conf', '/etc/chleb-bible-search/main.conf') {
 		next unless (-e $path);
-		return Religion::Bible::Verses::DI::Config->new({ dic => $self, path => $path });
+		return Chleb::Bible::DI::Config->new({ dic => $self, path => $path });
 	}
 
 	die('No config available!');
@@ -67,7 +67,7 @@ sub _makeConfig {
 
 sub _makeExclusions {
 	my ($self) = @_;
-	return Religion::Bible::Verses::Exclusions->new({ dic => $self });
+	return Chleb::Bible::Exclusions->new({ dic => $self });
 }
 
 1;

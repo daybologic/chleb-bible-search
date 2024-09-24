@@ -28,14 +28,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Chapter;
+package Chleb::Bible::Chapter;
 use strict;
 use warnings;
 use Moose;
 
-has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
+has _library => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
-has book => (is => 'ro', isa => 'Religion::Bible::Verses::Book', required => 1);
+has book => (is => 'ro', isa => 'Chleb::Bible::Book', required => 1);
 
 has ordinal => (is => 'ro', isa => 'Int', required => 1);
 
@@ -58,7 +58,7 @@ sub getVerseByOrdinal {
 	# but you need some more methods in the library to avoid it
 	# Perhaps have a getVerseByKey in _library?
 	if (my $text = $self->_library->__backend->getVerseDataByKey($verseKey)) {
-		return Religion::Bible::Verses::Verse->new({
+		return Chleb::Bible::Verse->new({
 			book    => $self->book,
 			chapter => $self,
 			ordinal => $ordinal,

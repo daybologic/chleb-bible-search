@@ -40,15 +40,15 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
-use Religion::Bible::Verses::DI::MockLogger;
+use Chleb::Bible;
+use Chleb::Bible::DI::MockLogger;
 use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Religion::Bible::Verses->new());
+	$self->sut(Chleb::Bible->new());
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -56,7 +56,7 @@ sub setUp {
 
 sub __mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
 	return;
 }
 
@@ -66,7 +66,7 @@ sub testPride {
 
 	my $verse = $self->sut->fetch('Prov', 16, 18);
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
 				ordinal   => 20,

@@ -28,16 +28,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Search::Results;
+package Chleb::Bible::Search::Results;
 use strict;
 use warnings;
 use Moose;
 
 has count => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeCount);
 
-has query => (is => 'ro', isa => 'Religion::Bible::Verses::Search::Query', required => 1);
+has query => (is => 'ro', isa => 'Chleb::Bible::Search::Query', required => 1);
 
-has verses => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Verse]', required => 1);
+has verses => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Verse]', required => 1);
 
 has msec => (is => 'rw', isa => 'Int', default => 0);
 

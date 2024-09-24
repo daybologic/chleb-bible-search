@@ -28,19 +28,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Search::Query;
+package Chleb::Bible::Search::Query;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Religion::Bible::Verses::Base';
+extends 'Chleb::Bible::Base';
 
 use Data::Dumper;
 use Moose::Util::TypeConstraints qw(enum);
-use Religion::Bible::Verses::Search::Results;
+use Chleb::Bible::Search::Results;
 use Time::HiRes ();
 
-has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
+has _library => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
 has limit => (is => 'rw', isa => 'Int', default => 25);
 
@@ -87,7 +87,7 @@ sub run {
 
 	splice(@verses, $self->limit);
 
-	my $results = Religion::Bible::Verses::Search::Results->new({
+	my $results = Chleb::Bible::Search::Results->new({
 		count  => scalar(@verses),
 		query  => $self,
 		verses => \@verses,

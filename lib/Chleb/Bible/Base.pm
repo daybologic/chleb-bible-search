@@ -28,10 +28,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Base;
+package Chleb::Bible::Base;
 use Moose;
 
-use Religion::Bible::Verses::DI::Container;
+use Chleb::Bible::DI::Container;
 
 use DateTime;
 use DateTime::Format::Strptime;
@@ -39,11 +39,11 @@ use English qw(-no_match_vars);
 use Scalar::Util qw(blessed);
 
 # TODO: Do we need a trap to ensure a fatal error occurs if the dic is constructed more than once?
-has dic => (isa => 'Religion::Bible::Verses::DI::Container', is => 'rw', lazy => 1, default => \&__makeDIContainer);
+has dic => (isa => 'Chleb::Bible::DI::Container', is => 'rw', lazy => 1, default => \&__makeDIContainer);
 
 sub __makeDIContainer {
 	my ($self) = @_;
-	return Religion::Bible::Verses::DI::Container->new();
+	return Chleb::Bible::DI::Container->new();
 }
 
 sub _resolveISO8601 {

@@ -28,12 +28,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::Config;
+package Chleb::Bible::DI::Config;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Religion::Bible::Verses::Base';
+extends 'Chleb::Bible::Base';
 
 use Config::INI::Reader;
 use English qw(-no_match_vars);

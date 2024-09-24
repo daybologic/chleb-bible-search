@@ -35,10 +35,10 @@ use warnings;
 use lib 'lib';
 
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
+use Chleb::Bible;
 
 sub main {
-	my $bible = Religion::Bible::Verses->new();
+	my $bible = Chleb::Bible->new();
 
 	my $verse = $bible->votd();
 	printf("%s\n", $verse->toString()); # TODO: Use Log4Perl

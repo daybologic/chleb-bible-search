@@ -40,15 +40,15 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
-use Religion::Bible::Verses::DI::MockLogger;
+use Chleb::Bible;
+use Chleb::Bible::DI::MockLogger;
 use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Religion::Bible::Verses->new());
+	$self->sut(Chleb::Bible->new());
 	#$self->__mockLogger(); # TODO?  Uncomment if we need it.
 
 	return EXIT_SUCCESS;
@@ -56,7 +56,7 @@ sub setUp {
 
 sub __mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
 	return;
 }
 
@@ -67,7 +67,7 @@ sub testSuccess {
 	my $book = $self->sut->getBookByShortName('Jonah');
 	my $verse = $book->getVerseByOrdinal(48);
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
 				ordinal   => 32, # 32nd book is 'Jonah'
@@ -86,7 +86,7 @@ sub testSuccess {
 	$book = $self->sut->getBookByOrdinal(20);
 	$verse = $book->getVerseByOrdinal(458);
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
 				ordinal   => 20,
@@ -105,7 +105,7 @@ sub testSuccess {
 	$book = $self->sut->getBookByOrdinal(1);
 	$verse = $book->getVerseByOrdinal(1);
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
 				ordinal   => 1,
@@ -123,7 +123,7 @@ sub testSuccess {
 
 	$verse = $book->getVerseByOrdinal(1533);
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
 				ordinal   => 1,
@@ -142,7 +142,7 @@ sub testSuccess {
 	$book = $self->sut->getBookByShortName('Rev');
 	$verse = $book->getVerseByOrdinal(404);
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
 				ordinal   => 66,

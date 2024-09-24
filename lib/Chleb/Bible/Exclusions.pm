@@ -28,19 +28,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Exclusions;
+package Chleb::Bible::Exclusions;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Religion::Bible::Verses::Base';
+extends 'Chleb::Bible::Base';
 
 use English qw(-no_match_vars);
 use Readonly;
 
 Readonly my $SECTION_NAME => 'votd_exclude';
 
-has refs => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Verse]', lazy => 1, default => \&__makeRefs);
+has refs => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Verse]', lazy => 1, default => \&__makeRefs);
 has terms => (is => 'ro', isa => 'ArrayRef[Str]', lazy => 1, default => \&__makeTerms);
 
 sub BUILD {
