@@ -28,30 +28,58 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Search::Results;
+package Chleb::Bible::DI::Config;
 use strict;
 use warnings;
 use Moose;
 
-has count => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeCount);
+extends 'Chleb::Bible::Base';
 
-has query => (is => 'ro', isa => 'Religion::Bible::Verses::Search::Query', required => 1);
+use Config::INI::Reader;
+use English qw(-no_match_vars);
+use IO::File;
+use Readonly;
 
-has verses => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Verse]', required => 1);
+has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
 
-has msec => (is => 'rw', isa => 'Int', default => 0);
+has path => (is => 'ro', isa => 'Str', required => 1);
 
 sub BUILD {
+	my ($self) = @_;
+	return;
 }
 
-sub __makeCount {
+sub __makeData {
 	my ($self) = @_;
-	return scalar(@{ $self->verses });
+	return Config::INI::Reader->read_file($self->path);
 }
 
-sub toString {
-	my ($self) = @_;
-	return sprintf("%s count %d for term '%s'", 'Results', $self->count, $self->query->text);
+sub get {
+	my ($self, $section, $key, $default, $isBoolean) = @_;
+
+	if (defined($self->__data->{$section}->{$key})) {
+		my $value = $self->__data->{$section}->{$key};
+		return __boolean($value) if ($isBoolean);
+		return $value;
+	}
+
+	return __boolean($default) if ($isBoolean);
+	return $default;
+}
+
+sub __boolean {
+	my ($value) = @_;
+
+	if (defined($value)) {
+		$value = lc($value);
+
+		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
+		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
+
+		die("Invalid boolean value in config: $value");
+	}
+
+	return 0;
 }
 
 1;

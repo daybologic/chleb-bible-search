@@ -39,9 +39,9 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses::DI::Container;
-use Religion::Bible::Verses::DI::MockLogger;
-use Religion::Bible::Verses::Server;
+use Chleb::Bible::DI::Container;
+use Chleb::Bible::DI::MockLogger;
+use Chleb::Bible::Server;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -49,7 +49,7 @@ sub setUp {
 	my ($self) = @_;
 
 	$self->__mockLogger();
-	$self->sut(Religion::Bible::Verses::Server->new());
+	$self->sut(Chleb::Bible::Server->new());
 
 	return EXIT_SUCCESS;
 }
@@ -316,8 +316,8 @@ sub testV2 {
 sub __mockLogger {
 	my ($self) = @_;
 
-	my $dic = Religion::Bible::Verses::DI::Container->instance;
-	$dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	my $dic = Chleb::Bible::DI::Container->instance;
+	$dic->logger(Chleb::Bible::DI::MockLogger->new());
 
 	return;
 }

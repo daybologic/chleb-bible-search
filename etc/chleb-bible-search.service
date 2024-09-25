@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 EnvironmentFile=-/etc/default/chleb-bible-search
-ExecStart=/usr/bin/perl /usr/share/perl5/Religion/Bible/Verses/Server.pm
+ExecStart=/usr/bin/perl /usr/share/perl5/Chleb/Bible/Server.pm
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 RestartPreventExitStatus=255

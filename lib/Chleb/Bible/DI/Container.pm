@@ -28,47 +28,46 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::MockLogger;
+package Chleb::Bible::DI::Container;
+use MooseX::Singleton;
 use Moose;
-use strict;
-use warnings;
 
-use Test::More;
+use Log::Log4perl;
+use Chleb::Bible::DI::Config;
+use Chleb::Bible::Exclusions;
 
-sub BUILD {
-	return;
+has bible => (is => 'rw');
+
+has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
+
+has config => (is => 'rw', lazy => 1, builder => '_makeConfig');
+
+has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
+
+sub _makeLogger {
+	foreach my $path ('etc/log4perl.conf', '/etc/chleb-bible-search/log4perl.conf') {
+		next unless (-e $path);
+		Log::Log4perl->init($path);
+		last;
+	}
+
+	return Log::Log4perl->get_logger('chleb');
 }
 
-sub log {
-	my ($self, $msg) = @_;
-	return unless ($ENV{TEST_VERBOSE});
-	diag($msg);
-	return;
+sub _makeConfig {
+	my ($self) = @_;
+
+	foreach my $path ('etc/main.conf', '/etc/chleb-bible-search/main.conf') {
+		next unless (-e $path);
+		return Chleb::Bible::DI::Config->new({ dic => $self, path => $path });
+	}
+
+	die('No config available!');
 }
 
-sub info {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub error {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub warn {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub debug {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub trace {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
+sub _makeExclusions {
+	my ($self) = @_;
+	return Chleb::Bible::Exclusions->new({ dic => $self });
 }
 
 1;

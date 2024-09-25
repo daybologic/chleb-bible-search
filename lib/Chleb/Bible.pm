@@ -28,33 +28,33 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses;
+package Chleb::Bible;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Religion::Bible::Verses::Base';
+extends 'Chleb::Bible::Base';
 
 use Data::Dumper;
 use Digest::CRC qw(crc32);
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
 
-use Religion::Bible::Verses::Backend;
-use Religion::Bible::Verses::DI::Container;
-use Religion::Bible::Verses::Search::Query;
-use Religion::Bible::Verses::Verse;
+use Chleb::Bible::Backend;
+use Chleb::Bible::DI::Container;
+use Chleb::Bible::Search::Query;
+use Chleb::Bible::Verse;
 
-has __backend => (is => 'ro', isa => 'Religion::Bible::Verses::Backend', lazy => 1, default => \&__makeBackend);
+has __backend => (is => 'ro', isa => 'Chleb::Bible::Backend', lazy => 1, default => \&__makeBackend);
 
 has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCount);
 
-has books => (is => 'ro', isa => 'ArrayRef[Religion::Bible::Verses::Book]', lazy => 1, default => \&__makeBooks);
+has books => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Book]', lazy => 1, default => \&__makeBooks);
 
 has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeConstructionTime);
 
 BEGIN {
-	our $VERSION = '0.9.0';
+	our $VERSION = '0.10.0';
 }
 
 sub BUILD {
@@ -125,11 +125,11 @@ sub newSearchQuery {
 
 	my %defaults = ( _library => $self, dic => $self->dic );
 
-	return Religion::Bible::Verses::Search::Query->new({ %defaults, text => $args[0] })
+	return Chleb::Bible::Search::Query->new({ %defaults, text => $args[0] })
 	    if (scalar(@args) == 1);
 
 	my %params = @args;
-	return Religion::Bible::Verses::Search::Query->new({ %defaults, %params });
+	return Chleb::Bible::Search::Query->new({ %defaults, %params });
 }
 
 sub resolveBook {
@@ -225,7 +225,7 @@ sub votd {
 
 sub __makeBackend {
 	my ($self) = @_;
-	return Religion::Bible::Verses::Backend->new({
+	return Chleb::Bible::Backend->new({
 		_library => $self,
 	});
 }

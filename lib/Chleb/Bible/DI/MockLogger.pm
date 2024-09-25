@@ -28,51 +28,47 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Base;
+package Chleb::Bible::DI::MockLogger;
 use Moose;
+use strict;
+use warnings;
 
-use Religion::Bible::Verses::DI::Container;
+use Test::More;
 
-use DateTime;
-use DateTime::Format::Strptime;
-use English qw(-no_match_vars);
-use Scalar::Util qw(blessed);
-
-# TODO: Do we need a trap to ensure a fatal error occurs if the dic is constructed more than once?
-has dic => (isa => 'Religion::Bible::Verses::DI::Container', is => 'rw', lazy => 1, default => \&__makeDIContainer);
-
-sub __makeDIContainer {
-	my ($self) = @_;
-	return Religion::Bible::Verses::DI::Container->new();
+sub BUILD {
+	return;
 }
 
-sub _resolveISO8601 {
-	my ($self, $iso8601) = @_;
+sub log {
+	my ($self, $msg) = @_;
+	return unless ($ENV{TEST_VERBOSE});
+	diag($msg);
+	return;
+}
 
-	$iso8601 ||= DateTime->now; # The default is the current time
-	if (my $ref = blessed($iso8601)) {
-		if ($ref->isa('DateTime')) {
-			$self->dic->logger->error('NULL in _resolveISO8601!') unless (defined($iso8601));
-			return $iso8601;
-		} else {
-			die('Unsupported blessed time format');
-		}
-	}
+sub info {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
+}
 
-	$iso8601 =~ s/ /+/g; # Fix bad client behavior
-	$self->dic->logger->trace("parsing date string '$iso8601'");
+sub error {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
+}
 
-	my $format = DateTime::Format::Strptime->new(pattern => '%FT%T%z');
-	eval {
-		$iso8601 = $format->parse_datetime($iso8601);
-	};
+sub warn {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
+}
 
-	if (my $evalError = $EVAL_ERROR) {
-		die('Unsupported ISO-8601 time format: ' . $evalError);
-	}
+sub debug {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
+}
 
-	$self->dic->logger->error('NULL in _resolveISO8601!') unless (defined($iso8601));
-	return $iso8601;
+sub trace {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
 }
 
 1;

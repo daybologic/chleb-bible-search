@@ -35,10 +35,10 @@ use warnings;
 use lib 'lib';
 
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
+use Chleb::Bible;
 
 sub main {
-	my $bible = Religion::Bible::Verses->new();
+	my $bible = Chleb::Bible->new();
 
 	my $query = $bible->newSearchQuery('dwelt')->setLimit(10);
 	# FIXME: Need to limit to one book?  should be able to do this via Query.pm

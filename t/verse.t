@@ -40,16 +40,16 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
-use Religion::Bible::Verses::Book;
-use Religion::Bible::Verses::Verse;
+use Chleb::Bible;
+use Chleb::Bible::Book;
+use Chleb::Bible::Verse;
 use Test::Deep qw(cmp_deeply);
 use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
-	$self->sut(Religion::Bible::Verses->new());
+	$self->sut(Chleb::Bible->new());
 	return EXIT_SUCCESS;
 }
 
@@ -57,7 +57,7 @@ sub test {
 	my ($self) = @_;
 	plan tests => 5;
 
-	my $book = Religion::Bible::Verses::Book->new({
+	my $book = Chleb::Bible::Book->new({
 		_library  => $self->sut,
 		longName  => 'Book of Morman',
 		ordinal   => 21,
@@ -67,9 +67,9 @@ sub test {
 
 	my $text = 'Blessed are the peacemakers, because they will be called sons of God';
 
-	my $verse = Religion::Bible::Verses::Verse->new({
+	my $verse = Chleb::Bible::Verse->new({
 		book    => $book,
-		chapter => Religion::Bible::Verses::Chapter->new({
+		chapter => Chleb::Bible::Chapter->new({
 			_library => $self->sut,
 			book     => $book,
 			ordinal  => 1121,
@@ -79,7 +79,7 @@ sub test {
 	});
 
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
 				ordinal   => 21,

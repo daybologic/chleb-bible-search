@@ -40,14 +40,14 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
-use Religion::Bible::Verses::DI::MockLogger;
+use Chleb::Bible;
+use Chleb::Bible::DI::MockLogger;
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Religion::Bible::Verses->new());
+	$self->sut(Chleb::Bible->new());
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -59,7 +59,7 @@ sub testPeaceSearch {
 
 	my $query = $self->sut->newSearchQuery('peace on earth')->setLimit(3);
 	cmp_deeply($query, all(
-		isa('Religion::Bible::Verses::Search::Query'),
+		isa('Chleb::Bible::Search::Query'),
 		methods(
 			limit         => 3,
 			testament     => undef,
@@ -70,7 +70,7 @@ sub testPeaceSearch {
 
 	my @bookExpect = (
 		all(
-			isa('Religion::Bible::Verses::Book'),
+			isa('Chleb::Bible::Book'),
 			methods(
 				ordinal      => 40,
 				shortName    => 'Mat',
@@ -80,7 +80,7 @@ sub testPeaceSearch {
 			),
 		),
 		all(
-			isa('Religion::Bible::Verses::Book'),
+			isa('Chleb::Bible::Book'),
 			methods(
 				ordinal      => 42,
 				shortName    => 'Luke',
@@ -93,16 +93,16 @@ sub testPeaceSearch {
 
 	my $results = $query->run();
 	cmp_deeply($results, all(
-		isa('Religion::Bible::Verses::Search::Results'),
+		isa('Chleb::Bible::Search::Results'),
 		methods(
 			count  => 2,
 			verses => [
 				all(
-					isa('Religion::Bible::Verses::Verse'),
+					isa('Chleb::Bible::Verse'),
 					methods(
 						book    => $bookExpect[0],
 						chapter => all(
-							isa('Religion::Bible::Verses::Chapter'),
+							isa('Chleb::Bible::Chapter'),
 							methods(
 								book       => $bookExpect[0],
 								ordinal    => 10,
@@ -114,11 +114,11 @@ sub testPeaceSearch {
 					),
 				),
 				all(
-					isa('Religion::Bible::Verses::Verse'),
+					isa('Chleb::Bible::Verse'),
 					methods(
 						book    => $bookExpect[1],
 						chapter => all(
-							isa('Religion::Bible::Verses::Chapter'),
+							isa('Chleb::Bible::Chapter'),
 							methods(
 								book       => $bookExpect[1],
 								ordinal    => 12,
@@ -138,7 +138,7 @@ sub testPeaceSearch {
 
 sub __mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
 	return;
 }
 

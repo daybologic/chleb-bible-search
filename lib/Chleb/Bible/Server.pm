@@ -29,12 +29,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Server;
+package Chleb::Bible::Server;
 use strict;
 use warnings;
 use JSON;
-use Religion::Bible::Verses;
-use Religion::Bible::Verses::DI::Container;
+use Chleb::Bible;
+use Chleb::Bible::DI::Container;
 use Time::Duration;
 use UUID::Tiny ':std';
 
@@ -48,7 +48,7 @@ sub new {
 }
 
 sub dic {
-	return Religion::Bible::Verses::DI::Container->instance;
+	return Chleb::Bible::DI::Container->instance;
 }
 
 sub __title {
@@ -74,7 +74,7 @@ sub __json {
 
 sub __bible {
 	my ($self) = @_;
-	$self->{__bible} ||= Religion::Bible::Verses->new();
+	$self->{__bible} ||= Chleb::Bible->new();
 	return $self->{__bible};
 }
 
@@ -111,7 +111,7 @@ sub __verseToJsonApi {
 		relationships => { },
 	});
 
-	my $dic = Religion::Bible::Verses::DI::Container->instance;
+	my $dic = Chleb::Bible::DI::Container->instance;
 	push(@{ $hash{included} }, {
 		type => 'stats',
 		id => uuid_to_string(create_uuid()),
@@ -237,7 +237,7 @@ sub __version {
 	my ($self) = @_;
 	my %hash = __makeJsonApi();
 
-	my $version = $Religion::Bible::Verses::VERSION;
+	my $version = $Chleb::Bible::VERSION;
 
 	return 403 unless ($self->dic->config->get('features', 'version', 'true', 1));
 
@@ -423,7 +423,7 @@ get '/1/uptime' => sub {
 };
 
 unless (caller()) {
-	$server = Religion::Bible::Verses::Server->new();
+	$server = Chleb::Bible::Server->new();
 	$0 = 'chleb-bible-search [server]';
 	dance;
 

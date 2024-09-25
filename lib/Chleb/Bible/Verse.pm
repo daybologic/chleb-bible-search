@@ -28,16 +28,16 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Verse;
+package Chleb::Bible::Verse;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Religion::Bible::Verses::Base';
+extends 'Chleb::Bible::Base';
 
-has book => (is => 'ro', isa => 'Religion::Bible::Verses::Book', required => 1);
+has book => (is => 'ro', isa => 'Chleb::Bible::Book', required => 1);
 
-has chapter => (is => 'ro', isa => 'Religion::Bible::Verses::Chapter', required => 1);
+has chapter => (is => 'ro', isa => 'Chleb::Bible::Chapter', required => 1);
 
 has ordinal => (is => 'ro', isa => 'Int', required => 1);
 

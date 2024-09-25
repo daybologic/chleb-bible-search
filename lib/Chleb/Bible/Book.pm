@@ -28,18 +28,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Book;
+package Chleb::Bible::Book;
 use strict;
 use warnings;
 use Moose;
 use Moose::Util::TypeConstraints qw(enum);
 use Readonly;
-use Religion::Bible::Verses::Chapter;
-use Religion::Bible::Verses::Verse;
+use Chleb::Bible::Chapter;
+use Chleb::Bible::Verse;
 
 Readonly my $TRANSLATION => 'kjv';
 
-has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
+has _library => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
 has ordinal => (is => 'ro', isa => 'Int');
 
@@ -66,7 +66,7 @@ sub getVerseByOrdinal {
 		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
 		if (my $text = $self->_library->__backend->getVerseDataByKey($verseKey)) {
 			my $chapter = $self->getChapterByOrdinal($chapterNumber);
-			return Religion::Bible::Verses::Verse->new({
+			return Chleb::Bible::Verse->new({
 				book    => $self,
 				chapter => $chapter,
 				ordinal => $verseNumber,
@@ -120,7 +120,7 @@ sub search {
 				$found = 1 if ($text =~ m/$critereonText/i);
 			}
 
-			push(@verses, Religion::Bible::Verses::Verse->new({
+			push(@verses, Chleb::Bible::Verse->new({
 				book    => $self,
 				chapter => $chapter,
 				ordinal => $verseOrdinal,
@@ -161,7 +161,7 @@ sub getChapterByOrdinal {
 		}
 	}
 
-	return Religion::Bible::Verses::Chapter->new({
+	return Chleb::Bible::Chapter->new({
 		_library => $self->_library,
 		book     => $self,
 		ordinal  => $ordinal,

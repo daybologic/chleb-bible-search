@@ -39,15 +39,15 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
-use Religion::Bible::Verses::DI::MockLogger;
+use Chleb::Bible;
+use Chleb::Bible::DI::MockLogger;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Religion::Bible::Verses->new());
+	$self->sut(Chleb::Bible->new());
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -59,10 +59,10 @@ sub test {
 
 	my $verse = $self->sut->votd();
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
-			book    => isa('Religion::Bible::Verses::Book'),
-			chapter => isa('Religion::Bible::Verses::Chapter'),
+			book    => isa('Chleb::Bible::Book'),
+			chapter => isa('Chleb::Bible::Chapter'),
 			ordinal => re(qr/^\d+$/),
 			text    => ignore(),
 		),
@@ -78,37 +78,37 @@ sub testV2 {
 	my $verse = $self->sut->votd({ version => 2, when => '2024-08-19T12:00:00+0100' });
 	cmp_deeply($verse, [
 		all(
-			isa('Religion::Bible::Verses::Verse'),
+			isa('Chleb::Bible::Verse'),
 			methods(
-				book    => isa('Religion::Bible::Verses::Book'),
-				chapter => isa('Religion::Bible::Verses::Chapter'),
+				book    => isa('Chleb::Bible::Book'),
+				chapter => isa('Chleb::Bible::Chapter'),
 				ordinal => 11,
 				text    => 'For the grace of God that bringeth salvation hath appeared to all men,',
 			),
 		),
 		all(
-			isa('Religion::Bible::Verses::Verse'),
+			isa('Chleb::Bible::Verse'),
 			methods(
-				book    => isa('Religion::Bible::Verses::Book'),
-				chapter => isa('Religion::Bible::Verses::Chapter'),
+				book    => isa('Chleb::Bible::Book'),
+				chapter => isa('Chleb::Bible::Chapter'),
 				ordinal => 12,
 				text    => 'Teaching us that, denying ungodliness and worldly lusts, we should live soberly, righteously, and godly, in this present world;',
 			),
 		),
 		all(
-			isa('Religion::Bible::Verses::Verse'),
+			isa('Chleb::Bible::Verse'),
 			methods(
-				book    => isa('Religion::Bible::Verses::Book'),
-				chapter => isa('Religion::Bible::Verses::Chapter'),
+				book    => isa('Chleb::Bible::Book'),
+				chapter => isa('Chleb::Bible::Chapter'),
 				ordinal => 13,
 				text    => 'Looking for that blessed hope, and the glorious appearing of the great God and our Saviour Jesus Christ;',
 			),
 		),
 		all(
-			isa('Religion::Bible::Verses::Verse'),
+			isa('Chleb::Bible::Verse'),
 			methods(
-				book    => isa('Religion::Bible::Verses::Book'),
-				chapter => isa('Religion::Bible::Verses::Chapter'),
+				book    => isa('Chleb::Bible::Book'),
+				chapter => isa('Chleb::Bible::Chapter'),
 				ordinal => 14,
 				text    => 'Who gave himself for us, that he might redeem us from all iniquity, and purify unto himself a peculiar people, zealous of good works.',
 			),
@@ -125,14 +125,14 @@ sub testParentalTerm {
 	my $when = '1973-01-12T12:00:00+0100';
 	my $verse = $self->sut->votd({ version => 1, when => $when, parental => 0 });
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => all(
-				isa('Religion::Bible::Verses::Book'),
+				isa('Chleb::Bible::Book'),
 				methods(shortName => 'Gal'),
 			),
 			chapter => all(
-				isa('Religion::Bible::Verses::Chapter'),
+				isa('Chleb::Bible::Chapter'),
 				methods(ordinal => 6),
 			),
 			ordinal => 12,
@@ -142,14 +142,14 @@ sub testParentalTerm {
 
 	$verse = $self->sut->votd({ version => 1, when => $when, parental => 1 });
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => all(
-				isa('Religion::Bible::Verses::Book'),
+				isa('Chleb::Bible::Book'),
 				methods(shortName => 'Jonah'),
 			),
 			chapter => all(
-				isa('Religion::Bible::Verses::Chapter'),
+				isa('Chleb::Bible::Chapter'),
 				methods(ordinal => 4),
 			),
 			ordinal => 10,
@@ -167,14 +167,14 @@ sub testParentalRef {
 	my $when = '1810-09-14T12:00:00+0000';
 	my $verse = $self->sut->votd({ version => 1, when => $when, parental => 0 });
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => all(
-				isa('Religion::Bible::Verses::Book'),
+				isa('Chleb::Bible::Book'),
 				methods(shortName => 'Judg'),
 			),
 			chapter => all(
-				isa('Religion::Bible::Verses::Chapter'),
+				isa('Chleb::Bible::Chapter'),
 				methods(ordinal => 19),
 			),
 			ordinal => 25,
@@ -184,14 +184,14 @@ sub testParentalRef {
 
 	$verse = $self->sut->votd({ version => 1, when => $when, parental => 1 });
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => all(
-				isa('Religion::Bible::Verses::Book'),
+				isa('Chleb::Bible::Book'),
 				methods(shortName => '2Th'),
 			),
 			chapter => all(
-				isa('Religion::Bible::Verses::Chapter'),
+				isa('Chleb::Bible::Chapter'),
 				methods(ordinal => 2),
 			),
 			ordinal => 17,
@@ -204,7 +204,7 @@ sub testParentalRef {
 
 sub __mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
 	return;
 }
 

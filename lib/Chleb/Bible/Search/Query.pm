@@ -1,4 +1,3 @@
-#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,95 +28,82 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package PrideTests;
+package Chleb::Bible::Search::Query;
 use strict;
 use warnings;
 use Moose;
 
-use lib 'externals/libtest-module-runnable-perl/lib';
+extends 'Chleb::Bible::Base';
 
-extends 'Test::Module::Runnable';
+use Data::Dumper;
+use Moose::Util::TypeConstraints qw(enum);
+use Chleb::Bible::Search::Results;
+use Time::HiRes ();
 
-use Test::Deep qw(all cmp_deeply isa methods);
-use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible;
-use Chleb::Bible::DI::MockLogger;
-use Test::Exception;
-use Test::More 0.96;
+has _library => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
-sub setUp {
-	my ($self) = @_;
+has limit => (is => 'rw', isa => 'Int', default => 25);
 
-	$self->sut(Chleb::Bible->new());
-	$self->__mockLogger();
+has testament => (is => 'ro', isa => enum(['old', 'new']), required => 0);
 
-	return EXIT_SUCCESS;
+has bookShortName => (is => 'ro', isa => 'Str', required => 0);
+
+has text => (is => 'ro', isa => 'Str', required => 1);
+
+has wholeword => (is => 'rw', isa => 'Bool', default => 0);
+
+sub BUILD {
 }
 
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
-	return;
+sub setLimit {
+	my ($self, $limit) = @_;
+	$self->limit($limit);
+	return $self;
 }
 
-sub testPride {
-	my ($self) = @_;
-	plan tests => 1;
-
-	my $verse = $self->sut->fetch('Prov', 16, 18);
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => methods(
-				ordinal   => 20,
-				longName  => 'Proverbs',
-				shortName => 'Prov',
-				testament => 'old',
-			),
-			chapter => methods(
-				ordinal => 16,
-			),
-			ordinal => 18,
-			text    => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
-		),
-	), 'verse inspection') or diag(explain($verse));
-	diag(explain($verse->toString()));
-
-	return EXIT_SUCCESS;
+sub setWholeword {
+	my ($self, $wholeword) = @_;
+	$self->wholeword($wholeword);
+	return $self;
 }
 
-sub testBadBook {
+sub run {
 	my ($self) = @_;
-	plan tests => 1;
+	my $startTiming = Time::HiRes::time();
 
-	throws_ok { $self->sut->fetch('Mormon', 16, 18) } qr/Long book name 'Mormon' is not a book in the bible/,
-	    'exception thrown';
+	my @booksToQuery = ( );
+	if ($self->bookShortName) {
+		$booksToQuery[0] = $self->_library->getBookByShortName($self->bookShortName);
+	} else {
+		@booksToQuery = @{ $self->_library->books };
+	}
 
-	return EXIT_SUCCESS;
+	my @verses = ( );
+	foreach my $book (@booksToQuery) {
+		next if ($self->testament && $self->testament ne $book->testament);
+		my $bookVerses = $book->search($self);
+		push(@verses, @$bookVerses);
+	}
+
+	splice(@verses, $self->limit);
+
+	my $results = Chleb::Bible::Search::Results->new({
+		count  => scalar(@verses),
+		query  => $self,
+		verses => \@verses,
+	});
+
+	my $endTiming = Time::HiRes::time();
+	my $msec = int(1000 * ($endTiming - $startTiming));
+	$results->msec($msec);
+	$self->dic->logger->debug(sprintf("Ran search %s and received %s in %dms", $self->toString(), $results->toString(), $msec));
+
+	return $results;
 }
 
-sub testBadChapter {
+sub toString {
 	my ($self) = @_;
-	plan tests => 1;
-
-	throws_ok { $self->sut->fetch('Prov', 36, 1) } qr/Chapter 36 not found in Prov/,
-	    'exception thrown';
-
-	return EXIT_SUCCESS;
+	return sprintf("%s text '%s'", 'Query', $self->text);
 }
 
-sub testBadVerse {
-	my ($self) = @_;
-	plan tests => 1;
-
-	throws_ok { $self->sut->fetch('Luke', 24, 54) } qr/Verse 54 not found in Luke 24/,
-	    'exception thrown';
-
-	return EXIT_SUCCESS;
-}
-
-package main;
-use strict;
-use warnings;
-
-exit(PrideTests->new->run());
+1;

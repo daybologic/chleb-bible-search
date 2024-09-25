@@ -1,3 +1,12 @@
+chleb-bible-search (0.10.0) stable; urgency=low
+
+  * Rename Debian package
+  * Rename Perl package prefix to Chleb::Bible
+    This is a major refactor for all direct users but not JSON:API users
+    Hopefully not too many more big changes before 1.0.0 release!
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Tue, 25 Sep 2024 20:57:45 +0100
+
 libreligion-bible-verses-perl (0.9.0) stable; urgency=medium
 
   * added 'prev' links

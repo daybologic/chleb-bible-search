@@ -40,14 +40,14 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses;
-use Religion::Bible::Verses::DI::MockLogger;
+use Chleb::Bible;
+use Chleb::Bible::DI::MockLogger;
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Religion::Bible::Verses->new());
+	$self->sut(Chleb::Bible->new());
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -59,13 +59,13 @@ sub testTraversal {
 
 	my $book = $self->sut->getBookByOrdinal(1);
 	cmp_deeply($book, all(
-		isa('Religion::Bible::Verses::Book'),
+		isa('Chleb::Bible::Book'),
 		methods(shortName => 'Gen'),
 	), 'Book lookup for Genesis');
 
 	my $verse = $book->getVerseByOrdinal(1);
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			chapter => methods(ordinal => 1),
 			ordinal => 1,
@@ -82,7 +82,7 @@ sub testTraversal {
 
 	$verse = $previousVerse;
 	cmp_deeply($verse, all(
-		isa('Religion::Bible::Verses::Verse'),
+		isa('Chleb::Bible::Verse'),
 		methods(
 			book => methods(ordinal => 66),
 			chapter => methods(ordinal => 22),
@@ -98,7 +98,7 @@ sub testTraversal {
 
 sub __mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
 	return;
 }
 

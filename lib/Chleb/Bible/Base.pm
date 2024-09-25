@@ -28,58 +28,51 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::DI::Config;
-use strict;
-use warnings;
+package Chleb::Bible::Base;
 use Moose;
 
-extends 'Religion::Bible::Verses::Base';
+use Chleb::Bible::DI::Container;
 
-use Config::INI::Reader;
+use DateTime;
+use DateTime::Format::Strptime;
 use English qw(-no_match_vars);
-use IO::File;
-use Readonly;
+use Scalar::Util qw(blessed);
 
-has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
+# TODO: Do we need a trap to ensure a fatal error occurs if the dic is constructed more than once?
+has dic => (isa => 'Chleb::Bible::DI::Container', is => 'rw', lazy => 1, default => \&__makeDIContainer);
 
-has path => (is => 'ro', isa => 'Str', required => 1);
-
-sub BUILD {
+sub __makeDIContainer {
 	my ($self) = @_;
-	return;
+	return Chleb::Bible::DI::Container->new();
 }
 
-sub __makeData {
-	my ($self) = @_;
-	return Config::INI::Reader->read_file($self->path);
-}
+sub _resolveISO8601 {
+	my ($self, $iso8601) = @_;
 
-sub get {
-	my ($self, $section, $key, $default, $isBoolean) = @_;
-
-	if (defined($self->__data->{$section}->{$key})) {
-		my $value = $self->__data->{$section}->{$key};
-		return __boolean($value) if ($isBoolean);
-		return $value;
+	$iso8601 ||= DateTime->now; # The default is the current time
+	if (my $ref = blessed($iso8601)) {
+		if ($ref->isa('DateTime')) {
+			$self->dic->logger->error('NULL in _resolveISO8601!') unless (defined($iso8601));
+			return $iso8601;
+		} else {
+			die('Unsupported blessed time format');
+		}
 	}
 
-	return __boolean($default) if ($isBoolean);
-	return $default;
-}
+	$iso8601 =~ s/ /+/g; # Fix bad client behavior
+	$self->dic->logger->trace("parsing date string '$iso8601'");
 
-sub __boolean {
-	my ($value) = @_;
+	my $format = DateTime::Format::Strptime->new(pattern => '%FT%T%z');
+	eval {
+		$iso8601 = $format->parse_datetime($iso8601);
+	};
 
-	if (defined($value)) {
-		$value = lc($value);
-
-		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
-		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
-
-		die("Invalid boolean value in config: $value");
+	if (my $evalError = $EVAL_ERROR) {
+		die('Unsupported ISO-8601 time format: ' . $evalError);
 	}
 
-	return 0;
+	$self->dic->logger->error('NULL in _resolveISO8601!') unless (defined($iso8601));
+	return $iso8601;
 }
 
 1;

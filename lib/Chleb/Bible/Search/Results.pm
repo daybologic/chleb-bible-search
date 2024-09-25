@@ -28,82 +28,30 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Religion::Bible::Verses::Search::Query;
+package Chleb::Bible::Search::Results;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Religion::Bible::Verses::Base';
+has count => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeCount);
 
-use Data::Dumper;
-use Moose::Util::TypeConstraints qw(enum);
-use Religion::Bible::Verses::Search::Results;
-use Time::HiRes ();
+has query => (is => 'ro', isa => 'Chleb::Bible::Search::Query', required => 1);
 
-has _library => (is => 'ro', isa => 'Religion::Bible::Verses', required => 1);
+has verses => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Verse]', required => 1);
 
-has limit => (is => 'rw', isa => 'Int', default => 25);
-
-has testament => (is => 'ro', isa => enum(['old', 'new']), required => 0);
-
-has bookShortName => (is => 'ro', isa => 'Str', required => 0);
-
-has text => (is => 'ro', isa => 'Str', required => 1);
-
-has wholeword => (is => 'rw', isa => 'Bool', default => 0);
+has msec => (is => 'rw', isa => 'Int', default => 0);
 
 sub BUILD {
 }
 
-sub setLimit {
-	my ($self, $limit) = @_;
-	$self->limit($limit);
-	return $self;
-}
-
-sub setWholeword {
-	my ($self, $wholeword) = @_;
-	$self->wholeword($wholeword);
-	return $self;
-}
-
-sub run {
+sub __makeCount {
 	my ($self) = @_;
-	my $startTiming = Time::HiRes::time();
-
-	my @booksToQuery = ( );
-	if ($self->bookShortName) {
-		$booksToQuery[0] = $self->_library->getBookByShortName($self->bookShortName);
-	} else {
-		@booksToQuery = @{ $self->_library->books };
-	}
-
-	my @verses = ( );
-	foreach my $book (@booksToQuery) {
-		next if ($self->testament && $self->testament ne $book->testament);
-		my $bookVerses = $book->search($self);
-		push(@verses, @$bookVerses);
-	}
-
-	splice(@verses, $self->limit);
-
-	my $results = Religion::Bible::Verses::Search::Results->new({
-		count  => scalar(@verses),
-		query  => $self,
-		verses => \@verses,
-	});
-
-	my $endTiming = Time::HiRes::time();
-	my $msec = int(1000 * ($endTiming - $startTiming));
-	$results->msec($msec);
-	$self->dic->logger->debug(sprintf("Ran search %s and received %s in %dms", $self->toString(), $results->toString(), $msec));
-
-	return $results;
+	return scalar(@{ $self->verses });
 }
 
 sub toString {
 	my ($self) = @_;
-	return sprintf("%s text '%s'", 'Query', $self->text);
+	return sprintf("%s count %d for term '%s'", 'Results', $self->count, $self->query->text);
 }
 
 1;

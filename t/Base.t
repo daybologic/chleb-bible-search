@@ -10,8 +10,8 @@ extends 'Test::Module::Runnable';
 
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
-use Religion::Bible::Verses::Base;
-use Religion::Bible::Verses::DI::MockLogger;
+use Chleb::Bible::Base;
+use Chleb::Bible::DI::MockLogger;
 use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
 use Test::More;
@@ -19,7 +19,7 @@ use Test::More;
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Religion::Bible::Verses::Base->new());
+	$self->sut(Chleb::Bible::Base->new());
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -101,7 +101,7 @@ sub testMangledPlus {
 
 sub __mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Religion::Bible::Verses::DI::MockLogger->new());
+	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
 	return;
 }
 
