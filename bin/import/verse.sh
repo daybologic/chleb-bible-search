@@ -42,7 +42,7 @@ TRANSLATION='kjv'
 ref="${TRANSLATION}:${bookNameShort}:${chapter}:${verse}"
 outputInterim="data/${TRANSLATION}-verses.txt"
 
-verseFile=$(mktemp bible-master-book.XXXXXX.tmp --tmpdir)
+verseFile=$(mktemp chleb-bible-search-import-book.XXXXXX.tmp --tmpdir)
 echo "${ref}::${text}" | tee "$verseFile"
 cat "$verseFile" >> "$outputInterim"
 rm -vf "$verseFile"

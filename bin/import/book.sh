@@ -35,7 +35,7 @@ set -xeuo pipefail
 bookPath="$1"
 
 bookNameShort=$(basename $bookPath)
-commands=$(mktemp bible-master-book-${bookNameShort}-commands.XXXXXX.sh --tmpdir)
+commands=$(mktemp chleb-bible-search-import-book-${bookNameShort}-commands.XXXXXX.sh --tmpdir)
 
 bookNameLong=$(./bin/import/book-name-long.awk -v BOOK_NAME_SHORT="$bookNameShort" data/static/kjv/index.cvs)
 echo "set bookNameLong: $bookNameLong"
