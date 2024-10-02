@@ -50,7 +50,7 @@ Readonly my $BIBLE    => 'kjv.bin';
 Readonly my $BIBLE_GZ => 'kjv.bin.gz';
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
-Readonly my $FILE_VERSION => 8;
+Readonly my $FILE_VERSION => 10;
 
 Readonly my $OT_COUNT => 39;
 
@@ -58,6 +58,7 @@ my $offsetMaster = -1;
 Readonly my $MAIN_OFFSET_SIG     => ++$offsetMaster; # string
 Readonly my $MAIN_OFFSET_VERSION => ++$offsetMaster; # int
 Readonly my $MAIN_OFFSET_BOOKS   => ++$offsetMaster; # array, see $BOOK_*
+Readonly my $MAIN_OFFSET_VERSES  => ++$offsetMaster; # global array of verses to key names
 Readonly my $MAIN_OFFSET_DATA    => ++$offsetMaster; # main verse map
 
 $offsetMaster = -1;
@@ -161,6 +162,11 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	}
 
 	return \@books;
+}
+
+sub getVerseKeyByOrdinal {
+	my ($self, $ordinal) = @_;
+	return $self->data->[$MAIN_OFFSET_VERSES]->[$ordinal];
 }
 
 sub getVerseDataByKey {
