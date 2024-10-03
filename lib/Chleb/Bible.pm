@@ -195,6 +195,23 @@ sub fetch {
 	return $verse;
 }
 
+sub random { # TODO: parental?
+	my ($self) = @_;
+
+	my $startTiming = Time::HiRes::time();
+	my $verseOrdinal = 1 + rand($self->verseCount);
+
+	my $verse = $self->getVerseByOrdinal($verseOrdinal);
+
+	my $endTiming = Time::HiRes::time();
+	my $msecAll = int(1000 * ($endTiming - $startTiming));
+
+	$verse->msec($msecAll);
+	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(), $msecAll));
+
+	return $verse;
+}
+
 sub votd {
 	my ($self, $params) = @_;
 	my $startTiming = Time::HiRes::time();
