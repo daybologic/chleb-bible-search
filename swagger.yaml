@@ -69,11 +69,43 @@ paths:
           description: Forbidden
         '429':
           description: Rate-limited
+  /1/random:
+    get:
+      summary: Random Verse
+      operationId: getRandom
+      description: Retrieve one verse from The Bible, at random.
+      security: [] # No security
+      responses:
+        '200':
+          description: Successfully retrieved verse
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stats'
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
   /1/votd:
     get:
       summary: Verse of The Day
       operationId: getVotd
-      description: Retrieve one verse from The Bible, at random.
+      description: Retrieve one verse from The Bible, for the given day
       parameters:
         - in: query
           name: when
@@ -121,7 +153,7 @@ paths:
     get:
       summary: Verse(s) of The Day
       operationId: getVotd2
-      description: Retrieve a series of verses from The Bible, at random.
+      description: Retrieve a series of verses from The Bible, for the given day
       parameters:
         - in: query
           name: when
