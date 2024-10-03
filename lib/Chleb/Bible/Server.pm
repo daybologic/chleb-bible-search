@@ -181,6 +181,17 @@ sub __lookup {
 	return $json;
 }
 
+sub __random {
+	my ($self) = @_;
+	my $verse = $self->__bible->random();
+
+	my $json = __verseToJsonApi($verse);
+	my $version = 1;
+	$json->{links}->{self} =  '/' . join('/', $version, 'random');
+
+	return $json;
+}
+
 sub __votd {
 	my ($self, $params) = @_;
 
@@ -375,6 +386,10 @@ use POSIX qw(EXIT_SUCCESS);
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
+
+get '/1/random' => sub {
+	return $server->__random();
+};
 
 get '/1/votd' => sub {
 	my $when = param('when');
