@@ -64,29 +64,29 @@ sub test {
 		data => [
 			{
 				attributes => {
-					book => 'Hab',
-					chapter => 2,
-					ordinal => 15,
-					text => 'Woe unto him that giveth his neighbour drink, that puttest thy bottle to [him], and makest [him] drunken also, that thou mayest look on their nakedness!',
+					book => 'Psa',
+					chapter => 55,
+					ordinal => 22,
+					text => 'Cast thy burden upon the LORD, and he shall sustain thee: he shall never suffer the righteous to be moved.',
 				},
-				id => 'hab/2/15',
+				id => 'psa/55/22',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/hab/2/14',
-					self => '/1/lookup/hab/2/15',
-					next => '/1/lookup/hab/2/16',
+					prev => '/1/lookup/psa/55/21',
+					self => '/1/lookup/psa/55/22',
+					next => '/1/lookup/psa/55/23',
 				},
 				relationships => {
 					book => {
 						data => {
-							id => 'hab',
+							id => 'psa',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'hab/2',
+							id => 'psa/55',
 							type => 'chapter',
 						},
 						links => {},
@@ -97,15 +97,15 @@ sub test {
 		included => [
 			{
 				attributes => {
-					book => 'Hab',
-					ordinal => 2,
+					book => 'Psa',
+					ordinal => 55,
 				},
-				id => 'hab/2',
+				id => 'psa/55',
 				type => 'chapter',
 				relationships => {
 					book => {
 						data => {
-							id => 'hab',
+							id => 'psa',
 							type => 'book',
 						},
 					},
@@ -113,10 +113,10 @@ sub test {
 			},
 			{
 				attributes => {
-					ordinal => 35,
+					ordinal => 19,
 					testament => 'old',
 				},
-				id => 'hab',
+				id => 'psa',
 				relationships => {},
 				type => 'book'
 			},
@@ -141,35 +141,35 @@ sub testV2 {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $when = '2024-08-19T12:00:00+0100';
-	my $json = $self->sut->__votd({ version => 2, when => '2024-08-19T12:00:00+0100' });
+	my $when = '1971-04-28T12:00:00+0100';
+	my $json = $self->sut->__votd({ version => 2, when => $when });
 	cmp_deeply($json, {
 		data => [
 			{
 				attributes => {
-					book => 'Titus',
-					chapter => 2,
-					ordinal => 11,
-					text => 'For the grace of God that bringeth salvation hath appeared to all men,',
+					book => 'Num',
+					chapter => 33,
+					ordinal => 51,
+					text => 'Speak unto the children of Israel, and say unto them, When ye are passed over Jordan into the land of Canaan;',
 				},
-				id => 'titus/2/11',
+				id => 'num/33/51',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/titus/2/10',
-					self => '/1/lookup/titus/2/11',
-					next => '/1/lookup/titus/2/12',
+					prev => '/1/lookup/num/33/50',
+					self => '/1/lookup/num/33/51',
+					next => '/1/lookup/num/33/52',
 				},
 				relationships => {
 					book => {
 						data => {
-							id => 'titus',
+							id => 'num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'titus/2',
+							id => 'num/33',
 							type => 'chapter',
 						},
 						links => {},
@@ -178,29 +178,29 @@ sub testV2 {
 			},
 			{
 				attributes => {
-					book => 'Titus',
-					chapter => 2,
-					ordinal => 12,
-					text => 'Teaching us that, denying ungodliness and worldly lusts, we should live soberly, righteously, and godly, in this present world;',
+					book => 'Num',
+					chapter => 33,
+					ordinal => 52,
+					text    => 'Then ye shall drive out all the inhabitants of the land from before you, and destroy all their pictures, and destroy all their molten images, and quite pluck down all their high places:',
 				},
-				id => 'titus/2/12',
+				id => 'num/33/52',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/titus/2/11',
-					self => '/1/lookup/titus/2/12',
-					next => '/1/lookup/titus/2/13',
+					prev => '/1/lookup/num/33/51',
+					self => '/1/lookup/num/33/52',
+					next => '/1/lookup/num/33/53',
 				},
 				relationships => {
 					book => {
 						data => {
-							id => 'titus',
+							id => 'num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'titus/2',
+							id => 'num/33',
 							type => 'chapter',
 						},
 						links => {},
@@ -209,60 +209,29 @@ sub testV2 {
 			},
 			{
 				attributes => {
-					book => 'Titus',
-					chapter => 2,
-					ordinal => 13,
-					text => 'Looking for that blessed hope, and the glorious appearing of the great God and our Saviour Jesus Christ;',
+					book => 'Num',
+					chapter => 33,
+					ordinal => 53,
+					text    => 'And ye shall dispossess [the inhabitants] of the land, and dwell therein: for I have given you the land to possess it.',
 				},
-				id => 'titus/2/13',
+				id => 'num/33/53',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/titus/2/12',
-					self => '/1/lookup/titus/2/13',
-					next => '/1/lookup/titus/2/14',
+					prev => '/1/lookup/num/33/52',
+					self => '/1/lookup/num/33/53',
+					next => '/1/lookup/num/33/54',
 				},
 				relationships => {
 					book => {
 						data => {
-							id => 'titus',
+							id => 'num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'titus/2',
-							type => 'chapter',
-						},
-						links => {},
-					}
-				},
-			},
-			{
-				attributes => {
-					book => 'Titus',
-					chapter => 2,
-					ordinal => 14,
-					text => 'Who gave himself for us, that he might redeem us from all iniquity, and purify unto himself a peculiar people, zealous of good works.',
-				},
-				id => 'titus/2/14',
-				type => 'verse',
-				links => {
-					prev => '/1/lookup/titus/2/13',
-					self => '/1/lookup/titus/2/14',
-					next => '/1/lookup/titus/2/15',
-				},
-				relationships => {
-					book => {
-						data => {
-							id => 'titus',
-							type => 'book',
-						},
-						links => {},
-					},
-					chapter => {
-						data => {
-							id => 'titus/2',
+							id => 'num/33',
 							type => 'chapter',
 						},
 						links => {},
@@ -273,15 +242,15 @@ sub testV2 {
 		included => [
 			{
 				attributes => {
-					book => 'Titus',
-					ordinal => 2,
+					book => 'Num',
+					ordinal => 33,
 				},
-				id => 'titus/2',
+				id => 'num/33',
 				type => 'chapter',
 				relationships => {
 					book => {
 						data => {
-							id => 'titus',
+							id => 'num',
 							type => 'book',
 						},
 					},
@@ -289,10 +258,10 @@ sub testV2 {
 			},
 			{
 				attributes => {
-					ordinal => 56,
-					testament => 'new',
+					ordinal => 4,
+					testament => 'old',
 				},
-				id => 'titus',
+				id => 'num',
 				relationships => {},
 				type => 'book'
 			},
