@@ -2,7 +2,7 @@ Source: chleb-bible-search
 Section: perl
 Priority: optional
 Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
-Build-Depends: debhelper (>= 13),
+Build-Depends: debhelper (>= 13), mawk
 Build-Depends-Indep:
  libconfig-ini-perl,
  libdatetime-perl,
