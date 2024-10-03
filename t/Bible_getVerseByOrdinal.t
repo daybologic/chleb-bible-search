@@ -62,9 +62,26 @@ sub __mockLogger {
 
 sub testFirstSuccess {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
-	my $verse = $self->sut->getVerseByOrdinal(1);
+	__checkFirstVerse($self->sut->getVerseByOrdinal(1));
+	__checkFirstVerse($self->sut->getVerseByOrdinal(-31_102));
+
+	return EXIT_SUCCESS;
+}
+
+sub testLastSuccess {
+	my ($self) = @_;
+	plan tests => 2;
+
+	__checkLastVerse($self->sut->getVerseByOrdinal(31_102));
+	__checkLastVerse($self->sut->getVerseByOrdinal(-1));
+
+	return EXIT_SUCCESS;
+}
+
+sub __checkFirstVerse {
+	my ($verse) = @_;
 	cmp_deeply($verse, all(
 		isa('Chleb::Bible::Verse'),
 		methods(
@@ -82,17 +99,7 @@ sub testFirstSuccess {
 		),
 	), 'verse inspection (Genesis 1:1)') or diag(explain($verse->toString()));
 
-	return EXIT_SUCCESS;
-}
-
-sub testLastSuccess {
-	my ($self) = @_;
-	plan tests => 2;
-
-	__checkLastVerse($self->sut->getVerseByOrdinal(31_102));
-	__checkLastVerse($self->sut->getVerseByOrdinal(-1));
-
-	return EXIT_SUCCESS;
+	return;
 }
 
 sub __checkLastVerse {

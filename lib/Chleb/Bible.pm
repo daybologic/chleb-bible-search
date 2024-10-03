@@ -128,8 +128,6 @@ sub getBookByOrdinal {
 sub getVerseByOrdinal {
 	my ($self, $ordinal) = @_;
 
-	$ordinal = $self->verseCount if ($ordinal == -1);
-
 	if (my $verseKey = $self->__backend->getVerseKeyByOrdinal($ordinal)) {
 		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
 		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
