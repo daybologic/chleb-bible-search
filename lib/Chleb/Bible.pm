@@ -209,14 +209,8 @@ sub votd {
 		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
 		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-		my $bookOrdinal = 1 + ($seed % $self->bookCount);
-		my $book = $self->getBookByOrdinal($bookOrdinal);
-
-		my $chapterOrdinal = 1 + ($seed % $book->chapterCount);
-		my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
-
-		my $verseOrdinal = 1 + ($seed % $chapter->verseCount);
-		$verse = $chapter->getVerseByOrdinal($verseOrdinal);
+		my $verseOrdinal = 1 + ($seed % $self->verseCount);
+		$verse = $self->getVerseByOrdinal($verseOrdinal);
 
 		last if (!$parental || !$verse->parental);
 		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
