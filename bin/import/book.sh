@@ -37,7 +37,7 @@ bookPath="$1"
 bookNameShort=$(basename $bookPath)
 commands=$(mktemp chleb-bible-search-import-book-${bookNameShort}-commands.XXXXXX.sh --tmpdir)
 
-bookNameLong=$(./bin/import/book-name-long.awk -v BOOK_NAME_SHORT="$bookNameShort" data/static/kjv/index.cvs)
+bookNameLong=$(./bin/import/book-name-long.awk -v BOOK_NAME_SHORT="$bookNameShort" data/kjv/index.cvs)
 echo "set bookNameLong: $bookNameLong"
 
 echo "#!/bin/sh" > "$commands"

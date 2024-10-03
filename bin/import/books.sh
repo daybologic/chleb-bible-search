@@ -33,6 +33,6 @@
 set -xeuo pipefail
 
 rm -f data/kjv-verses.txt
-find data/static/kjv/ -mindepth 1 -maxdepth 1 -type d -exec bin/import/book.sh "{}" \;
+find data/kjv/ -mindepth 1 -maxdepth 1 -type d -exec bin/import/book.sh "{}" \;
 
 bin/import/text-to-kjv.sh

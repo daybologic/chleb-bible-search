@@ -44,7 +44,7 @@ use Storable qw(nstore);
 Readonly my $OT_COUNT => 39;
 
 Readonly my $DATA_DIR   => 'data';
-Readonly my $BOOK_INPUT => 'static/kjv/index.cvs';
+Readonly my $BOOK_INPUT => 'kjv/index.cvs';
 Readonly my $INPUT      => 'kjv-verses.txt';
 Readonly my $OUTPUT     => 'kjv.bin';
 
