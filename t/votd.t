@@ -75,15 +75,15 @@ sub testV2 {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $verse = $self->sut->votd({ version => 2, when => '2024-08-19T12:00:00+0100' });
+	my $verse = $self->sut->votd({ version => 2, when => '1971-04-28T12:00:00+0100' });
 	cmp_deeply($verse, [
 		all(
 			isa('Chleb::Bible::Verse'),
 			methods(
 				book    => isa('Chleb::Bible::Book'),
 				chapter => isa('Chleb::Bible::Chapter'),
-				ordinal => 11,
-				text    => 'For the grace of God that bringeth salvation hath appeared to all men,',
+				ordinal => 51,
+				text    => 'Speak unto the children of Israel, and say unto them, When ye are passed over Jordan into the land of Canaan;',
 			),
 		),
 		all(
@@ -91,8 +91,8 @@ sub testV2 {
 			methods(
 				book    => isa('Chleb::Bible::Book'),
 				chapter => isa('Chleb::Bible::Chapter'),
-				ordinal => 12,
-				text    => 'Teaching us that, denying ungodliness and worldly lusts, we should live soberly, righteously, and godly, in this present world;',
+				ordinal => 52,
+				text    => 'Then ye shall drive out all the inhabitants of the land from before you, and destroy all their pictures, and destroy all their molten images, and quite pluck down all their high places:',
 			),
 		),
 		all(
@@ -100,17 +100,8 @@ sub testV2 {
 			methods(
 				book    => isa('Chleb::Bible::Book'),
 				chapter => isa('Chleb::Bible::Chapter'),
-				ordinal => 13,
-				text    => 'Looking for that blessed hope, and the glorious appearing of the great God and our Saviour Jesus Christ;',
-			),
-		),
-		all(
-			isa('Chleb::Bible::Verse'),
-			methods(
-				book    => isa('Chleb::Bible::Book'),
-				chapter => isa('Chleb::Bible::Chapter'),
-				ordinal => 14,
-				text    => 'Who gave himself for us, that he might redeem us from all iniquity, and purify unto himself a peculiar people, zealous of good works.',
+				ordinal => 53,
+				text    => 'And ye shall dispossess [the inhabitants] of the land, and dwell therein: for I have given you the land to possess it.',
 			),
 		)
 	], 'specific verses inspection');
@@ -122,20 +113,20 @@ sub testParentalTerm {
 	my ($self) = @_;
 	plan tests => 2;
 
-	my $when = '1973-01-12T12:00:00+0100';
+	my $when = '1980-04-12T12:00:00+0100';
 	my $verse = $self->sut->votd({ version => 1, when => $when, parental => 0 });
 	cmp_deeply($verse, all(
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => all(
 				isa('Chleb::Bible::Book'),
-				methods(shortName => 'Gal'),
+				methods(shortName => 'Jer'),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
-				methods(ordinal => 6),
+				methods(ordinal => 5),
 			),
-			ordinal => 12,
+			ordinal => 7,
 			text    => ignore(),
 		),
 	), 'verse inspection') or diag(explain($verse->toString()));
@@ -146,13 +137,13 @@ sub testParentalTerm {
 		methods(
 			book    => all(
 				isa('Chleb::Bible::Book'),
-				methods(shortName => 'Jonah'),
+				methods(shortName => 'Gen'),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
-				methods(ordinal => 4),
+				methods(ordinal => 42),
 			),
-			ordinal => 10,
+			ordinal => 3,
 			text    => ignore(),
 		),
 	), 'verse inspection, parental') or diag(explain($verse->toString()));
@@ -164,20 +155,20 @@ sub testParentalRef {
 	my ($self) = @_;
 	plan tests => 2;
 
-	my $when = '1810-09-14T12:00:00+0000';
+	my $when = '1980-09-8T12:00:00+0100';
 	my $verse = $self->sut->votd({ version => 1, when => $when, parental => 0 });
 	cmp_deeply($verse, all(
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => all(
 				isa('Chleb::Bible::Book'),
-				methods(shortName => 'Judg'),
+				methods(shortName => 'Deu'),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
-				methods(ordinal => 19),
+				methods(ordinal => 22),
 			),
-			ordinal => 25,
+			ordinal => 21,
 			text    => ignore(),
 		),
 	), 'verse inspection') or diag(explain($verse->toString()));
@@ -188,13 +179,13 @@ sub testParentalRef {
 		methods(
 			book    => all(
 				isa('Chleb::Bible::Book'),
-				methods(shortName => '2Th'),
+				methods(shortName => 'Isa'),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
-				methods(ordinal => 2),
+				methods(ordinal => 37),
 			),
-			ordinal => 17,
+			ordinal => 19,
 			text    => ignore(),
 		),
 	), 'verse inspection, parental') or diag(explain($verse->toString()));

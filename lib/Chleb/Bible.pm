@@ -37,6 +37,7 @@ extends 'Chleb::Bible::Base';
 
 use Data::Dumper;
 use Digest::CRC qw(crc32);
+use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
 
@@ -45,6 +46,8 @@ use Chleb::Bible::DI::Container;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 
+Readonly my $TRANSLATION => 'kjv';
+
 has __backend => (is => 'ro', isa => 'Chleb::Bible::Backend', lazy => 1, default => \&__makeBackend);
 
 has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCount);
@@ -52,6 +55,8 @@ has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCo
 has books => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Book]', lazy => 1, default => \&__makeBooks);
 
 has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeConstructionTime);
+
+has verseCount => (is => 'ro', isa => 'Int', default => 31_102); # TODO: Hard-coded 31,102: This is probably not translation-safe, only works for "kjv" (canonical)
 
 BEGIN {
 	our $VERSION = '0.10.0';
@@ -120,6 +125,29 @@ sub getBookByOrdinal {
 	return $self->books->[$ordinal - 1];
 }
 
+sub getVerseByOrdinal {
+	my ($self, $ordinal) = @_;
+
+	if (my $verseKey = $self->__backend->getVerseKeyByOrdinal($ordinal)) {
+		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
+		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
+			if (my $book = $self->getBookByShortName($bookShortName)) {
+				my $chapter = $book->getChapterByOrdinal($chapterNumber);
+				return Chleb::Bible::Verse->new({
+					book    => $book,
+					chapter => $chapter,
+					ordinal => $verseNumber,
+					text    => $text,
+				});
+			}
+		} else {
+			die "I don't think you can reach this";
+		}
+	}
+
+	die(sprintf("Verse %d not found in '%s'", $ordinal, $TRANSLATION));
+}
+
 sub newSearchQuery {
 	my ($self, @args) = @_;
 
@@ -181,14 +209,8 @@ sub votd {
 		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
 		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-		my $bookOrdinal = 1 + ($seed % $self->bookCount);
-		my $book = $self->getBookByOrdinal($bookOrdinal);
-
-		my $chapterOrdinal = 1 + ($seed % $book->chapterCount);
-		my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
-
-		my $verseOrdinal = 1 + ($seed % $chapter->verseCount);
-		$verse = $chapter->getVerseByOrdinal($verseOrdinal);
+		my $verseOrdinal = 1 + ($seed % $self->verseCount);
+		$verse = $self->getVerseByOrdinal($verseOrdinal);
 
 		last if (!$parental || !$verse->parental);
 		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');

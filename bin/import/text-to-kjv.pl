@@ -49,12 +49,13 @@ Readonly my $INPUT      => 'kjv-verses.txt';
 Readonly my $OUTPUT     => 'kjv.bin';
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
-Readonly my $FILE_VERSION => 8;
+Readonly my $FILE_VERSION => 10;
 
 my $offsetMaster = -1;
 Readonly my $MAIN_OFFSET_SIG     => ++$offsetMaster; # string
 Readonly my $MAIN_OFFSET_VERSION => ++$offsetMaster; # int
 Readonly my $MAIN_OFFSET_BOOKS   => ++$offsetMaster; # array, see $BOOK_*
+Readonly my $MAIN_OFFSET_VERSES  => ++$offsetMaster; # global array of verses to key names
 Readonly my $MAIN_OFFSET_DATA    => ++$offsetMaster; # main verse map
 
 $offsetMaster = -1;
@@ -139,6 +140,7 @@ sub main {
 		undef($fh);
 
 		my $translation = 'kjv'; # TODO: What about other translations?
+		my $verseOrdinalRelativeBible = 0;
 		BOOK: foreach my $bookShortName (@bookShortNames) {
 			my $verseOrdinalRelativeBook = 0;
 			CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal > 0; $chapterOrdinal++) {
@@ -147,6 +149,7 @@ sub main {
 					last VERSE unless ($data->[$MAIN_OFFSET_DATA]->{$verseKey});
 					my $verseKeyRelativeBook = join(':', $translation, $bookShortName, ++$verseOrdinalRelativeBook);
 					$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_VERSES_TO_KEYS]->{$verseKeyRelativeBook} = $verseKey;
+					$data->[$MAIN_OFFSET_VERSES]->[++$verseOrdinalRelativeBible] = $verseKey;
 				}
 
 				# if the chapter ordinal is out of range, the first verse of that chapter won't exist
