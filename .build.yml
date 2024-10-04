@@ -31,29 +31,29 @@
 
 image: freebsd/latest
 packages:
-  - perl5
-  - p5-Moose
+  - p5-Cache-Cache
+  - p5-Config-INI
+  - p5-Dancer2
+  - p5-Datetime
+  - p5-DateTime-Format-Strptime
+  - p5-DBD-Mysql
+  - p5-DBI
+  - p5-Digest-CRC
   - p5-JSON
   - p5-JSON-MaybeXS
   - p5-libwww
+  - p5-Log-Log4perl
+  - p5-Moose
+  - p5-MooseX-Singleton
   - p5-Readonly
-  - p5-URI-Encode
-  - p5-Config-INI
-  - p5-Datetime
-  - p5-DBD-Mysql
-  - p5-DBI
-  - p5-UNIVERSAL-Require
   - p5-Test-Deep
   - p5-Test-Exception
   - p5-Test-MockModule
-  - p5-Cache-Cache
-  - p5-Log-Log4perl
   - p5-Time-Duration
-  - p5-Digest-CRC
-  - p5-MooseX-Singleton
-  - p5-DateTime-Format-Strptime
+  - p5-UNIVERSAL-Require
+  - p5-URI-Encode
   - p5-UUID-Tiny
-  - p5-Dancer2
+  - perl5
 
 sources:
   - https://git.sr.ht/~m6kvm/chleb-bible-search
