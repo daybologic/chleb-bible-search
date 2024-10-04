@@ -50,6 +50,7 @@ packages:
   - p5-Time-Duration
   - p5-Digest-CRC
   - p5-MooseX-Singleton
+  - p5-DateTime-Format-Strptime
 
 sources:
   - https://git.sr.ht/~m6kvm/chleb-bible-search
