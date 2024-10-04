@@ -53,6 +53,7 @@ packages:
   - p5-MooseX-Singleton
   - p5-DateTime-Format-Strptime
   - p5-UUID-Tiny
+  - p5-Dancer2
 
 sources:
   - https://git.sr.ht/~m6kvm/chleb-bible-search
