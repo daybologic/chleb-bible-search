@@ -52,6 +52,7 @@ packages:
   - p5-Digest-CRC
   - p5-MooseX-Singleton
   - p5-DateTime-Format-Strptime
+  - p5-UUID-Tiny
 
 sources:
   - https://git.sr.ht/~m6kvm/chleb-bible-search
