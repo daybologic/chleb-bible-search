@@ -1,3 +1,4 @@
 etc/chleb-bible-search.service /etc/systemd/system/
 etc/log4perl.conf /etc/chleb-bible-search/
 etc/main.conf /etc/chleb-bible-search/
+data/*.bin.gz /usr/share/chleb-bible-search/

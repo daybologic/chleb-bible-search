@@ -2,7 +2,7 @@ name: Perl CI
 
 on:
   push:
-    branches: [ "develop", "master", "f/202408-votd-multiple" ]
+    branches: [ "develop", "master", "f/202408-no-bins" ]
   pull_request:
     branches: [ "develop" ]
 
@@ -13,8 +13,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        lfs: 'true'
 
     - name: recursion
       run: git submodule update --init --recursive
