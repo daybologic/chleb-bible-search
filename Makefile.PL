@@ -43,6 +43,9 @@ WriteMakefile(
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
 	EXE_FILES    => [glob q('data/*.bin.gz')],
 
+	clean => {
+		FILES => [glob q('data/*.bin.gz')],
+	},
 	PREREQ_PM => {
 		'Moose'            => 0,
 		'Test::MockModule' => 0,
