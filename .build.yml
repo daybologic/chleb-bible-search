@@ -45,15 +45,8 @@ packages:
   - p5-UNIVERSAL-Require
   - p5-Test-Deep
   - p5-Test-MockModule
-  - libtest-exception-perl
   - p5-Cache-Cache
   - p5-Log-Log4perl
-  - libdatetime-format-strptime-perl
-  - libdigest-crc-perl
-  - libuuid-tiny-perl
-  - libmoosex-singleton-perl
-  - libdancer2-perl
-  - libconfig-ini-perl
   - p5-Time-Duration
 
 sources:
