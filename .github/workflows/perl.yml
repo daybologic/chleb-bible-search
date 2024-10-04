@@ -2,7 +2,7 @@ name: Perl CI
 
 on:
   push:
-    branches: [ "develop", "master", "f/202408-votd-multiple" ]
+    branches: [ "develop", "master", "f/202408-no-bins" ]
   pull_request:
     branches: [ "develop" ]
 
