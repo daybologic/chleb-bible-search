@@ -49,6 +49,7 @@ packages:
   - p5-Log-Log4perl
   - p5-Time-Duration
   - p5-Digest-CRC
+  - p5-MooseX-Singleton
 
 sources:
   - https://git.sr.ht/~m6kvm/chleb-bible-search
