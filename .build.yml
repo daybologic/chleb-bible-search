@@ -44,6 +44,7 @@ packages:
   - p5-DBI
   - p5-UNIVERSAL-Require
   - p5-Test-Deep
+  - p5-Test-Exception
   - p5-Test-MockModule
   - p5-Cache-Cache
   - p5-Log-Log4perl
