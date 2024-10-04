@@ -29,32 +29,32 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-image: debian/stable
+image: freebsd/latest
 packages:
-  - perl
-  - libmoose-perl
-  - libjson-perl
-  - libjson-maybexs-perl
-  - libwww-perl
-  - libreadonly-perl
-  - liburi-encode-perl
-  - libconfig-ini-perl
-  - libdatetime-perl
-  - libdbd-mysql-perl
-  - libdbi-perl
-  - libuniversal-require-perl
-  - libtest-deep-perl
-  - libtest-mockmodule-perl
+  - perl5
+  - p5-Moose
+  - p5-JSON
+  - p5-JSON-MaybeXS
+  - p5-libwww
+  - p5-Readonly
+  - p5-URI-Encode
+  - p5-Config-INI
+  - p5-Datetime
+  - p5-DBD-Mysql
+  - p5-DBI
+  - p5-UNIVERSAL-Require
+  - p5-Test-Deep
+  - p5-Test-MockModule
   - libtest-exception-perl
-  - libcache-cache-perl
-  - liblog-log4perl-perl
+  - p5-Cache-Cache
+  - p5-Log-Log4perl
   - libdatetime-format-strptime-perl
   - libdigest-crc-perl
   - libuuid-tiny-perl
   - libmoosex-singleton-perl
   - libdancer2-perl
   - libconfig-ini-perl
-  - libtime-duration-perl
+  - p5-Time-Duration
 
 sources:
   - https://git.sr.ht/~m6kvm/chleb-bible-search
