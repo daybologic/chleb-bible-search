@@ -19,13 +19,19 @@ For API documentation, please use the documentation published at [SwaggerHub](ht
 
 ## Availability
 
-The primary hosting for Chleb Bible Search is GitHub, but a backup is also provided at [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/commits/branch/master)
+Hosting for Chleb Bible Search source code is provided at the following sites:
+
+  * [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/commits/branch/master)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search)
+  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search)
 
 The latest release is version 0.10.0, which is available for download at the following sites:
 
   * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v0.10.0.tar.gz)
+  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/archive/v0.10.0.tar.gz)
 
 The latest release is available as a Debian package from the following locations:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v0.10.0/chleb-bible-search_0.10.0_all.deb)
   * [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/downloads/chleb-bible-search_0.10.0_all.deb)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v0.10.0/chleb-bible-search_0.10.0_all.deb)
+  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v0.10.0)
