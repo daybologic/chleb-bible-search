@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/make -f
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (2E0EOL),
 # All rights reserved.
@@ -30,6 +30,12 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-system('cd data/ && ./Makefile');
+all: kjv.bin.gz
 
-exit 0
+kjv.bin.gz: static/kjv.txt
+	cd ../ && ./bin/import/text-to-kjv.sh
+
+clean:
+	rm -vf kjv.bin.gz kjv.bin
+
+.PHONY: clean all
