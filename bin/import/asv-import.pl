@@ -7,10 +7,12 @@ use warnings;
 use English;
 use IO::File;
 
+my $globalVerseCount = 0;
+
 sub processBook {
 	my ($bible, $bookShortName, $bookLongName) = @_;
 	my $fileName = sprintf('%s.txt', $bookShortName);
-	$fileName = sprintf('%s.txt', $bookLongName) unless (-f $fileName);
+	#$fileName = sprintf('%s.txt', $bookLongName) unless (-f $fileName);
 	if (my $fh = IO::File->new($fileName, 'r')) {
 		my $bigLine = '';
 		while (my $line = <$fh>) {
@@ -39,7 +41,8 @@ sub processBook {
 			}
 		}
 		$fh->close();
-		printf("total count %d for %s\n", $verseCount, $fileName);
+		printf("verse count %d for %s\n", $verseCount, $fileName);
+		$globalVerseCount += $verseCount;
 	} else {
 		printf(STDERR "'%s' -- %s\n", $fileName, $ERRNO);
 		die('Must process all books!');
@@ -55,7 +58,7 @@ sub writeBible {
 		foreach my $book (sort(keys(%$bible))) {
 			foreach my $chapter (sort(keys(%{ $bible->{ $book } }))) {
 				foreach my $verse (sort(keys(%{ $bible->{ $book }->{ $chapter } }))) {
-					printf($fh "asv:%s:%d:%d:%s\n", $book, $chapter, $verse, $bible->{ $book }->{ $chapter }->{ $verse });
+					printf($fh "asv:%s:%d:%d::%s\n", $book, $chapter, $verse, $bible->{ $book }->{ $chapter }->{ $verse });
 				}
 			}
 		}
@@ -74,11 +77,16 @@ sub main {
 			processBook(\%bible, $bookShortName, $bookLongName);
 		}
 		$fh->close();
-		warn('FIXME: There are text files unprocessed.  What are they and why?  Philemon, for example?');
 	} else {
 		printf(STDERR "ERROR: $ERRNO");
 		return 1;
 	}
+
+	printf("global verse count %d\n", $globalVerseCount);
+	printf("Gen 1:1 %s\n", $bible{Gen}->{1}->{1});
+	printf("Rev 22:21 %s\n", $bible{Rev}->{22}->{21});
+
+	die("Verse count wrong!  Must be 31,102: $globalVerseCount") if ($globalVerseCount != 31_102);
 
 	writeBible(\%bible);
 
