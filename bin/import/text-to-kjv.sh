@@ -32,5 +32,5 @@
 
 set -eu
 
-bin/import/text-to-kjv.pl
+bin/import/text-to-bin.pl kjv
 gzip data/kjv.bin

@@ -45,8 +45,6 @@ Readonly my $OT_COUNT => 39;
 
 Readonly my $DATA_DIR   => 'data';
 Readonly my $BOOK_INPUT => 'static/kjv.cvs';
-Readonly my $INPUT      => 'static/kjv.txt';
-Readonly my $OUTPUT     => 'kjv.bin';
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
 Readonly my $FILE_VERSION => 10;
@@ -70,10 +68,10 @@ Readonly my $BOOK_OFFSET_VERSES_TO_KEYS => ++$offsetMaster; # Relative book vers
 # v - verse count map (keys are the chapter number, there is no zero, and values are the verse counts)
 
 sub writeOutput {
-	my ($data) = @_;
+	my ($data, $translation) = @_;
 
 	eval {
-		nstore($data, join('/', $DATA_DIR, $OUTPUT));
+		nstore($data, __outputFromTranslation($translation));
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
@@ -84,8 +82,24 @@ sub writeOutput {
 	return EXIT_SUCCESS;
 }
 
+sub __inputFromTranslation {
+	my ($translation) = @_;
+	return join('/', 'static', sprintf('%s.txt', $translation));
+}
+
+sub __outputFromTranslation {
+	my ($translation) = @_;
+	return join('/', $DATA_DIR, sprintf('%s.bin', $translation));
+}
+
 sub main {
+	my ($translation) = @ARGV;
 	my $data = [ ];
+
+	unless ($translation) {
+		printf(STDERR "You must specify the translation!\n");
+		return EXIT_FAILURE;
+	}
 
 	$data->[$MAIN_OFFSET_SIG] = $FILE_SIG;
 	$data->[$MAIN_OFFSET_VERSION] = $FILE_VERSION;
@@ -110,7 +124,7 @@ sub main {
 
 	$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES] = \@bookShortNames;
 
-	if (my $fh = IO::File->new(join('/', $DATA_DIR, $INPUT), 'r')) {
+	if (my $fh = IO::File->new(join('/', $DATA_DIR, __inputFromTranslation($translation)), 'r')) {
 		while (my $line = <$fh>) {
 			my @verseData = split(m/::/, $line, 2);
 			my ($verseKey, $verseText) = @verseData;
@@ -139,7 +153,6 @@ sub main {
 		}
 		undef($fh);
 
-		my $translation = 'kjv'; # TODO: What about other translations?
 		my $verseOrdinalRelativeBible = 0;
 		BOOK: foreach my $bookShortName (@bookShortNames) {
 			my $verseOrdinalRelativeBook = 0;
@@ -160,7 +173,7 @@ sub main {
 
 	}
 
-	return writeOutput($data);
+	return writeOutput($data, $translation);
 }
 
 exit(main()) unless (caller());
