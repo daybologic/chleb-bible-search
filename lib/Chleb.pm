@@ -196,15 +196,6 @@ sub __loadBible {
 	});
 }
 
-#sub __getBackendByTranslation {
-#	my ($self, $translation) = @_;
-#	for (my $i = 0; $i < scalar(@{ $self->__backends }); $i++) {
-#		return $self->__backends->[$i]; # FIXME
-#	}
-#
-#	die("No such backend translation -- '$translation'");
-#}
-
 sub __makeConstructionTime {
 	return time();
 }
