@@ -37,9 +37,7 @@ use Readonly;
 use Chleb::Bible::Chapter;
 use Chleb::Bible::Verse;
 
-Readonly my $TRANSLATION => 'kjv';
-
-has _library => (is => 'ro', isa => 'Chleb::Bible', required => 1);
+has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
 has ordinal => (is => 'ro', isa => 'Int');
 
@@ -61,10 +59,10 @@ sub getVerseByOrdinal {
 
 	$ordinal = $self->verseCount if ($ordinal == -1);
 
-	my $bookVerseKey = join(':', $TRANSLATION, $self->shortName, $ordinal);
-	if (my $verseKey = $self->_library->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
+	my $bookVerseKey = join(':', $self->bible->translation, $self->shortName, $ordinal);
+	if (my $verseKey = $self->bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
 		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
-		if (my $text = $self->_library->__backend->getVerseDataByKey($verseKey)) {
+		if (my $text = $self->bible->__backend->getVerseDataByKey($verseKey)) {
 			my $chapter = $self->getChapterByOrdinal($chapterNumber);
 			return Chleb::Bible::Verse->new({
 				book    => $self,
@@ -82,13 +80,13 @@ sub getVerseByOrdinal {
 
 sub getNext {
 	my ($self) = @_;
-	return $self->_library->getBookByOrdinal($self->ordinal + 1, { nonFatal => 1 });
+	return $self->bible->getBookByOrdinal($self->ordinal + 1, { nonFatal => 1 });
 }
 
 sub getPrev {
 	my ($self) = @_;
 
-	return $self->_library->getBookByOrdinal($self->ordinal - 1, { nonFatal => 1 })
+	return $self->bible->getBookByOrdinal($self->ordinal - 1, { nonFatal => 1 })
 	    if ($self->ordinal > 1);
 
 	return undef;
@@ -107,7 +105,7 @@ sub search {
 			# TODO: You shouldn't access __backend here
 			# but you need some more methods in the library to avoid it
 			# Perhaps have a getVerseByKey in _library?
-			my $text = $self->_library->__backend->getVerseDataByKey($verseKey);
+			my $text = $self->bible->__backend->getVerseDataByKey($verseKey);
 			my $found = 0;
 
 			if ($query->wholeword) {
@@ -162,7 +160,7 @@ sub getChapterByOrdinal {
 	}
 
 	return Chleb::Bible::Chapter->new({
-		_library => $self->_library,
+		bible    => $self->bible,
 		book     => $self,
 		ordinal  => $ordinal,
 	});
@@ -170,7 +168,7 @@ sub getChapterByOrdinal {
 
 sub __makeVerseKey {
 	my ($self, $chapterOrdinal, $verseOrdinal) = @_;
-	return join(':', $TRANSLATION, $self->shortName, $chapterOrdinal, $verseOrdinal);
+	return join(':', $self->bible->translation, $self->shortName, $chapterOrdinal, $verseOrdinal);
 }
 
 sub __makeId {

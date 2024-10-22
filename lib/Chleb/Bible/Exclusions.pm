@@ -94,6 +94,8 @@ sub __makeRefs {
 				$verseOrdinalEnd = $verseOrdinalStart if (!$verseOrdinalEnd || $verseOrdinalEnd < $verseOrdinalStart);
 				for (my $verseOrdinal = $verseOrdinalStart; $verseOrdinal <= $verseOrdinalEnd; $verseOrdinal++) {
 					eval {
+						# FIXME: Deprecated!  This is highly unreliable and you need to find a new
+						# way to access the library afore it goes away!
 						$verse = $self->dic->bible->fetch($bookName, $chapterOrdinal, $verseOrdinal);
 					};
 					if (my $evalError = $EVAL_ERROR) {

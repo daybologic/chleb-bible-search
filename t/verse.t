@@ -40,7 +40,7 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible;
+use Chleb;
 use Chleb::Bible::Book;
 use Chleb::Bible::Verse;
 use Test::Deep qw(cmp_deeply);
@@ -49,7 +49,7 @@ use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
-	$self->sut(Chleb::Bible->new());
+	$self->sut(Chleb->new());
 	return EXIT_SUCCESS;
 }
 
@@ -57,8 +57,9 @@ sub test {
 	my ($self) = @_;
 	plan tests => 5;
 
+	my $bible = $self->sut->__getBible();
 	my $book = Chleb::Bible::Book->new({
-		_library  => $self->sut,
+		bible     => $bible,
 		longName  => 'Book of Morman',
 		ordinal   => 21,
 		shortName => 'Susana',
@@ -70,7 +71,7 @@ sub test {
 	my $verse = Chleb::Bible::Verse->new({
 		book    => $book,
 		chapter => Chleb::Bible::Chapter->new({
-			_library => $self->sut,
+			bible    => $bible,
 			book     => $book,
 			ordinal  => 1121,
 		}),

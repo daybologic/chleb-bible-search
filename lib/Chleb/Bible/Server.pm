@@ -32,9 +32,9 @@
 package Chleb::Bible::Server;
 use strict;
 use warnings;
-use JSON;
-use Chleb::Bible;
+use Chleb;
 use Chleb::Bible::DI::Container;
+use JSON;
 use Time::Duration;
 use UUID::Tiny ':std';
 
@@ -72,10 +72,10 @@ sub __json {
 	return $self->{__json};
 }
 
-sub __bible {
+sub __library {
 	my ($self) = @_;
-	$self->{__bible} ||= Chleb::Bible->new();
-	return $self->{__bible};
+	$self->{__library} ||= Chleb->new();
+	return $self->{__library};
 }
 
 sub __makeJsonApi {
@@ -168,7 +168,7 @@ sub __verseToJsonApi {
 
 sub __lookup {
 	my ($self, $params) = @_;
-	my $verse = $self->__bible->fetch($params->{book}, $params->{chapter}, $params->{verse});
+	my $verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse});
 
 	my $json = __verseToJsonApi($verse);
 
@@ -183,7 +183,7 @@ sub __lookup {
 
 sub __random {
 	my ($self) = @_;
-	my $verse = $self->__bible->random();
+	my $verse = $self->__library->random();
 
 	my $json = __verseToJsonApi($verse);
 	my $version = 1;
@@ -196,7 +196,7 @@ sub __votd {
 	my ($self, $params) = @_;
 
 	my $version = $params->{version} || 1;
-	my $verse = $self->__bible->votd($params);
+	my $verse = $self->__library->votd($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
 
@@ -286,7 +286,7 @@ sub __uptime {
 
 sub __getUptime {
 	my ($self) = @_;
-	return time() - $self->__bible->constructionTime;
+	return time() - $self->__library->constructionTime;
 }
 
 sub __search {
@@ -297,7 +297,7 @@ sub __search {
 
 	my $wholeword = int($search->{wholeword});
 
-	my $query = $self->__bible->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
+	my $query = $self->__library->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
 	my $results = $query->run();
 
 	my %hash = __makeJsonApi();

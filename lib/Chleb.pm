@@ -28,34 +28,30 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Bible;
+package Chleb;
 use strict;
 use warnings;
 use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Data::Dumper;
 use Digest::CRC qw(crc32);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
 
+use Chleb::Bible;
 use Chleb::Bible::Backend;
 use Chleb::Bible::DI::Container;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 
-#Readonly my $TRANSLATION_DEFAULT => 'kjv';
+Readonly my $TRANSLATION_DEFAULT => 'kjv';
 
-has __backend => (is => 'ro', isa => 'Chleb::Bible::Backend', lazy => 1, default => \&__makeBackend);
+has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeConstructionTime);
 
-has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCount);
-
-has books => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Book]', lazy => 1, default => \&__makeBooks);
-
-has verseCount => (is => 'ro', isa => 'Int', default => 31_102); # TODO: Hard-coded 31,102: works for "kjv", "asv" (canonical)
-
-has translation => (is => 'ro', isa => 'Str', required => 1);
+has __bibles => (is => 'ro', isa => 'HashRef[Str]', lazy => 1, default => \&__makeBibles); # use 'bibles' to access
 
 BEGIN {
 	our $VERSION = '0.10.0';
@@ -64,125 +60,33 @@ BEGIN {
 sub BUILD {
 	my ($self) = @_;
 
-	# FIXME doesn't make sense now we have multiple bible translations,
-	# superficially it works but will probably be highly unreliable.
-	$self->dic->bible($self); # self registration
+	$self->constructionTime();
 
 	return;
-}
-
-sub getBookByShortName {
-	my ($self, $shortName, $args) = @_;
-
-	$shortName ||= '';
-	if ($shortName =~ m/^(\d)(\w+)$/) {
-		$shortName = "$1\u$2";
-	} else {
-		$shortName = "\u$shortName";
-	}
-
-	foreach my $book (@{ $self->books }) {
-		next if ($book->shortName ne $shortName);
-		return $book;
-	}
-
-	my $errorMsg = "Short book name '$shortName' is not a book in the bible";
-	if ($args->{nonFatal}) {
-		$self->dic->logger->warn($errorMsg);
-	} else {
-		die($errorMsg);
-	}
-
-	return undef;
-}
-
-sub getBookByLongName {
-	my ($self, $longName) = @_;
-
-	$longName ||= '';
-	foreach my $book (@{ $self->books }) {
-		next if ($book->longName ne $longName);
-		return $book;
-	}
-
-	die("Long book name '$longName' is not a book in the bible");
-}
-
-sub getBookByOrdinal {
-	my ($self, $ordinal, $args) = @_;
-
-	$ordinal = $self->bookCount if ($ordinal == -1);
-
-	if ($ordinal > $self->bookCount) {
-		if ($args->{nonFatal}) {
-			return undef;
-		} else {
-			die(sprintf('Book ordinal %d out of range, there are %d books in the bible',
-			    $ordinal, $self->bookCount));
-		}
-	}
-
-	return $self->books->[$ordinal - 1];
-}
-
-sub getVerseByOrdinal {
-	my ($self, $ordinal, $args) = @_;
-
-	if (my $verseKey = $self->__backend->getVerseKeyByOrdinal($ordinal)) {
-		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
-		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
-			if (my $book = $self->getBookByShortName($bookShortName, $args)) {
-				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
-				return Chleb::Bible::Verse->new({
-					book    => $book,
-					chapter => $chapter,
-					ordinal => $verseNumber,
-					text    => $text,
-				});
-			}
-		} else {
-			die "I don't think you can reach this";
-		}
-	}
-
-	die(sprintf("Verse %d not found in '%s'", $ordinal, $self->translation));
 }
 
 sub newSearchQuery {
 	my ($self, @args) = @_;
 
-	my %defaults = ( _library => $self, dic => $self->dic );
+	my %defaults = ( dic => $self->dic );
 
-	return Chleb::Bible::Search::Query->new({ %defaults, text => $args[0] })
-	    if (scalar(@args) == 1);
+	if (scalar(@args) == 1) {
+		$defaults{bible} = $self->__getBible();
+		return Chleb::Bible::Search::Query->new({ %defaults, text => $args[0] })
+	}
 
 	my %params = @args;
+	$defaults{bible} = $self->__getBible(\%params);
 	return Chleb::Bible::Search::Query->new({ %defaults, %params });
 }
 
-sub resolveBook {
-	my ($self, $book) = @_;
-
-	unless (blessed($book)) {
-		if (looks_like_number($book)) {
-			$book = $self->getBookByOrdinal($book);
-		} else {
-			if (my $shortBook = $self->getBookByShortName($book, { nonFatal => 1 })) {
-				return $shortBook;
-			} else {
-				$book = $self->getBookByLongName($book);
-			}
-		}
-	}
-
-	return $book;
-}
-
 sub fetch {
-	my ($self, $book, $chapterOrdinal, $verseOrdinal) = @_;
+	my ($self, $book, $chapterOrdinal, $verseOrdinal, $args) = @_;
 	my $startTiming = Time::HiRes::time();
 
-	$book = $self->resolveBook($book);
+	my $bible = $self->__getBible($args);
+
+	$book = $bible->resolveBook($book);
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
@@ -196,12 +100,13 @@ sub fetch {
 }
 
 sub random { # TODO: parental?
-	my ($self) = @_;
+	my ($self, $args) = @_;
 
 	my $startTiming = Time::HiRes::time();
-	my $verseOrdinal = 1 + rand($self->verseCount);
+	my $bible = $self->__getBible($args);
 
-	my $verse = $self->getVerseByOrdinal($verseOrdinal);
+	my $verseOrdinal = 1 + rand($bible->verseCount);
+	my $verse = $bible->getVerseByOrdinal($verseOrdinal);
 
 	my $endTiming = Time::HiRes::time();
 	my $msecAll = int(1000 * ($endTiming - $startTiming));
@@ -213,9 +118,10 @@ sub random { # TODO: parental?
 }
 
 sub votd {
-	my ($self, $params) = @_;
+	my ($self, $args) = @_;
 	my $startTiming = Time::HiRes::time();
-	my ($when, $version, $parental) = @{$params}{qw(when version parental)};
+	my $bible = $self->__getBible($args);
+	my ($when, $version, $parental) = @{$args}{qw(when version parental)};
 
 	$when = $self->_resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
@@ -226,8 +132,8 @@ sub votd {
 		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
 		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-		my $verseOrdinal = 1 + ($seed % $self->verseCount);
-		$verse = $self->getVerseByOrdinal($verseOrdinal);
+		my $verseOrdinal = 1 + ($seed % $bible->verseCount);
+		$verse = $bible->getVerseByOrdinal($verseOrdinal, $args);
 
 		last if (!$parental || !$verse->parental);
 		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
@@ -262,26 +168,50 @@ sub votd {
 	return $verse;
 }
 
-sub __makeBackend {
-	my ($self) = @_;
+sub bibles {
+	my ($self, $translation) = @_;
+	$translation = __getTranslation({ translation => $translation });
+	unless ($self->__bibles->{$translation}) {
+		$self->__bibles->{$translation} = $self->__loadBible($translation);
+	}
 
-	return Chleb::Bible::Backend->new({
-		bible => $self,
+	return $self->__bibles->{$translation};
+}
+
+sub __getBible {
+	my ($self, $args) = @_;
+	return $self->bibles(__getTranslation($args));
+}
+
+sub __getTranslation {
+	my ($args) = @_;
+	return $TRANSLATION_DEFAULT unless ($args->{translation});
+	return $args->{translation};
+}
+
+sub __loadBible {
+	my ($self, $translation) = @_;
+	return Chleb::Bible->new({
+		translation => $translation,
 	});
 }
 
-sub __makeBookCount {
-	my ($self) = @_;
-	return scalar(@{ $self->books });
-}
-
-sub __makeBooks {
-	my ($self) = @_;
-	return $self->__backend->getBooks();
-}
+#sub __getBackendByTranslation {
+#	my ($self, $translation) = @_;
+#	for (my $i = 0; $i < scalar(@{ $self->__backends }); $i++) {
+#		return $self->__backends->[$i]; # FIXME
+#	}
+#
+#	die("No such backend translation -- '$translation'");
+#}
 
 sub __makeConstructionTime {
 	return time();
+}
+
+sub __makeBibles {
+	my ($self) = @_;
+	return { }; # demand-loaded to keep memory usage down
 }
 
 1;

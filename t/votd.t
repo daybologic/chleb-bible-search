@@ -38,16 +38,16 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
-use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible;
+use Chleb;
 use Chleb::Bible::DI::MockLogger;
+use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Chleb::Bible->new());
+	$self->sut(Chleb->new());
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;

@@ -40,14 +40,14 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible;
+use Chleb;
 use Chleb::Bible::DI::MockLogger;
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Chleb::Bible->new());
+	$self->sut(Chleb->new());
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -57,7 +57,8 @@ sub testTraversalReverse {
 	my ($self) = @_;
 	plan tests => 4;
 
-	my $book = $self->sut->getBookByOrdinal(-1);
+	my $bible = $self->sut->__getBible();
+	my $book = $bible->getBookByOrdinal(-1);
 	cmp_deeply($book, all(
 		isa('Chleb::Bible::Book'),
 		methods(shortName => 'Rev'),

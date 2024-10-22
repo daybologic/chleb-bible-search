@@ -46,9 +46,6 @@ use Readonly;
 use Chleb::Bible::Book;
 use Storable;
 
-Readonly my $BIBLE    => 'kjv.bin';
-Readonly my $BIBLE_GZ => 'kjv.bin.gz';
-
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
 Readonly my $FILE_VERSION => 10;
 
@@ -72,7 +69,7 @@ Readonly my $BOOK_OFFSET_VERSES_TO_KEYS => ++$offsetMaster; # Relative book vers
 # t - testamentEnum ('N', 'O')
 # v - verse count map (keys are the chapter number, there is no zero, and values are the verse counts)
 
-has _library => (is => 'ro', isa => 'Chleb::Bible', required => 1);
+has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
 has tmpPath => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeTmpPath);
 
@@ -86,7 +83,7 @@ has dataDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDataDir)
 
 sub __makeCompressedPath {
 	my ($self) = @_;
-	return join('/', $self->dataDir, $BIBLE_GZ);
+	return join('/', $self->dataDir, $self->__bibleFileName(compressed => 1));
 }
 
 sub __makeTmpDir {
@@ -106,7 +103,7 @@ sub __makeTmpDir {
 sub __makeTmpPath {
 	my ($self) = @_;
 
-	my $path = join('/', $self->tmpDir, $BIBLE);
+	my $path = join('/', $self->tmpDir, $self->__bibleFileName());
 
 	gunzip $self->compressedPath => $path
 	   or die("gunzip \"" . $self->compressedPath . "\" failed: $GunzipError\n");
@@ -151,7 +148,7 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 		my $bookInfo = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortName};
 		my $bookOrdinal = $bookIndex + 1;
 		$books[$bookIndex] = Chleb::Bible::Book->new({
-			_library   => $self->_library,
+			bible      => $self->bible,
 			ordinal    => $bookOrdinal,
 			shortName  => $shortName,
 			longName   => $bookInfo->{n},
@@ -224,11 +221,12 @@ sub __validateVersion {
 }
 
 sub __makeDataDir {
-	Readonly my @PATHS => ('data', '/usr/share/chleb-bible-search');
+	my ($self) = @_;
 
+	Readonly my @PATHS => ('data', '/usr/share/chleb-bible-search');
 	foreach my $path (@PATHS) {
 		if (-d $path) {
-			my $testFile = join('/', $path, 'kjv.bin.gz'); # TODO: File always exists?  Might need a master file
+			my $testFile = join('/', $path, $self->__bibleFileName(compressed => 1));
 			if (-f $testFile) {
 				return $path;
 			}
@@ -236,6 +234,13 @@ sub __makeDataDir {
 	}
 
 	return $PATHS[0];
+}
+
+sub __bibleFileName {
+	my ($self, %flags) = @_;
+	my $fileName = join('.', $self->bible->translation, 'bin');
+	$fileName .= '.gz' if ($flags{compressed});
+	return $fileName;
 }
 
 1;
