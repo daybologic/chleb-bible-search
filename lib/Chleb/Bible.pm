@@ -57,10 +57,6 @@ has verseCount => (is => 'ro', isa => 'Int', default => 31_102); # TODO: Hard-co
 
 has translation => (is => 'ro', isa => 'Str', required => 1);
 
-BEGIN {
-	our $VERSION = '0.10.0';
-}
-
 sub BUILD {
 	my ($self) = @_;
 

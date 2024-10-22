@@ -36,8 +36,8 @@ use strict;
 use warnings;
 
 WriteMakefile(
-	NAME         => 'Chleb::Bible',
-	VERSION_FROM => 'lib/Chleb/Bible.pm', # finds $VERSION
+	NAME         => 'Chleb',
+	VERSION_FROM => 'lib/Chleb.pm', # finds $VERSION
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
 	ABSTRACT     => 'Chleb Bible Search',
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
