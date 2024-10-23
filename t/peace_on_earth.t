@@ -53,11 +53,94 @@ sub setUp {
 	return EXIT_SUCCESS;
 }
 
-sub testPeaceSearch {
+sub testPeaceSearch_defaultTranslation {
 	my ($self) = @_;
 	plan tests => 2;
 
 	my $query = $self->sut->newSearchQuery('peace on earth')->setLimit(3);
+	cmp_deeply($query, all(
+		isa('Chleb::Bible::Search::Query'),
+		methods(
+			limit         => 3,
+			testament     => undef,
+			bookShortName => undef,
+			text          => 'peace on earth',
+		),
+	), 'query inspection') or diag(explain($query));
+
+	my @bookExpect = (
+		all(
+			isa('Chleb::Bible::Book'),
+			methods(
+				ordinal      => 40,
+				shortName    => 'Mat',
+				chapterCount => 28,
+				verseCount   => 1071,
+				testament    => 'new',
+			),
+		),
+		all(
+			isa('Chleb::Bible::Book'),
+			methods(
+				ordinal      => 42,
+				shortName    => 'Luke',
+				chapterCount => 24,
+				verseCount   => 1151,
+				testament    => 'new',
+			),
+		),
+	);
+
+	my $results = $query->run();
+	cmp_deeply($results, all(
+		isa('Chleb::Bible::Search::Results'),
+		methods(
+			count  => 2,
+			verses => [
+				all(
+					isa('Chleb::Bible::Verse'),
+					methods(
+						book    => $bookExpect[0],
+						chapter => all(
+							isa('Chleb::Bible::Chapter'),
+							methods(
+								book       => $bookExpect[0],
+								ordinal    => 10,
+								verseCount => 42,
+							),
+						),
+						ordinal => 34,
+						text    => 'Think not that I am come to send peace on earth: I came not to send peace, but a sword.',
+					),
+				),
+				all(
+					isa('Chleb::Bible::Verse'),
+					methods(
+						book    => $bookExpect[1],
+						chapter => all(
+							isa('Chleb::Bible::Chapter'),
+							methods(
+								book       => $bookExpect[1],
+								ordinal    => 12,
+								verseCount => 59,
+							),
+						),
+						ordinal => 51,
+						text    => 'Suppose ye that I am come to give peace on earth? I tell you, Nay; but rather division:',
+					),
+				),
+			],
+		),
+	), 'results inspection');
+
+	return EXIT_SUCCESS;
+}
+
+sub testPeaceSearch_asvTranslation {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $query = $self->sut->newSearchQuery(text => 'peace on earth', translation => 'asv')->setLimit(3);
 	cmp_deeply($query, all(
 		isa('Chleb::Bible::Search::Query'),
 		methods(
