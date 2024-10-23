@@ -101,6 +101,11 @@ sub run {
 	return $results;
 }
 
+sub translation {
+	my ($self) = @_;
+	return $self->bible->translation;
+}
+
 sub toString {
 	my ($self) = @_;
 	return sprintf("%s text '%s'", 'Query', $self->text);

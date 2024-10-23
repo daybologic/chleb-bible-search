@@ -65,6 +65,7 @@ sub testPeaceSearch_defaultTranslation {
 			testament     => undef,
 			bookShortName => undef,
 			text          => 'peace on earth',
+			translation   => 'kjv',
 		),
 	), 'query inspection') or diag(explain($query));
 
@@ -148,6 +149,7 @@ sub testPeaceSearch_asvTranslation {
 			testament     => undef,
 			bookShortName => undef,
 			text          => 'peace on earth',
+			translation   => 'asv',
 		),
 	), 'query inspection') or diag(explain($query));
 
