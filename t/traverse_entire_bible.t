@@ -38,11 +38,15 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
-use Test::Deep qw(all cmp_deeply isa methods);
-use POSIX qw(EXIT_SUCCESS);
 use Chleb;
 use Chleb::Bible::DI::MockLogger;
+use POSIX qw(EXIT_SUCCESS);
+use Readonly;
+use Test::Deep qw(all cmp_deeply isa methods);
 use Test::More 0.96;
+
+Readonly my $VERSE_FIRST => 0;
+Readonly my $VERSE_LAST  => 1;
 
 sub setUp {
 	my ($self) = @_;
@@ -53,11 +57,37 @@ sub setUp {
 	return EXIT_SUCCESS;
 }
 
-sub testTraversal {
+sub testTraversalDefault {
 	my ($self) = @_;
+
+	$self->__checkTraversal();
+
+	return EXIT_SUCCESS;
+}
+
+sub testTraversal_kjv {
+	my ($self) = @_;
+
+	$self->__checkTraversal('kjv');
+
+	return EXIT_SUCCESS;
+}
+
+sub testTraversal_asv {
+	my ($self) = @_;
+
+	$self->__checkTraversal('asv');
+
+	return EXIT_SUCCESS;
+}
+
+sub __checkTraversal {
+	my ($self, $translation) = @_;
 	plan tests => 4;
 
-	my $bible = $self->sut->__getBible();
+	$translation = { translation => $translation } if (defined($translation));
+	my $bible = $self->sut->__getBible($translation);
+
 	my $book = $bible->getBookByOrdinal(1);
 	cmp_deeply($book, all(
 		isa('Chleb::Bible::Book'),
@@ -70,6 +100,7 @@ sub testTraversal {
 		methods(
 			chapter => methods(ordinal => 1),
 			ordinal => 1,
+			text    => __getVerseText($translation, $VERSE_FIRST),
 		),
 	), 'First verse in bible correct: ' . $verse->toString());
 
@@ -88,19 +119,43 @@ sub testTraversal {
 			book => methods(ordinal => 66),
 			chapter => methods(ordinal => 22),
 			ordinal => 21,
+			text    => __getVerseText($translation, $VERSE_LAST),
 		),
 	), 'Last verse in bible correct: ' . $verse->toString());
 
 	my $expectBibleVerseCount = 31_102;
 	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
 
-	return EXIT_SUCCESS;
+	return;
 }
 
 sub __mockLogger {
 	my ($self) = @_;
 	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
 	return;
+}
+
+sub __getVerseText {
+	my ($translation, $which) = @_;
+
+	if ($translation) {
+		$translation = $translation->{translation};
+	} else {
+		$translation = 'kjv';
+	}
+
+	Readonly my %TEXT => (
+		'kjv' => [
+			'In the beginning God created the heaven and the earth.',
+			'The grace of our Lord Jesus Christ [be] with you all. Amen.',
+		],
+		'asv' => [
+			'In the beginning God created the heavens and the earth.',
+			'The grace of the Lord Jesus be with the saints. Amen.',
+		],
+	);
+
+	return $TEXT{$translation}->[$which];
 }
 
 package main;
