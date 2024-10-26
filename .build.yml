@@ -37,6 +37,7 @@ packages:
   - libdancer2-perl
   - libdatetime-format-strptime-perl
   - libdatetime-perl
+  - libdevel-cover-perl
   - libdbd-mysql-perl
   - libdbi-perl
   - libdigest-crc-perl
