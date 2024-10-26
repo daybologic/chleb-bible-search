@@ -147,13 +147,12 @@ sub getVerseByOrdinal {
 sub newSearchQuery {
 	my ($self, @args) = @_;
 
-	my %defaults = ( _library => $self, dic => $self->dic );
-
-	return Chleb::Bible::Search::Query->new({ %defaults, text => $args[0] })
+	return Chleb::Bible::Search::Query->new({ text => $args[0] })
 	    if (scalar(@args) == 1);
 
 	my %params = @args;
-	return Chleb::Bible::Search::Query->new({ %defaults, %params });
+	$params{bible} = $self;
+	return Chleb::Bible::Search::Query->new({ %params });
 }
 
 sub resolveBook {

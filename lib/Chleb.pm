@@ -185,6 +185,7 @@ sub __getBible {
 
 sub __getTranslation {
 	my ($args) = @_;
+	return $args if ($args && ref($args) ne 'HASH');
 	return $TRANSLATION_DEFAULT unless ($args->{translation});
 	return $args->{translation};
 }
