@@ -207,56 +207,6 @@ sub random { # TODO: parental?
 	return $verse;
 }
 
-sub votd {
-	my ($self, $params) = @_;
-	my $startTiming = Time::HiRes::time();
-	my ($when, $version, $parental) = @{$params}{qw(when version parental)};
-
-	$when = $self->_resolveISO8601($when);
-	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
-
-	my $verse;
-	for (my $offset = 0; $offset > -1; $offset++) {
-		my $seed = crc32($when->epoch + $offset);
-		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
-		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
-
-		my $verseOrdinal = 1 + ($seed % $self->verseCount);
-		$verse = $self->getVerseByOrdinal($verseOrdinal);
-
-		last if (!$parental || !$verse->parental);
-		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
-	}
-
-	$self->dic->logger->debug($verse->toString());
-
-	my $msecAll = 0;
-	# handle ARRAY verses where more than one compound Verse may be returned
-	if ($version && looks_like_number($version) && $version == 2) {
-		$verse = [ $verse ]; # make it an ARRAY
-		my $endTiming = Time::HiRes::time();
-		my $msec = int(1000 * ($endTiming - $startTiming));
-		$verse->[0]->msec($msec);
-		$msecAll += $msec;
-		while ($verse->[-1]->continues) {
-			push(@$verse, $verse->[-1]->getNext());
-			$endTiming = Time::HiRes::time();
-			$msec = int(1000 * ($endTiming - $startTiming));
-			$verse->[-1]->msec($msec);
-			$msecAll += $msec;
-			$startTiming = Time::HiRes::time();
-		}
-	} else {
-		my $endTiming = Time::HiRes::time();
-		$msecAll = int(1000 * ($endTiming - $startTiming));
-
-		$verse->msec($msecAll);
-	}
-
-	$self->dic->logger->debug(sprintf('VoTD sought in %dms', $msecAll));
-	return $verse;
-}
-
 sub __makeBackend {
 	my ($self) = @_;
 
