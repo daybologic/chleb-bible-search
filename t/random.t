@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,48 +29,56 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
+package RandomTests;
+use strict;
+use warnings;
+use Moose;
 
-use ExtUtils::MakeMaker;
-#use ExtUtils::MakeMaker::Coverage;
+use lib 'externals/libtest-module-runnable-perl/lib';
+
+extends 'Test::Module::Runnable';
+
+use POSIX qw(EXIT_SUCCESS);
+use Chleb::Bible;
+use Chleb::Bible::DI::MockLogger;
+use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::More 0.96;
+
+sub setUp {
+	my ($self) = @_;
+
+	$self->sut(Chleb::Bible->new());
+	$self->__mockLogger();
+
+	return EXIT_SUCCESS;
+}
+
+sub test {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $verse = $self->sut->random();
+	cmp_deeply($verse, all(
+		isa('Chleb::Bible::Verse'),
+		methods(
+			book    => isa('Chleb::Bible::Book'),
+			chapter => isa('Chleb::Bible::Chapter'),
+			ordinal => re(qr/^\d+$/),
+			text    => ignore(),
+		),
+	), 'verse inspection') or diag(explain($verse->toString()));
+
+	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
+	return;
+}
+
+package main;
 use strict;
 use warnings;
 
-WriteMakefile(
-	NAME         => 'Chleb::Bible',
-	VERSION_FROM => 'lib/Chleb/Bible.pm', # finds $VERSION
-	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Chleb Bible Search',
-	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => [glob q('data/*.bin.gz')],
-
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
-	PREREQ_PM => {
-		'Moose'            => 0,
-		'Test::MockModule' => 0,
-		'Test::More'       => 0,
-		'UUID::Tiny'       => 0,
-	}, BUILD_REQUIRES => {
-		'DateTime::Format::Strptime' => 0,
-		'Devel::Cover'    => 0,
-		'Moose'           => 0,
-		'Test::More'      => 0,
-		'Readonly'        => 0,
-		'Test::Deep'      => 0,
-		'Test::Exception' => 0,
-	},
-);
-
-package MY;
-
-sub MY::postamble {
-    return q~
-cover :: pure_all
-	HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
-
-    ~;
-}
-
-1;
+exit(RandomTests->new->run());

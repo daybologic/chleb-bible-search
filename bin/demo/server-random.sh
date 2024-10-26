@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,48 +29,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
+H=localhost:3000
 
-use ExtUtils::MakeMaker;
-#use ExtUtils::MakeMaker::Coverage;
-use strict;
-use warnings;
+if [ -x /usr/bin/curl ]; then
+	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
+		curl -s "http://$H/1/random" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
+	else
+		curl -s "http://$H/1/random" | tr -d '\n' | grep -o '"text":[^"]*"[^"]*"'
+	fi
 
-WriteMakefile(
-	NAME         => 'Chleb::Bible',
-	VERSION_FROM => 'lib/Chleb/Bible.pm', # finds $VERSION
-	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Chleb Bible Search',
-	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => [glob q('data/*.bin.gz')],
-
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
-	PREREQ_PM => {
-		'Moose'            => 0,
-		'Test::MockModule' => 0,
-		'Test::More'       => 0,
-		'UUID::Tiny'       => 0,
-	}, BUILD_REQUIRES => {
-		'DateTime::Format::Strptime' => 0,
-		'Devel::Cover'    => 0,
-		'Moose'           => 0,
-		'Test::More'      => 0,
-		'Readonly'        => 0,
-		'Test::Deep'      => 0,
-		'Test::Exception' => 0,
-	},
-);
-
-package MY;
-
-sub MY::postamble {
-    return q~
-cover :: pure_all
-	HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
-
-    ~;
-}
-
-1;
+fi

@@ -36,6 +36,7 @@ packages:
   - p5-Dancer2
   - p5-Datetime
   - p5-DateTime-Format-Strptime
+  - p5-Devel-Cover
   - p5-DBD-Mysql
   - p5-DBI
   - p5-Digest-CRC
