@@ -152,7 +152,7 @@ sub newSearchQuery {
 
 	my %params = @args;
 	$params{bible} = $self;
-	return Chleb::Bible::Search::Query->new({ %params });
+	return $self->_library->newSearchQuery(%params);
 }
 
 sub resolveBook {

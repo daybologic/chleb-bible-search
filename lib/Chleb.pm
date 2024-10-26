@@ -193,6 +193,7 @@ sub __getTranslation {
 sub __loadBible {
 	my ($self, $translation) = @_;
 	return Chleb::Bible->new({
+		library     => $self,
 		translation => $translation,
 	});
 }
