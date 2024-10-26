@@ -32,6 +32,7 @@
 package main;
 
 use ExtUtils::MakeMaker;
+#use ExtUtils::MakeMaker::Coverage;
 use strict;
 use warnings;
 
@@ -53,6 +54,7 @@ WriteMakefile(
 		'UUID::Tiny'       => 0,
 	}, BUILD_REQUIRES => {
 		'DateTime::Format::Strptime' => 0,
+		'Devel::Cover'    => 0,
 		'Moose'           => 0,
 		'Test::More'      => 0,
 		'Readonly'        => 0,
@@ -60,3 +62,15 @@ WriteMakefile(
 		'Test::Exception' => 0,
 	},
 );
+
+package MY;
+
+sub MY::postamble {
+    return q~
+cover :: pure_all
+	HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
+
+    ~;
+}
+
+1;
