@@ -45,8 +45,6 @@ use Chleb::Bible::DI::Container;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 
-#Readonly my $TRANSLATION_DEFAULT => 'kjv';
-
 has __backend => (is => 'ro', isa => 'Chleb::Bible::Backend', lazy => 1, default => \&__makeBackend);
 
 has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCount);
