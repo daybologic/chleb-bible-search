@@ -70,6 +70,9 @@ sub MY::postamble {
 cover :: pure_all
 	HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
 
+clean :: pure_all
+	rm -rf cover_db
+
     ~;
 }
 
