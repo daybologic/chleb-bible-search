@@ -22,4 +22,6 @@ chown $SERVER_USER /var/log/chleb-bible-search /var/log/chleb-bible-search/defau
 systemctl start chleb-bible-search
 systemctl enable chleb-bible-search
 
+#DEBHELPER#
+
 exit 0
