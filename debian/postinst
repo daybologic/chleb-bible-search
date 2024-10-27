@@ -19,8 +19,7 @@ fi
 usermod -c "$SERVER_NAME" $SERVER_USER
 chown $SERVER_USER /var/log/chleb-bible-search /var/log/chleb-bible-search/default.log
 
-systemctl start chleb-bible-search
-systemctl enable chleb-bible-search
+invoke-rc.d chleb-bible-search restart || :
 
 #DEBHELPER#
 
