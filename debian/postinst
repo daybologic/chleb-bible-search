@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 [ -z "$SERVER_USER" ] && SERVER_USER=chleb
 [ -z "$SERVER_NAME" ] && SERVER_NAME="Chleb Bible Search"
 
@@ -8,6 +10,7 @@ if ! getent passwd | grep -q "^$SERVER_USER:"; then
 	adduser --quiet \
 		--system \
 		--no-create-home \
+		--home /nonexistent \
 		--disabled-password \
 		$SERVER_USER 2>/dev/null || true
 	echo "..done"
@@ -16,7 +19,8 @@ fi
 usermod -c "$SERVER_NAME" $SERVER_USER
 chown $SERVER_USER /var/log/chleb-bible-search /var/log/chleb-bible-search/default.log
 
-/usr/bin/systemctl start chleb-bible-search
-/usr/bin/systemctl enable chleb-bible-search
+invoke-rc.d chleb-bible-search restart || :
+
+#DEBHELPER#
 
 exit 0

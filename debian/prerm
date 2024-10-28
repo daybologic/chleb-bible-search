@@ -1,6 +1,9 @@
 #!/bin/sh
 
-/usr/bin/systemctl disable chleb-bible-search
-/usr/bin/systemctl stop chleb-bible-search
+set -e
+
+invoke-rc.d chleb-bible-search stop || :
+
+#DEBHELPER#
 
 exit 0

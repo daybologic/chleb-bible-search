@@ -1,5 +1,5 @@
 Source: chleb-bible-search
-Section: perl
+Section: contrib/perl
 Priority: optional
 Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
