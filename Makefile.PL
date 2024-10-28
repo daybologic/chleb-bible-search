@@ -36,6 +36,8 @@ use ExtUtils::MakeMaker;
 use strict;
 use warnings;
 
+system('bin/maint/synology.sh');
+
 WriteMakefile(
 	NAME         => 'Chleb',
 	VERSION_FROM => 'lib/Chleb.pm', # finds $VERSION
@@ -69,6 +71,9 @@ sub MY::postamble {
     return q~
 cover :: pure_all
 	HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
+
+clean :: pure_all
+	rm -rf cover_db
 
     ~;
 }

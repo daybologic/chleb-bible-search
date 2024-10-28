@@ -1,6 +1,7 @@
 [Unit]
 Description=Chleb Bible Search
 After=network.target
+Documentation=https://github.com/daybologic/chleb-bible-search/blob/master/README.md
 
 [Service]
 EnvironmentFile=-/etc/default/chleb-bible-search
