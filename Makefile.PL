@@ -36,6 +36,8 @@ use ExtUtils::MakeMaker;
 use strict;
 use warnings;
 
+system('bin/maint/synology.sh');
+
 WriteMakefile(
 	NAME         => 'Chleb::Bible',
 	VERSION_FROM => 'lib/Chleb/Bible.pm', # finds $VERSION
