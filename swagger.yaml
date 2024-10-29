@@ -74,6 +74,17 @@ paths:
       summary: Random Verse
       operationId: getRandom
       description: Retrieve one verse from The Bible, at random.
+      parameters:
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -233,6 +244,16 @@ paths:
             default: false
           required: false
           description: Require whitespace or end of verse after the requested term
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -288,6 +309,16 @@ paths:
             type: integer
           required: true
           description: Verse within chapter (ordinal)
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
