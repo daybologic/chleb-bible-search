@@ -122,16 +122,6 @@ paths:
             default: false
           required: false
           description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
-        - in: query
-          name: translation
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/Translation'
-          required: false
-          style: form
-          explode: false
-          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -423,6 +413,8 @@ components:
               type: string
               description: Verbatim and unedited text from the Holy Bible.
               example: Thus did Noah; according to all that God commanded him, so did he.
+            translation:
+              $ref: '#/components/schemas/Translation'
     Stats:
       type: object
       properties:
