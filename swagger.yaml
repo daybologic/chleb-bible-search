@@ -122,6 +122,16 @@ paths:
             default: false
           required: false
           description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+        - in: query
+          name: translation
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -170,6 +180,16 @@ paths:
             default: false
           required: false
           description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -372,6 +392,10 @@ components:
               type: string
               description: Description of uptime in human-readable text
               example: 1 minute and 30 seconds
+    Translation:
+      type: string
+      enum: ["all", "any", "asv", "kjv"]
+      default: "kjv"
     Verse:
       type: object
       properties:
