@@ -102,10 +102,11 @@ sub test {
 
 	my $json = $verse->TO_JSON();
 	cmp_deeply($json, {
-		book    => 'Susana',
-		chapter => 1121,
-		ordinal => 5,
-		text    => 'Blessed are the peacemakers, because they will be called sons of God',
+		book        => 'Susana',
+		chapter     => 1121,
+		ordinal     => 5,
+		text        => 'Blessed are the peacemakers, because they will be called sons of God',
+		translation => 'kjv',
 	}, 'TO_JSON') or diag(explain($json));
 
 	return EXIT_SUCCESS;

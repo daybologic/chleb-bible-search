@@ -98,10 +98,11 @@ sub TO_JSON {
 	my ($self) = @_;
 
 	return {
-		book    => $self->book->shortName,
-		chapter => $self->chapter->ordinal,
-		ordinal => $self->ordinal,
-		text    => $self->text,
+		book        => $self->book->shortName,
+		chapter     => $self->chapter->ordinal,
+		ordinal     => $self->ordinal,
+		text        => $self->text,
+		translation => $self->book->bible->translation,
 	};
 }
 

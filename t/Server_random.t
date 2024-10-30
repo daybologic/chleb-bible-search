@@ -67,6 +67,7 @@ sub test {
 					chapter => re(qr/^\d{1,3}$/),
 					ordinal => re(qr/^\d{1,2}$/),
 					text => ignore(),
+					translation => 'kjv',
 				},
 				id => re(qr@^\w+/\d{1,3}/\d{1,2}$@),
 				type => 'verse',
