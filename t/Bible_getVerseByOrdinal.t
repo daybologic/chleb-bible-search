@@ -64,9 +64,9 @@ sub testFirstSuccess {
 	my ($self) = @_;
 	plan tests => 2;
 
-	my $bible = $self->sut->__getBible();
-	__checkFirstVerse($bible->getVerseByOrdinal(1));
-	__checkFirstVerse($bible->getVerseByOrdinal(-31_102));
+	my @bible = $self->sut->__getBible();
+	__checkFirstVerse($bible[0]->getVerseByOrdinal(1));
+	__checkFirstVerse($bible[0]->getVerseByOrdinal(-31_102));
 
 	return EXIT_SUCCESS;
 }
@@ -75,9 +75,9 @@ sub testLastSuccess {
 	my ($self) = @_;
 	plan tests => 2;
 
-	my $bible = $self->sut->__getBible();
-	__checkLastVerse($bible->getVerseByOrdinal(31_102));
-	__checkLastVerse($bible->getVerseByOrdinal(-1));
+	my @bible = $self->sut->__getBible();
+	__checkLastVerse($bible[0]->getVerseByOrdinal(31_102));
+	__checkLastVerse($bible[0]->getVerseByOrdinal(-1));
 
 	return EXIT_SUCCESS;
 }
@@ -131,8 +131,8 @@ sub testOutOfBounds {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $bible = $self->sut->__getBible();
-	throws_ok { $bible->getVerseByOrdinal(31_103) } qr/^Verse 31103 not found in 'kjv' /,
+	my @bible = $self->sut->__getBible();
+	throws_ok { $bible[0]->getVerseByOrdinal(31_103) } qr/^Verse 31103 not found in 'kjv' /,
 	    'verse out of bounds';
 
 	return EXIT_SUCCESS;
