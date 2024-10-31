@@ -57,8 +57,8 @@ sub testTraversalReverse {
 	my ($self) = @_;
 	plan tests => 4;
 
-	my $bible = $self->sut->__getBible();
-	my $book = $bible->getBookByOrdinal(-1);
+	my @bible = $self->sut->__getBible();
+	my $book = $bible[0]->getBookByOrdinal(-1);
 	cmp_deeply($book, all(
 		isa('Chleb::Bible::Book'),
 		methods(shortName => 'Rev'),

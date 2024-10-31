@@ -37,6 +37,7 @@ extends 'Chleb::Bible::Base';
 
 use Data::Dumper;
 use Digest::CRC qw(crc32);
+use List::Util qw(shuffle);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
@@ -71,22 +72,24 @@ sub newSearchQuery {
 	my %defaults = ( dic => $self->dic );
 
 	if (scalar(@args) == 1) {
-		$defaults{bible} = $self->__getBible();
+		($defaults{bible}) = $self->__getBible();
 		return Chleb::Bible::Search::Query->new({ %defaults, text => $args[0] })
 	}
 
 	my %params = @args;
-	$defaults{bible} = $self->__getBible(\%params);
+	__fixTranslationsParam(\%params);
+	($defaults{bible}) = $self->__getBible(\%params); # TODO: Needs testing, probably won't work with multiple translations
 	return Chleb::Bible::Search::Query->new({ %defaults, %params });
 }
 
 sub fetch {
 	my ($self, $book, $chapterOrdinal, $verseOrdinal, $args) = @_;
 	my $startTiming = Time::HiRes::time();
+	__fixTranslationsParam($args);
 
-	my $bible = $self->__getBible($args);
+	my @bible = $self->__getBible($args);
 
-	$book = $bible->resolveBook($book);
+	$book = $bible[0]->resolveBook($book); # TODO: This won't handle 'all' properly, you need a loop.
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
@@ -103,16 +106,18 @@ sub random { # TODO: parental?
 	my ($self, $args) = @_;
 
 	my $startTiming = Time::HiRes::time();
-	my $bible = $self->__getBible($args);
+	__fixTranslationsParam($args);
+	my (@bible) = $self->__getBible($args);
+	@bible = shuffle(@bible);
 
-	my $verseOrdinal = 1 + rand($bible->verseCount);
-	my $verse = $bible->getVerseByOrdinal($verseOrdinal);
+	my $verseOrdinal = 1 + rand($bible[0]->verseCount);
+	my $verse = $bible[0]->getVerseByOrdinal($verseOrdinal);
 
 	my $endTiming = Time::HiRes::time();
 	my $msecAll = int(1000 * ($endTiming - $startTiming));
 
 	$verse->msec($msecAll);
-	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(), $msecAll));
+	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(1), $msecAll));
 
 	return $verse;
 }
@@ -120,20 +125,24 @@ sub random { # TODO: parental?
 sub votd {
 	my ($self, $args) = @_;
 	my $startTiming = Time::HiRes::time();
-	my $bible = $self->__getBible($args);
+	__fixTranslationsParam($args);
 	my ($when, $version, $parental) = @{$args}{qw(when version parental)};
 
+	my (@bible) = $self->__getBible($args);
 	$when = $self->_resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
-	my $verse;
+	my ($verse, $verseOrdinal);
 	for (my $offset = 0; $offset > -1; $offset++) {
 		my $seed = crc32($when->epoch + $offset);
 		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
 		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-		my $verseOrdinal = 1 + ($seed % $bible->verseCount);
-		$verse = $bible->getVerseByOrdinal($verseOrdinal, $args);
+		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
+		# Especially with the order they appear in the ARRAY.
+		# TODO: Sort the ARRAY?
+		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
+		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
 
 		last if (!$parental || !$verse->parental);
 		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
@@ -145,16 +154,25 @@ sub votd {
 	# handle ARRAY verses where more than one compound Verse may be returned
 	if ($version && looks_like_number($version) && $version == 2) {
 		$verse = [ $verse ]; # make it an ARRAY
-		my $endTiming = Time::HiRes::time();
-		my $msec = int(1000 * ($endTiming - $startTiming));
-		$verse->[0]->msec($msec);
-		$msecAll += $msec;
-		while ($verse->[-1]->continues) {
-			push(@$verse, $verse->[-1]->getNext());
-			$endTiming = Time::HiRes::time();
-			$msec = int(1000 * ($endTiming - $startTiming));
-			$verse->[-1]->msec($msec);
+		for (my $bibleTranslationOrdinal = 0; $bibleTranslationOrdinal < scalar(@bible); $bibleTranslationOrdinal++) {
+			if ($bibleTranslationOrdinal > 0) {
+				push(@$verse, $bible[$bibleTranslationOrdinal]->getVerseByOrdinal($verseOrdinal, $args));
+			}
+
+			my $endTiming = Time::HiRes::time();
+			my $msec = int(1000 * ($endTiming - $startTiming));
+			$verse->[0]->msec($msec);
 			$msecAll += $msec;
+
+			while ($verse->[-1]->continues) {
+				push(@$verse, $verse->[-1]->getNext());
+				$endTiming = Time::HiRes::time();
+				$msec = int(1000 * ($endTiming - $startTiming));
+				$verse->[-1]->msec($msec);
+				$msecAll += $msec;
+				$startTiming = Time::HiRes::time();
+			}
+
 			$startTiming = Time::HiRes::time();
 		}
 	} else {
@@ -170,7 +188,8 @@ sub votd {
 
 sub bibles {
 	my ($self, $translation) = @_;
-	$translation = __getTranslation({ translation => $translation });
+	#$translation = __getTranslation({ translation => $translation });
+	$translation = __getTranslation($translation);
 	unless ($self->__bibles->{$translation}) {
 		$self->__bibles->{$translation} = $self->__loadBible($translation);
 	}
@@ -180,14 +199,26 @@ sub bibles {
 
 sub __getBible {
 	my ($self, $args) = @_;
-	return $self->bibles(__getTranslation($args));
+
+	my @bible = ( );
+	my @translations = __getTranslation($args);
+	foreach my $translation (@translations) {
+		push(@bible, $self->bibles($translation));
+	}
+
+	return @bible;
 }
 
 sub __getTranslation {
 	my ($args) = @_;
+
 	return $args if ($args && ref($args) ne 'HASH');
-	return $TRANSLATION_DEFAULT unless ($args->{translation});
-	return $args->{translation};
+
+	if (my $translations = $args->{translations}) {
+		return (@$translations);
+	}
+
+	return ($TRANSLATION_DEFAULT);
 }
 
 sub __loadBible {
@@ -205,6 +236,37 @@ sub __makeConstructionTime {
 sub __makeBibles {
 	my ($self) = @_;
 	return { }; # demand-loaded to keep memory usage down
+}
+
+sub __fixTranslationsParam {
+	my ($args) = @_;
+
+	if (my $translation = $args->{translation}) { # legacy
+		if ($translation eq 'all') {
+			die ("Cannot use all in 'translation', switch code to 'translations'");
+		}
+		$args->{translations} = [ $translation ]; # convert to new style
+	}
+
+	if (my $translations = $args->{translations}) { # new style
+		TRANSLATION: foreach my $translation (@{ $args->{translations} }) {
+			if ($translation eq 'all') {
+				$translations = [ __allTranslationsList() ];
+				last TRANSLATION;
+			}
+		}
+		my %uniqueTranslations = map { $_ => 1 } @$translations;
+		$translations = [ sort(keys(%uniqueTranslations)) ]; # ensure order is predictable
+		$args->{translations} = $translations; # update after unique/sort
+		$args->{translation} = $translations->[0]; # populate legacy
+	}
+
+	return;
+}
+
+sub __allTranslationsList {
+	# TODO: Can we make this dynamic?  If we can, we can drop in custom translations dynamically
+	return ('asv', 'kjv');
 }
 
 1;

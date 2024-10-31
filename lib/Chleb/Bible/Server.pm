@@ -182,8 +182,8 @@ sub __lookup {
 }
 
 sub __random {
-	my ($self) = @_;
-	my $verse = $self->__library->random();
+	my ($self, $params) = @_;
+	my $verse = $self->__library->random($params);
 
 	my $json = __verseToJsonApi($verse);
 	my $version = 1;
@@ -388,7 +388,8 @@ my $server;
 set serializer => 'JSON'; # or any other serializer
 
 get '/1/random' => sub {
-	return $server->__random();
+	my $translations = param('translations');
+	return $server->__random({ translations => $translations });
 };
 
 get '/1/votd' => sub {
@@ -400,6 +401,7 @@ get '/1/votd' => sub {
 get '/2/votd' => sub {
 	my $when = param('when');
 	my $parental = int(param('parental'));
+	my $translations = param('translations');
 	return $server->__votd({ version => 2, when => $when, parental => $parental });
 };
 

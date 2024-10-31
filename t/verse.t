@@ -57,9 +57,9 @@ sub test {
 	my ($self) = @_;
 	plan tests => 5;
 
-	my $bible = $self->sut->__getBible();
+	my @bible = $self->sut->__getBible();
 	my $book = Chleb::Bible::Book->new({
-		bible     => $bible,
+		bible     => $bible[0],
 		longName  => 'Book of Morman',
 		ordinal   => 21,
 		shortName => 'Susana',
@@ -72,7 +72,7 @@ sub test {
 	my $verse = Chleb::Bible::Verse->new({
 		book    => $book,
 		chapter => Chleb::Bible::Chapter->new({
-			bible    => $bible,
+			bible    => $bible[0],
 			book     => $book,
 			ordinal  => 1121,
 		}),

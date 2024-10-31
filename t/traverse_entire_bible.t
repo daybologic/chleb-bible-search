@@ -85,10 +85,11 @@ sub __checkTraversal {
 	my ($self, $translation) = @_;
 	plan tests => 4;
 
-	$translation = { translation => $translation } if (defined($translation));
-	my $bible = $self->sut->__getBible($translation);
+	my %args = ( );
+	$args{translations} = [ $translation ] if ($translation);
+	my @bible = $self->sut->__getBible(\%args);
 
-	my $book = $bible->getBookByOrdinal(1);
+	my $book = $bible[0]->getBookByOrdinal(1);
 	cmp_deeply($book, all(
 		isa('Chleb::Bible::Book'),
 		methods(shortName => 'Gen'),
@@ -138,11 +139,7 @@ sub __mockLogger {
 sub __getVerseText {
 	my ($translation, $which) = @_;
 
-	if ($translation) {
-		$translation = $translation->{translation};
-	} else {
-		$translation = 'kjv';
-	}
+	$translation ||= 'kjv';
 
 	Readonly my %TEXT => (
 		'kjv' => [
