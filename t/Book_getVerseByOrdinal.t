@@ -64,8 +64,8 @@ sub testSuccess {
 	my ($self) = @_;
 	plan tests => 5;
 
-	my $bible = $self->sut->__getBible();
-	my $book = $bible->getBookByShortName('Jonah');
+	my @bible = $self->sut->__getBible();
+	my $book = $bible[0]->getBookByShortName('Jonah');
 	my $verse = $book->getVerseByOrdinal(48);
 	cmp_deeply($verse, all(
 		isa('Chleb::Bible::Verse'),
@@ -84,7 +84,7 @@ sub testSuccess {
 		),
 	), 'verse inspection (Jonah)') or diag(explain($verse->toString()));
 
-	$book = $bible->getBookByOrdinal(20);
+	$book = $bible[0]->getBookByOrdinal(20);
 	$verse = $book->getVerseByOrdinal(458);
 	cmp_deeply($verse, all(
 		isa('Chleb::Bible::Verse'),
@@ -103,7 +103,7 @@ sub testSuccess {
 		),
 	), 'verse inspection (Proverbs)') or diag(explain($verse->toString()));
 
-	$book = $bible->getBookByOrdinal(1);
+	$book = $bible[0]->getBookByOrdinal(1);
 	$verse = $book->getVerseByOrdinal(1);
 	cmp_deeply($verse, all(
 		isa('Chleb::Bible::Verse'),
@@ -140,7 +140,7 @@ sub testSuccess {
 		),
 	), 'verse inspection (Genesis)') or diag(explain($verse->toString()));
 
-	$book = $bible->getBookByShortName('Rev');
+	$book = $bible[0]->getBookByShortName('Rev');
 	$verse = $book->getVerseByOrdinal(404);
 	cmp_deeply($verse, all(
 		isa('Chleb::Bible::Verse'),
@@ -166,12 +166,12 @@ sub testOutOfBounds {
 	my ($self) = @_;
 	plan tests => 2;
 
-	my $bible = $self->sut->__getBible();
-	my $book = $bible->getBookByShortName('Rev');
+	my @bible = $self->sut->__getBible();
+	my $book = $bible[0]->getBookByShortName('Rev');
 	my $msg = 'Verse 405 not found in Rev';
 	throws_ok { $book->getVerseByOrdinal(405) } qr/^$msg /, $msg;
 
-	$book = $bible->getBookByShortName('Gen');
+	$book = $bible[0]->getBookByShortName('Gen');
 	$msg = 'Verse 1534 not found in Gen';
 	throws_ok { $book->getVerseByOrdinal(1534) } qr/^$msg /, $msg;
 
