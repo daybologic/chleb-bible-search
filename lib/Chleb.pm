@@ -37,6 +37,7 @@ extends 'Chleb::Bible::Base';
 
 use Data::Dumper;
 use Digest::CRC qw(crc32);
+use List::Util qw(shuffle);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
@@ -103,16 +104,18 @@ sub random { # TODO: parental?
 	my ($self, $args) = @_;
 
 	my $startTiming = Time::HiRes::time();
-	my $bible = $self->__getBible($args);
+	__fixTranslationsParam($args);
+	my (@bible) = $self->__getBible($args);
+	@bible = shuffle(@bible);
 
-	my $verseOrdinal = 1 + rand($bible->verseCount);
-	my $verse = $bible->getVerseByOrdinal($verseOrdinal);
+	my $verseOrdinal = 1 + rand($bible[0]->verseCount);
+	my $verse = $bible[0]->getVerseByOrdinal($verseOrdinal);
 
 	my $endTiming = Time::HiRes::time();
 	my $msecAll = int(1000 * ($endTiming - $startTiming));
 
 	$verse->msec($msecAll);
-	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(), $msecAll));
+	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(1), $msecAll));
 
 	return $verse;
 }

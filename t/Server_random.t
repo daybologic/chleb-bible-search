@@ -54,7 +54,7 @@ sub setUp {
 	return EXIT_SUCCESS;
 }
 
-sub test {
+sub test_translation_kjv {
 	my ($self) = @_;
 	plan tests => 1;
 
@@ -65,16 +65,16 @@ sub test {
 				attributes => {
 					book => ignore(),
 					chapter => re(qr/^\d{1,3}$/),
-					ordinal => re(qr/^\d{1,2}$/),
+					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
 					translation => 'kjv',
 				},
-				id => re(qr@^\w+/\d{1,3}/\d{1,2}$@),
+				id => re(qr@^\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,2}$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,2}$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,2}$@),
+					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
 				},
 				relationships => {
 					book => {
@@ -98,7 +98,173 @@ sub test {
 			{
 				attributes => {
 					book => ignore(),
+					ordinal => re(qr/^\d{1,3}$/),
+				},
+				id => re(qr@^\w+/\d{1,3}$@),
+				type => 'chapter',
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+					},
+				},
+			},
+			{
+				attributes => {
 					ordinal => re(qr/^\d{1,2}$/),
+					testament => re(qr/^\w{3}$/),
+				},
+				id => ignore(),
+				relationships => {},
+				type => 'book'
+			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
+			},
+		],
+		links => {
+			self => '/1/random',
+		},
+	}, "single random verse JSON") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub test_translation_asv {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $json = $self->sut->__random({ translations => ['asv'] });
+	cmp_deeply($json, {
+		data => [
+			{
+				attributes => {
+					book => ignore(),
+					chapter => re(qr/^\d{1,3}$/),
+					ordinal => re(qr/^\d{1,3}$/),
+					text => ignore(),
+					translation => 'asv',
+				},
+				id => re(qr@^\w+/\d{1,3}/\d{1,3}$@),
+				type => 'verse',
+				links => {
+					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+				},
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => ignore(),
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+		],
+		included => [
+			{
+				attributes => {
+					book => ignore(),
+					ordinal => re(qr/^\d{1,3}$/),
+				},
+				id => re(qr@^\w+/\d{1,3}$@),
+				type => 'chapter',
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+					},
+				},
+			},
+			{
+				attributes => {
+					ordinal => re(qr/^\d{1,2}$/),
+					testament => re(qr/^\w{3}$/),
+				},
+				id => ignore(),
+				relationships => {},
+				type => 'book'
+			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
+			},
+		],
+		links => {
+			self => '/1/random',
+		},
+	}, "single random verse JSON") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub test_translation_all {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $json = $self->sut->__random({ translations => ['all'] });
+	cmp_deeply($json, {
+		data => [
+			{
+				attributes => {
+					book => ignore(),
+					chapter => re(qr/^\d{1,3}$/),
+					ordinal => re(qr/^\d{1,3}$/),
+					text => ignore(),
+					translation => re(qr/^\w{3}$/),
+				},
+				id => re(qr@^\w+/\d{1,3}/\d{1,3}$@),
+				type => 'verse',
+				links => {
+					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+				},
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => ignore(),
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+		],
+		included => [
+			{
+				attributes => {
+					book => ignore(),
+					ordinal => re(qr/^\d{1,3}$/),
 				},
 				id => re(qr@^\w+/\d{1,3}$@),
 				type => 'chapter',
