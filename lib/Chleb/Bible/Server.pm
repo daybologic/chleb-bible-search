@@ -51,6 +51,14 @@ sub dic {
 	return Chleb::Bible::DI::Container->instance;
 }
 
+sub forceArray {
+	my ($param) = @_;
+
+	return [] unless (defined($param));
+	return $param if (ref($param) eq 'ARRAY');
+	return [ split(m/,/, $param) ];
+}
+
 sub __title {
 	my ($self) = @_;
 
@@ -401,7 +409,7 @@ get '/1/votd' => sub {
 get '/2/votd' => sub {
 	my $when = param('when');
 	my $parental = int(param('parental'));
-	my $translations = param('translations');
+	my $translations = Chleb::Bible::Server::forceArray(param('translations'));
 	return $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
 };
 
