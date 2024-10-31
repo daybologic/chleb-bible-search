@@ -139,8 +139,6 @@ sub votd {
 		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
-		# Especially with the order they appear in the ARRAY.
-		# TODO: Sort the ARRAY?
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
 
