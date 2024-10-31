@@ -72,22 +72,24 @@ sub newSearchQuery {
 	my %defaults = ( dic => $self->dic );
 
 	if (scalar(@args) == 1) {
-		$defaults{bible} = $self->__getBible();
+		($defaults{bible}) = $self->__getBible();
 		return Chleb::Bible::Search::Query->new({ %defaults, text => $args[0] })
 	}
 
 	my %params = @args;
-	$defaults{bible} = $self->__getBible(\%params);
+	__fixTranslationsParam(\%params);
+	($defaults{bible}) = $self->__getBible(\%params); # TODO: Needs testing, probably won't work with multiple translations
 	return Chleb::Bible::Search::Query->new({ %defaults, %params });
 }
 
 sub fetch {
 	my ($self, $book, $chapterOrdinal, $verseOrdinal, $args) = @_;
 	my $startTiming = Time::HiRes::time();
+	__fixTranslationsParam($args);
 
-	my $bible = $self->__getBible($args);
+	my @bible = $self->__getBible($args);
 
-	$book = $bible->resolveBook($book);
+	$book = $bible[0]->resolveBook($book); # TODO: This won't handle 'all' properly, you need a loop.
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 
