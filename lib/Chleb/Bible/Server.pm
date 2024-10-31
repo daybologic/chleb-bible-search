@@ -400,6 +400,7 @@ get '/1/votd' => sub {
 get '/2/votd' => sub {
 	my $when = param('when');
 	my $parental = int(param('parental'));
+	my $translations = param('translations');
 	return $server->__votd({ version => 2, when => $when, parental => $parental });
 };
 
