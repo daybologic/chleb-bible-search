@@ -415,7 +415,7 @@ components:
               example: 1 minute and 30 seconds
     Translation:
       type: string
-      enum: ["all", "any", "asv", "kjv"]
+      enum: ["all", "asv", "kjv"]
       default: "kjv"
     Verse:
       type: object
