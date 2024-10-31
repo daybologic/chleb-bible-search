@@ -90,7 +90,7 @@ sub equals {
 sub toString {
 	my ($self, $verbose) = @_;
 	my $str = sprintf('%s:%d', $self->chapter->toString(), $self->ordinal);
-	$str = sprintf('%s - %s', $str, $self->text) if ($verbose);
+	$str = sprintf('%s - %s [%s]', $str, $self->text, $self->book->bible->translation) if ($verbose);
 	return $str;
 }
 
