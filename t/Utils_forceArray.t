@@ -41,6 +41,7 @@ extends 'Test::Module::Runnable';
 use POSIX qw(EXIT_SUCCESS);
 use Chleb::Utils;
 #use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
@@ -54,13 +55,42 @@ sub setUp {
 
 sub testSuccess {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 6;
 
+	is_deeply(Chleb::Utils::forceArray(), [], 'empty is empty ARRAY');
 	is_deeply(Chleb::Utils::forceArray(undef), [], 'undef is empty ARRAY');
 	is_deeply(Chleb::Utils::forceArray([]), [], 'empty ARRAY is empty ARRAY');
 	is_deeply(Chleb::Utils::forceArray(['x', 1]), ['x', 1], 'normal ARRAY');
 	is_deeply(Chleb::Utils::forceArray('x', 1), ['x', 1], 'list becomes ARRAY');
 	is_deeply(Chleb::Utils::forceArray('x'), ['x'], 'SCALAR becomes ARRAY');
+
+	return EXIT_SUCCESS;
+}
+
+sub testFailure {
+	my ($self) = @_;
+	plan tests => 3;
+
+	subtest 'scalar' => sub {
+		plan tests => 2;
+
+		throws_ok { Chleb::Utils::forceArray($self) } qr/no blessed object support/;
+		throws_ok { Chleb::Utils::forceArray(sub { }) } qr/no CODE support/;
+	};
+
+	subtest 'list' => sub {
+		plan tests => 2;
+
+		throws_ok { Chleb::Utils::forceArray(1, $self) } qr/no blessed object support/;
+		throws_ok { Chleb::Utils::forceArray(1, sub { }) } qr/no CODE support/;
+	};
+
+	subtest 'array' => sub {
+		plan tests => 2;
+
+		throws_ok { Chleb::Utils::forceArray([1, $self]) } qr/no blessed object support/;
+		throws_ok { Chleb::Utils::forceArray([1, sub { }]) } qr/no CODE support/;
+	};
 
 	return EXIT_SUCCESS;
 }

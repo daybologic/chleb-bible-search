@@ -2,6 +2,8 @@ package Chleb::Utils;
 use strict;
 use warnings;
 
+use Scalar::Util qw(blessed);
+
 =head1 FUNCTIONS
 
 =over
@@ -34,11 +36,21 @@ the function will throw a fatal error.
 sub forceArray {
 	my (@input) = @_;
 
+	my $noObjects = sub {
+		my ($item) = @_;
+		die('no blessed object support') if (blessed($item));
+		die('no CODE support') if (ref($item) eq 'CODE');
+	};
+
 	my @output = ( );
 	foreach my $unknown (@input) {
 		next unless (defined($unknown));
+		$noObjects->($unknown);
 		if (ref($unknown) eq 'ARRAY') {
-			push(@output, @$unknown);
+			foreach my $subItem (@$unknown) {
+				$noObjects->($subItem);
+				push(@output, $subItem);
+			}
 			next;
 		}
 		push(@output, split(m/,/, $unknown));
