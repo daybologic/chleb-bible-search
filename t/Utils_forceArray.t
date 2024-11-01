@@ -67,24 +67,27 @@ sub testFailure {
 	plan tests => 3;
 
 	subtest 'scalar' => sub {
-		plan tests => 2;
+		plan tests => 3;
 
 		throws_ok { Chleb::Utils::forceArray($self) } qr/no blessed object support/;
 		throws_ok { Chleb::Utils::forceArray(sub { }) } qr/no CODE support/;
+		throws_ok { Chleb::Utils::forceArray({}) } qr/no HASH support/;
 	};
 
 	subtest 'list' => sub {
-		plan tests => 2;
+		plan tests => 3;
 
 		throws_ok { Chleb::Utils::forceArray(1, $self) } qr/no blessed object support/;
 		throws_ok { Chleb::Utils::forceArray(1, sub { }) } qr/no CODE support/;
+		throws_ok { Chleb::Utils::forceArray(1, {}) } qr/no HASH support/;
 	};
 
 	subtest 'array' => sub {
-		plan tests => 2;
+		plan tests => 3;
 
 		throws_ok { Chleb::Utils::forceArray([1, $self]) } qr/no blessed object support/;
 		throws_ok { Chleb::Utils::forceArray([1, sub { }]) } qr/no CODE support/;
+		throws_ok { Chleb::Utils::forceArray([1, {}]) } qr/no HASH support/;
 	};
 
 	return EXIT_SUCCESS;

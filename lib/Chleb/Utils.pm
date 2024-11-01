@@ -40,6 +40,7 @@ sub forceArray {
 		my ($item) = @_;
 		die('no blessed object support') if (blessed($item));
 		die('no CODE support') if (ref($item) eq 'CODE');
+		die('no HASH support') if (ref($item) eq 'HASH');
 	};
 
 	my @output = ( );
