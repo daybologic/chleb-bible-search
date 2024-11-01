@@ -34,6 +34,7 @@ use strict;
 use warnings;
 use Chleb;
 use Chleb::Bible::DI::Container;
+use Chleb::Utils;
 use JSON;
 use Time::Duration;
 use UUID::Tiny ':std';
@@ -49,14 +50,6 @@ sub new {
 
 sub dic {
 	return Chleb::Bible::DI::Container->instance;
-}
-
-sub forceArray {
-	my ($param) = @_;
-
-	return [] unless (defined($param));
-	return $param if (ref($param) eq 'ARRAY');
-	return [ split(m/,/, $param) ];
 }
 
 sub __title {
@@ -409,7 +402,7 @@ get '/1/votd' => sub {
 get '/2/votd' => sub {
 	my $when = param('when');
 	my $parental = int(param('parental'));
-	my $translations = Chleb::Bible::Server::forceArray(param('translations'));
+	my $translations = Chleb::Utils::forceArray(param('translations'));
 	return $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
 };
 
