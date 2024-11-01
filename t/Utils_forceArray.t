@@ -58,10 +58,10 @@ sub testSuccess {
 	plan tests => 6;
 
 	is_deeply(Chleb::Utils::forceArray(), [], 'empty is empty ARRAY');
-	is_deeply(Chleb::Utils::forceArray(undef), [], 'undef is empty ARRAY');
+	is_deeply(Chleb::Utils::forceArray(undef), [undef], 'undef is ARRAY containing undef');
 	is_deeply(Chleb::Utils::forceArray([]), [], 'empty ARRAY is empty ARRAY');
-	is_deeply(Chleb::Utils::forceArray(['x', 1]), ['x', 1], 'normal ARRAY');
-	is_deeply(Chleb::Utils::forceArray('x', 1), ['x', 1], 'list becomes ARRAY');
+	is_deeply(Chleb::Utils::forceArray(['x', 1, undef]), ['x', 1, undef], 'normal ARRAY');
+	is_deeply(Chleb::Utils::forceArray('x', 1, undef), ['x', 1, undef], 'list becomes ARRAY');
 	is_deeply(Chleb::Utils::forceArray('x'), ['x'], 'SCALAR becomes ARRAY');
 
 	return EXIT_SUCCESS;

@@ -44,7 +44,10 @@ sub forceArray {
 
 	my @output = ( );
 	foreach my $unknown (@input) {
-		next unless (defined($unknown));
+		unless (defined($unknown)) {
+			push(@output, undef);
+			next;
+		}
 		$noObjects->($unknown);
 		if (ref($unknown) eq 'ARRAY') {
 			foreach my $subItem (@$unknown) {
