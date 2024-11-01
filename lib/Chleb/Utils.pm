@@ -32,11 +32,19 @@ the function will throw a fatal error.
 =cut
 
 sub forceArray {
-	my ($param) = @_;
+	my (@input) = @_;
 
-	return [] unless (defined($param));
-	return $param if (ref($param) eq 'ARRAY');
-	return [ split(m/,/, $param) ];
+	my @output = ( );
+	foreach my $unknown (@input) {
+		next unless (defined($unknown));
+		if (ref($unknown) eq 'ARRAY') {
+			push(@output, @$unknown);
+			next;
+		}
+		push(@output, split(m/,/, $unknown));
+	}
+
+	return \@output;
 }
 
 =back
