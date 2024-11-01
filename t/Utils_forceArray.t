@@ -55,7 +55,7 @@ sub setUp {
 
 sub testSuccess {
 	my ($self) = @_;
-	plan tests => 6;
+	plan tests => 8;
 
 	is_deeply(Chleb::Utils::forceArray(), [], 'empty is empty ARRAY');
 	is_deeply(Chleb::Utils::forceArray(undef), [undef], 'undef is ARRAY containing undef');
@@ -63,6 +63,8 @@ sub testSuccess {
 	is_deeply(Chleb::Utils::forceArray(['x', 1, undef]), ['x', 1, undef], 'normal ARRAY');
 	is_deeply(Chleb::Utils::forceArray('x', 1, undef), ['x', 1, undef], 'list becomes ARRAY');
 	is_deeply(Chleb::Utils::forceArray('x'), ['x'], 'SCALAR becomes ARRAY');
+	is_deeply(Chleb::Utils::forceArray('x,y,z'), ['x','y','z'], 'comma-separated list become ARRAY');
+	is_deeply(Chleb::Utils::forceArray(['x,y,z']), ['x','y','z'], 'comma-separated ARRAY is exploded ARRAY');
 
 	return EXIT_SUCCESS;
 }

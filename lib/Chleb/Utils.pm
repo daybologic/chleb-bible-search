@@ -51,8 +51,12 @@ sub forceArray {
 		$noObjects->($unknown);
 		if (ref($unknown) eq 'ARRAY') {
 			foreach my $subItem (@$unknown) {
-				$noObjects->($subItem);
-				push(@output, $subItem);
+				if (defined($subItem)) {
+					$noObjects->($subItem);
+					push(@output, split(m/,/, $subItem));
+				} else {
+					push(@output, $subItem);
+				}
 			}
 			next;
 		}
