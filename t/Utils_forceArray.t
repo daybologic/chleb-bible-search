@@ -40,18 +40,8 @@ extends 'Test::Module::Runnable';
 
 use POSIX qw(EXIT_SUCCESS);
 use Chleb::Utils;
-#use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::Exception;
 use Test::More 0.96;
-
-sub setUp {
-	my ($self) = @_;
-
-	#$self->sut(Chleb->new());
-	#$self->__mockLogger();
-
-	return EXIT_SUCCESS;
-}
 
 sub testSuccess {
 	my ($self) = @_;
