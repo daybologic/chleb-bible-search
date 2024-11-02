@@ -199,8 +199,10 @@ sub __getBible {
 	my ($self, $args) = @_;
 
 	my @bible = ( );
+	my %real = map { $_ => 1 } (qw(all asv kjv)); # TODO: Make this dynamic
 	my @translations = __getTranslation($args);
 	foreach my $translation (@translations) {
+		next unless ($real{$translation});
 		push(@bible, $self->bibles($translation));
 	}
 
