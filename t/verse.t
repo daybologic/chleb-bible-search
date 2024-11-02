@@ -42,6 +42,7 @@ use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
 use Chleb;
 use Chleb::Bible::Book;
+use Chleb::Bible::DI::MockLogger;
 use Chleb::Bible::Verse;
 use Test::Deep qw(cmp_deeply);
 use Test::Exception;
@@ -50,6 +51,7 @@ use Test::More 0.96;
 sub setUp {
 	my ($self) = @_;
 	$self->sut(Chleb->new());
+	$self->__mockLogger();
 	return EXIT_SUCCESS;
 }
 
@@ -111,6 +113,12 @@ sub test {
 	}, 'TO_JSON') or diag(explain($json));
 
 	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
+	return;
 }
 
 package main;

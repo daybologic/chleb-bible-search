@@ -49,7 +49,7 @@ sub setUp {
 	my ($self) = @_;
 
 	$self->sut(Chleb->new());
-	#$self->__mockLogger(); # TODO?  Uncomment if we need it.
+	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }

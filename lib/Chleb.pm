@@ -206,8 +206,8 @@ sub __getBible {
 		push(@bible, $self->bibles($translation));
 	}
 
-	# TODO: Better it is, to have a 404
-	die('No recognized bible translations')
+	$self->dic->logger->trace(sprintf('translation count: %d', scalar(@bible)));
+	die('No recognized bible translations') # TODO: Better it is, to have a 404
 	    if (scalar(@bible) == 0);
 
 	return @bible;
