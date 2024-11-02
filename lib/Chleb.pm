@@ -206,6 +206,10 @@ sub __getBible {
 		push(@bible, $self->bibles($translation));
 	}
 
+	# TODO: Better it is, to have a 404
+	die('No recognized bible translations')
+	    if (scalar(@bible) == 0);
+
 	return @bible;
 }
 
