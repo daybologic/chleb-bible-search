@@ -216,13 +216,18 @@ sub __getBible {
 sub __getTranslation {
 	my ($args) = @_;
 
+	my @translationsReturned = ( );
 	return $args if ($args && ref($args) ne 'HASH');
 
 	if (my $translations = $args->{translations}) {
-		return (@$translations);
+		foreach my $translation (@$translations) {
+			next unless (defined($translation));
+			push(@translationsReturned, $translation);
+		}
 	}
 
-	return ($TRANSLATION_DEFAULT);
+	@translationsReturned = ($TRANSLATION_DEFAULT) if (scalar(@translationsReturned) == 0);
+	return @translationsReturned;
 }
 
 sub __loadBible {
