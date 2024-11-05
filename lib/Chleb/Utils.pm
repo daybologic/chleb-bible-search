@@ -67,6 +67,18 @@ sub forceArray {
 	return \@output;
 }
 
+sub removeArrayEmptyItems {
+	my ($arrayRef) = @_;
+
+	my @filtered = ( );
+	foreach my $value (@$arrayRef) {
+		next if (!defined($value));
+		next if (length($value) == 0);
+		push(@filtered, $value);
+	}
+	return \@filtered;
+}
+
 =back
 
 =cut

@@ -402,7 +402,7 @@ get '/1/votd' => sub {
 get '/2/votd' => sub {
 	my $when = param('when');
 	my $parental = int(param('parental'));
-	my $translations = Chleb::Utils::forceArray(param('translations'));
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	return $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
 };
 
