@@ -199,9 +199,17 @@ sub __getBible {
 	my ($self, $args) = @_;
 
 	my @bible = ( );
-	my %real = map { $_ => 1 } (qw(all asv kjv)); # TODO: Make this dynamic
+	my %real = map { $_ => 1 } __allTranslationsList();
 	my @translations = __getTranslation($args);
+
 	foreach my $translation (@translations) {
+		next if ($translation ne 'all');
+		@translations = __allTranslationsList();
+		last;
+	}
+
+	foreach my $translation (@translations) {
+		$self->dic->logger->trace('testing translation: ' . $translation);
 		next unless ($real{$translation});
 		push(@bible, $self->bibles($translation));
 	}
