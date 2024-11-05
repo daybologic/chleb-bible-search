@@ -204,10 +204,14 @@ sub __getBible {
 	my %real = map { $_ => 1 } __allTranslationsList();
 	my @translations = __getTranslation($args);
 
-	foreach my $translation (@translations) {
-		next if ($translation ne 'all');
+	if (scalar(@translations) == 0) {
 		@translations = __allTranslationsList();
-		last;
+	} else {
+		foreach my $translation (@translations) {
+			next if ($translation ne 'all');
+			@translations = __allTranslationsList();
+			last;
+		}
 	}
 
 	foreach my $translation (@translations) {
