@@ -202,18 +202,23 @@ sub __getBible {
 
 	my @bible = ( );
 	my %real = map { $_ => 1 } __allTranslationsList();
+	$self->dic->logger->trace('args: ' . Dumper $args);
 	my @translations = __getTranslation($args);
+	$self->dic->logger->trace(sprintf('translations count: %d - %s', scalar(@translations), Dumper \@translations));
 
 	if (scalar(@translations) == 0) {
 		@translations = __allTranslationsList();
+		$self->dic->logger->trace(sprintf('got %d translations from all translations list', scalar(@translations)));
 	} else {
 		foreach my $translation (@translations) {
 			next if ($translation ne 'all');
 			@translations = __allTranslationsList();
+			$self->dic->logger->trace(sprintf('got %d translations from all translations list', scalar(@translations)));
 			last;
 		}
 	}
 
+	$self->dic->logger->trace(sprintf('translations count: %d - %s', scalar(@translations), Dumper \@translations));
 	foreach my $translation (@translations) {
 		$self->dic->logger->trace('testing translation: ' . $translation);
 		next unless ($real{$translation});
