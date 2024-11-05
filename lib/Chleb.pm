@@ -58,9 +58,11 @@ BEGIN {
 	our $VERSION = '0.10.0';
 }
 
+my $dic;
 sub BUILD {
 	my ($self) = @_;
 
+	$dic = $self->dic;
 	$self->constructionTime();
 
 	return;
@@ -187,7 +189,7 @@ sub votd {
 sub bibles {
 	my ($self, $translation) = @_;
 	#$translation = __getTranslation({ translation => $translation });
-	$translation = __getTranslation($translation);
+	($translation) = __getTranslation($translation);
 	unless ($self->__bibles->{$translation}) {
 		$self->__bibles->{$translation} = $self->__loadBible($translation);
 	}
@@ -234,7 +236,9 @@ sub __getTranslation {
 		}
 	}
 
+	$dic->logger->trace(sprintf('translation count: %d', scalar(@translationsReturned))) if ($dic);
 	@translationsReturned = ($TRANSLATION_DEFAULT) if (scalar(@translationsReturned) == 0);
+	$dic->logger->trace(sprintf('translation count: %d', scalar(@translationsReturned))) if ($dic);
 	return @translationsReturned;
 }
 
