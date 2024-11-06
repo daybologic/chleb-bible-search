@@ -406,8 +406,9 @@ get '/2/votd' => sub {
 	my $parental = int(param('parental'));
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
+	my $result;
 	eval {
-		return $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
+		$result = $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
 	};
 
 	if (my $evalError = $EVAL_ERROR) { # TODO: Possibly superfluous 'if' statement
@@ -418,6 +419,8 @@ get '/2/votd' => sub {
 			send_error($exception, 500);
 		}
 	}
+
+	return $result;
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {
