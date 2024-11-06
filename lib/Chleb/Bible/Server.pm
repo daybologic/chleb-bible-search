@@ -382,7 +382,9 @@ use strict;
 use warnings;
 
 use Dancer2;
+use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
+use Scalar::Util qw(blessed);
 
 my $server;
 
@@ -403,7 +405,19 @@ get '/2/votd' => sub {
 	my $when = param('when');
 	my $parental = int(param('parental'));
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-	return $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
+
+	eval {
+		return $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
+	};
+
+	if (my $evalError = $EVAL_ERROR) { # TODO: Possibly superfluous 'if' statement
+		my $exception = $evalError;
+		if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
+			send_error('TODO', $exception->statusCode);
+		} else {
+			send_error($exception, 500);
+		}
+	}
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {
