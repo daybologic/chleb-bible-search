@@ -38,9 +38,10 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
-use POSIX qw(EXIT_SUCCESS);
 use Chleb;
 use Chleb::Bible::DI::MockLogger;
+use English qw(-no_match_vars);
+use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods);
 use Test::Exception;
 use Test::More 0.96;
@@ -128,7 +129,14 @@ sub testFail {
 	my ($self) = @_;
 	plan tests => 1;
 
-	throws_ok { $self->sut->__getBible('blah') } qr/No recognized bible translations/;
+	eval { $self->sut->__getBible('blah') };
+	cmp_deeply($EVAL_ERROR, all(
+		isa('Chleb::Bible::Server::Exception'),
+		methods(
+			description => 'No recognized bible translations',
+			statusCode  => 404,
+		),
+	), "correct 'not found' error");
 
 	return EXIT_SUCCESS;
 }
