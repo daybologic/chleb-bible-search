@@ -58,11 +58,9 @@ BEGIN {
 	our $VERSION = '0.10.0';
 }
 
-my $dic;
 sub BUILD {
 	my ($self) = @_;
 
-	$dic = $self->dic;
 	$self->constructionTime();
 
 	return;
@@ -202,31 +200,25 @@ sub __getBible {
 
 	my @bible = ( );
 	my %real = map { $_ => 1 } __allTranslationsList();
-	$self->dic->logger->trace('args: ' . Dumper $args);
 	my @translations = __getTranslation($args);
-	$self->dic->logger->trace(sprintf('translations count: %d - %s', scalar(@translations), Dumper \@translations));
 
 	if (scalar(@translations) == 0) {
 		@translations = __allTranslationsList();
-		$self->dic->logger->trace(sprintf('got %d translations from all translations list', scalar(@translations)));
 	} else {
 		foreach my $translation (@translations) {
 			next if ($translation ne 'all');
 			@translations = __allTranslationsList();
-			$self->dic->logger->trace(sprintf('got %d translations from all translations list', scalar(@translations)));
 			last;
 		}
 	}
 
-	$self->dic->logger->trace(sprintf('translations count: %d - %s', scalar(@translations), Dumper \@translations));
 	foreach my $translation (@translations) {
-		$self->dic->logger->trace('testing translation: ' . $translation);
 		next unless ($real{$translation});
 		push(@bible, $self->bibles($translation));
 	}
 
-	$self->dic->logger->trace(sprintf('translation count: %d', scalar(@bible)));
-	die('No recognized bible translations') # TODO: Better it is, to have a 404
+	# TODO: Better it is, to have a 404
+	die('No recognized bible translations')
 	    if (scalar(@bible) == 0);
 
 	return @bible;
@@ -245,9 +237,7 @@ sub __getTranslation {
 		}
 	}
 
-	$dic->logger->trace(sprintf('translation count: %d', scalar(@translationsReturned))) if ($dic);
 	@translationsReturned = ($TRANSLATION_DEFAULT) if (scalar(@translationsReturned) == 0);
-	$dic->logger->trace(sprintf('translation count: %d', scalar(@translationsReturned))) if ($dic);
 	return @translationsReturned;
 }
 
