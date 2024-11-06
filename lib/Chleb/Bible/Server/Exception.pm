@@ -33,12 +33,16 @@ use strict;
 use warnings;
 use Moose;
 
+has description => (is => 'ro', isa => 'Str');
+
 has statusCode => (is => 'ro', isa => 'Int', default => 200);
 
 sub raise {
 	my ($class, $statusCode, $description) = @_;
+
 	return $class->new({
-		statusCode => $statusCode,
+		description => $description,
+		statusCode  => $statusCode,
 	});
 }
 

@@ -37,6 +37,7 @@ extends 'Chleb::Bible::Base';
 
 use Data::Dumper;
 use Digest::CRC qw(crc32);
+use HTTP::Status qw(:constants);
 use List::Util qw(shuffle);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
@@ -218,8 +219,7 @@ sub __getBible {
 		push(@bible, $self->bibles($translation));
 	}
 
-	# TODO: Better it is, to have a 404
-	die Chleb::Bible::Server::Exception->raise(404, 'No recognized bible translations')
+	die Chleb::Bible::Server::Exception->raise(HTTP_NOT_FOUND, 'No recognized bible translations')
 	    if (scalar(@bible) == 0);
 
 	return @bible;

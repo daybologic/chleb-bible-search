@@ -413,7 +413,7 @@ get '/2/votd' => sub {
 	if (my $evalError = $EVAL_ERROR) { # TODO: Possibly superfluous 'if' statement
 		my $exception = $evalError;
 		if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
-			send_error('TODO', $exception->statusCode);
+			send_error($exception->description, $exception->statusCode);
 		} else {
 			send_error($exception, 500);
 		}
