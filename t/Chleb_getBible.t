@@ -129,14 +129,21 @@ sub testFail {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval { $self->sut->__getBible('blah') };
-	cmp_deeply($EVAL_ERROR, all(
-		isa('Chleb::Bible::Server::Exception'),
-		methods(
-			description => 'No recognized bible translations',
-			statusCode  => 404,
-		),
-	), "correct 'not found' error");
+	eval {
+		$self->sut->__getBible('blah');
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Bible::Server::Exception'),
+			methods(
+				description => 'No recognized bible translations',
+				statusCode  => 404,
+			),
+		), "correct 'not found' error");
+	} else {
+		fail('No exception raised, as was expected');
+	}
 
 	return EXIT_SUCCESS;
 }
