@@ -17,7 +17,11 @@ if ! getent passwd | grep -q "^$SERVER_USER:"; then
 fi
 
 usermod -c "$SERVER_NAME" $SERVER_USER
-chown $SERVER_USER /var/log/chleb-bible-search /var/log/chleb-bible-search/default.log
+chown $SERVER_USER /var/log/chleb-bible-search
+
+if [ -f /var/log/chleb-bible-search/default.log ]; then
+	chown $SERVER_USER /var/log/chleb-bible-search/default.log
+fi
 
 invoke-rc.d chleb-bible-search restart || :
 
