@@ -33,4 +33,4 @@
 set -eu
 
 bin/import/text-to-bin.pl asv
-gzip data/asv.bin
+gzip -f data/asv.bin

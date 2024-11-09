@@ -33,4 +33,4 @@
 set -eu
 
 bin/import/text-to-bin.pl kjv
-gzip data/kjv.bin
+gzip -f data/kjv.bin
