@@ -411,7 +411,7 @@ get '/2/votd' => sub {
 		$result = $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
 	};
 
-	if (my $evalError = $EVAL_ERROR) { # TODO: Possibly superfluous 'if' statement
+	if (my $evalError = $EVAL_ERROR) {
 		my $exception = $evalError;
 		if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
 			send_error($exception->description, $exception->statusCode);
@@ -427,8 +427,24 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $book = param('book');
 	my $chapter = param('chapter');
 	my $verse = param('verse');
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
-	return $server->__lookup({ book => $book, chapter => $chapter, verse => $verse });
+	my $result;
+	eval {
+		$result = $server->__lookup({ book => $book, chapter => $chapter, verse => $verse, translations => $translations });
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		my $exception = $evalError;
+		if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
+			send_error($exception->description, $exception->statusCode);
+		} else {
+			send_error($exception, 500);
+		}
+	}
+
+	return $result;
+
 };
 
 get '/1/search' => sub {
