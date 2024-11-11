@@ -91,17 +91,22 @@ sub fetch {
 
 	my (@bible) = $self->__getBible($args);
 
-	$book = $bible[0]->resolveBook($book); # TODO: This won't handle 'all' properly, you need a loop.
-	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
-	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+	my @verse;
+	for (my $bibleI = 0; $bibleI < scalar(@bible); $bibleI++) {
+		if (my $resolvedBook = $bible[$bibleI]->resolveBook($book)) {
+			my $chapter = $resolvedBook->getChapterByOrdinal($chapterOrdinal);
+			push(@verse, $chapter->getVerseByOrdinal($verseOrdinal));
+		}
+	}
 
 	my $endTiming = Time::HiRes::time();
 	my $msec = int(1000 * ($endTiming - $startTiming));
 
-	$self->dic->logger->debug(sprintf('%s sought in %dms', $verse->toString(), $msec));
-	$verse->msec($msec);
+	$self->dic->logger->debug(sprintf('%s sought in %dms', $verse[0]->toString(), $msec));
 
-	return $verse;
+	$_->msec($msec) foreach (@verse);
+
+	return @verse;
 }
 
 sub random { # TODO: parental?
