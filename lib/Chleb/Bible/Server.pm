@@ -169,17 +169,24 @@ sub __verseToJsonApi {
 
 sub __lookup {
 	my ($self, $params) = @_;
-	my $verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
+	my @verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
 
-	my $json = __verseToJsonApi($verse);
-
-	$json->{links}->{self} = '/' . join('/', 1, 'lookup', $verse->id);
-	foreach my $type (qw(next prev)) {
-		next unless ($json->{data}->[0]->{links}->{$type});
-		$json->{links}->{$type} = $json->{data}->[0]->{links}->{$type};
+	my @json;
+	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
+		push(@json, __verseToJsonApi($verse[$verseI]));
+		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->id);
 	}
 
-	return $json;
+	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
+		push(@{ $json[0]->{data} }, $json[$jsonI]->{data});
+	}
+
+	foreach my $type (qw(next prev)) {
+		next unless ($json[0]->{data}->[0]->{links}->{$type});
+		$json[0]->{links}->{$type} = $json[0]->{data}->[0]->{links}->{$type};
+	}
+
+	return $json[0];
 }
 
 sub __random {
