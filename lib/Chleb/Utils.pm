@@ -2,6 +2,16 @@ package Chleb::Utils;
 use strict;
 use warnings;
 
+=head1 NAME
+
+Chleb::Utils - Functions for miscellaneous internal purposes
+
+=head1 DESCRIPTION
+
+Functions for miscellaneous internal purposes
+
+=cut
+
 use Scalar::Util qw(blessed);
 
 =head1 FUNCTIONS
@@ -66,6 +76,13 @@ sub forceArray {
 
 	return \@output;
 }
+
+=item C<removeArrayEmptyItems($arrayRef)>
+
+Given an C<ARRAY>, remove any item which is not defined or has no length,
+and return a new C<ARRAY>.  The original is not modified.
+
+=cut
 
 sub removeArrayEmptyItems {
 	my ($arrayRef) = @_;
