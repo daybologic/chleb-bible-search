@@ -89,7 +89,7 @@ sub fetch {
 	my $startTiming = Time::HiRes::time();
 	__fixTranslationsParam($args);
 
-	my @bible = $self->__getBible($args);
+	my (@bible) = $self->__getBible($args);
 
 	$book = $bible[0]->resolveBook($book); # TODO: This won't handle 'all' properly, you need a loop.
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);

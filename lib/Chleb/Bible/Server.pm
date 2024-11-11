@@ -169,7 +169,7 @@ sub __verseToJsonApi {
 
 sub __lookup {
 	my ($self, $params) = @_;
-	my $verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse});
+	my $verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
 
 	my $json = __verseToJsonApi($verse);
 
