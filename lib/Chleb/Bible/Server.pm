@@ -88,7 +88,7 @@ sub __makeJsonApi {
 }
 
 sub __verseToJsonApi {
-	my ($verse) = @_;
+	my ($verse, $params) = @_;
 	my %hash = __makeJsonApi();
 
 	push(@{ $hash{included} }, {
@@ -122,17 +122,18 @@ sub __verseToJsonApi {
 		links => { },
 	});
 
+	my $queryParams = Chleb::Utils::queryParamsHelper($params);
 	my %links = (
 		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
-		self => '/' . join('/', 1, 'lookup', $verse->id),
+		self => '/' . join('/', 1, 'lookup', $verse->id) . $queryParams,
 	);
 
 	if (my $nextVerse = $verse->getNext()) {
-		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->id);
+		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->id) . $queryParams;
 	}
 
 	if (my $prevVerse = $verse->getPrev()) {
-		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->id);
+		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->id) . $queryParams;
 	}
 
 	push(@{ $hash{data} }, {
@@ -173,8 +174,8 @@ sub __lookup {
 
 	my @json;
 	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
-		push(@json, __verseToJsonApi($verse[$verseI]));
-		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->id);
+		push(@json, __verseToJsonApi($verse[$verseI], $params));
+		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->id) . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
@@ -193,7 +194,7 @@ sub __random {
 	my ($self, $params) = @_;
 	my $verse = $self->__library->random($params);
 
-	my $json = __verseToJsonApi($verse);
+	my $json = __verseToJsonApi($verse, $params);
 	my $version = 1;
 	$json->{links}->{self} =  '/' . join('/', $version, 'random');
 
@@ -209,7 +210,7 @@ sub __votd {
 		my @json;
 
 		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
-			push(@json, __verseToJsonApi($verse->[$verseI]));
+			push(@json, __verseToJsonApi($verse->[$verseI], $params));
 		}
 
 		my $secondary_total_msec = 0;
@@ -227,12 +228,12 @@ sub __votd {
 			$json[0]->{included}->[$includedI]->{attributes}->{msec} += $secondary_total_msec;
 		}
 
-		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd');
+		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 		return $json[0];
 	}
 
-	my $json = __verseToJsonApi($verse);
-	$json->{links}->{self} =  '/' . join('/', $version, 'votd');
+	my $json = __verseToJsonApi($verse, $params);
+	$json->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 
 	return $json;
 }

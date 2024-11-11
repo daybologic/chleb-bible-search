@@ -96,6 +96,25 @@ sub removeArrayEmptyItems {
 	return \@filtered;
 }
 
+sub queryParamsHelper {
+	my ($params) = @_;
+
+	my $str = '';
+	my $counter = 0;
+	my %blacklist = map { $_ => 1 } (qw(book chapter translation verse version when)); # TODO: We should aim to eliminate this hack
+
+	while (my ($k, $v) = each(%$params)) {
+		next if ($blacklist{$k});
+		$str .= ($counter == 0) ? '?' : '&';
+		$v = join(',', @$v) if (ref($v) eq 'ARRAY');
+		$v = 'all' if ($v eq 'asv,kjv' && $k eq 'translations'); # TODO: You should do this via a callback
+		$str .= "${k}=${v}";
+		$counter++;
+	}
+
+	return $str;
+}
+
 =back
 
 =cut

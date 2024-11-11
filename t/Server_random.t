@@ -155,9 +155,9 @@ sub test_translation_asv {
 				id => re(qr@^\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
 				},
 				relationships => {
 					book => {
@@ -238,9 +238,9 @@ sub test_translation_all {
 				id => re(qr@^\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=all$@),
+					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=all$@),
+					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=all$@),
 				},
 				relationships => {
 					book => {

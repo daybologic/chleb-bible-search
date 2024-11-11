@@ -305,9 +305,9 @@ sub testV2_translations_asv_asv {
 				id => 'psa/122/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/122/7',
-					self => '/1/lookup/psa/122/8',
-					next => '/1/lookup/psa/122/9',
+					prev => '/1/lookup/psa/122/7?translations=asv',
+					self => '/1/lookup/psa/122/8?translations=asv',
+					next => '/1/lookup/psa/122/9?translations=asv',
 				},
 				relationships => {
 					book => {
@@ -363,7 +363,7 @@ sub testV2_translations_asv_asv {
 			},
 		],
 		links => {
-			self => '/2/votd',
+			self => '/2/votd?translations=asv',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
@@ -389,9 +389,9 @@ sub testV2_translations_kjv_asv {
 				id => 'psa/122/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/122/7',
-					self => '/1/lookup/psa/122/8',
-					next => '/1/lookup/psa/122/9',
+					prev => '/1/lookup/psa/122/7?translations=all',
+					self => '/1/lookup/psa/122/8?translations=all',
+					next => '/1/lookup/psa/122/9?translations=all',
 				},
 				relationships => {
 					book => {
@@ -421,9 +421,9 @@ sub testV2_translations_kjv_asv {
 				id => 'psa/122/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/122/7',
-					self => '/1/lookup/psa/122/8',
-					next => '/1/lookup/psa/122/9',
+					prev => '/1/lookup/psa/122/7?translations=all',
+					self => '/1/lookup/psa/122/8?translations=all',
+					next => '/1/lookup/psa/122/9?translations=all',
 				},
 				relationships => {
 					book => {
@@ -479,7 +479,7 @@ sub testV2_translations_kjv_asv {
 			},
 		],
 		links => {
-			self => '/2/votd',
+			self => '/2/votd?translations=all',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
@@ -505,9 +505,9 @@ sub testV2_translations_all {
 				id => 'num/16/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/7',
-					self => '/1/lookup/num/16/8',
-					next => '/1/lookup/num/16/9',
+					prev => '/1/lookup/num/16/7?translations=all',
+					self => '/1/lookup/num/16/8?translations=all',
+					next => '/1/lookup/num/16/9?translations=all',
 				},
 				relationships => {
 					book => {
@@ -537,9 +537,9 @@ sub testV2_translations_all {
 				id => 'num/16/9',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/8',
-					self => '/1/lookup/num/16/9',
-					next => '/1/lookup/num/16/10',
+					prev => '/1/lookup/num/16/8?translations=all',
+					self => '/1/lookup/num/16/9?translations=all',
+					next => '/1/lookup/num/16/10?translations=all',
 				},
 				relationships => {
 					book => {
@@ -569,9 +569,9 @@ sub testV2_translations_all {
 				id => 'num/16/10',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/9',
-					self => '/1/lookup/num/16/10',
-					next => '/1/lookup/num/16/11',
+					prev => '/1/lookup/num/16/9?translations=all',
+					self => '/1/lookup/num/16/10?translations=all',
+					next => '/1/lookup/num/16/11?translations=all',
 				},
 				relationships => {
 					book => {
@@ -601,9 +601,9 @@ sub testV2_translations_all {
 				id => 'num/16/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/7',
-					self => '/1/lookup/num/16/8',
-					next => '/1/lookup/num/16/9',
+					prev => '/1/lookup/num/16/7?translations=all',
+					self => '/1/lookup/num/16/8?translations=all',
+					next => '/1/lookup/num/16/9?translations=all',
 				},
 				relationships => {
 					book => {
@@ -633,9 +633,9 @@ sub testV2_translations_all {
 				id => 'num/16/9',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/8',
-					self => '/1/lookup/num/16/9',
-					next => '/1/lookup/num/16/10',
+					prev => '/1/lookup/num/16/8?translations=all',
+					self => '/1/lookup/num/16/9?translations=all',
+					next => '/1/lookup/num/16/10?translations=all',
 				},
 				relationships => {
 					book => {
@@ -691,7 +691,7 @@ sub testV2_translations_all {
 			},
 		],
 		links => {
-			self => '/2/votd',
+			self => '/2/votd?translations=all',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
