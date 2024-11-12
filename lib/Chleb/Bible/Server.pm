@@ -35,9 +35,7 @@ use warnings;
 use Chleb;
 use Chleb::Bible::DI::Container;
 use Chleb::Utils;
-use Dancer2;
 use JSON;
-use Scalar::Util qw(blessed);
 use Time::Duration;
 use UUID::Tiny ':std';
 
@@ -52,18 +50,6 @@ sub new {
 
 sub dic {
 	return Chleb::Bible::DI::Container->instance;
-}
-
-sub handleException {
-	my ($self, $exception) = @_;
-
-	if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
-		send_error($exception->description, $exception->statusCode);
-	} else {
-		send_error($exception, 500);
-	}
-
-	return;
 }
 
 sub __title {
@@ -428,10 +414,23 @@ use warnings;
 use Dancer2;
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
+use Scalar::Util qw(blessed);
 
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
+
+sub handleException {
+	my ($exception) = @_;
+
+	if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
+		send_error($exception->description, $exception->statusCode);
+	} else {
+		send_error($exception, 500);
+	}
+
+	return;
+}
 
 get '/1/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
@@ -442,7 +441,7 @@ get '/1/random' => sub {
 	};
 
 	if (my $exception = $EVAL_ERROR) {
-		$server->handleException($exception);
+		handleException($exception);
 	}
 
 	return $result;
@@ -465,7 +464,7 @@ get '/2/votd' => sub {
 	};
 
 	if (my $exception = $EVAL_ERROR) {
-		$server->handleException($exception);
+		handleException($exception);
 	}
 
 	return $result;
@@ -483,7 +482,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	};
 
 	if (my $exception = $EVAL_ERROR) {
-		$server->handleException($exception);
+		handleException($exception);
 	}
 
 	return $result;
