@@ -421,7 +421,7 @@ my $server;
 set serializer => 'JSON'; # or any other serializer
 
 get '/1/random' => sub {
-	my $translations = param('translations');
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	return $server->__random({ translations => $translations });
 };
 
