@@ -389,9 +389,9 @@ sub testV2_translations_kjv_asv {
 				id => 'psa/122/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/122/7?translations=all',
-					self => '/1/lookup/psa/122/8?translations=all',
-					next => '/1/lookup/psa/122/9?translations=all',
+					prev => '/1/lookup/psa/122/7?translations=asv',
+					self => '/1/lookup/psa/122/8?translations=asv',
+					next => '/1/lookup/psa/122/9?translations=asv',
 				},
 				relationships => {
 					book => {
@@ -421,9 +421,9 @@ sub testV2_translations_kjv_asv {
 				id => 'psa/122/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/122/7?translations=all',
-					self => '/1/lookup/psa/122/8?translations=all',
-					next => '/1/lookup/psa/122/9?translations=all',
+					prev => '/1/lookup/psa/122/7?translations=kjv',
+					self => '/1/lookup/psa/122/8?translations=kjv',
+					next => '/1/lookup/psa/122/9?translations=kjv',
 				},
 				relationships => {
 					book => {
@@ -505,9 +505,9 @@ sub testV2_translations_all {
 				id => 'num/16/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/7?translations=all',
-					self => '/1/lookup/num/16/8?translations=all',
-					next => '/1/lookup/num/16/9?translations=all',
+					prev => '/1/lookup/num/16/7?translations=asv',
+					self => '/1/lookup/num/16/8?translations=asv',
+					next => '/1/lookup/num/16/9?translations=asv',
 				},
 				relationships => {
 					book => {
@@ -537,9 +537,9 @@ sub testV2_translations_all {
 				id => 'num/16/9',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/8?translations=all',
-					self => '/1/lookup/num/16/9?translations=all',
-					next => '/1/lookup/num/16/10?translations=all',
+					prev => '/1/lookup/num/16/8?translations=asv',
+					self => '/1/lookup/num/16/9?translations=asv',
+					next => '/1/lookup/num/16/10?translations=asv',
 				},
 				relationships => {
 					book => {
@@ -569,9 +569,9 @@ sub testV2_translations_all {
 				id => 'num/16/10',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/9?translations=all',
-					self => '/1/lookup/num/16/10?translations=all',
-					next => '/1/lookup/num/16/11?translations=all',
+					prev => '/1/lookup/num/16/9?translations=asv',
+					self => '/1/lookup/num/16/10?translations=asv',
+					next => '/1/lookup/num/16/11?translations=asv',
 				},
 				relationships => {
 					book => {
@@ -601,9 +601,9 @@ sub testV2_translations_all {
 				id => 'num/16/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/7?translations=all',
-					self => '/1/lookup/num/16/8?translations=all',
-					next => '/1/lookup/num/16/9?translations=all',
+					prev => '/1/lookup/num/16/7?translations=kjv',
+					self => '/1/lookup/num/16/8?translations=kjv',
+					next => '/1/lookup/num/16/9?translations=kjv',
 				},
 				relationships => {
 					book => {
@@ -633,9 +633,9 @@ sub testV2_translations_all {
 				id => 'num/16/9',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/8?translations=all',
-					self => '/1/lookup/num/16/9?translations=all',
-					next => '/1/lookup/num/16/10?translations=all',
+					prev => '/1/lookup/num/16/8?translations=kjv',
+					self => '/1/lookup/num/16/9?translations=kjv',
+					next => '/1/lookup/num/16/10?translations=kjv',
 				},
 				relationships => {
 					book => {

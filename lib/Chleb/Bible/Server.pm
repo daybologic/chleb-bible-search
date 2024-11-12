@@ -122,7 +122,11 @@ sub __verseToJsonApi {
 		links => { },
 	});
 
-	my $queryParams = Chleb::Utils::queryParamsHelper($params);
+	my %paramsLocal = ( );
+	%paramsLocal = %$params if ($params);
+	$paramsLocal{translations} = [ $verse->book->bible->translation ] if ($paramsLocal{translations});
+	my $queryParams = Chleb::Utils::queryParamsHelper(\%paramsLocal);
+
 	my %links = (
 		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
 		self => '/' . join('/', 1, 'lookup', $verse->id) . $queryParams,

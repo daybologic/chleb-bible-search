@@ -238,9 +238,9 @@ sub test_translation_all {
 				id => re(qr@^\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=all$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=all$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=all$@),
+					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
 				},
 				relationships => {
 					book => {
