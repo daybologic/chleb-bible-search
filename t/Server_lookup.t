@@ -162,9 +162,9 @@ sub test_translation_all {
 			},
 		],
 		links => {
-			prev => '/1/lookup/psa/109/31?translations=asv',
+			prev => '/1/lookup/psa/109/31?translations=all',
 			self => '/1/lookup/psa/110/1?translations=all',
-			next => '/1/lookup/psa/110/2?translations=asv',
+			next => '/1/lookup/psa/110/2?translations=all',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 

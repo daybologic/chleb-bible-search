@@ -188,7 +188,25 @@ sub __lookup {
 
 	foreach my $type (qw(next prev)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
-		$json[0]->{links}->{$type} = $json[0]->{data}->[0]->{links}->{$type};
+
+		my $id;
+		if ($type eq 'prev') {
+			if (my $prevVerse = $verse[0]->getPrev()) {
+				$id = $prevVerse->id;
+			} else {
+				next;
+			}
+		} elsif ($type eq 'next') {
+			if (my $nextVerse = $verse[0]->getNext()) {
+				$id = $nextVerse->id;
+			} else {
+				next;
+			}
+		} else {
+			$id = $verse[0]->id;
+		}
+
+		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $id) . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	return $json[0];
