@@ -35,7 +35,9 @@ use warnings;
 use Chleb;
 use Chleb::Bible::DI::Container;
 use Chleb::Utils;
+use Dancer2;
 use JSON;
+use Scalar::Util qw(blessed);
 use Time::Duration;
 use UUID::Tiny ':std';
 
@@ -50,6 +52,18 @@ sub new {
 
 sub dic {
 	return Chleb::Bible::DI::Container->instance;
+}
+
+sub handleException {
+	my ($self, $exception) = @_;
+
+	if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
+		send_error($exception->description, $exception->statusCode);
+	} else {
+		send_error($exception, 500);
+	}
+
+	return;
 }
 
 sub __title {
@@ -414,7 +428,6 @@ use warnings;
 use Dancer2;
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
-use Scalar::Util qw(blessed);
 
 my $server;
 
@@ -422,7 +435,17 @@ set serializer => 'JSON'; # or any other serializer
 
 get '/1/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-	return $server->__random({ translations => $translations });
+
+	my $result;
+	eval {
+		$result = $server->__random({ translations => $translations });
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		$server->handleException($exception);
+	}
+
+	return $result;
 };
 
 get '/1/votd' => sub {
@@ -441,13 +464,8 @@ get '/2/votd' => sub {
 		$result = $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
 	};
 
-	if (my $evalError = $EVAL_ERROR) {
-		my $exception = $evalError;
-		if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
-			send_error($exception->description, $exception->statusCode);
-		} else {
-			send_error($exception, 500);
-		}
+	if (my $exception = $EVAL_ERROR) {
+		$server->handleException($exception);
 	}
 
 	return $result;
@@ -464,13 +482,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 		$result = $server->__lookup({ book => $book, chapter => $chapter, verse => $verse, translations => $translations });
 	};
 
-	if (my $evalError = $EVAL_ERROR) {
-		my $exception = $evalError;
-		if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
-			send_error($exception->description, $exception->statusCode);
-		} else {
-			send_error($exception, 500);
-		}
+	if (my $exception = $EVAL_ERROR) {
+		$server->handleException($exception);
 	}
 
 	return $result;
