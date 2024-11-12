@@ -183,7 +183,7 @@ sub __lookup {
 	}
 
 	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
-		push(@{ $json[0]->{data} }, $json[$jsonI]->{data});
+		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
 	}
 
 	foreach my $type (qw(next prev)) {
