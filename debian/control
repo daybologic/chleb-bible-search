@@ -1,5 +1,5 @@
 Source: chleb-bible-search
-Section: perl
+Section: contrib/perl
 Priority: optional
 Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
@@ -7,6 +7,7 @@ Build-Depends-Indep:
  libconfig-ini-perl,
  libdatetime-perl,
  libdatetime-format-strptime-perl,
+ libdevel-cover-perl,
  libdigest-crc-perl,
  libjson-perl,
  libdancer2-perl,

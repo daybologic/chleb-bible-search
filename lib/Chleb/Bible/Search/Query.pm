@@ -40,7 +40,7 @@ use Moose::Util::TypeConstraints qw(enum);
 use Chleb::Bible::Search::Results;
 use Time::HiRes ();
 
-has _library => (is => 'ro', isa => 'Chleb::Bible', required => 1);
+has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
 has limit => (is => 'rw', isa => 'Int', default => 25);
 
@@ -73,9 +73,9 @@ sub run {
 
 	my @booksToQuery = ( );
 	if ($self->bookShortName) {
-		$booksToQuery[0] = $self->_library->getBookByShortName($self->bookShortName);
+		$booksToQuery[0] = $self->bible->getBookByShortName($self->bookShortName);
 	} else {
-		@booksToQuery = @{ $self->_library->books };
+		@booksToQuery = @{ $self->bible->books };
 	}
 
 	my @verses = ( );
@@ -99,6 +99,11 @@ sub run {
 	$self->dic->logger->debug(sprintf("Ran search %s and received %s in %dms", $self->toString(), $results->toString(), $msec));
 
 	return $results;
+}
+
+sub translation {
+	my ($self) = @_;
+	return $self->bible->translation;
 }
 
 sub toString {

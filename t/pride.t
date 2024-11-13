@@ -38,17 +38,17 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
-use Test::Deep qw(all cmp_deeply isa methods);
-use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible;
+use Chleb;
 use Chleb::Bible::DI::MockLogger;
+use POSIX qw(EXIT_SUCCESS);
+use Test::Deep qw(all cmp_deeply isa methods);
 use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Chleb::Bible->new());
+	$self->sut(Chleb->new());
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -60,28 +60,74 @@ sub __mockLogger {
 	return;
 }
 
-sub testPride {
+sub testPride_default {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $verse = $self->sut->fetch('Prov', 16, 18);
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => methods(
-				ordinal   => 20,
-				longName  => 'Proverbs',
-				shortName => 'Prov',
-				testament => 'old',
+	my @verse = $self->sut->fetch('Prov', 16, 18);
+	cmp_deeply(\@verse, [
+		all(
+			isa('Chleb::Bible::Verse'),
+			methods(
+				book    => methods(
+					ordinal   => 20,
+					longName  => 'Proverbs',
+					shortName => 'Prov',
+					testament => 'old',
+				),
+				chapter => methods(
+					ordinal => 16,
+				),
+				ordinal => 18,
+				text    => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
 			),
-			chapter => methods(
-				ordinal => 16,
-			),
-			ordinal => 18,
-			text    => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
 		),
-	), 'verse inspection') or diag(explain($verse));
-	diag(explain($verse->toString()));
+	], 'verse inspection') or diag(explain($verse[0]->toString()));
+
+	return EXIT_SUCCESS;
+}
+
+sub testPride_allTranslations {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ 'all' ] });
+	cmp_deeply(\@verse, [
+		all(
+			isa('Chleb::Bible::Verse'),
+			methods(
+				book    => methods(
+					bible     => methods(translation => 'asv'),
+					ordinal   => 20,
+					longName  => 'Proverbs',
+					shortName => 'Prov',
+					testament => 'old',
+				),
+				chapter => methods(
+					ordinal => 16,
+				),
+				ordinal => 18,
+				text    => 'Pride [goeth] before destruction, And a haughty spirit before a fall.',
+			),
+		),
+		all(
+			isa('Chleb::Bible::Verse'),
+			methods(
+				book    => methods(
+					bible     => methods(translation => 'kjv'),
+					ordinal   => 20,
+					longName  => 'Proverbs',
+					shortName => 'Prov',
+					testament => 'old',
+				),
+				chapter => methods(
+					ordinal => 16,
+				),
+				ordinal => 18,
+				text    => 'Pride [goeth] before destruction, and an haughty spirit before a fall.',
+			),
+		),
+	], 'verse inspection') or diag(explain($verse[0]->toString()));
 
 	return EXIT_SUCCESS;
 }

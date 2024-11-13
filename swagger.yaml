@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Chleb Bible Search
   description: Query the bible, or get a verse of the day.
-  version: 0.10.0
+  version: 0.11.0
 servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
@@ -69,11 +69,54 @@ paths:
           description: Forbidden
         '429':
           description: Rate-limited
+  /1/random:
+    get:
+      summary: Random Verse
+      operationId: getRandom
+      description: Retrieve one verse from The Bible, at random.
+      parameters:
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
+      security: [] # No security
+      responses:
+        '200':
+          description: Successfully retrieved verse
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stats'
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
   /1/votd:
     get:
       summary: Verse of The Day
       operationId: getVotd
-      description: Retrieve one verse from The Bible, at random.
+      description: Retrieve one verse from The Bible, for the given day
       parameters:
         - in: query
           name: when
@@ -121,7 +164,7 @@ paths:
     get:
       summary: Verse(s) of The Day
       operationId: getVotd2
-      description: Retrieve a series of verses from The Bible, at random.
+      description: Retrieve a series of verses from The Bible, for the given day
       parameters:
         - in: query
           name: when
@@ -138,6 +181,16 @@ paths:
             default: false
           required: false
           description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -191,6 +244,16 @@ paths:
             default: false
           required: false
           description: Require whitespace or end of verse after the requested term
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -246,6 +309,16 @@ paths:
             type: integer
           required: true
           description: Verse within chapter (ordinal)
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -340,6 +413,10 @@ components:
               type: string
               description: Description of uptime in human-readable text
               example: 1 minute and 30 seconds
+    Translation:
+      type: string
+      enum: ["all", "asv", "kjv"]
+      default: "kjv"
     Verse:
       type: object
       properties:
@@ -367,6 +444,8 @@ components:
               type: string
               description: Verbatim and unedited text from the Holy Bible.
               example: Thus did Noah; according to all that God commanded him, so did he.
+            translation:
+              $ref: '#/components/schemas/Translation'
     Stats:
       type: object
       properties:

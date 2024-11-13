@@ -33,7 +33,7 @@ use strict;
 use warnings;
 use Moose;
 
-has _library => (is => 'ro', isa => 'Chleb::Bible', required => 1);
+has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
 has book => (is => 'ro', isa => 'Chleb::Bible::Book', required => 1);
 
@@ -57,7 +57,7 @@ sub getVerseByOrdinal {
 	# TODO: You shouldn't access __backend here
 	# but you need some more methods in the library to avoid it
 	# Perhaps have a getVerseByKey in _library?
-	if (my $text = $self->_library->__backend->getVerseDataByKey($verseKey)) {
+	if (my $text = $self->bible->__backend->getVerseDataByKey($verseKey)) {
 		return Chleb::Bible::Verse->new({
 			book    => $self->book,
 			chapter => $self,
@@ -113,7 +113,7 @@ sub TO_JSON {
 
 sub __makeVerseCount {
 	my ($self) = @_;
-	my $bookInfo = $self->_library->__backend->getBookInfoByShortName($self->book->shortName);
+	my $bookInfo = $self->bible->__backend->getBookInfoByShortName($self->book->shortName);
 	die 'FIXME: ' . $self->book->shortName unless ($bookInfo);
 	my $count = $bookInfo->{v}->{ $self->ordinal };
 	die("FIXME: ${count}, " . $self->ordinal) unless ($count);

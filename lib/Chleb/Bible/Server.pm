@@ -32,9 +32,10 @@
 package Chleb::Bible::Server;
 use strict;
 use warnings;
-use JSON;
-use Chleb::Bible;
+use Chleb;
 use Chleb::Bible::DI::Container;
+use Chleb::Utils;
+use JSON;
 use Time::Duration;
 use UUID::Tiny ':std';
 
@@ -72,10 +73,10 @@ sub __json {
 	return $self->{__json};
 }
 
-sub __bible {
+sub __library {
 	my ($self) = @_;
-	$self->{__bible} ||= Chleb::Bible->new();
-	return $self->{__bible};
+	$self->{__library} ||= Chleb->new();
+	return $self->{__library};
 }
 
 sub __makeJsonApi {
@@ -87,7 +88,7 @@ sub __makeJsonApi {
 }
 
 sub __verseToJsonApi {
-	my ($verse) = @_;
+	my ($verse, $params) = @_;
 	my %hash = __makeJsonApi();
 
 	push(@{ $hash{included} }, {
@@ -121,17 +122,22 @@ sub __verseToJsonApi {
 		links => { },
 	});
 
+	my %paramsLocal = ( );
+	%paramsLocal = %$params if ($params);
+	$paramsLocal{translations} = [ $verse->book->bible->translation ] if ($paramsLocal{translations});
+	my $queryParams = Chleb::Utils::queryParamsHelper(\%paramsLocal);
+
 	my %links = (
 		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
-		self => '/' . join('/', 1, 'lookup', $verse->id),
+		self => '/' . join('/', 1, 'lookup', $verse->id) . $queryParams,
 	);
 
 	if (my $nextVerse = $verse->getNext()) {
-		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->id);
+		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->id) . $queryParams;
 	}
 
 	if (my $prevVerse = $verse->getPrev()) {
-		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->id);
+		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->id) . $queryParams;
 	}
 
 	push(@{ $hash{data} }, {
@@ -168,15 +174,51 @@ sub __verseToJsonApi {
 
 sub __lookup {
 	my ($self, $params) = @_;
-	my $verse = $self->__bible->fetch($params->{book}, $params->{chapter}, $params->{verse});
+	my @verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
 
-	my $json = __verseToJsonApi($verse);
-
-	$json->{links}->{self} = '/' . join('/', 1, 'lookup', $verse->id);
-	foreach my $type (qw(next prev)) {
-		next unless ($json->{data}->[0]->{links}->{$type});
-		$json->{links}->{$type} = $json->{data}->[0]->{links}->{$type};
+	my @json;
+	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
+		push(@json, __verseToJsonApi($verse[$verseI], $params));
+		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->id) . Chleb::Utils::queryParamsHelper($params);
 	}
+
+	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
+		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
+	}
+
+	foreach my $type (qw(next prev)) {
+		next unless ($json[0]->{data}->[0]->{links}->{$type});
+
+		my $id;
+		if ($type eq 'prev') {
+			if (my $prevVerse = $verse[0]->getPrev()) {
+				$id = $prevVerse->id;
+			} else {
+				next;
+			}
+		} elsif ($type eq 'next') {
+			if (my $nextVerse = $verse[0]->getNext()) {
+				$id = $nextVerse->id;
+			} else {
+				next;
+			}
+		} else {
+			$id = $verse[0]->id;
+		}
+
+		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $id) . Chleb::Utils::queryParamsHelper($params);
+	}
+
+	return $json[0];
+}
+
+sub __random {
+	my ($self, $params) = @_;
+	my $verse = $self->__library->random($params);
+
+	my $json = __verseToJsonApi($verse, $params);
+	my $version = 1;
+	$json->{links}->{self} =  '/' . join('/', $version, 'random');
 
 	return $json;
 }
@@ -185,12 +227,12 @@ sub __votd {
 	my ($self, $params) = @_;
 
 	my $version = $params->{version} || 1;
-	my $verse = $self->__bible->votd($params);
+	my $verse = $self->__library->votd($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
 
 		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
-			push(@json, __verseToJsonApi($verse->[$verseI]));
+			push(@json, __verseToJsonApi($verse->[$verseI], $params));
 		}
 
 		my $secondary_total_msec = 0;
@@ -208,12 +250,12 @@ sub __votd {
 			$json[0]->{included}->[$includedI]->{attributes}->{msec} += $secondary_total_msec;
 		}
 
-		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd');
+		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 		return $json[0];
 	}
 
-	my $json = __verseToJsonApi($verse);
-	$json->{links}->{self} =  '/' . join('/', $version, 'votd');
+	my $json = __verseToJsonApi($verse, $params);
+	$json->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 
 	return $json;
 }
@@ -237,7 +279,7 @@ sub __version {
 	my ($self) = @_;
 	my %hash = __makeJsonApi();
 
-	my $version = $Chleb::Bible::VERSION;
+	my $version = $Chleb::VERSION;
 
 	return 403 unless ($self->dic->config->get('features', 'version', 'true', 1));
 
@@ -275,7 +317,7 @@ sub __uptime {
 
 sub __getUptime {
 	my ($self) = @_;
-	return time() - $self->__bible->constructionTime;
+	return time() - $self->__library->constructionTime;
 }
 
 sub __search {
@@ -286,7 +328,7 @@ sub __search {
 
 	my $wholeword = int($search->{wholeword});
 
-	my $query = $self->__bible->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
+	my $query = $self->__library->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
 	my $results = $query->run();
 
 	my %hash = __makeJsonApi();
@@ -370,11 +412,40 @@ use strict;
 use warnings;
 
 use Dancer2;
+use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
+use Scalar::Util qw(blessed);
 
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
+
+sub handleException {
+	my ($exception) = @_;
+
+	if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
+		send_error($exception->description, $exception->statusCode);
+	} else {
+		send_error($exception, 500);
+	}
+
+	return;
+}
+
+get '/1/random' => sub {
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
+
+	my $result;
+	eval {
+		$result = $server->__random({ translations => $translations });
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	return $result;
+};
 
 get '/1/votd' => sub {
 	my $when = param('when');
@@ -385,15 +456,37 @@ get '/1/votd' => sub {
 get '/2/votd' => sub {
 	my $when = param('when');
 	my $parental = int(param('parental'));
-	return $server->__votd({ version => 2, when => $when, parental => $parental });
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
+
+	my $result;
+	eval {
+		$result = $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	return $result;
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $book = param('book');
 	my $chapter = param('chapter');
 	my $verse = param('verse');
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
-	return $server->__lookup({ book => $book, chapter => $chapter, verse => $verse });
+	my $result;
+	eval {
+		$result = $server->__lookup({ book => $book, chapter => $chapter, verse => $verse, translations => $translations });
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	return $result;
+
 };
 
 get '/1/search' => sub {

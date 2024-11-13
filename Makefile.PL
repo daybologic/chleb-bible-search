@@ -32,17 +32,23 @@
 package main;
 
 use ExtUtils::MakeMaker;
+#use ExtUtils::MakeMaker::Coverage;
 use strict;
 use warnings;
 
+system('bin/maint/synology.sh');
+
 WriteMakefile(
-	NAME         => 'Chleb::Bible',
-	VERSION_FROM => 'lib/Chleb/Bible.pm', # finds $VERSION
+	NAME         => 'Chleb',
+	VERSION_FROM => 'lib/Chleb.pm', # finds $VERSION
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
 	ABSTRACT     => 'Chleb Bible Search',
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
 	EXE_FILES    => [glob q('data/*.bin.gz')],
 
+	clean => {
+		FILES => [glob q('data/*.bin.gz')],
+	},
 	PREREQ_PM => {
 		'Moose'            => 0,
 		'Test::MockModule' => 0,
@@ -50,6 +56,7 @@ WriteMakefile(
 		'UUID::Tiny'       => 0,
 	}, BUILD_REQUIRES => {
 		'DateTime::Format::Strptime' => 0,
+		'Devel::Cover'    => 0,
 		'Moose'           => 0,
 		'Test::More'      => 0,
 		'Readonly'        => 0,
@@ -57,3 +64,18 @@ WriteMakefile(
 		'Test::Exception' => 0,
 	},
 );
+
+package MY;
+
+sub MY::postamble {
+    return q~
+cover :: pure_all
+	HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
+
+clean :: pure_all
+	rm -rf cover_db
+
+    ~;
+}
+
+1;

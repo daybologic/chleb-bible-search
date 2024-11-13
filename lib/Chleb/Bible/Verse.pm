@@ -90,7 +90,7 @@ sub equals {
 sub toString {
 	my ($self, $verbose) = @_;
 	my $str = sprintf('%s:%d', $self->chapter->toString(), $self->ordinal);
-	$str = sprintf('%s - %s', $str, $self->text) if ($verbose);
+	$str = sprintf('%s - %s [%s]', $str, $self->text, $self->book->bible->translation) if ($verbose);
 	return $str;
 }
 
@@ -98,10 +98,11 @@ sub TO_JSON {
 	my ($self) = @_;
 
 	return {
-		book    => $self->book->shortName,
-		chapter => $self->chapter->ordinal,
-		ordinal => $self->ordinal,
-		text    => $self->text,
+		book        => $self->book->shortName,
+		chapter     => $self->chapter->ordinal,
+		ordinal     => $self->ordinal,
+		text        => $self->text,
+		translation => $self->book->bible->translation,
 	};
 }
 
