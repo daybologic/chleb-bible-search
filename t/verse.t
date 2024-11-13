@@ -40,8 +40,9 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible;
+use Chleb;
 use Chleb::Bible::Book;
+use Chleb::Bible::DI::MockLogger;
 use Chleb::Bible::Verse;
 use Test::Deep qw(cmp_deeply);
 use Test::Exception;
@@ -49,7 +50,8 @@ use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
-	$self->sut(Chleb::Bible->new());
+	$self->sut(Chleb->new());
+	$self->__mockLogger();
 	return EXIT_SUCCESS;
 }
 
@@ -57,20 +59,22 @@ sub test {
 	my ($self) = @_;
 	plan tests => 5;
 
+	my @bible = $self->sut->__getBible();
 	my $book = Chleb::Bible::Book->new({
-		_library  => $self->sut,
+		bible     => $bible[0],
 		longName  => 'Book of Morman',
 		ordinal   => 21,
 		shortName => 'Susana',
 		testament => 'old',
 	});
 
+	my $translation = 'kjv';
 	my $text = 'Blessed are the peacemakers, because they will be called sons of God';
 
 	my $verse = Chleb::Bible::Verse->new({
 		book    => $book,
 		chapter => Chleb::Bible::Chapter->new({
-			_library => $self->sut,
+			bible    => $bible[0],
 			book     => $book,
 			ordinal  => 1121,
 		}),
@@ -97,17 +101,24 @@ sub test {
 
 	is($verse->toString(), 'Susana 1121:5', 'toString default verbosity');
 	is($verse->toString(0), 'Susana 1121:5', 'toString non-verbose');
-	is($verse->toString(1), 'Susana 1121:5 - Blessed are the peacemakers, because they will be called sons of God', 'toString verbose');
+	is($verse->toString(1), "Susana 1121:5 - $text [$translation]", 'toString verbose');
 
 	my $json = $verse->TO_JSON();
 	cmp_deeply($json, {
-		book    => 'Susana',
-		chapter => 1121,
-		ordinal => 5,
-		text    => 'Blessed are the peacemakers, because they will be called sons of God',
+		book        => 'Susana',
+		chapter     => 1121,
+		ordinal     => 5,
+		text        => $text,
+		translation => $translation,
 	}, 'TO_JSON') or diag(explain($json));
 
 	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
+	return;
 }
 
 package main;

@@ -35,7 +35,6 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
-use Data::Dumper;
 use Digest::CRC qw(crc32);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
@@ -46,33 +45,28 @@ use Chleb::Bible::DI::Container;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 
-Readonly my $TRANSLATION => 'kjv';
-
 has __backend => (is => 'ro', isa => 'Chleb::Bible::Backend', lazy => 1, default => \&__makeBackend);
 
 has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCount);
 
 has books => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Book]', lazy => 1, default => \&__makeBooks);
 
-has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeConstructionTime);
+has verseCount => (is => 'ro', isa => 'Int', default => 31_102); # TODO: Hard-coded 31,102: works for "kjv", "asv" (canonical)
 
-has verseCount => (is => 'ro', isa => 'Int', default => 31_102); # TODO: Hard-coded 31,102: This is probably not translation-safe, only works for "kjv" (canonical)
-
-BEGIN {
-	our $VERSION = '0.10.0';
-}
+has translation => (is => 'ro', isa => 'Str', required => 1);
 
 sub BUILD {
 	my ($self) = @_;
 
+	# FIXME doesn't make sense now we have multiple bible translations,
+	# superficially it works but will probably be highly unreliable.
 	$self->dic->bible($self); # self registration
-	$self->constructionTime();
 
 	return;
 }
 
 sub getBookByShortName {
-	my ($self, $shortName, $unfatal) = @_;
+	my ($self, $shortName, $args) = @_;
 
 	$shortName ||= '';
 	if ($shortName =~ m/^(\d)(\w+)$/) {
@@ -87,7 +81,7 @@ sub getBookByShortName {
 	}
 
 	my $errorMsg = "Short book name '$shortName' is not a book in the bible";
-	if ($unfatal) {
+	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
 		die($errorMsg);
@@ -126,13 +120,13 @@ sub getBookByOrdinal {
 }
 
 sub getVerseByOrdinal {
-	my ($self, $ordinal) = @_;
+	my ($self, $ordinal, $args) = @_;
 
 	if (my $verseKey = $self->__backend->getVerseKeyByOrdinal($ordinal)) {
 		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
 		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
-			if (my $book = $self->getBookByShortName($bookShortName)) {
-				my $chapter = $book->getChapterByOrdinal($chapterNumber);
+			if (my $book = $self->getBookByShortName($bookShortName, $args)) {
+				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
 				return Chleb::Bible::Verse->new({
 					book    => $book,
 					chapter => $chapter,
@@ -145,19 +139,18 @@ sub getVerseByOrdinal {
 		}
 	}
 
-	die(sprintf("Verse %d not found in '%s'", $ordinal, $TRANSLATION));
+	die(sprintf("Verse %d not found in '%s'", $ordinal, $self->translation));
 }
 
 sub newSearchQuery {
 	my ($self, @args) = @_;
 
-	my %defaults = ( _library => $self, dic => $self->dic );
-
-	return Chleb::Bible::Search::Query->new({ %defaults, text => $args[0] })
+	return Chleb::Bible::Search::Query->new({ bible => $self, text => $args[0] })
 	    if (scalar(@args) == 1);
 
 	my %params = @args;
-	return Chleb::Bible::Search::Query->new({ %defaults, %params });
+	$params{bible} = $self;
+	return $self->_library->newSearchQuery(%params);
 }
 
 sub resolveBook {
@@ -167,7 +160,7 @@ sub resolveBook {
 		if (looks_like_number($book)) {
 			$book = $self->getBookByOrdinal($book);
 		} else {
-			if (my $shortBook = $self->getBookByShortName($book, 1)) {
+			if (my $shortBook = $self->getBookByShortName($book, { nonFatal => 1 })) {
 				return $shortBook;
 			} else {
 				$book = $self->getBookByLongName($book);
@@ -195,77 +188,11 @@ sub fetch {
 	return $verse;
 }
 
-sub random { # TODO: parental?
-	my ($self) = @_;
-
-	my $startTiming = Time::HiRes::time();
-	my $verseOrdinal = 1 + rand($self->verseCount);
-
-	my $verse = $self->getVerseByOrdinal($verseOrdinal);
-
-	my $endTiming = Time::HiRes::time();
-	my $msecAll = int(1000 * ($endTiming - $startTiming));
-
-	$verse->msec($msecAll);
-	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(), $msecAll));
-
-	return $verse;
-}
-
-sub votd {
-	my ($self, $params) = @_;
-	my $startTiming = Time::HiRes::time();
-	my ($when, $version, $parental) = @{$params}{qw(when version parental)};
-
-	$when = $self->_resolveISO8601($when);
-	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
-
-	my $verse;
-	for (my $offset = 0; $offset > -1; $offset++) {
-		my $seed = crc32($when->epoch + $offset);
-		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
-		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
-
-		my $verseOrdinal = 1 + ($seed % $self->verseCount);
-		$verse = $self->getVerseByOrdinal($verseOrdinal);
-
-		last if (!$parental || !$verse->parental);
-		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
-	}
-
-	$self->dic->logger->debug($verse->toString());
-
-	my $msecAll = 0;
-	# handle ARRAY verses where more than one compound Verse may be returned
-	if ($version && looks_like_number($version) && $version == 2) {
-		$verse = [ $verse ]; # make it an ARRAY
-		my $endTiming = Time::HiRes::time();
-		my $msec = int(1000 * ($endTiming - $startTiming));
-		$verse->[0]->msec($msec);
-		$msecAll += $msec;
-		while ($verse->[-1]->continues) {
-			push(@$verse, $verse->[-1]->getNext());
-			$endTiming = Time::HiRes::time();
-			$msec = int(1000 * ($endTiming - $startTiming));
-			$verse->[-1]->msec($msec);
-			$msecAll += $msec;
-			$startTiming = Time::HiRes::time();
-		}
-	} else {
-		my $endTiming = Time::HiRes::time();
-		$msecAll = int(1000 * ($endTiming - $startTiming));
-
-		$verse->msec($msecAll);
-	}
-
-	$self->dic->logger->debug(sprintf('VoTD sought in %dms', $msecAll));
-	return $verse;
-}
-
 sub __makeBackend {
 	my ($self) = @_;
+
 	return Chleb::Bible::Backend->new({
-		_library => $self,
+		bible => $self,
 	});
 }
 

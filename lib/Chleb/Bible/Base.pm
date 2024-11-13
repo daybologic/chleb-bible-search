@@ -41,6 +41,8 @@ use Scalar::Util qw(blessed);
 # TODO: Do we need a trap to ensure a fatal error occurs if the dic is constructed more than once?
 has dic => (isa => 'Chleb::Bible::DI::Container', is => 'rw', lazy => 1, default => \&__makeDIContainer);
 
+has _library => (isa => 'Chleb', is => 'rw', required => 0, init_arg => 'library'); # TODO: Can we make this required, or provide a default?
+
 sub __makeDIContainer {
 	my ($self) = @_;
 	return Chleb::Bible::DI::Container->new();

@@ -40,7 +40,7 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible;
+use Chleb;
 use Chleb::Bible::DI::MockLogger;
 use Test::Exception;
 use Test::More 0.96;
@@ -48,8 +48,8 @@ use Test::More 0.96;
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Chleb::Bible->new());
-	#$self->__mockLogger(); # TODO?  Uncomment if we need it.
+	$self->sut(Chleb->new());
+	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
@@ -64,8 +64,9 @@ sub testFirstSuccess {
 	my ($self) = @_;
 	plan tests => 2;
 
-	__checkFirstVerse($self->sut->getVerseByOrdinal(1));
-	__checkFirstVerse($self->sut->getVerseByOrdinal(-31_102));
+	my @bible = $self->sut->__getBible();
+	__checkFirstVerse($bible[0]->getVerseByOrdinal(1));
+	__checkFirstVerse($bible[0]->getVerseByOrdinal(-31_102));
 
 	return EXIT_SUCCESS;
 }
@@ -74,8 +75,9 @@ sub testLastSuccess {
 	my ($self) = @_;
 	plan tests => 2;
 
-	__checkLastVerse($self->sut->getVerseByOrdinal(31_102));
-	__checkLastVerse($self->sut->getVerseByOrdinal(-1));
+	my @bible = $self->sut->__getBible();
+	__checkLastVerse($bible[0]->getVerseByOrdinal(31_102));
+	__checkLastVerse($bible[0]->getVerseByOrdinal(-1));
 
 	return EXIT_SUCCESS;
 }
@@ -129,7 +131,8 @@ sub testOutOfBounds {
 	my ($self) = @_;
 	plan tests => 1;
 
-	throws_ok { $self->sut->getVerseByOrdinal(31_103) } qr/^Verse 31103 not found in 'kjv' /,
+	my @bible = $self->sut->__getBible();
+	throws_ok { $bible[0]->getVerseByOrdinal(31_103) } qr/^Verse 31103 not found in 'kjv' /,
 	    'verse out of bounds';
 
 	return EXIT_SUCCESS;

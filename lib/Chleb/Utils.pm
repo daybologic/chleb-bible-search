@@ -2,6 +2,16 @@ package Chleb::Utils;
 use strict;
 use warnings;
 
+=head1 NAME
+
+Chleb::Utils - Functions for miscellaneous internal purposes
+
+=head1 DESCRIPTION
+
+Functions for miscellaneous internal purposes
+
+=cut
+
 use Scalar::Util qw(blessed);
 
 =head1 FUNCTIONS
@@ -65,6 +75,44 @@ sub forceArray {
 	}
 
 	return \@output;
+}
+
+=item C<removeArrayEmptyItems($arrayRef)>
+
+Given an C<ARRAY>, remove any item which is not defined or has no length,
+and return a new C<ARRAY>.  The original is not modified.
+
+=cut
+
+sub removeArrayEmptyItems {
+	my ($arrayRef) = @_;
+
+	my @filtered = ( );
+	foreach my $value (@$arrayRef) {
+		next if (!defined($value));
+		next if (length($value) == 0);
+		push(@filtered, $value);
+	}
+	return \@filtered;
+}
+
+sub queryParamsHelper {
+	my ($params) = @_;
+
+	my $str = '';
+	my $counter = 0;
+	my %blacklist = map { $_ => 1 } (qw(book chapter translation verse version when)); # TODO: We should aim to eliminate this hack
+
+	while (my ($k, $v) = each(%$params)) {
+		next if ($blacklist{$k});
+		$str .= ($counter == 0) ? '?' : '&';
+		$v = join(',', @$v) if (ref($v) eq 'ARRAY');
+		$v = 'all' if ($v eq 'asv,kjv' && $k eq 'translations'); # TODO: You should do this via a callback
+		$str .= "${k}=${v}";
+		$counter++;
+	}
+
+	return $str;
 }
 
 =back

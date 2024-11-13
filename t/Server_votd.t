@@ -68,6 +68,7 @@ sub test {
 					chapter => 55,
 					ordinal => 22,
 					text => 'Cast thy burden upon the LORD, and he shall sustain thee: he shall never suffer the righteous to be moved.',
+					translation => 'kjv',
 				},
 				id => 'psa/55/22',
 				type => 'verse',
@@ -151,6 +152,7 @@ sub testV2 {
 					chapter => 33,
 					ordinal => 51,
 					text => 'Speak unto the children of Israel, and say unto them, When ye are passed over Jordan into the land of Canaan;',
+					translation => 'kjv',
 				},
 				id => 'num/33/51',
 				type => 'verse',
@@ -182,6 +184,7 @@ sub testV2 {
 					chapter => 33,
 					ordinal => 52,
 					text    => 'Then ye shall drive out all the inhabitants of the land from before you, and destroy all their pictures, and destroy all their molten images, and quite pluck down all their high places:',
+					translation => 'kjv',
 				},
 				id => 'num/33/52',
 				type => 'verse',
@@ -213,6 +216,7 @@ sub testV2 {
 					chapter => 33,
 					ordinal => 53,
 					text    => 'And ye shall dispossess [the inhabitants] of the land, and dwell therein: for I have given you the land to possess it.',
+					translation => 'kjv',
 				},
 				id => 'num/33/53',
 				type => 'verse',
@@ -278,6 +282,418 @@ sub testV2 {
 			self => '/2/votd',
 		},
 	}, "specific JSON verses inspection for $when") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testV2_translations_asv_asv {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $json = $self->sut->__votd({ version => 2, when => $when, translations => ['asv', 'asv'] });
+	cmp_deeply($json, {
+		data => [
+			{
+				attributes => {
+					book => 'Psa',
+					chapter => 122,
+					ordinal => 8,
+					text => "For my brethren and companions' sakes, I will now say, Peace be within thee.",
+					translation => 'asv',
+				},
+				id => 'psa/122/8',
+				type => 'verse',
+				links => {
+					prev => '/1/lookup/psa/122/7?translations=asv',
+					self => '/1/lookup/psa/122/8?translations=asv',
+					next => '/1/lookup/psa/122/9?translations=asv',
+				},
+				relationships => {
+					book => {
+						data => {
+							id => 'psa',
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => 'psa/122',
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+		],
+		included => [
+			{
+				attributes => {
+					book => 'Psa',
+					ordinal => 122,
+				},
+				id => 'psa/122',
+				type => 'chapter',
+				relationships => {
+					book => {
+						data => {
+							id => 'psa',
+							type => 'book',
+						},
+					},
+				},
+			},
+			{
+				attributes => {
+					ordinal => 19,
+					testament => 'old',
+				},
+				id => 'psa',
+				relationships => {},
+				type => 'book'
+			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
+			},
+		],
+		links => {
+			self => '/2/votd?translations=asv',
+		},
+	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testV2_translations_kjv_asv {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $json = $self->sut->__votd({ version => 2, when => $when, translations => ['kjv', 'asv'] });
+	cmp_deeply($json, {
+		data => [
+			{
+				attributes => {
+					book => 'Psa',
+					chapter => 122,
+					ordinal => 8,
+					text => "For my brethren and companions' sakes, I will now say, Peace be within thee.",
+					translation => 'asv',
+				},
+				id => 'psa/122/8',
+				type => 'verse',
+				links => {
+					prev => '/1/lookup/psa/122/7?translations=asv',
+					self => '/1/lookup/psa/122/8?translations=asv',
+					next => '/1/lookup/psa/122/9?translations=asv',
+				},
+				relationships => {
+					book => {
+						data => {
+							id => 'psa',
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => 'psa/122',
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+			{
+				attributes => {
+					book => 'Psa',
+					chapter => 122,
+					ordinal => 8,
+					text => "For my brethren and companions' sakes, I will now say, Peace [be] within thee.",
+					translation => 'kjv',
+				},
+				id => 'psa/122/8',
+				type => 'verse',
+				links => {
+					prev => '/1/lookup/psa/122/7?translations=kjv',
+					self => '/1/lookup/psa/122/8?translations=kjv',
+					next => '/1/lookup/psa/122/9?translations=kjv',
+				},
+				relationships => {
+					book => {
+						data => {
+							id => 'psa',
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => 'psa/122',
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+		],
+		included => [
+			{
+				attributes => {
+					book => 'Psa',
+					ordinal => 122,
+				},
+				id => 'psa/122',
+				type => 'chapter',
+				relationships => {
+					book => {
+						data => {
+							id => 'psa',
+							type => 'book',
+						},
+					},
+				},
+			},
+			{
+				attributes => {
+					ordinal => 19,
+					testament => 'old',
+				},
+				id => 'psa',
+				relationships => {},
+				type => 'book'
+			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
+			},
+		],
+		links => {
+			self => '/2/votd?translations=all',
+		},
+	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testV2_translations_all {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2021-10-30T21:36:26+0000';
+	my $json = $self->sut->__votd({ version => 2, when => $when, translations => ['all'] });
+	cmp_deeply($json, {
+		data => [
+			{
+				attributes => {
+					book => 'Num',
+					chapter => 16,
+					ordinal => 8,
+					text => 'And Moses said unto Korah, Hear now, ye sons of Levi:',
+					translation => 'asv',
+				},
+				id => 'num/16/8',
+				type => 'verse',
+				links => {
+					prev => '/1/lookup/num/16/7?translations=asv',
+					self => '/1/lookup/num/16/8?translations=asv',
+					next => '/1/lookup/num/16/9?translations=asv',
+				},
+				relationships => {
+					book => {
+						data => {
+							id => 'num',
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => 'num/16',
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+			{
+				attributes => {
+					book => 'Num',
+					chapter => 16,
+					ordinal => 9,
+					text => '[seemeth it but] a small thing unto you, that the God of Israel hath separated you from the congregation of Israel, to bring you near to himself, to do the service of the tabernacle of Jehovah, and to stand before the congregation to minister unto them;',
+					translation => 'asv',
+				},
+				id => 'num/16/9',
+				type => 'verse',
+				links => {
+					prev => '/1/lookup/num/16/8?translations=asv',
+					self => '/1/lookup/num/16/9?translations=asv',
+					next => '/1/lookup/num/16/10?translations=asv',
+				},
+				relationships => {
+					book => {
+						data => {
+							id => 'num',
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => 'num/16',
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+			{
+				attributes => {
+					book => 'Num',
+					chapter => 16,
+					ordinal => 10,
+					text => 'and that he hath brought thee near, and all thy brethren the sons of Levi with thee? and seek ye the priesthood also?',
+					translation => 'asv',
+				},
+				id => 'num/16/10',
+				type => 'verse',
+				links => {
+					prev => '/1/lookup/num/16/9?translations=asv',
+					self => '/1/lookup/num/16/10?translations=asv',
+					next => '/1/lookup/num/16/11?translations=asv',
+				},
+				relationships => {
+					book => {
+						data => {
+							id => 'num',
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => 'num/16',
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+			{
+				attributes => {
+					book => 'Num',
+					chapter => 16,
+					ordinal => 8,
+					text => 'And Moses said unto Korah, Hear, I pray you, ye sons of Levi:',
+					translation => 'kjv',
+				},
+				id => 'num/16/8',
+				type => 'verse',
+				links => {
+					prev => '/1/lookup/num/16/7?translations=kjv',
+					self => '/1/lookup/num/16/8?translations=kjv',
+					next => '/1/lookup/num/16/9?translations=kjv',
+				},
+				relationships => {
+					book => {
+						data => {
+							id => 'num',
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => 'num/16',
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+			{
+				attributes => {
+					book => 'Num',
+					chapter => 16,
+					ordinal => 9,
+					text => '[Seemeth it but] a small thing unto you, that the God of Israel hath separated you from the congregation of Israel, to bring you near to himself to do the service of the tabernacle of the LORD, and to stand before the congregation to minister unto them?',
+					translation => 'kjv',
+				},
+				id => 'num/16/9',
+				type => 'verse',
+				links => {
+					prev => '/1/lookup/num/16/8?translations=kjv',
+					self => '/1/lookup/num/16/9?translations=kjv',
+					next => '/1/lookup/num/16/10?translations=kjv',
+				},
+				relationships => {
+					book => {
+						data => {
+							id => 'num',
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => 'num/16',
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+		],
+		included => [
+			{
+				attributes => {
+					book => 'Num',
+					ordinal => 16,
+				},
+				id => 'num/16',
+				type => 'chapter',
+				relationships => {
+					book => {
+						data => {
+							id => 'num',
+							type => 'book',
+						},
+					},
+				},
+			},
+			{
+				attributes => {
+					ordinal => 4,
+					testament => 'old',
+				},
+				id => 'num',
+				relationships => {},
+				type => 'book'
+			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
+			},
+		],
+		links => {
+			self => '/2/votd?translations=all',
+		},
+	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
 	return EXIT_SUCCESS;
 }

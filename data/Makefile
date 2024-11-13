@@ -30,12 +30,15 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-all: kjv.bin.gz
+all: kjv.bin.gz asv.bin.gz
 
 kjv.bin.gz: static/kjv.txt
 	cd ../ && ./bin/import/text-to-kjv.sh
 
+asv.bin.gz: static/asv.txt
+	cd ../ && ./bin/import/text-to-asv.sh
+
 clean:
-	rm -vf kjv.bin.gz kjv.bin
+	rm -vf kjv.bin.gz kjv.bin asv.bin.gz asv.bin
 
 .PHONY: clean all

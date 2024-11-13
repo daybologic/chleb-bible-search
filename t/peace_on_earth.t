@@ -40,20 +40,20 @@ extends 'Test::Module::Runnable';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible;
+use Chleb;
 use Chleb::Bible::DI::MockLogger;
 use Test::More 0.96;
 
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Chleb::Bible->new());
+	$self->sut(Chleb->new());
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
 
-sub testPeaceSearch {
+sub testPeaceSearch_defaultTranslation {
 	my ($self) = @_;
 	plan tests => 2;
 
@@ -65,6 +65,7 @@ sub testPeaceSearch {
 			testament     => undef,
 			bookShortName => undef,
 			text          => 'peace on earth',
+			translation   => 'kjv',
 		),
 	), 'query inspection') or diag(explain($query));
 
@@ -127,6 +128,263 @@ sub testPeaceSearch {
 						),
 						ordinal => 51,
 						text    => 'Suppose ye that I am come to give peace on earth? I tell you, Nay; but rather division:',
+					),
+				),
+			],
+		),
+	), 'results inspection');
+
+	return EXIT_SUCCESS;
+}
+
+sub testPeaceSearch_asvTranslation {
+	my ($self) = @_;
+	plan tests => 6;
+
+	# it's empty because the wording 'peace on earth' does not appear in the asv, only the kjv
+	my $query = $self->sut->newSearchQuery(text => 'peace on earth', translation => 'asv')->setLimit(3);
+	cmp_deeply($query, all(
+		isa('Chleb::Bible::Search::Query'),
+		methods(
+			limit         => 3,
+			testament     => undef,
+			bookShortName => undef,
+			text          => 'peace on earth',
+			translation   => 'asv',
+		),
+	), "'peace on earth' query inspection") or diag(explain($query));
+
+	my $results = $query->run();
+	cmp_deeply($results, all(
+		isa('Chleb::Bible::Search::Results'),
+		methods(
+			count  => 0,
+			verses => [],
+		),
+	), 'results inspection (empty)');
+
+	# we alter the query to 'peace on the earth' to pick up Matthew, but Luke does not match because it
+	# says 'peace in the earth'.
+	$query = $self->sut->newSearchQuery(text => 'peace on the earth', translation => 'asv')->setLimit(3);
+	cmp_deeply($query, all(
+		isa('Chleb::Bible::Search::Query'),
+		methods(
+			limit         => 3,
+			testament     => undef,
+			bookShortName => undef,
+			text          => 'peace on the earth',
+			translation   => 'asv',
+		),
+	), "'peace on the earth' query inspection") or diag(explain($query));
+
+	my @bookExpect = (
+		all(
+			isa('Chleb::Bible::Book'),
+			methods(
+				ordinal      => 40,
+				shortName    => 'Mat',
+				chapterCount => 28,
+				verseCount   => 1071,
+				testament    => 'new',
+			),
+		),
+	);
+
+	$results = $query->run();
+	cmp_deeply($results, all(
+		isa('Chleb::Bible::Search::Results'),
+		methods(
+			count  => 1,
+			verses => [
+				all(
+					isa('Chleb::Bible::Verse'),
+					methods(
+						book    => $bookExpect[0],
+						chapter => all(
+							isa('Chleb::Bible::Chapter'),
+							methods(
+								book       => $bookExpect[0],
+								ordinal    => 10,
+								verseCount => 42,
+							),
+						),
+						ordinal => 34,
+						text    => 'Think not that I came to send peace on the earth: I came not to send peace, but a sword.',
+					),
+				),
+			],
+		),
+	), 'results inspection');
+
+	# we alter the query to 'peace in the earth' to pick up Luke, but Matthew does not match because it
+	# says 'peace on the earth'.
+	$query = $self->sut->newSearchQuery(text => 'peace in the earth', translation => 'asv')->setLimit(3);
+	cmp_deeply($query, all(
+		isa('Chleb::Bible::Search::Query'),
+		methods(
+			limit         => 3,
+			testament     => undef,
+			bookShortName => undef,
+			text          => 'peace in the earth',
+			translation   => 'asv',
+		),
+	), "'peace in the earth' query inspection") or diag(explain($query));
+
+	@bookExpect = (
+		all(
+			isa('Chleb::Bible::Book'),
+			methods(
+				ordinal      => 42,
+				shortName    => 'Luke',
+				chapterCount => 24,
+				verseCount   => 1151,
+				testament    => 'new',
+			),
+		),
+	);
+
+	$results = $query->run();
+	cmp_deeply($results, all(
+		isa('Chleb::Bible::Search::Results'),
+		methods(
+			count  => 1,
+			verses => [
+				all(
+					isa('Chleb::Bible::Verse'),
+					methods(
+						book    => $bookExpect[0],
+						chapter => all(
+							isa('Chleb::Bible::Chapter'),
+							methods(
+								book       => $bookExpect[0],
+								ordinal    => 12,
+								verseCount => 59,
+							),
+						),
+						ordinal => 51,
+						text    => 'Think ye that I am come to give peace in the earth? I tell you, Nay; but rather division:',
+					),
+				),
+			],
+		),
+	), 'results inspection');
+
+	return EXIT_SUCCESS;
+}
+
+sub testPeaceSearch_asvTranslationViaBible_textParam {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $translation = 'asv';
+	$self->sut($self->sut->__getBible($translation));
+	my $query = $self->sut->newSearchQuery(text => 'peace in the earth')->setLimit(3);
+
+	cmp_deeply($query, all(
+		isa('Chleb::Bible::Search::Query'),
+		methods(
+			limit         => 3,
+			testament     => undef,
+			bookShortName => undef,
+			text          => 'peace in the earth',
+			translation   => 'asv',
+		),
+	), "'peace in the earth' query inspection") or diag(explain($query));
+
+	my @bookExpect = (
+		all(
+			isa('Chleb::Bible::Book'),
+			methods(
+				ordinal      => 42,
+				shortName    => 'Luke',
+				chapterCount => 24,
+				verseCount   => 1151,
+				testament    => 'new',
+			),
+		),
+	);
+
+	my $results = $query->run();
+	cmp_deeply($results, all(
+		isa('Chleb::Bible::Search::Results'),
+		methods(
+			count  => 1,
+			verses => [
+				all(
+					isa('Chleb::Bible::Verse'),
+					methods(
+						book    => $bookExpect[0],
+						chapter => all(
+							isa('Chleb::Bible::Chapter'),
+							methods(
+								book       => $bookExpect[0],
+								ordinal    => 12,
+								verseCount => 59,
+							),
+						),
+						ordinal => 51,
+						text    => 'Think ye that I am come to give peace in the earth? I tell you, Nay; but rather division:',
+					),
+				),
+			],
+		),
+	), 'results inspection');
+
+	return EXIT_SUCCESS;
+}
+
+sub testPeaceSearch_asvTranslationViaBible_direct {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $translation = 'asv';
+	$self->sut($self->sut->__getBible($translation));
+	my $query = $self->sut->newSearchQuery('peace in the earth')->setLimit(3);
+
+	cmp_deeply($query, all(
+		isa('Chleb::Bible::Search::Query'),
+		methods(
+			limit         => 3,
+			testament     => undef,
+			bookShortName => undef,
+			text          => 'peace in the earth',
+			translation   => 'asv',
+		),
+	), "'peace in the earth' query inspection") or diag(explain($query));
+
+	my @bookExpect = (
+		all(
+			isa('Chleb::Bible::Book'),
+			methods(
+				ordinal      => 42,
+				shortName    => 'Luke',
+				chapterCount => 24,
+				verseCount   => 1151,
+				testament    => 'new',
+			),
+		),
+	);
+
+	my $results = $query->run();
+	cmp_deeply($results, all(
+		isa('Chleb::Bible::Search::Results'),
+		methods(
+			count  => 1,
+			verses => [
+				all(
+					isa('Chleb::Bible::Verse'),
+					methods(
+						book    => $bookExpect[0],
+						chapter => all(
+							isa('Chleb::Bible::Chapter'),
+							methods(
+								book       => $bookExpect[0],
+								ordinal    => 12,
+								verseCount => 59,
+							),
+						),
+						ordinal => 51,
+						text    => 'Think ye that I am come to give peace in the earth? I tell you, Nay; but rather division:',
 					),
 				),
 			],

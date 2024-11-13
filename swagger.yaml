@@ -74,6 +74,17 @@ paths:
       summary: Random Verse
       operationId: getRandom
       description: Retrieve one verse from The Bible, at random.
+      parameters:
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -170,6 +181,16 @@ paths:
             default: false
           required: false
           description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -223,6 +244,16 @@ paths:
             default: false
           required: false
           description: Require whitespace or end of verse after the requested term
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -278,6 +309,16 @@ paths:
             type: integer
           required: true
           description: Verse within chapter (ordinal)
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
       security: [] # No security
       responses:
         '200':
@@ -372,6 +413,10 @@ components:
               type: string
               description: Description of uptime in human-readable text
               example: 1 minute and 30 seconds
+    Translation:
+      type: string
+      enum: ["all", "asv", "kjv"]
+      default: "kjv"
     Verse:
       type: object
       properties:
@@ -399,6 +444,8 @@ components:
               type: string
               description: Verbatim and unedited text from the Holy Bible.
               example: Thus did Noah; according to all that God commanded him, so did he.
+            translation:
+              $ref: '#/components/schemas/Translation'
     Stats:
       type: object
       properties:
