@@ -279,7 +279,7 @@ sub __version {
 	my ($self) = @_;
 	my %hash = __makeJsonApi();
 
-	my $version = $Chleb::Bible::VERSION;
+	my $version = $Chleb::VERSION;
 
 	return 403 unless ($self->dic->config->get('features', 'version', 'true', 1));
 
