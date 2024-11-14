@@ -436,16 +436,17 @@ set serializer => 'JSON'; # or any other serializer
 sub handleException {
 	my ($exception) = @_;
 
-	$server->dic->logger->debug($exception);
 	if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
-		$server->dic->logger->debug(status_constant_name($exception->statusCode));
+		$server->dic->logger->debug(sprintf('Returning HTTP status code %s (%d)',
+		    status_constant_name($exception->statusCode), $exception->statusCode));
+
 		if (is_redirect($exception->statusCode)) {
 			return redirect $exception->location, $exception->statusCode;
 		} else {
 			send_error($exception->description, $exception->statusCode);
 		}
 	} else {
-		$server->dic->logger->error('Internal Server Error!');
+		$server->dic->logger->error("Internal Server Error: $exception");
 		send_error($exception, 500);
 	}
 
