@@ -425,7 +425,7 @@ use warnings;
 
 use Dancer2;
 use English qw(-no_match_vars);
-use HTTP::Status qw(:is status_constant_name);
+use HTTP::Status qw(:is);
 use POSIX qw(EXIT_SUCCESS);
 use Scalar::Util qw(blessed);
 
@@ -437,9 +437,7 @@ sub handleException {
 	my ($exception) = @_;
 
 	if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
-		$server->dic->logger->debug(sprintf('Returning HTTP status code %s (%d)',
-		    status_constant_name($exception->statusCode), $exception->statusCode));
-
+		$server->dic->logger->debug(sprintf('Returning HTTP status code %d', $exception->statusCode));
 		if (is_redirect($exception->statusCode)) {
 			return redirect $exception->location, $exception->statusCode;
 		} else {
