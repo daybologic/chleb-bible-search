@@ -32,27 +32,129 @@ package Chleb::Bible::Book;
 use strict;
 use warnings;
 use Moose;
+
+=head1 NAME
+
+Chleb::Bible::Book - One book within a Chleb::Bible
+
+=head1 DESCRIPTION
+
+Object representing one Book within a translation of The Holy Bible
+
+=cut
+
 use Moose::Util::TypeConstraints qw(enum);
 use Readonly;
 use Chleb::Bible::Chapter;
 use Chleb::Bible::Verse;
 
+=head1 ATTRIBUTES
+
+=over
+
+=item C<bible>
+
+L<Chleb::Bible> object to which this C<Book> belongs.
+B<required> and set by the creator of the object.  May not be associated with
+another bible translation, once created.
+
+=cut
+
 has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
+
+=item C<ordinal>
+
+Number in which the book appears in the associated L</bible>.
+This cannot be changed.  Note that it is possible this changes between
+bible translations.
+
+=cut
 
 has ordinal => (is => 'ro', isa => 'Int');
 
+=item C<shortName>
+
+The short name of this book within the bible, for example: C<gen> for 'Genesis'.
+This cannot be changed.
+
+=item C<longName>
+
+The long name of this book within the bible, for example: C<Genesis>.
+This cannot be changed.
+
+=cut
+
 has [qw(shortName longName)] => (is => 'ro', isa => 'Str');
+
+=item C<chapterCount>
+
+Integer; The number of chapters in the book (cannot be changed).
+
+=item C<verseCount>
+
+Integer; The number of verses in the book (cannot be changed).
+
+=cut
 
 has [qw(chapterCount verseCount)] => (is => 'ro', isa => 'Int');
 
+=item C<testament>
+
+A fixed enumerated string identifying which testament the  book belongs to.
+
+May be either of:
+
+=over
+
+=item *
+
+old
+
+=item *
+
+new
+
+=back
+
+This cannot be changed.
+
+=cut
+
 has testament => (is => 'ro', isa => enum(['old', 'new']));
+
+=item C<type>
+
+The type of this object, which is typically used for JSON-generation purposes.
+In this case, the type is always C<book>.  This cannot be changed.
+
+=cut
 
 has type => (is => 'ro', isa => 'Str', default => sub { 'book' });
 
+=item C<id>
+
+An opaque and unique identifier which may be used in JSON:API responses,
+or in lookups.  This is unique per book but not across translations.
+
+=cut
+
 has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
 
-sub BUILD {
-}
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<getVerseByOrdinal($ordinal)>
+
+Fetch a L<Chleb::Bible::Verse> by ordinal relative to the C<Book> which contains it (B<not the Chapter>).
+
+As a special case, C<$ordinal> C<-1> is accepted to mean the last verse within the B<Book>.
+
+If the C<Verse> cannot be found, a fatal error is thrown.
+
+=cut
 
 sub getVerseByOrdinal {
 	my ($self, $ordinal) = @_;
@@ -78,10 +180,24 @@ sub getVerseByOrdinal {
 	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
 }
 
+=item C<getNext()>
+
+Returns the next book in the series, relative to this one.
+If there are no more books, a false value is returned.
+
+=cut
+
 sub getNext {
 	my ($self) = @_;
 	return $self->bible->getBookByOrdinal($self->ordinal + 1, { nonFatal => 1 });
 }
+
+=item C<getPrev()>
+
+Returns the previous book in the series, relative to this one.
+If there are no previous books, a false value is returned.
+
+=cut
 
 sub getPrev {
 	my ($self) = @_;
@@ -91,6 +207,14 @@ sub getPrev {
 
 	return undef;
 }
+
+=item C<search($query)>
+
+Given C<$query> (L<Chleb::Bible::Search::Query>), run a search on B<this book only>.
+Return an C<ARRAY> of matching L<Chleb::Bible::Verse> objects.  This array may be empty,
+if nothing has matched.
+
+=cut
 
 sub search {
 	my ($self, $query) = @_;
@@ -132,10 +256,25 @@ sub search {
 	return \@verses;
 }
 
+=item C<toString()>
+
+Return an opaque, loggable version of this book's name.
+This name may not even be in the speaker's preferred language,
+if this is a world-bible translation.  It B<must NOT> be used in most
+places where L</shortName> is accepted.
+
+=cut
+
 sub toString {
 	my ($self) = @_;
 	return $self->shortName;
 }
+
+=item C<TO_JSON()>
+
+Returns the JSON:API C<attributes> associated with this Book.
+
+=cut
 
 sub TO_JSON {
 	my ($self) = @_;
@@ -145,6 +284,12 @@ sub TO_JSON {
 		ordinal   => $self->ordinal,
 	};
 }
+
+=item C<getChapterByOrdinal($ordinal, $args)>
+
+TODO
+
+=cut
 
 sub getChapterByOrdinal {
 	my ($self, $ordinal, $args) = @_;
@@ -166,14 +311,37 @@ sub getChapterByOrdinal {
 	});
 }
 
+=back
+
+=head1 PRIVATE METHODS
+
+=over
+
+=item C<__makeVerseKey($chapterOrdinal, $verseOrdinal)>
+
+Helper which makes a key suitable for fetching verses from the backend.
+TODO: Does this belong here?  I wonder.
+Perhaps this would be better within the Backend, or as a Utils?
+
+=cut
+
 sub __makeVerseKey {
 	my ($self, $chapterOrdinal, $verseOrdinal) = @_;
 	return join(':', $self->bible->translation, $self->shortName, $chapterOrdinal, $verseOrdinal);
 }
+
+=item C<__makeId()>
+
+Lazy-initializer for L</id>.
+
+=cut
 
 sub __makeId {
        my ($self) = @_;
        return lc($self->shortName);
 }
 
+=back
+
+=cut
 1;
