@@ -2,14 +2,14 @@ name: Perl CI
 
 on:
   push:
-    branches: [ "develop", "master", "f/202409-lintian" ]
+    branches: [ "develop", "master", "platform/freebsd" ]
   pull_request:
     branches: [ "develop" ]
 
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: freebsd-latest
 
     steps:
     - uses: actions/checkout@v4
