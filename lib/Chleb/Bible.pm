@@ -51,9 +51,9 @@ use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
 
 use Chleb::Bible::Backend;
-use Chleb::Bible::DI::Container;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
+use Chleb::DI::Container;
 
 =head1 ATTRIBUTES
 

@@ -28,13 +28,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Bible::DI::Container;
+package Chleb::DI::Container;
 use MooseX::Singleton;
 use Moose;
 
 =head1 NAME
 
-Chleb::Bible::DI::Container - DIC
+Chleb::DI::Container - DIC
 
 =head1 DESCRIPTION
 

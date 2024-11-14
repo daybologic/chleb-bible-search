@@ -44,8 +44,8 @@ Dancer2 server for stand-alone HTTP server for Chleb Bible Search
 =cut
 
 use Chleb;
-use Chleb::Bible::DI::Container;
 use Chleb::Bible::Server::Exception;
+use Chleb::DI::Container;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
 use JSON;
@@ -73,12 +73,12 @@ sub new {
 
 =item C<dic()>
 
-Return the singleton L<Chleb::Bible::DI::Container>.
+Return the singleton L<Chleb::DI::Container>.
 
 =cut
 
 sub dic {
-	return Chleb::Bible::DI::Container->instance;
+	return Chleb::DI::Container->instance;
 }
 
 =back
@@ -544,7 +544,7 @@ sub __verseToJsonApi {
 		relationships => { },
 	});
 
-	my $dic = Chleb::Bible::DI::Container->instance;
+	my $dic = Chleb::DI::Container->instance;
 	push(@{ $hash{included} }, {
 		type => 'stats',
 		id => uuid_to_string(create_uuid()),

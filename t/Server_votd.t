@@ -39,8 +39,8 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible::DI::Container;
 use Chleb::Bible::DI::MockLogger;
+use Chleb::DI::Container;
 use Chleb::Server;
 use English qw(-no_match_vars);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
@@ -748,7 +748,7 @@ sub testRedirectV1 {
 sub __mockLogger {
 	my ($self) = @_;
 
-	my $dic = Chleb::Bible::DI::Container->instance;
+	my $dic = Chleb::DI::Container->instance;
 	$dic->logger(Chleb::Bible::DI::MockLogger->new());
 
 	return;

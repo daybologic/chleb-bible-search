@@ -45,10 +45,10 @@ use Time::HiRes ();
 
 use Chleb::Bible;
 use Chleb::Bible::Backend;
-use Chleb::Bible::DI::Container;
 use Chleb::Bible::Server::Exception;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
+use Chleb::DI::Container;
 
 Readonly my $TRANSLATION_DEFAULT => 'kjv';
 
