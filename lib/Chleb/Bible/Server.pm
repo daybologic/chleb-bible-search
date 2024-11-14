@@ -32,6 +32,17 @@
 package Chleb::Bible::Server;
 use strict;
 use warnings;
+
+=head1 NAME
+
+Chleb::Bible::Server - Dancer2 server facility
+
+=head1 DESCRIPTION
+
+Dancer2 server for stand-alone HTTP server for Chleb Bible Search
+
+=cut
+
 use Chleb;
 use Chleb::Bible::DI::Container;
 use Chleb::Bible::Server::Exception;
@@ -40,6 +51,16 @@ use HTTP::Status qw(:constants);
 use JSON;
 use Time::Duration;
 use UUID::Tiny ':std';
+
+=head1 METHODS
+
+=over
+
+=item C<new()>
+
+Construct and return a new C<Chleb::Bible::Server>.
+
+=cut
 
 sub new {
 	my ($class) = @_;
@@ -50,9 +71,30 @@ sub new {
 	return $object;
 }
 
+=item C<dic()>
+
+Return the singleton L<Chleb::Bible::DI::Container>.
+
+=cut
+
 sub dic {
 	return Chleb::Bible::DI::Container->instance;
 }
+
+=back
+
+=head1 PRIVATE METHODS
+
+=over
+
+=item C<__title()>
+
+Logs that the server has started, including information about the administrator.
+This is a local log only, and is not transmitted to the consumer/user.
+This should only be called once, and at server startup time.
+There is no return value.
+
+=cut
 
 sub __title {
 	my ($self) = @_;
@@ -69,17 +111,37 @@ sub __title {
 	return;
 }
 
+=item C<__json()>
+
+FIXME: THIS APPEARS TO NOT BE CALLED ANYWHERE
+
+=cut
+
 sub __json {
 	my ($self) = @_;
 	$self->{__json} ||= JSON->new();
 	return $self->{__json};
 }
 
+=item C<__library()>
+
+Server accessor for L<Chleb> itself; core library.
+If the object has not yet been created, a new one is returned.
+
+=cut
+
 sub __library {
 	my ($self) = @_;
 	$self->{__library} ||= Chleb->new();
 	return $self->{__library};
 }
+
+=item C<__makeJsonApi()>
+
+Return a new empty skeleton for a C<JSON:API> response, with all mandatory parts, ie.
+with empty C<data>, C<included> and C<links> keys.
+
+=cut
 
 sub __makeJsonApi {
 	return (
@@ -89,90 +151,38 @@ sub __makeJsonApi {
 	);
 }
 
-sub __verseToJsonApi {
-	my ($verse, $params) = @_;
-	my %hash = __makeJsonApi();
+=item C<__lookup($params)>
 
-	push(@{ $hash{included} }, {
-		type => $verse->chapter->type,
-		id => $verse->chapter->id,
-		attributes => $verse->chapter->TO_JSON(),
-		relationships => {
-			book => {
-				data => {
-					type => $verse->book->type,
-					id => $verse->book->id,
-				},
-			}
-		},
-	});
+Given the user-supplied C<$params> (C<HASH>), we attempt to fetch a verse,
+which includes links to the previous and next verses.
 
-	push(@{ $hash{included} }, {
-		type => $verse->book->type,
-		id => $verse->book->id,
-		attributes => $verse->book->TO_JSON(),
-		relationships => { },
-	});
+returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Bible::Server::Exception>.
 
-	my $dic = Chleb::Bible::DI::Container->instance;
-	push(@{ $hash{included} }, {
-		type => 'stats',
-		id => uuid_to_string(create_uuid()),
-		attributes => {
-			msec => int($verse->msec),
-		},
-		links => { },
-	});
+The following C<$params> are required:
 
-	my %paramsLocal = ( );
-	%paramsLocal = %$params if ($params);
-	$paramsLocal{translations} = [ $verse->book->bible->translation ] if ($paramsLocal{translations});
-	my $queryParams = Chleb::Utils::queryParamsHelper(\%paramsLocal);
+=over
 
-	my %links = (
-		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
-		self => '/' . join('/', 1, 'lookup', $verse->id) . $queryParams,
-	);
+=item C<book>
 
-	if (my $nextVerse = $verse->getNext()) {
-		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->id) . $queryParams;
-	}
+Numerical ordinal, short name, or long name for the sought book
 
-	if (my $prevVerse = $verse->getPrev()) {
-		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->id) . $queryParams;
-	}
+=cut
 
-	push(@{ $hash{data} }, {
-		type => $verse->type,
-		id => $verse->id,
-		attributes => $verse->TO_JSON(),
-		links => \%links,
-		relationships => {
-			chapter => {
-				links => {
-					# TODO: It should be possible to look up an entire chapter
-					#self => '/' . join('/', 1, 'lookup', $verse->chapter->id),
-				},
-				data => {
-					type => $verse->chapter->type,
-					id => $verse->chapter->id,
-				},
-			},
-			book => {
-				links => {
-					# TODO: It should be possible to look up an entire book
-					#self => '/' . join('/', 1, 'lookup', $verse->book->id),
-				},
-				data => {
-					type => $verse->book->type,
-					id => $verse->book->id,
-				},
-			},
-		},
-	});
+=item C<chapter>
 
-	return \%hash;
-}
+Numerical chapter ordinal within C<book>
+
+=cut
+
+=item C<verse>
+
+Numerical verse ordinal within C<chapter>
+
+=cut
+
+=back
+
+=cut
 
 sub __lookup {
 	my ($self, $params) = @_;
@@ -214,6 +224,16 @@ sub __lookup {
 	return $json[0];
 }
 
+=item C<__random($params)>
+
+Retrieve a verse at random, and return the C<JSON:API> structure from it.
+
+Optionally, C<$params> (C<HASH>) may be supplied.
+
+returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Bible::Server::Exception>.
+
+=cut
+
 sub __random {
 	my ($self, $params) = @_;
 	my $verse = $self->__library->random($params);
@@ -224,6 +244,16 @@ sub __random {
 
 	return $json;
 }
+
+=item C<__votd($params)>
+
+Retrieve the verse of the day, and return the C<JSON:API> structure for it.
+
+Optionally, C<$params> (C<HASH>) may be supplied.
+
+returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Bible::Server::Exception>.
+
+=cut
 
 sub __votd {
 	my ($self, $params) = @_;
@@ -272,6 +302,14 @@ sub __votd {
 	return $json;
 }
 
+=item C<__ping()>
+
+Returns a simple C<JSON:API> structure which simply demonstrates that the server
+is up and running.  The type of the C<data> element is a C<pong> response.  See
+L<https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search>.
+
+=cut
+
 sub __ping {
 	my ($self) = @_;
 	my %hash = __makeJsonApi();
@@ -286,6 +324,17 @@ sub __ping {
 
 	return \%hash;
 }
+
+=item C<__version()>
+
+Returns a simple C<JSON:API> structure which contains information about the server version.
+The type of the C<data> element is a C<version> response.  See
+L<https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search>.
+
+This method may throw a L<Chleb::Bible::Server::Exception> if the feature has been
+disabled by the server administrator, or potentially, for any other reason.
+
+=cut
 
 sub __version {
 	my ($self) = @_;
@@ -309,6 +358,12 @@ sub __version {
 	return \%hash;
 }
 
+=item C<__uptime()>
+
+Returns a C<JSON:API> structure suitable for returning the server uptime.
+
+=cut
+
 sub __uptime {
 	my ($self) = @_;
 	my %hash = __makeJsonApi();
@@ -327,10 +382,30 @@ sub __uptime {
 	return \%hash;
 }
 
-sub __getUptime {
-	my ($self) = @_;
-	return time() - $self->__library->constructionTime;
-}
+=item C<__search($search)>
+
+Perform a search with various parameters and return a C<JSON:API> structure,
+fully-populated with all results.  TODO: In the future we must support pagination.
+
+The following C<$params> (C<HASH>) are supported:
+
+=over
+
+=item C<limit>
+
+A limit for the number of results, whose default is C<5>.
+
+=item C<wholeword>
+
+Whether the C<term> shall be considered a wholeword, or the default, a sub-string.
+
+=item C<term>
+
+The text the user is searching for (critereon).
+
+=back
+
+=cut
 
 sub __search {
 	my ($self, $search) = @_;
@@ -418,6 +493,120 @@ sub __search {
 
 	return \%hash;
 }
+
+=item C<__getUptime()>
+
+Return the number of seconds the server has been running.
+
+=cut
+
+sub __getUptime {
+	my ($self) = @_;
+	return time() - $self->__library->constructionTime;
+}
+
+=back
+
+=head1 C<PRIVATE FUNCTIONS>
+
+=over
+
+=item C<__verseToJsonApi($verse, $params)>
+
+Take the given C<$verse> (L<Chleb::Bible::Verse>) and optional C<$params> (C<HASH>)
+and produce the user-facing C<JSON:API> response (C<HASH>).  Shared logic used by
+multiple results-orientated server methods.
+
+=cut
+
+sub __verseToJsonApi {
+	my ($verse, $params) = @_;
+	my %hash = __makeJsonApi();
+
+	push(@{ $hash{included} }, {
+		type => $verse->chapter->type,
+		id => $verse->chapter->id,
+		attributes => $verse->chapter->TO_JSON(),
+		relationships => {
+			book => {
+				data => {
+					type => $verse->book->type,
+					id => $verse->book->id,
+				},
+			}
+		},
+	});
+
+	push(@{ $hash{included} }, {
+		type => $verse->book->type,
+		id => $verse->book->id,
+		attributes => $verse->book->TO_JSON(),
+		relationships => { },
+	});
+
+	my $dic = Chleb::Bible::DI::Container->instance;
+	push(@{ $hash{included} }, {
+		type => 'stats',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			msec => int($verse->msec),
+		},
+		links => { },
+	});
+
+	my %paramsLocal = ( );
+	%paramsLocal = %$params if ($params);
+	$paramsLocal{translations} = [ $verse->book->bible->translation ] if ($paramsLocal{translations});
+	my $queryParams = Chleb::Utils::queryParamsHelper(\%paramsLocal);
+
+	my %links = (
+		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
+		self => '/' . join('/', 1, 'lookup', $verse->id) . $queryParams,
+	);
+
+	if (my $nextVerse = $verse->getNext()) {
+		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->id) . $queryParams;
+	}
+
+	if (my $prevVerse = $verse->getPrev()) {
+		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->id) . $queryParams;
+	}
+
+	push(@{ $hash{data} }, {
+		type => $verse->type,
+		id => $verse->id,
+		attributes => $verse->TO_JSON(),
+		links => \%links,
+		relationships => {
+			chapter => {
+				links => {
+					# TODO: It should be possible to look up an entire chapter
+					#self => '/' . join('/', 1, 'lookup', $verse->chapter->id),
+				},
+				data => {
+					type => $verse->chapter->type,
+					id => $verse->chapter->id,
+				},
+			},
+			book => {
+				links => {
+					# TODO: It should be possible to look up an entire book
+					#self => '/' . join('/', 1, 'lookup', $verse->book->id),
+				},
+				data => {
+					type => $verse->book->type,
+					id => $verse->book->id,
+				},
+			},
+		},
+	});
+
+	return \%hash;
+}
+
+=back
+
+=cut
 
 package main;
 use strict;
