@@ -32,17 +32,71 @@ package Chleb::Bible::DI::Container;
 use MooseX::Singleton;
 use Moose;
 
+=head1 NAME
+
+Chleb::Bible::DI::Container - DIC
+
+=head1 DESCRIPTION
+
+Registry of "singletons" which may be replaced during any unit test.
+This central registry should be populated by any module which needs
+to use a specific library.  Objects such a loggers should only be accessed
+via this "DIC" so that they may be reliably replaced during the test suites.
+
+=cut
+
 use Log::Log4perl;
 use Chleb::Bible::DI::Config;
 use Chleb::Bible::Exclusions;
 
-has bible => (is => 'rw');
+has bible => (is => 'rw'); # TODO: deprecated
+
+=head1 ATTRIBUTES
+
+=over
+
+=item C<logger>
+
+The logger object, which may be any object which accepts a series of
+logger-level methods, such as C<warn>, C<debug>.
+
+If not specified, a default hook brings in the L<Log::Log4perl> framework.
+Otherwise, you should replace it with L<Chleb::Bible::DI::MockLogger> during a test.
+
+=cut
 
 has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
 
+=item C<config>
+
+TODO
+
+=cut
+
 has config => (is => 'rw', lazy => 1, builder => '_makeConfig');
 
+=item C<exclusions>
+
+TODO
+
+=cut
+
 has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
+
+=back
+
+=head1 PROTECTED METHODS
+
+=over
+
+=item C<_makeLogger()>
+
+The default lazy-initializer for L</logger>.
+
+This can and may be overridden in a derivative of this object.
+This is the recommended approach.
+
+=cut
 
 sub _makeLogger {
 	foreach my $path ('etc/log4perl.conf', '/etc/chleb-bible-search/log4perl.conf') {
@@ -53,6 +107,19 @@ sub _makeLogger {
 
 	return Log::Log4perl->get_logger('chleb');
 }
+
+=item C<_makeConfig()>
+
+The default lazy-initializer for L</config>.
+
+Returns a L<Chleb::Bible::DI::Config>.
+
+In this default initializtion, if the real config file cannt be found, the first access is fatal.
+
+This can and may be overridden in a derivative of this object.
+This is the recommended approach.
+
+=cut
 
 sub _makeConfig {
 	my ($self) = @_;
@@ -65,9 +132,19 @@ sub _makeConfig {
 	die('No config available!');
 }
 
+=item C<_makeExclusions()>
+
+TODO
+
+=cut
+
 sub _makeExclusions {
 	my ($self) = @_;
 	return Chleb::Bible::Exclusions->new({ dic => $self });
 }
+
+=back
+
+=cut
 
 1;
