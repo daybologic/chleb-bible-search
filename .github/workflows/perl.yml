@@ -9,10 +9,13 @@ on:
 jobs:
   build:
 
-    runs-on: freebsd-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+    - name: Test in FreeBSD
+      id: test
+      uses: vmactions/freebsd-vm@v1
 
     - name: recursion
       run: git submodule update --init --recursive
