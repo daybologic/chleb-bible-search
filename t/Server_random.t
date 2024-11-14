@@ -41,7 +41,7 @@ extends 'Test::Module::Runnable';
 use POSIX qw(EXIT_SUCCESS);
 use Chleb::Bible::DI::Container;
 use Chleb::Bible::DI::MockLogger;
-use Chleb::Bible::Server;
+use Chleb::Server;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -49,7 +49,7 @@ sub setUp {
 	my ($self) = @_;
 
 	$self->__mockLogger();
-	$self->sut(Chleb::Bible::Server->new());
+	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
 }

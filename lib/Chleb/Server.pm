@@ -29,13 +29,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Bible::Server;
+package Chleb::Server;
 use strict;
 use warnings;
 
 =head1 NAME
 
-Chleb::Bible::Server - Dancer2 server facility
+Chleb::Server - Dancer2 server facility
 
 =head1 DESCRIPTION
 
@@ -58,7 +58,7 @@ use UUID::Tiny ':std';
 
 =item C<new()>
 
-Construct and return a new C<Chleb::Bible::Server>.
+Construct and return a new C<Chleb::Server>.
 
 =cut
 
@@ -736,7 +736,7 @@ get '/1/uptime' => sub {
 };
 
 unless (caller()) {
-	$server = Chleb::Bible::Server->new();
+	$server = Chleb::Server->new();
 	$0 = 'chleb-bible-search [server]';
 	dance;
 
