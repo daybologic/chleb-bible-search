@@ -33,6 +33,16 @@ use strict;
 use warnings;
 use Moose;
 
+=head1 NAME
+
+Chleb::Bible - The Holy Bible
+
+=head1 DESCRIPTION
+
+Object representing one translation of The Holy Bible
+
+=cut
+
 extends 'Chleb::Bible::Base';
 
 use Digest::CRC qw(crc32);
@@ -45,15 +55,74 @@ use Chleb::Bible::DI::Container;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 
-has __backend => (is => 'ro', isa => 'Chleb::Bible::Backend', lazy => 1, default => \&__makeBackend);
+=head1 ATTRIBUTES
+
+=over
+
+=item C<bookCount>
+
+The count (number) of books in the bible.  Whilst most bibles will contain C<66> books,
+please do B<not> assume so, because of the Apocrypha, or perhaps the entire translation
+is of only one testament.
+
+=cut
 
 has bookCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeBookCount);
 
+=item C<books>
+
+Array of all books in the bible, in the order they appear within it.  Note that
+this B<might> vary between translations!  Each entry is a L<Chleb::Bible::Book> object.
+
+=cut
+
 has books => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Book]', lazy => 1, default => \&__makeBooks);
+
+=item C<verseCount>
+
+The number of verses in this translation of the bible.  nb. that a typical bible contains C<31,102> verses,
+but in some translations, this may vary, so please do not assume.
+
+=cut
 
 has verseCount => (is => 'ro', isa => 'Int', default => 31_102); # TODO: Hard-coded 31,102: works for "kjv", "asv" (canonical)
 
+=item C<translation>
+
+A short, lower-case word identifying the translation name.  This may be used in URLs and as an identifier.
+For example: 'kjv', represents the King James Bible, aka Authorized Edition.
+
+=cut
+
 has translation => (is => 'ro', isa => 'Str', required => 1);
+
+=back
+
+=head1 PRIVATE ATTRIBUTES
+
+=over
+
+=item C<__backend>
+
+The backend L<Chleb::Bible::Backend> object for this bible translation.  Users of the library should
+never touch things within this object because the functionality may change without warning.
+
+=cut
+
+has __backend => (is => 'ro', isa => 'Chleb::Bible::Backend', lazy => 1, default => \&__makeBackend);
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<BUILD>
+
+Automatic build hook, called by the L<Moose> framework when this bible translation
+is loaded.
+
+=cut
 
 sub BUILD {
 	my ($self) = @_;
@@ -64,6 +133,16 @@ sub BUILD {
 
 	return;
 }
+
+=item C<getBookByShortName($shortName, [$args])>
+
+Return a L<Chleb::Bible::Book> object from L</books> given its C<$shortName>.
+A fatal error occurs if the book does not exist or cannot be found.
+
+If you want to avoid a fatal error and merely want a warning, pass a true value
+in the key C<nonFatal> within the B<optional> C<$args> C<HASH>.
+
+=cut
 
 sub getBookByShortName {
 	my ($self, $shortName, $args) = @_;
@@ -90,6 +169,13 @@ sub getBookByShortName {
 	return undef;
 }
 
+=item C<getBookByLongName($longName)>
+
+Return a L<Chleb::Bible::Book> object from L</books> given its C<$shortName>.
+A fatal error occurs if the book does not exist or cannot be found.
+
+=cut
+
 sub getBookByLongName {
 	my ($self, $longName) = @_;
 
@@ -101,6 +187,21 @@ sub getBookByLongName {
 
 	die("Long book name '$longName' is not a book in the bible");
 }
+
+=item C<getBookByOrdinal($ordinal, [$args])>
+
+Given a numeric C<$ordinal>, return that L<Chleb::Bible::Book> from
+this translation of the bible.  Always make sure that it is less than
+or equal to L</bookCount>.  nb. an ordinal to us always starts at C<1>,
+not C<0>.  A special value, C<-1> indicates the last book in this translation
+of the bible.
+
+If the book is out of range, a fatal error occurs, unless the C<$args> C<HASH>
+contains a true key by the name C<nonFatal>.
+
+B<Don't assume> there are C<66> books in any translation of the bible!
+
+=cut
 
 sub getBookByOrdinal {
 	my ($self, $ordinal, $args) = @_;
@@ -118,6 +219,21 @@ sub getBookByOrdinal {
 
 	return $self->books->[$ordinal - 1];
 }
+
+=item C<getVerseByOrdinal($ordinal, [$args])>
+
+Return the requested L<Chleb::Bible::Verse> object given a numeric C<$ordinal> relative to the
+start of this translation of the bible, rather than the chapter, which is more commonplace.
+This value is usually used for traversing the entire bible, rather than the normal chapter:verse
+references.
+
+C<$args> is passed through unmodified to L</getBookByShortName($shortName, [$args])> and
+L<Chleb::Bible::Book/getChapterByOrdinal($ordinal, [$args])>.  It is otherwise not checked here.
+
+Asking for a verse which is out of range causes a fatal error, therefore check L</verseCount>
+before access.  Please note that ordinals start at C<1>, not C<0>.
+
+=cut
 
 sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
@@ -142,6 +258,17 @@ sub getVerseByOrdinal {
 	die(sprintf("Verse %d not found in '%s'", $ordinal, $self->translation));
 }
 
+=item C<$newSearchQuery(@args)>
+
+Create a new L<Chleb::Bible::Seach::Query> object.  See docs for this object to see
+what attributes are available.  If C<@args> is not a C<HASH>, it will be assumed
+to be text critereon only.
+
+Special case, if C<bible> is not specified within the attributes, it will be assumed to
+be this bible object.
+
+=cut
+
 sub newSearchQuery {
 	my ($self, @args) = @_;
 
@@ -149,9 +276,37 @@ sub newSearchQuery {
 	    if (scalar(@args) == 1);
 
 	my %params = @args;
-	$params{bible} = $self;
+	$params{bible} = $self unless ($params{bible});
 	return $self->_library->newSearchQuery(%params);
 }
+
+=item C<resolveBook($book)>
+
+Resolve and return a L<Chleb::Bible::Book> object given any of the following C<$book> contents:
+
+=over
+
+=item *
+
+An existing L<Chleb::Bible::Book> object, which will be returned unmodified
+
+=item *
+
+A numeric ordinal relative to the bible, B<not the Chapter>
+
+=item *
+
+a short book name, for example C<1Ki> or C<gen>.
+
+=item *
+
+A long book name, for example C<1 Kings> or C<Genesis>.
+
+=back
+
+A fatal error is thrown if the Book cannot be found.
+
+=cut
 
 sub resolveBook {
 	my ($self, $book) = @_;
@@ -171,6 +326,16 @@ sub resolveBook {
 	return $book;
 }
 
+=item C<fetch($book, $chapterOrdinal, $verseOrdinal)>
+
+Fetch a L<Chleb::Bible::Verse>, given C<book>, which may be in any format accepted by L</resolveBook($book)>,
+and a numeric C<$chapterOrdinal> and a numeric C<$verseOrdinal>.  If this does not exist, a fatal error will
+be thrown.
+
+nb. the verse ordinal is relative to the chapter.  Both ordinals start at C<1>, not C<0>.
+
+=cut
+
 sub fetch {
 	my ($self, $book, $chapterOrdinal, $verseOrdinal) = @_;
 	my $startTiming = Time::HiRes::time();
@@ -188,6 +353,19 @@ sub fetch {
 	return $verse;
 }
 
+=back
+
+=head1 PRIVATE METHODS
+
+=over
+
+=item C<__makeBackend()>
+
+Lazy-initializer for L</__backend>, which creates the object
+with a back-reference to ourselves (this object).
+
+=cut
+
 sub __makeBackend {
 	my ($self) = @_;
 
@@ -196,18 +374,30 @@ sub __makeBackend {
 	});
 }
 
+=item C<__makeBookCount()>
+
+Lazy-initializer for L</bookCount>, which merely checks L</books> under the hood.
+
+=cut
+
 sub __makeBookCount {
 	my ($self) = @_;
 	return scalar(@{ $self->books });
 }
+
+=item C<__makeBooks>
+
+Lazy-initializer for L</books>.
+
+=cut
 
 sub __makeBooks {
 	my ($self) = @_;
 	return $self->__backend->getBooks();
 }
 
-sub __makeConstructionTime {
-	return time();
-}
+=back
+
+=cut
 
 1;
