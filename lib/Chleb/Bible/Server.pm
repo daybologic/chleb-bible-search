@@ -34,7 +34,9 @@ use strict;
 use warnings;
 use Chleb;
 use Chleb::Bible::DI::Container;
+use Chleb::Bible::Server::Exception;
 use Chleb::Utils;
+use HTTP::Status qw(:constants);
 use JSON;
 use Time::Duration;
 use UUID::Tiny ':std';
@@ -227,6 +229,11 @@ sub __votd {
 	my ($self, $params) = @_;
 
 	my $version = $params->{version} || 1;
+	my $redirect = $params->{redirect} // 0;
+
+	die Chleb::Bible::Server::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
+	    if ($redirect && $version > 1);
+
 	my $verse = $self->__library->votd($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
@@ -253,6 +260,11 @@ sub __votd {
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 		return $json[0];
 	}
+
+	die Chleb::Bible::Server::Exception->raise(
+		HTTP_TEMPORARY_REDIRECT,
+		'/1/lookup/' . join('/', lc($verse->book->shortName), $verse->chapter->ordinal, $verse->ordinal),
+	) if ($redirect);
 
 	my $json = __verseToJsonApi($verse, $params);
 	$json->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
@@ -413,6 +425,7 @@ use warnings;
 
 use Dancer2;
 use English qw(-no_match_vars);
+use HTTP::Status qw(:is status_constant_name);
 use POSIX qw(EXIT_SUCCESS);
 use Scalar::Util qw(blessed);
 
@@ -423,9 +436,16 @@ set serializer => 'JSON'; # or any other serializer
 sub handleException {
 	my ($exception) = @_;
 
+	$server->dic->logger->debug($exception);
 	if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
-		send_error($exception->description, $exception->statusCode);
+		$server->dic->logger->debug(status_constant_name($exception->statusCode));
+		if (is_redirect($exception->statusCode)) {
+			return redirect $exception->location, $exception->statusCode;
+		} else {
+			send_error($exception->description, $exception->statusCode);
+		}
 	} else {
+		$server->dic->logger->error('Internal Server Error!');
 		send_error($exception, 500);
 	}
 
@@ -448,19 +468,31 @@ get '/1/random' => sub {
 };
 
 get '/1/votd' => sub {
-	my $when = param('when');
 	my $parental = int(param('parental'));
-	return $server->__votd({ when => $when, parental => $parental });
-};
-
-get '/2/votd' => sub {
+	my $redirect = param('redirect');
 	my $when = param('when');
-	my $parental = int(param('parental'));
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
 	my $result;
 	eval {
-		$result = $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations });
+		$result = $server->__votd({ parental => $parental, redirect => $redirect, when => $when });
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	return $result;
+};
+
+get '/2/votd' => sub {
+	my $parental = int(param('parental'));
+	my $redirect = param('redirect');
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
+	my $when = param('when');
+
+	my $result;
+	eval {
+		$result = $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations, redirect => $redirect });
 	};
 
 	if (my $exception = $EVAL_ERROR) {

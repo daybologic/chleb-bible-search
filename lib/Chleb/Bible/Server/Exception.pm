@@ -33,17 +33,28 @@ use strict;
 use warnings;
 use Moose;
 
+use HTTP::Status qw(:is);
+
 has description => (is => 'ro', isa => 'Str');
 
 has statusCode => (is => 'ro', isa => 'Int', default => 200);
 
-sub raise {
-	my ($class, $statusCode, $description) = @_;
+has location => (is => 'ro', isa => 'Str');
 
-	return $class->new({
-		description => $description,
-		statusCode  => $statusCode,
-	});
+sub raise {
+	my ($class, $statusCode, $thing) = @_;
+
+	my %params = (
+		statusCode => $statusCode,
+	);
+
+	if (is_redirect($statusCode)) {
+		$params{location} = $thing;
+	} else {
+		$params{description} = $thing;
+	}
+
+	return $class->new(\%params);
 }
 
 1;

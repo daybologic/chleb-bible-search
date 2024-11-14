@@ -42,6 +42,7 @@ use POSIX qw(EXIT_SUCCESS);
 use Chleb::Bible::DI::Container;
 use Chleb::Bible::DI::MockLogger;
 use Chleb::Bible::Server;
+use English qw(-no_match_vars);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -694,6 +695,52 @@ sub testV2_translations_all {
 			self => '/2/votd?translations=all',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testRedirectV2 {
+	my ($self) = @_;
+
+	eval {
+		$self->sut->__votd({ redirect => 1, version => 2 });
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Bible::Server::Exception'),
+			methods(
+				description => 'votd redirect is only supported on version 1',
+				statusCode  => 400,
+			),
+		), 'correct error');
+	} else {
+		fail('No exception raised, as was expected');
+	}
+
+	return EXIT_SUCCESS;
+}
+
+sub testRedirectV1 {
+	my ($self) = @_;
+
+	eval {
+		my $when = '2021-10-30T21:36:26+0000';
+		$self->sut->__votd({ redirect => 1, version => 1, when => $when });
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Bible::Server::Exception'),
+			methods(
+				description => undef,
+				location    => '/1/lookup/num/16/8',
+				statusCode  => 307,
+			),
+		), 'correct redirect');
+	} else {
+		fail('No exception raised, as was expected');
+	}
 
 	return EXIT_SUCCESS;
 }

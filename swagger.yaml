@@ -133,6 +133,13 @@ paths:
             default: false
           required: false
           description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+        - in: query
+          name: redirect
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Provide a 307 redirect to the appropriate verse lookup
       security: [] # No security
       responses:
         '200':
@@ -150,6 +157,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Stats'
+        '307':
+          description: Temporary Redirect
         '429':
           description: Rate-limited
         '500':
