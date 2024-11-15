@@ -46,8 +46,8 @@ via this "DIC" so that they may be reliably replaced during the test suites.
 =cut
 
 use Log::Log4perl;
-use Chleb::Bible::DI::Config;
 use Chleb::Bible::Exclusions;
+use Chleb::DI::Config;
 
 has bible => (is => 'rw'); # TODO: deprecated
 
@@ -112,7 +112,7 @@ sub _makeLogger {
 
 The default lazy-initializer for L</config>.
 
-Returns a L<Chleb::Bible::DI::Config>.
+Returns a L<Chleb::DI::Config>.
 
 In this default initializtion, if the real config file cannt be found, the first access is fatal.
 
@@ -126,7 +126,7 @@ sub _makeConfig {
 
 	foreach my $path ('etc/main.conf', '/etc/chleb-bible-search/main.conf') {
 		next unless (-e $path);
-		return Chleb::Bible::DI::Config->new({ dic => $self, path => $path });
+		return Chleb::DI::Config->new({ dic => $self, path => $path });
 	}
 
 	die('No config available!');
