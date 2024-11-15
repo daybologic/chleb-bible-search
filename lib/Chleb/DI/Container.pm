@@ -61,7 +61,7 @@ The logger object, which may be any object which accepts a series of
 logger-level methods, such as C<warn>, C<debug>.
 
 If not specified, a default hook brings in the L<Log::Log4perl> framework.
-Otherwise, you should replace it with L<Chleb::Bible::DI::MockLogger> during a test.
+Otherwise, you should replace it with L<Chleb::DI::MockLogger> during a test.
 
 =cut
 

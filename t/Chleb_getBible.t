@@ -39,7 +39,7 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use Chleb;
-use Chleb::Bible::DI::MockLogger;
+use Chleb::DI::MockLogger;
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods);
@@ -150,7 +150,7 @@ sub testFail {
 
 sub __mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
+	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
 	return;
 }
 

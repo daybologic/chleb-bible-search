@@ -28,7 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Bible::DI::MockLogger;
+package Chleb::DI::MockLogger;
 use Moose;
 use strict;
 use warnings;
