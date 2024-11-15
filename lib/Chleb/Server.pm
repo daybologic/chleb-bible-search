@@ -44,7 +44,7 @@ Dancer2 server for stand-alone HTTP server for Chleb Bible Search
 =cut
 
 use Chleb;
-use Chleb::Bible::Server::Exception;
+use Chleb::Exception;
 use Chleb::DI::Container;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
@@ -156,7 +156,7 @@ sub __makeJsonApi {
 Given the user-supplied C<$params> (C<HASH>), we attempt to fetch a verse,
 which includes links to the previous and next verses.
 
-returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Bible::Server::Exception>.
+returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 The following C<$params> are required:
 
@@ -230,7 +230,7 @@ Retrieve a verse at random, and return the C<JSON:API> structure from it.
 
 Optionally, C<$params> (C<HASH>) may be supplied.
 
-returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Bible::Server::Exception>.
+returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 =cut
 
@@ -251,7 +251,7 @@ Retrieve the verse of the day, and return the C<JSON:API> structure for it.
 
 Optionally, C<$params> (C<HASH>) may be supplied.
 
-returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Bible::Server::Exception>.
+returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 =cut
 
@@ -261,7 +261,7 @@ sub __votd {
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
 
-	die Chleb::Bible::Server::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
+	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
 	    if ($redirect && $version > 1);
 
 	my $verse = $self->__library->votd($params);
@@ -291,7 +291,7 @@ sub __votd {
 		return $json[0];
 	}
 
-	die Chleb::Bible::Server::Exception->raise(
+	die Chleb::Exception->raise(
 		HTTP_TEMPORARY_REDIRECT,
 		'/1/lookup/' . join('/', lc($verse->book->shortName), $verse->chapter->ordinal, $verse->ordinal),
 	) if ($redirect);
@@ -331,7 +331,7 @@ Returns a simple C<JSON:API> structure which contains information about the serv
 The type of the C<data> element is a C<version> response.  See
 L<https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search>.
 
-This method may throw a L<Chleb::Bible::Server::Exception> if the feature has been
+This method may throw a L<Chleb::Exception> if the feature has been
 disabled by the server administrator, or potentially, for any other reason.
 
 =cut
@@ -625,7 +625,7 @@ set serializer => 'JSON'; # or any other serializer
 sub handleException {
 	my ($exception) = @_;
 
-	if (blessed($exception) && $exception->isa('Chleb::Bible::Server::Exception')) {
+	if (blessed($exception) && $exception->isa('Chleb::Exception')) {
 		$server->dic->logger->debug(sprintf('Returning HTTP status code %d', $exception->statusCode));
 		if (is_redirect($exception->statusCode)) {
 			return redirect $exception->location, $exception->statusCode;

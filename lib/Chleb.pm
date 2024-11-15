@@ -45,7 +45,7 @@ use Time::HiRes ();
 
 use Chleb::Bible;
 use Chleb::Bible::Backend;
-use Chleb::Bible::Server::Exception;
+use Chleb::Exception;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 use Chleb::DI::Container;
@@ -224,7 +224,7 @@ sub __getBible {
 		push(@bible, $self->bibles($translation));
 	}
 
-	die Chleb::Bible::Server::Exception->raise(HTTP_NOT_FOUND, 'No recognized bible translations')
+	die Chleb::Exception->raise(HTTP_NOT_FOUND, 'No recognized bible translations')
 	    if (scalar(@bible) == 0);
 
 	return @bible;

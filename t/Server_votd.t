@@ -708,7 +708,7 @@ sub testRedirectV2 {
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
-			isa('Chleb::Bible::Server::Exception'),
+			isa('Chleb::Exception'),
 			methods(
 				description => 'votd redirect is only supported on version 1',
 				statusCode  => 400,
@@ -731,7 +731,7 @@ sub testRedirectV1 {
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
-			isa('Chleb::Bible::Server::Exception'),
+			isa('Chleb::Exception'),
 			methods(
 				description => undef,
 				location    => '/1/lookup/num/16/8',

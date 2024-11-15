@@ -135,7 +135,7 @@ sub testFail {
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
-			isa('Chleb::Bible::Server::Exception'),
+			isa('Chleb::Exception'),
 			methods(
 				description => 'No recognized bible translations',
 				statusCode  => 404,
