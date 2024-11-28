@@ -38,6 +38,7 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
+use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
@@ -167,6 +168,30 @@ sub test_translation_all {
 			next => '/1/lookup/psa/110/2?translations=all',
 		},
 	}, "single random verse JSON") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub test_not_found {
+	my ($self) = @_;
+	plan tests => 1;
+
+	eval {
+		$self->sut->__lookup({ book => 'Acts', chapter => 29, verse => 1, translations => [ 'kjv' ] });
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => 'Chapter 29 not found in Acts',
+				location    => undef,
+				statusCode  => 404,
+			),
+		), 'correctly not found');
+	} else {
+		fail('No exception raised, as was expected');
+	}
 
 	return EXIT_SUCCESS;
 }
