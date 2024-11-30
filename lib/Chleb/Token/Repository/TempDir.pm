@@ -1,1 +1,1 @@
-package Chleb::Token::Storage::Repository::TempDir;
+package Chleb::Token::Repository::TempDir;
