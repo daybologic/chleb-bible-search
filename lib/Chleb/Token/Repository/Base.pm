@@ -39,4 +39,8 @@ BEGIN {
 	our $VERSION = '0.11.0';
 }
 
+sub save {
+	die('save must be overridden');
+}
+
 1;

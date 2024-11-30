@@ -55,4 +55,9 @@ sub _generate {
 	return $sha->add($PID, time(), rand(time()))->hexdigest;
 }
 
+sub save {
+	my ($self) = @_;
+	return $self->source->save();
+}
+
 1;

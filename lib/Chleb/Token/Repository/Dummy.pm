@@ -28,30 +28,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Token::Repository;
+package Chleb::Token::Repository::Dummy;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Chleb::Bible::Base';
-
-use Chleb::Token::Repository::TempDir;
+extends 'Chleb::Token::Repository::Base';
 
 BEGIN {
 	our $VERSION = '0.11.0';
 }
 
-sub repo {
-	my ($self, $name) = @_;
-
-	if (defined($name)) {
-		if ($name eq 'Dummy') {
-			return Chleb::Token::Repository::Dummy->new();
-		} elsif ($name eq 'TempDir') {
-			return Chleb::Token::Repository::TempDir->new();
-		}
-	}
-
+sub save {
 	...
 }
 
