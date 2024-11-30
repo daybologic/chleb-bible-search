@@ -35,8 +35,22 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Token::Repository::TempDir;
+
 BEGIN {
 	our $VERSION = '0.11.0';
+}
+
+sub repo {
+	my ($self, $name) = @_;
+
+	if (defined($name)) {
+		if ($name eq 'TempDir') {
+			return Chleb::Token::Repository::TempDir->new();
+		}
+	}
+
+	...
 }
 
 1;
