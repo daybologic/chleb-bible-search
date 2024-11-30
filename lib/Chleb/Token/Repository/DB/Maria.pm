@@ -1,1 +1,1 @@
-package Chleb::Token::Storage::Repository::DB::Maria;
+package Chleb::Token::Repository::DB::Maria;

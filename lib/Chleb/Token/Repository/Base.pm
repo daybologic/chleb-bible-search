@@ -1,1 +1,1 @@
-package Chleb::Token::Storage::Repository::Base;
+package Chleb::Token::Repository::Base;
