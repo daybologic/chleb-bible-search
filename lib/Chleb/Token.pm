@@ -35,6 +35,9 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Digest::SHA;
+use English qw(-no_match_vars);
+
 BEGIN {
 	our $VERSION = '0.11.0';
 }
@@ -48,8 +51,8 @@ has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder
 sub _generate {
 	my ($self) = @_;
 
-	# FIXME: This is not acceptable and is insecure, but is here to get us started in dev only
-	return 1 + rand(100);
+	my $sha = Digest::SHA->new(256);
+	return $sha->add($PID, time(), rand(time()))->hexdigest;
 }
 
 1;
