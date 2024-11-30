@@ -33,7 +33,7 @@ use strict;
 use warnings;
 use Moose;
 
-extends 'Chleb::Bible::Repository::Base';
+extends 'Chleb::Token::Repository::Base';
 
 BEGIN {
 	our $VERSION = '0.11.0';
