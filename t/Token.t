@@ -13,6 +13,7 @@ use POSIX qw(EXIT_SUCCESS);
 use Chleb::DI::MockLogger;
 use Chleb::Token;
 use Chleb::Token::Repository;
+use Chleb::Token::Repository::Dummy;
 use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
 use Test::More 0.96;
@@ -85,6 +86,26 @@ sub testInitWithoutValue {
 	is(length($self->sut->value), 64, 'value length is 64 (256-bit)');
 
 	$self->debug(sprintf("The value is '%s'", $value));
+
+	return EXIT_SUCCESS;
+}
+
+sub testSave {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my ($mockPackage, $mockMethod) = ('Chleb::Token::Repository::Dummy', 'save');
+	$self->mock($mockPackage, $mockMethod);
+
+	$self->sut(Chleb::Token->new({
+		_repo => $self->sut,
+		_source => $self->sut->repo('Dummy'),
+	}));
+
+	$self->sut->save();
+
+	my $mockCalls = $self->mockCalls($mockPackage, $mockMethod);
+	cmp_deeply($mockCalls, [[]], sprintf('one call to %s/%s', $mockPackage, $mockMethod)) or diag(explain($mockCalls));
 
 	return EXIT_SUCCESS;
 }
