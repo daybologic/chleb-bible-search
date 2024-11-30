@@ -68,7 +68,7 @@ sub testInitWithValue {
 
 sub testInitWithoutValue {
 	my ($self) = @_;
-	plan tests => 3;
+	plan tests => 4;
 
 	$self->sut(Chleb::Token->new({
 		_repo => $self->sut,
@@ -81,6 +81,8 @@ sub testInitWithoutValue {
 	$self->__readOnlyValueCheck($self->uniqueStr());
 
 	is($self->sut->value, $value, 'value is the same upon second reading');
+
+	is(length($self->sut->value), 64, 'value length is 64 (256-bit)');
 
 	$self->debug(sprintf("The value is '%s'", $value));
 
