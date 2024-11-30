@@ -39,4 +39,17 @@ BEGIN {
 	our $VERSION = '0.11.0';
 }
 
+has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, init_arg => '_repo');
+
+has source => (is => 'ro', isa => 'Chleb::Token::Repository::Base', required => 1, init_arg => '_source');
+
+has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate');
+
+sub _generate {
+	my ($self) = @_;
+
+	# FIXME: This is not acceptable and is insecure, but is here to get us started in dev only
+	return 1 + rand(100);
+}
+
 1;
