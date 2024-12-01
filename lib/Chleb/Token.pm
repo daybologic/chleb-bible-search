@@ -57,7 +57,17 @@ sub _generate {
 
 sub save {
 	my ($self) = @_;
-	return $self->source->save();
+	return $self->source->save($self);
+}
+
+sub toString {
+	my ($self) = @_;
+	return sprintf('Token %s', $self->value);
+}
+
+sub TO_JSON {
+	my ($self) = @_;
+	return { value => $self->value };
 }
 
 1;

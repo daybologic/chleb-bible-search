@@ -55,4 +55,10 @@ sub repo {
 	...
 }
 
+sub load {
+	my ($self, $tokenValue) = @_;
+
+	return $self->repo('TempDir')->load($tokenValue);
+}
+
 1;
