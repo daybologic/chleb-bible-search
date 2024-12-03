@@ -75,22 +75,32 @@ sub load {
 		# TODO logger?
 	}
 
-	return Chleb::Token->new({
-		_repo => $self->__repo,
+	# FIXME: Need a way to associate actual data with the key?
+	# Perhaps not though, perhaps keep in memory with shared memcached?
+	# That would keep session ids simple
+	my $token = Chleb::Token->new({
+		_repo   => $self->__repo,
 		_source => $self,
-		_value => $value,
-		# FIXME: Need a way to associate actual data with the key?  Perhaps not though, perhaps keep in memory with shared memcached?  This would keep session cooks simple
+		_value  => $value,
+		expires => $data->{expires},
+		now     => $data->{created},
 	});
+
+	die Chleb::Exception->raise(HTTP_FORBIDDEN, 'Token not recognized via ' . __PACKAGE__)
+	    if ($token->expired);
+
+	return $token;
 }
 
 sub save {
 	my ($self, $token) = @_;
 
 	my $filePath = $self->__getFilePath($token->value);
+
 	eval {
-		# TODO: We're not storing anything useful aside the token
 		store($token->TO_JSON(), $filePath);
 	};
+
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error(sprintf("Failed to store %s in %s to '%s': %s",
 		    $token->toString(), __PACKAGE__, $filePath, $evalError));

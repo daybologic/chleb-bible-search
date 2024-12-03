@@ -29,17 +29,23 @@ sub setUp {
 
 sub testSaveLoad {
 	my ($self) = @_;
-	plan tests => 2;
+	plan tests => 3;
 
 	my $value;
+	my $now = time();
+	$self->debug("now is $now");
 
 	subtest save => sub {
-		plan tests => 3;
+		plan tests => 6;
 
 		my $token;
 		lives_ok {
-			$token = $self->sut->create();
+			$token = $self->sut->create({ now => $now });
 		} 'create called';
+
+		cmp_ok($token->expires, '==', $now + 604_800, 'default expiry in one week');
+		cmp_ok($token->expires($now + 5), '==', $now + 5, 'set expiry time five seconds from now');
+		cmp_ok($token->created, '==', $now, "created is now (setting expires doesn't change that");
 
 		lives_ok {
 			$token->save();
@@ -50,12 +56,18 @@ sub testSaveLoad {
 	};
 
 	subtest load => sub {
-		plan tests => 1;
+		plan tests => 2;
 
-		my $token = $self->sut->load($value);
+		my $token;
+		lives_ok {
+			$token = $self->sut->load($value);
+		} 'load called';
+
 		cmp_deeply($token, all(
 			isa('Chleb::Token'),
 			methods(
+				created => $now, # original time from file, not object reconstruction
+				expires => $now + 5,
 				repo => isa('Chleb::Token::Repository'),
 				source => all(
 					isa('Chleb::Token::Repository::TempDir'),
@@ -63,6 +75,33 @@ sub testSaveLoad {
 				value => $value,
 			),
 		), 'token');
+	};
+
+	$self->debug('sleeping until token expires (5s)');
+	sleep(5);
+
+	subtest expired => sub {
+		plan tests => 2;
+
+		my $token;
+		eval {
+			$self->sut->load($value);
+		};
+
+		if (my $evalError = $EVAL_ERROR) {
+			cmp_deeply($evalError, all(
+				isa('Chleb::Exception'),
+				methods(
+					description => 'Token not recognized via Chleb::Token::Repository::TempDir',
+					location    => undef,
+					statusCode  => 403,
+				),
+			), '403 Forbidden'); # TODO: Different description for expired?  Hmm?
+		} else {
+			fail('No exception raised, as was expected');
+		}
+
+		ok(!$token, 'token not set');
 	};
 
 	return EXIT_SUCCESS;

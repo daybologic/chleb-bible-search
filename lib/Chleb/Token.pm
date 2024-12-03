@@ -37,10 +37,22 @@ extends 'Chleb::Bible::Base';
 
 use Digest::SHA;
 use English qw(-no_match_vars);
+use Readonly;
 
 BEGIN {
 	our $VERSION = '0.11.0';
 }
+
+Readonly my $DEFAULT_EXPIRES_SECONDS => 604_800; # one week
+
+has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
+	my ($self) = @_;
+	return $self->created + $DEFAULT_EXPIRES_SECONDS;
+});
+
+has created => (is => 'rw', isa => 'Int', init_arg => 'now', default => sub {
+	return time();
+});
 
 has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, init_arg => '_repo');
 
@@ -65,9 +77,19 @@ sub toString {
 	return sprintf('Token %s', $self->value);
 }
 
+sub expired {
+	my ($self) = @_;
+	return time() >= $self->expires;
+}
+
 sub TO_JSON {
 	my ($self) = @_;
-	return { value => $self->value };
+
+	return {
+		created => $self->created,
+		expires => $self->expires,
+		value   => $self->value,
+	};
 }
 
 1;
