@@ -68,6 +68,33 @@ sub testSaveLoad {
 	return EXIT_SUCCESS;
 }
 
+sub testLoadNotFound {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $token;
+	eval {
+		$token = $self->sut->load($self->uniqueStr());
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => 'Token not recognized via Chleb::Token::Repository::TempDir',
+				location    => undef,
+				statusCode  => 403,
+			),
+		), '403 Forbidden');
+	} else {
+		fail('No exception raised, as was expected');
+	}
+
+	ok(!$token, 'token not set');
+
+	return EXIT_SUCCESS;
+}
+
 sub __mockLogger {
 	my ($self) = @_;
 	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
