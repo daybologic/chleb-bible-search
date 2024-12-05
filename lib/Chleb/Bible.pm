@@ -46,6 +46,7 @@ Object representing one translation of The Holy Bible
 extends 'Chleb::Bible::Base';
 
 use Digest::CRC qw(crc32);
+use HTTP::Status qw(:constants);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
@@ -54,6 +55,7 @@ use Chleb::Bible::Backend;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 use Chleb::DI::Container;
+use Chleb::Exception;
 
 =head1 ATTRIBUTES
 
@@ -163,7 +165,7 @@ sub getBookByShortName {
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
-		die($errorMsg);
+		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
 	}
 
 	return undef;
@@ -185,7 +187,7 @@ sub getBookByLongName {
 		return $book;
 	}
 
-	die("Long book name '$longName' is not a book in the bible");
+	die Chleb::Exception->raise(HTTP_NOT_FOUND, "Long book name '$longName' is not a book in the bible");
 }
 
 =item C<getBookByOrdinal($ordinal, [$args])>
@@ -212,7 +214,7 @@ sub getBookByOrdinal {
 		if ($args->{nonFatal}) {
 			return undef;
 		} else {
-			die(sprintf('Book ordinal %d out of range, there are %d books in the bible',
+			die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Book ordinal %d out of range, there are %d books in the bible',
 			    $ordinal, $self->bookCount));
 		}
 	}
@@ -255,7 +257,7 @@ sub getVerseByOrdinal {
 		}
 	}
 
-	die(sprintf("Verse %d not found in '%s'", $ordinal, $self->translation));
+	die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf("Verse %d not found in '%s'", $ordinal, $self->translation));
 }
 
 =item C<$newSearchQuery(@args)>

@@ -33,6 +33,9 @@ use strict;
 use warnings;
 use Moose;
 
+use Chleb::Exception;
+use HTTP::Status qw(:constants);
+
 has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
 has book => (is => 'ro', isa => 'Chleb::Bible::Book', required => 1);
@@ -67,7 +70,7 @@ sub getVerseByOrdinal {
 	}
 
 	return undef if ($args->{nonFatal});
-	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
+	die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
 }
 
 sub getNext {

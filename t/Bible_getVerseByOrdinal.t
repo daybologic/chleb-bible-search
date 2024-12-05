@@ -38,10 +38,11 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
-use Test::Deep qw(all cmp_deeply isa methods);
-use POSIX qw(EXIT_SUCCESS);
 use Chleb;
 use Chleb::DI::MockLogger;
+use English qw(-no_match_vars);
+use POSIX qw(EXIT_SUCCESS);
+use Test::Deep qw(all cmp_deeply isa methods);
 use Test::Exception;
 use Test::More 0.96;
 
@@ -132,8 +133,23 @@ sub testOutOfBounds {
 	plan tests => 1;
 
 	my @bible = $self->sut->__getBible();
-	throws_ok { $bible[0]->getVerseByOrdinal(31_103) } qr/^Verse 31103 not found in 'kjv' /,
-	    'verse out of bounds';
+
+	eval {
+		$bible[0]->getVerseByOrdinal(31_103);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => "Verse 31103 not found in 'kjv'",
+				location    => undef,
+				statusCode  => 404,
+			),
+		), 'verse out out bounds');
+	} else {
+		fail('No exception raised, as was expected');
+	}
 
 	return EXIT_SUCCESS;
 }

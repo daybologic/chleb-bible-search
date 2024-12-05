@@ -43,10 +43,12 @@ Object representing one Book within a translation of The Holy Bible
 
 =cut
 
-use Moose::Util::TypeConstraints qw(enum);
-use Readonly;
 use Chleb::Bible::Chapter;
 use Chleb::Bible::Verse;
+use Chleb::Exception;
+use HTTP::Status qw(:constants);
+use Moose::Util::TypeConstraints qw(enum);
+use Readonly;
 
 =head1 ATTRIBUTES
 
@@ -300,7 +302,7 @@ sub getChapterByOrdinal {
 		if ($args->{nonFatal}) {
 			return undef;
 		} else {
-			die(sprintf('Chapter %d not found in %s', $ordinal, $self->toString()));
+			die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Chapter %d not found in %s', $ordinal, $self->toString()));
 		}
 	}
 

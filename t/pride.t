@@ -40,6 +40,7 @@ extends 'Test::Module::Runnable';
 
 use Chleb;
 use Chleb::DI::MockLogger;
+use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods);
 use Test::Exception;
@@ -136,8 +137,22 @@ sub testBadBook {
 	my ($self) = @_;
 	plan tests => 1;
 
-	throws_ok { $self->sut->fetch('Mormon', 16, 18) } qr/Long book name 'Mormon' is not a book in the bible/,
-	    'exception thrown';
+	eval {
+		$self->sut->fetch('Mormon', 16, 18);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => "Long book name 'Mormon' is not a book in the bible",
+				location    => undef,
+				statusCode  => 404,
+			),
+		), 'correctly not found');
+	} else {
+		fail('No exception raised, as was expected');
+	}
 
 	return EXIT_SUCCESS;
 }
@@ -146,8 +161,22 @@ sub testBadChapter {
 	my ($self) = @_;
 	plan tests => 1;
 
-	throws_ok { $self->sut->fetch('Prov', 36, 1) } qr/Chapter 36 not found in Prov/,
-	    'exception thrown';
+	eval {
+		$self->sut->fetch('Prov', 36, 1);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => 'Chapter 36 not found in Prov',
+				location    => undef,
+				statusCode  => 404,
+			),
+		), 'correctly not found');
+	} else {
+		fail('No exception raised, as was expected');
+	}
 
 	return EXIT_SUCCESS;
 }
@@ -156,8 +185,22 @@ sub testBadVerse {
 	my ($self) = @_;
 	plan tests => 1;
 
-	throws_ok { $self->sut->fetch('Luke', 24, 54) } qr/Verse 54 not found in Luke 24/,
-	    'exception thrown';
+	eval {
+		$self->sut->fetch('Luke', 24, 54);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => 'Verse 54 not found in Luke 24',
+				location    => undef,
+				statusCode  => 404,
+			),
+		), 'correctly not found');
+	} else {
+		fail('No exception raised, as was expected');
+	}
 
 	return EXIT_SUCCESS;
 }
