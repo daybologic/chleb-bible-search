@@ -260,6 +260,7 @@ sub __votd {
 
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
+	my $jsonAccept = $params->{json} // 1;
 
 	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
 	    if ($redirect && $version > 1);
@@ -288,7 +289,19 @@ sub __votd {
 		}
 
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
-		return $json[0];
+		return $json[0] if ($jsonAccept); # application/json
+
+		# text/plain
+		# TODO: This can't handle continuation of more than one verse, and should probably be in a sub
+		my $translation = 'unknown'; # FIXME: Where is it in the JSON?
+		my $attributes = $json[0]->{data}->[0]->{attributes};
+		return sprintf("%s\r\n\r\n%s %d:%d (%s)\r\n", # FIXME: line-endings don't work.  Do we need HTML instead?
+			$attributes->{text},
+			$attributes->{book},
+			$attributes->{chapter},
+			$attributes->{ordinal},
+			$translation,
+		);
 	}
 
 	die Chleb::Exception->raise(
@@ -662,7 +675,12 @@ get '/1/votd' => sub {
 
 	my $result;
 	eval {
-		$result = $server->__votd({ parental => $parental, redirect => $redirect, when => $when });
+		$result = $server->__votd({
+			parental => $parental,
+			redirect => $redirect,
+			when     => $when,
+			json     => 1,
+		});
 	};
 
 	if (my $exception = $EVAL_ERROR) {
@@ -677,10 +695,20 @@ get '/2/votd' => sub {
 	my $redirect = param('redirect');
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
+	my $dancerRequest = request();
+
+	my $accept = $dancerRequest->header('Accept');
 
 	my $result;
 	eval {
-		$result = $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations, redirect => $redirect });
+		$result = $server->__votd({
+			version      => 2,
+			when         => $when,
+			parental     => $parental,
+			translations => $translations,
+			redirect     => $redirect,
+			json         => ($accept eq 'application/json') ? 1 : 0,
+		});
 	};
 
 	if (my $exception = $EVAL_ERROR) {
