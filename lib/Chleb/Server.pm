@@ -265,7 +265,12 @@ sub __votd {
 
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
-	my $contentType = $params->{contentType} // $CONTENT_TYPE_JSON;
+	my $contentType = $params->{contentType};
+	if (!$contentType) {
+		$contentType = $CONTENT_TYPE_JSON;
+	} elsif ($contentType eq '*/*') {
+		$contentType = $CONTENT_TYPE_JSON;
+	}
 
 	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
 	    if ($redirect && $version > 1);
