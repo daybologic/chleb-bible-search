@@ -724,10 +724,8 @@ get '/2/votd' => sub {
 		handleException($exception);
 	}
 
-	if ($accept eq $Chleb::Server::CONTENT_TYPE_HTML) {
+	if ($accept eq $Chleb::Server::CONTENT_TYPE_HTML || $accept eq $Chleb::Server::CONTENT_TYPE_TEXT) {
 		send_as html => $result;
-	} elsif ($accept eq $Chleb::Server::CONTENT_TYPE_TEXT) {
-		send_as text => $result;
 	}
 
 	return $result;
