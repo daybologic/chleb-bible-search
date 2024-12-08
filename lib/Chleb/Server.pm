@@ -634,6 +634,7 @@ use Scalar::Util qw(blessed);
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
+set content_type => 'application/json';
 
 sub handleException {
 	my ($exception) = @_;
@@ -713,6 +714,10 @@ get '/2/votd' => sub {
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
+	}
+
+	if ($accept ne 'application/json') {
+		send_as html => $result;
 	}
 
 	return $result;
