@@ -101,7 +101,7 @@ sub queryParamsHelper {
 
 	my $str = '';
 	my $counter = 0;
-	my %blacklist = map { $_ => 1 } (qw(book chapter translation verse version when)); # TODO: We should aim to eliminate this hack
+	my %blacklist = map { $_ => 1 } (qw(book chapter contentType translation verse version when)); # TODO: We should aim to eliminate this hack
 
 	while (my ($k, $v) = each(%$params)) {
 		next if ($blacklist{$k});
