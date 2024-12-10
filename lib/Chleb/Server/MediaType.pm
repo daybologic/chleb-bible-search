@@ -78,6 +78,14 @@ subtype 'Part',
 
 has [qw(major minor)] => (is => 'ro', required => 1, isa => 'Part');
 
+=item C<original>
+
+The original 'Accept' header value.
+
+=cut
+
+has original => (is => 'ro', isa => 'Str', required => 1);
+
 =back
 
 =head1 METHODS
@@ -121,6 +129,7 @@ sub parseAcceptHeader {
 		$obj = $class->new({
 			major => $parts[0],
 			minor => $parts[1],
+			original => $str,
 		});
 	};
 
@@ -136,6 +145,17 @@ sub parseAcceptHeader {
 	    if ($obj->major eq '*' && $obj->minor ne '*');
 
 	return $obj;
+}
+
+=item C<toString()>
+
+Return a human-readable string for logging purposes
+
+=cut
+
+sub toString {
+	my ($self) = @_;
+	return $self->original;
 }
 
 =back

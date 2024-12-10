@@ -203,6 +203,23 @@ sub testIllegal {
 	return EXIT_SUCCESS;
 }
 
+sub testMultiType {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $input = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($input);
+	cmp_deeply($mediaType, all(
+		isa('Chleb::Server::MediaType'),
+		methods(
+			major => 'text',
+			minor => 'html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+		),
+	), 'type inspection') or diag(explain($mediaType->toString()));
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;
