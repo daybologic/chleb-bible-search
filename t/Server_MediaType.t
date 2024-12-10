@@ -46,14 +46,6 @@ use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
-sub setUp {
-	my ($self) = @_;
-
-	#$self->sut(Chleb->new());
-
-	return EXIT_SUCCESS;
-}
-
 sub testAny {
 	my ($self) = @_;
 	plan tests => 3;
