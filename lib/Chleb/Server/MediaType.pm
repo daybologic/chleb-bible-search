@@ -44,9 +44,9 @@ Accept / Content-Type header
 =cut
 
 use Chleb::Exception;
+use Chleb::Server::MediaType::Item;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
-use Moose::Util::TypeConstraints;
 use Readonly;
 use Scalar::Util qw(blessed);
 
@@ -57,26 +57,14 @@ Readonly my $MINIMUM_LENGTH => 3;
 
 =over
 
-=item C<major>
+=item C<items>
 
-The major media type, such as 'application', or 'text'.
-
-=item C<minor>
-
-The minor media type, such as 'html', or 'json'.
+Media types.  Typically, there is only one item in this list,
+but there may be more, in deminishing order of priority.
 
 =cut
 
-subtype 'Part',
-	as 'Str',
-	where {
-		length($_) > 0 && m/^\S+$/ && ! m@^/+$@
-	},
-	message {
-		'incomplete spec'
-	};
-
-has [qw(major minor)] => (is => 'ro', required => 1, isa => 'Part');
+has items => (is => 'ro', isa => 'ArrayRef[Chleb::Server::MediaType::Item]', required => 1);
 
 =item C<original>
 
@@ -127,8 +115,12 @@ sub parseAcceptHeader {
 	my $obj;
 	eval {
 		$obj = $class->new({
-			major => $parts[0],
-			minor => $parts[1],
+			items => [
+				Chleb::Server::MediaType::Item->new({
+					major => $parts[0],
+					minor => $parts[1],
+				}),
+			],
 			original => $str,
 		});
 	};
@@ -142,7 +134,7 @@ sub parseAcceptHeader {
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: wildcard misused')
-	    if ($obj->major eq '*' && $obj->minor ne '*');
+	    if ($obj->items->[0]->major eq '*' && $obj->items->[0]->minor ne '*');
 
 	return $obj;
 }

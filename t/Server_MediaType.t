@@ -66,8 +66,15 @@ sub testAny {
 		cmp_deeply($mediaType, all(
 			isa('Chleb::Server::MediaType'),
 			methods(
-				major => '*',
-				minor => '*',
+				items => [
+					all(
+						isa('Chleb::Server::MediaType::Item'),
+						methods(
+							major => '*',
+							minor => '*',
+						),
+					),
+				],
 			),
 		), "type inspection ${printable} is */*") or diag(explain($mediaType->toString()));
 	};
@@ -87,8 +94,15 @@ sub testAnyText {
 	cmp_deeply($mediaType, all(
 		isa('Chleb::Server::MediaType'),
 		methods(
-			major => 'text',
-			minor => '*',
+			items => [
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'text',
+						minor => '*',
+					),
+				),
+			],
 		),
 	), 'type inspection is text/*') or diag(explain($mediaType->toString()));
 
@@ -212,8 +226,15 @@ sub testMultiType {
 	cmp_deeply($mediaType, all(
 		isa('Chleb::Server::MediaType'),
 		methods(
-			major => 'text',
-			minor => 'html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+			items => [
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'text',
+						minor => 'html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+					),
+				),
+			],
 		),
 	), 'type inspection') or diag(explain($mediaType->toString()));
 
