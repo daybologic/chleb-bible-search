@@ -223,7 +223,21 @@ sub testMultiType {
 					isa('Chleb::Server::MediaType::Item'),
 					methods(
 						major => 'text',
-						minor => 'html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+						minor => 'html',
+					),
+				),
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'application',
+						minor => 'xhtml+xml',
+					),
+				),
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'application',
+						minor => 'xml',
 					),
 				),
 			],

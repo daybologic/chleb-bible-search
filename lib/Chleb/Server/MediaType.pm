@@ -109,34 +109,38 @@ sub parseAcceptHeader {
 		$str = $DEFAULT_HEADER;
 	} elsif (length($str) < $MINIMUM_LENGTH) {
 		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: header too short');
+	} else {
+		my $weightInfoStartOffset = index($str, ';'); # TODO: Should re-use this to process weights
+		$str = substr($str, 0, $weightInfoStartOffset) if ($weightInfoStartOffset > -1);
 	}
 
-	my @parts = split(m@/@, lc($str), 2);
-	my $obj;
-	eval {
-		$obj = $class->new({
-			items => [
-				Chleb::Server::MediaType::Item->new({
-					major => $parts[0],
-					minor => $parts[1],
-				}),
-			],
-			original => $str,
-		});
-	};
+	my @types = split(m@,@, lc($str));
+	my @items = ( );
+	foreach my $type (@types) {
+		my @parts = split(m@/@, lc($type), 2);
+		eval {
+			push(@items, Chleb::Server::MediaType::Item->new({
+				major => $parts[0],
+				minor => $parts[1],
+			}));
+		};
 
-	if (my $evalError = $EVAL_ERROR) {
-		if (blessed($evalError) && blessed($evalError) eq 'Moose::Exception::ValidationFailedForTypeConstraint') {
-			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, __extractMessageFromMooseException($evalError))
-		} else {
-			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'unknown error');
+		if (my $evalError = $EVAL_ERROR) {
+			if (blessed($evalError) && blessed($evalError) eq 'Moose::Exception::ValidationFailedForTypeConstraint') {
+				die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, __extractMessageFromMooseException($evalError))
+			} else {
+				die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'unknown error');
+			}
 		}
+
+		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: wildcard misused')
+		    if ($items[-1]->major eq '*' && $items[-1]->minor ne '*');
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: wildcard misused')
-	    if ($obj->items->[0]->major eq '*' && $obj->items->[0]->minor ne '*');
-
-	return $obj;
+	return $class->new({
+		items => \@items,
+		original => $str,
+	});
 }
 
 =item C<toString()>
