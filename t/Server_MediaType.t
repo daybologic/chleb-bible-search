@@ -209,7 +209,45 @@ sub testIllegal {
 	return EXIT_SUCCESS;
 }
 
-sub testMultiType {
+sub testMultiTypeUnweighted {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $input = 'text/html,application/xhtml+xml,application/xml';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($input);
+	cmp_deeply($mediaType, all(
+		isa('Chleb::Server::MediaType'),
+		methods(
+			items => [
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'text',
+						minor => 'html',
+					),
+				),
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'application',
+						minor => 'xhtml+xml',
+					),
+				),
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'application',
+						minor => 'xml',
+					),
+				),
+			],
+		),
+	), 'type inspection') or diag(explain($mediaType->toString()));
+
+	return EXIT_SUCCESS;
+}
+
+sub testMultiTypeWeighted {
 	my ($self) = @_;
 	plan tests => 1;
 
@@ -238,6 +276,13 @@ sub testMultiType {
 					methods(
 						major => 'application',
 						minor => 'xml',
+					),
+				),
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => '*',
+						minor => '*',
 					),
 				),
 			],

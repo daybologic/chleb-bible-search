@@ -109,15 +109,13 @@ sub parseAcceptHeader {
 		$str = $DEFAULT_HEADER;
 	} elsif (length($str) < $MINIMUM_LENGTH) {
 		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: header too short');
-	} else {
-		my $weightInfoStartOffset = index($str, ';'); # TODO: Should re-use this to process weights
-		$str = substr($str, 0, $weightInfoStartOffset) if ($weightInfoStartOffset > -1);
 	}
 
 	my @types = split(m@,@, lc($str));
 	my @items = ( );
-	foreach my $type (@types) {
-		my @parts = split(m@/@, lc($type), 2);
+	foreach my $typeAndQ (@types) {
+		my ($type, $qValue) = split(m@;@, $typeAndQ, 2);
+		my @parts = split(m@/@, $type, 2);
 		eval {
 			push(@items, Chleb::Server::MediaType::Item->new({
 				major => $parts[0],
