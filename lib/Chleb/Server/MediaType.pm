@@ -116,10 +116,18 @@ sub parseAcceptHeader {
 	foreach my $typeAndQ (@types) {
 		my ($type, $qValue) = split(m@;@, $typeAndQ, 2);
 		my @parts = split(m@/@, $type, 2);
+
+		if ($qValue && $qValue =~ m/^q=(.*)$/) {
+			$qValue = $1;
+		} else {
+			$qValue = 1.0;
+		}
+
 		eval {
 			push(@items, Chleb::Server::MediaType::Item->new({
 				major => $parts[0],
 				minor => $parts[1],
+				weight => $qValue,
 			}));
 		};
 

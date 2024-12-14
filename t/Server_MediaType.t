@@ -43,7 +43,7 @@ use Chleb::DI::MockLogger;
 use Chleb::Server::MediaType;
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::Deep qw(all cmp_deeply isa methods re ignore num);
 use Test::More 0.96;
 
 sub testAny {
@@ -224,6 +224,7 @@ sub testMultiTypeUnweighted {
 					methods(
 						major => 'text',
 						minor => 'html',
+						weight => num(1.0, 1e-1),
 					),
 				),
 				all(
@@ -231,6 +232,7 @@ sub testMultiTypeUnweighted {
 					methods(
 						major => 'application',
 						minor => 'xhtml+xml',
+						weight => num(1.0, 1e-1),
 					),
 				),
 				all(
@@ -238,6 +240,7 @@ sub testMultiTypeUnweighted {
 					methods(
 						major => 'application',
 						minor => 'xml',
+						weight => num(1.0, 1e-1),
 					),
 				),
 			],
@@ -262,6 +265,7 @@ sub testMultiTypeWeighted {
 					methods(
 						major => 'text',
 						minor => 'html',
+						weight => num(1.0, 1e-1),
 					),
 				),
 				all(
@@ -269,6 +273,7 @@ sub testMultiTypeWeighted {
 					methods(
 						major => 'application',
 						minor => 'xhtml+xml',
+						weight => num(1.0, 1e-1),
 					),
 				),
 				all(
@@ -276,6 +281,7 @@ sub testMultiTypeWeighted {
 					methods(
 						major => 'application',
 						minor => 'xml',
+						weight => num(0.9, 1e-1),
 					),
 				),
 				all(
@@ -283,6 +289,7 @@ sub testMultiTypeWeighted {
 					methods(
 						major => '*',
 						minor => '*',
+						weight => num(0.8, 1e-1),
 					),
 				),
 			],

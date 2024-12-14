@@ -70,6 +70,16 @@ subtype 'Part',
 
 has [qw(major minor)] => (is => 'ro', required => 1, isa => 'Part');
 
+=item C<weight>
+
+The weight, whose default is always 1.0.  Lower values indicate a backup priority only.
+
+TODO: 1.1 and above is illegal, I think?  Check the standards.
+
+=cut
+
+has weight => (is => 'ro', required => 1, isa => 'Num', default => 1.0, required => 1);
+
 =back
 
 =head1 METHODS
