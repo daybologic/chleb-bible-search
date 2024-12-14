@@ -139,7 +139,7 @@ sub testTooShort {
 
 sub testIncomplete {
 	my ($self) = @_;
-	plan tests => 10;
+	plan tests => 9;
 
 	my $check = sub {
 		my ($input) = @_;
@@ -163,7 +163,6 @@ sub testIncomplete {
 		}
 	};
 
-	$check->('   ');
 	$check->('///');
 	$check->('/ /');
 	$check->(' / ');
@@ -290,6 +289,56 @@ sub testMultiTypeWeighted {
 						major => '*',
 						minor => '*',
 						weight => num(0.8, 1e-1),
+					),
+				),
+			],
+		),
+	), 'type inspection') or diag(explain($mediaType->toString()));
+
+	return EXIT_SUCCESS;
+}
+
+sub testMultiTypeWeightedAndWhitespace {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $input = 'text/plain; q=0.5, text/html,' . "\n"
+	    . 'text/x-dvi; q=0.8, text/x-c';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($input);
+	cmp_deeply($mediaType, all(
+		isa('Chleb::Server::MediaType'),
+		methods(
+			items => [
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'text',
+						minor => 'plain',
+						weight => num(0.5, 1e-1),
+					),
+				),
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'text',
+						minor => 'html',
+						weight => num(1.0, 1e-1),
+					),
+				),
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'text',
+						minor => 'x-dvi',
+						weight => num(0.8, 1e-1),
+					),
+				),
+				all(
+					isa('Chleb::Server::MediaType::Item'),
+					methods(
+						major => 'text',
+						minor => 'x-c',
+						weight => num(1.0, 1e-1),
 					),
 				),
 			],

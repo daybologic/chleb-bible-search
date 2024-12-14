@@ -111,6 +111,7 @@ sub parseAcceptHeader {
 		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: header too short');
 	}
 
+	$str =~ s/\s+//g; # remove all whitespace
 	my @types = split(m@,@, lc($str));
 	my @items = ( );
 	foreach my $typeAndQ (@types) {
