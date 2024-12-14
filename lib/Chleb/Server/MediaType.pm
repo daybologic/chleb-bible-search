@@ -80,17 +80,6 @@ has original => (is => 'ro', isa => 'Str', required => 1);
 
 =over
 
-=item C<BUILD>
-
-Hook called by Moose on object construction.
-
-=cut
-
-sub BUILD {
-	my ($self) = @_;
-	return;
-}
-
 =item C<parseAcceptHeader($str)>
 
 Create and return a new L<Chleb::Server::MediaType>,
