@@ -253,7 +253,7 @@ sub testMultiTypeWeighted {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $input = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8';
+	my $input = 'text/html,application/xhtml+xml,*/*;q=0.8,application/xml;q=0.9';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($input);
 	cmp_deeply($mediaType, all(
 		isa('Chleb::Server::MediaType'),
@@ -313,15 +313,15 @@ sub testMultiTypeWeightedAndWhitespace {
 					isa('Chleb::Server::MediaType::Item'),
 					methods(
 						major => 'text',
-						minor => 'plain',
-						weight => num(0.5, 1e-1),
+						minor => 'html',
+						weight => num(1.0, 1e-1),
 					),
 				),
 				all(
 					isa('Chleb::Server::MediaType::Item'),
 					methods(
 						major => 'text',
-						minor => 'html',
+						minor => 'x-c',
 						weight => num(1.0, 1e-1),
 					),
 				),
@@ -337,8 +337,8 @@ sub testMultiTypeWeightedAndWhitespace {
 					isa('Chleb::Server::MediaType::Item'),
 					methods(
 						major => 'text',
-						minor => 'x-c',
-						weight => num(1.0, 1e-1),
+						minor => 'plain',
+						weight => num(0.5, 1e-1),
 					),
 				),
 			],

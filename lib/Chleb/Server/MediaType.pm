@@ -144,6 +144,8 @@ sub parseAcceptHeader {
 		    if ($items[-1]->major eq '*' && $items[-1]->minor ne '*');
 	}
 
+	@items = sort { $b->weight <=> $a->weight } @items;
+
 	return $class->new({
 		items => \@items,
 		original => $str,
