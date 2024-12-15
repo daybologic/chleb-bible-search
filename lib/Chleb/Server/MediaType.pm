@@ -128,8 +128,8 @@ sub parseAcceptHeader {
 				} else {
 					die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, $className);
 				}
-			} else {
-				die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'unknown error');
+			} else { # older Moose versions
+				die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: incomplete spec');
 			}
 		}
 

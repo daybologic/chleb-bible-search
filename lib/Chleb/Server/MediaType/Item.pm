@@ -62,7 +62,7 @@ The minor media type, such as 'html', or 'json'.
 subtype 'Part',
 	as 'Str',
 	where {
-		length($_) > 0 && m/^\S+$/ && ! m@^/+$@
+		defined($_) && length($_) > 0 && m/^\S+$/ && ! m@^/+$@
 	},
 	message {
 		'incomplete spec'
