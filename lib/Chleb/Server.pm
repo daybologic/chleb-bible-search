@@ -55,7 +55,6 @@ use Time::Duration;
 use UUID::Tiny ':std';
 
 Readonly our $CONTENT_TYPE_JSON => 'application/json';
-Readonly our $CONTENT_TYPE_HTML => 'text/html';
 Readonly our $CONTENT_TYPE_TEXT => 'text/plain';
 
 =head1 METHODS
@@ -266,11 +265,12 @@ sub __votd {
 
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
-	my $contentType = $params->{contentType};
-	if (!$contentType) {
-		$contentType = $CONTENT_TYPE_JSON;
-	} elsif ($contentType eq '*/*') {
-		$contentType = $CONTENT_TYPE_JSON;
+
+	my $contentType = $CONTENT_TYPE_TEXT;
+	if (my $accept = $params->{accept}) {
+		if ($accept->major eq '*' || $accept->toString() eq 'application/json') {
+			$contentType = $CONTENT_TYPE_JSON;
+		}
 	}
 
 	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
@@ -302,7 +302,7 @@ sub __votd {
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 		return $json[0] if ($contentType eq $CONTENT_TYPE_JSON); # application/json
 
-		if ($contentType eq $CONTENT_TYPE_HTML || $contentType eq $CONTENT_TYPE_TEXT) {
+		if ($contentType eq $CONTENT_TYPE_TEXT) {
 			# text/plain
 			# TODO: This can't handle continuation of more than one verse, and should probably be in a sub
 			my $translation = 'unknown'; # FIXME: Where is it in the JSON?
@@ -713,12 +713,11 @@ get '/2/votd' => sub {
 	my $dancerRequest = request();
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
-	my $accept = $mediaType->items->[0]->toString();
 
 	my $result;
 	eval {
 		$result = $server->__votd({
-			contentType  => $accept,
+			accept       => $mediaType,
 			version      => 2,
 			when         => $when,
 			parental     => $parental,
@@ -731,7 +730,7 @@ get '/2/votd' => sub {
 		handleException($exception);
 	}
 
-	if ($accept eq $Chleb::Server::CONTENT_TYPE_HTML || $accept eq $Chleb::Server::CONTENT_TYPE_TEXT) {
+	if ($mediaType->items->[0]->major eq 'text') {
 		send_as html => $result;
 	}
 
