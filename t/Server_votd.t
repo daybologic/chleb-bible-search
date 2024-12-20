@@ -144,7 +144,8 @@ sub testV2 {
 	plan tests => 1;
 
 	my $when = '1971-04-28T12:00:00+0100';
-	my $json = $self->sut->__votd({ version => 2, when => $when });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ version => 2, when => $when, accept => $mediaType });
 	cmp_deeply($json, {
 		data => [
 			{
