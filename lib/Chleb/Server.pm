@@ -92,10 +92,6 @@ sub dic {
 
 =over
 
-=item C<__title()>
-
-Logs that the server has started, including information about the administrator.
-This is a local log only, and is not transmitted to the consumer/user.
 This should only be called once, and at server startup time.
 There is no return value.
 
@@ -268,7 +264,34 @@ sub __votd {
 
 	my $contentType = $CONTENT_TYPE_TEXT;
 	if (my $accept = $params->{accept}) {
-		if ($accept->major eq '*' || $accept->toString() eq 'application/json') {
+		my $items = $accept->items;
+		my %userPriorities = (
+			# defaults
+			'text/plain' => 0,
+			'text/html' => 0,
+			'*/*' => 0,
+			'application/json' => 1,
+		);
+		for (my $priority = 0; $priority < scalar(@$items); $priority++) {
+			my $item = $items->[$priority];
+			my $recordPriority = 0;
+
+			if ($item->major eq '*') {
+				$recordPriority = 1;
+			} elsif ($item->major eq 'text' || ($item->minor eq 'plain' && $item->minor eq 'html')) {
+				$recordPriority = 1;
+			} elsif ($item->major eq 'application' && $item->minor eq 'json') {
+				$recordPriority = 1;
+			}
+		}
+
+		# nb. lower-priorities are higher, so the logic reads backward
+		# TODO: Should probably have a priorityFromItem, or prioritiesFromIndex?  Would elimiate loop above at least
+		if ($userPriorities{'application/json'} < $userPriorities{'*/*'}) {
+			$contentType = $CONTENT_TYPE_JSON;
+		} elsif ($userPriorities{'application/json'} < $userPriorities{'text/plain'}) {
+			$contentType = $CONTENT_TYPE_JSON;
+		} elsif ($userPriorities{'application/json'} < $userPriorities{'text/html'}) {
 			$contentType = $CONTENT_TYPE_JSON;
 		}
 	}
