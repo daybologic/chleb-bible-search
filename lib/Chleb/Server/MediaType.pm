@@ -144,10 +144,13 @@ sub parseAcceptHeader {
 
 	@items = sort { $b->weight <=> $a->weight } @items;
 
-	return $class->new({
+	my $object = $class->new({
 		items => \@items,
 		original => $str,
 	});
+
+	$dic->logger->trace('Created MediaType object: ' . $object->toString());
+	return $object;
 }
 
 =item C<priorityFromTypeStr($typeStr)>
