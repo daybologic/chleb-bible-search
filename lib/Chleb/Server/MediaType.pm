@@ -100,7 +100,7 @@ sub parseAcceptHeader {
 	if (!defined($str) || length($str) < $MINIMUM_LENGTH) {
 		# invalid header under minimum length is not something worth handling, pretend it was valid and */*
 		$str = $DEFAULT_HEADER;
-		$dic->logger->warn('Accept header was bad, substituting default wildcard');
+		$dic->logger->trace('Short Accept header, substituting default wildcard');
 	} else {
 		$dic->logger->trace("Accept header: '$str'");
 	}
@@ -208,7 +208,14 @@ Return a human-readable string for logging purposes
 
 sub toString {
 	my ($self) = @_;
-	return $self->original;
+
+	my $str = $self->original . "\n";
+	for (my $priority = 0; $priority < scalar(@{ $self->items }); $priority++) {
+		my $item = $self->items->[$priority];
+		$str .= sprintf("[%d] %s;q=%.1f\n", $priority, $item->toString(), $item->weight);
+	}
+
+	return $str;
 }
 
 =back
