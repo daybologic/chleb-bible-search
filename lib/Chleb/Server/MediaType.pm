@@ -95,10 +95,9 @@ sub parseAcceptHeader {
 	my ($class, $str) = @_;
 
 	$str = __resolveObject($str);
-	if (!defined($str) || length($str) == 0) {
+	if (!defined($str) || length($str) < $MINIMUM_LENGTH) {
+		# invalid header under minimum length is not something worth handling, pretend it was valid and */*
 		$str = $DEFAULT_HEADER;
-	} elsif (length($str) < $MINIMUM_LENGTH) {
-		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: header too short'); # FIXME: '*' is apparently a valid Accept header
 	}
 
 	my $dic = Chleb::DI::Container->instance;

@@ -45,6 +45,7 @@ use Chleb::Server::MediaType;
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods re ignore num);
+use Test::Exception;
 use Test::More 0.96;
 
 has dic => (isa => 'Chleb::DI::Container', is => 'rw');
@@ -115,28 +116,30 @@ sub testAnyText {
 
 sub testTooShort {
 	my ($self) = @_;
-	plan tests => 10;
+	plan tests => 10 * 2;
 
 	my $check = sub {
 		my ($input) = @_;
 
-		eval {
-			Chleb::Server::MediaType->parseAcceptHeader($input);
-		};
+		my $mediaType;
+		lives_ok {
+			$mediaType = Chleb::Server::MediaType->parseAcceptHeader($input);
+		} "parseAcceptHeader returned successfully for $input";
 
-		if (my $evalError = $EVAL_ERROR) {
-			my $description = 'Accept: header too short';
-			cmp_deeply($evalError, all(
-				isa('Chleb::Exception'),
-				methods(
-					description => $description,
-					location    => undef,
-					statusCode  => 406,
-				),
-			), "'${input}': ${description}");
-		} else {
-			fail('No exception raised, as was expected');
-		}
+		cmp_deeply($mediaType, all(
+			isa('Chleb::Server::MediaType'),
+			methods(
+				items => [
+					all(
+						isa('Chleb::Server::MediaType::Item'),
+						methods(
+							major => '*',
+							minor => '*',
+						),
+					),
+				],
+			),
+		), "type inspection $input is */*") or diag(explain($mediaType->toString()));
 	};
 
 	foreach my $char (qw(a/ /a a 0 / // */ /*)) {
