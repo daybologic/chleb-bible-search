@@ -227,7 +227,7 @@ sub toString {
 		for (my $priority = 0; $priority < scalar(@{ $self->items }); $priority++) {
 			my $item = $self->items->[$priority];
 			$str .= sprintf('[%d] %s', $priority, $item->toString($args));
-			$str .= "\n";
+			$str .= "\n" if ($priority < scalar(@{ $self->items }) - 1);
 		}
 	}
 
