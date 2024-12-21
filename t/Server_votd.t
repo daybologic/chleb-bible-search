@@ -293,7 +293,8 @@ sub testV2_translations_asv_asv {
 	plan tests => 1;
 
 	my $when = '2024-10-30T21:36:26+0000';
-	my $json = $self->sut->__votd({ version => 2, when => $when, translations => ['asv', 'asv'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['asv', 'asv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -377,7 +378,8 @@ sub testV2_translations_kjv_asv {
 	plan tests => 1;
 
 	my $when = '2024-10-30T21:36:26+0000';
-	my $json = $self->sut->__votd({ version => 2, when => $when, translations => ['kjv', 'asv'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['kjv', 'asv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -493,7 +495,8 @@ sub testV2_translations_all {
 	plan tests => 1;
 
 	my $when = '2021-10-30T21:36:26+0000';
-	my $json = $self->sut->__votd({ version => 2, when => $when, translations => ['all'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['all'] });
 	cmp_deeply($json, {
 		data => [
 			{
