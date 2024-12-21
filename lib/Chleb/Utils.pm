@@ -12,6 +12,7 @@ Functions for miscellaneous internal purposes
 
 =cut
 
+use Chleb::Server::MediaType::Args::ToString;
 use Scalar::Util qw(blessed);
 
 =head1 FUNCTIONS
@@ -113,6 +114,12 @@ sub queryParamsHelper {
 	}
 
 	return $str;
+}
+
+sub makeDummyArgs {
+	my ($class, $args) = @_; # TODO; ignored $class
+	return $args if ($args); # shortcut
+	return Chleb::Server::MediaType::Args::ToString->new();
 }
 
 =back

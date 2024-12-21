@@ -45,6 +45,7 @@ Accept / Content-Type header
 
 use Chleb::DI::Container;
 use Chleb::Exception;
+use Chleb::Server::MediaType::Args::ToString;
 use Chleb::Server::MediaType::Item;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
@@ -149,7 +150,10 @@ sub parseAcceptHeader {
 		original => $str,
 	});
 
-	$dic->logger->trace('Created MediaType object: ' . $object->toString({ verbose => 1 }));
+	$dic->logger->trace('Created MediaType object: ' . $object->toString(
+		Chleb::Server::MediaType::Args::ToString->new(verbose => 1)
+	));
+
 	return $object;
 }
 
@@ -204,24 +208,15 @@ sub getWeightMap {
 
 Return a human-readable string for logging purposes
 
-The C<$args HASH> may contain the following keys:
-
-=over
-
-=item C<verbose>
-
-True of false, default false, indicating whether we call toString() on L</items>.
-
-=back
+C<$args> must be a L<Chleb::Server::MediaType::Args::ToString> object, if present.
 
 =cut
 
 sub toString {
 	my ($self, $args) = @_;
-	my ($verbose) = @{$args}{qw(verbose)};
 
 	my $str = $self->original;
-	if ($verbose) {
+	if ($args->verbose) {
 		$str .= "\n";
 
 		for (my $priority = 0; $priority < scalar(@{ $self->items }); $priority++) {
