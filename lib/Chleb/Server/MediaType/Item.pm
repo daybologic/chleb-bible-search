@@ -86,15 +86,32 @@ has weight => (is => 'ro', required => 1, isa => 'Num', default => 1.0, required
 
 =over
 
-=item C<toString()>
+=item C<toString([$args])>
 
 Return the media type in the standard major/minor format.
+
+The C<$args HASH> may contain the following keys:
+
+=over
+
+=item C<verbose>
+
+True of false, default false, indicating whether to include the L</weight>.
+
+=back
 
 =cut
 
 sub toString {
-	my ($self) = @_;
-	return join('/', $self->major, $self->minor);
+	my ($self, $args) = @_;
+	my ($verbose) = @{$args}{qw(verbose)};
+
+	my $str = join('/', $self->major, $self->minor);
+
+	$str .= sprintf(';q=%.1f', $self->weight)
+	    if ($verbose);
+
+	return $str;
 }
 
 =back

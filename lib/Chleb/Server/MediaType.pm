@@ -226,7 +226,8 @@ sub toString {
 
 		for (my $priority = 0; $priority < scalar(@{ $self->items }); $priority++) {
 			my $item = $self->items->[$priority];
-			$str .= sprintf("[%d] %s;q=%.1f\n", $priority, $item->toString(), $item->weight);
+			$str .= sprintf('[%d] %s', $priority, $item->toString($args));
+			$str .= "\n";
 		}
 	}
 
