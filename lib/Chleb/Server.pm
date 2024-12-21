@@ -745,7 +745,7 @@ get '/2/votd' => sub {
 		handleException($exception);
 	}
 
-	if ($mediaType->items->[0]->major eq 'text') {
+	if (ref($result) ne 'HASH') {
 		send_as html => $result;
 	}
 
