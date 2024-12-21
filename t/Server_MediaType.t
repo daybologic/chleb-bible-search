@@ -39,12 +39,24 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use Chleb;
+use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::MediaType;
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods re ignore num);
 use Test::More 0.96;
+
+has dic => (isa => 'Chleb::DI::Container', is => 'rw');
+
+sub setUp {
+	my ($self) = @_;
+
+	$self->dic(Chleb::DI::Container->instance);
+	$self->__mockLogger();
+
+	return EXIT_SUCCESS;
+}
 
 sub testAny {
 	my ($self) = @_;
@@ -346,6 +358,12 @@ sub testMultiTypeWeightedAndWhitespace {
 	), 'type inspection') or diag(explain($mediaType->toString()));
 
 	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->dic->logger(Chleb::DI::MockLogger->new());
+	return;
 }
 
 package main;

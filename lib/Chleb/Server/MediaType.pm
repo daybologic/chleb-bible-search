@@ -43,6 +43,7 @@ Accept / Content-Type header
 
 =cut
 
+use Chleb::DI::Container;
 use Chleb::Exception;
 use Chleb::Server::MediaType::Item;
 use English qw(-no_match_vars);
@@ -99,6 +100,9 @@ sub parseAcceptHeader {
 	} elsif (length($str) < $MINIMUM_LENGTH) {
 		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: header too short'); # FIXME: '*' is apparently a valid Accept header
 	}
+
+	my $dic = Chleb::DI::Container->instance;
+	$dic->logger->trace("Accept header: '$str'");
 
 	$str =~ s/\s+//g; # remove all whitespace
 	my @types = split(m@,@, lc($str));
