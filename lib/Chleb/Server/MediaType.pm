@@ -94,14 +94,16 @@ but L<HTTP::Headers> is also accepted, and we'll process the right header.
 sub parseAcceptHeader {
 	my ($class, $str) = @_;
 
+	my $dic = Chleb::DI::Container->instance;
+
 	$str = __resolveObject($str);
 	if (!defined($str) || length($str) < $MINIMUM_LENGTH) {
 		# invalid header under minimum length is not something worth handling, pretend it was valid and */*
 		$str = $DEFAULT_HEADER;
+		$dic->logger->warn('Accept header was bad, substituting default wildcard');
+	} else {
+		$dic->logger->trace("Accept header: '$str'");
 	}
-
-	my $dic = Chleb::DI::Container->instance;
-	$dic->logger->trace("Accept header: '$str'");
 
 	$str =~ s/\s+//g; # remove all whitespace
 	my @types = split(m@,@, lc($str));
