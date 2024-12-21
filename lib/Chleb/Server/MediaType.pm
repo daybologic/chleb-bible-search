@@ -149,7 +149,7 @@ sub parseAcceptHeader {
 		original => $str,
 	});
 
-	$dic->logger->trace('Created MediaType object: ' . $object->toString());
+	$dic->logger->trace('Created MediaType object: ' . $object->toString({ verbose => 1 }));
 	return $object;
 }
 
@@ -200,19 +200,34 @@ sub getWeightMap {
 	return \%weightMap;
 }
 
-=item C<toString()>
+=item C<toString([$args])>
 
 Return a human-readable string for logging purposes
+
+The C<$args HASH> may contain the following keys:
+
+=over
+
+=item C<verbose>
+
+True of false, default false, indicating whether we call toString() on L</items>.
+
+=back
 
 =cut
 
 sub toString {
-	my ($self) = @_;
+	my ($self, $args) = @_;
+	my ($verbose) = @{$args}{qw(verbose)};
 
-	my $str = $self->original . "\n";
-	for (my $priority = 0; $priority < scalar(@{ $self->items }); $priority++) {
-		my $item = $self->items->[$priority];
-		$str .= sprintf("[%d] %s;q=%.1f\n", $priority, $item->toString(), $item->weight);
+	my $str = $self->original;
+	if ($verbose) {
+		$str .= "\n";
+
+		for (my $priority = 0; $priority < scalar(@{ $self->items }); $priority++) {
+			my $item = $self->items->[$priority];
+			$str .= sprintf("[%d] %s;q=%.1f\n", $priority, $item->toString(), $item->weight);
+		}
 	}
 
 	return $str;
