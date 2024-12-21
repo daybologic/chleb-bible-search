@@ -97,7 +97,7 @@ sub parseAcceptHeader {
 	if (!defined($str) || length($str) == 0) {
 		$str = $DEFAULT_HEADER;
 	} elsif (length($str) < $MINIMUM_LENGTH) {
-		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: header too short');
+		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: header too short'); # FIXME: '*' is apparently a valid Accept header
 	}
 
 	$str =~ s/\s+//g; # remove all whitespace

@@ -317,8 +317,7 @@ sub __votd {
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 		return $json[0] if ($contentType eq $CONTENT_TYPE_JSON); # application/json
 
-		if ($contentType eq $CONTENT_TYPE_TEXT) {
-			# text/plain
+		if ($contentType eq $CONTENT_TYPE_TEXT) { # text/plain
 			# TODO: This can't handle continuation of more than one verse, and should probably be in a sub
 			my $translation = 'unknown'; # FIXME: Where is it in the JSON?
 			my $attributes = $json[0]->{data}->[0]->{attributes};
