@@ -265,33 +265,25 @@ sub __votd {
 	my $contentType = $CONTENT_TYPE_TEXT;
 	if (my $accept = $params->{accept}) {
 		my $items = $accept->items;
-		my %userPriorities = (
+		my %priorities = (
 			# defaults
 			'text/plain' => 0,
 			'text/html' => 0,
 			'*/*' => 0,
 			'application/json' => 1,
 		);
-		for (my $priority = 0; $priority < scalar(@$items); $priority++) {
-			my $item = $items->[$priority];
-			my $recordPriority = 0;
 
-			if ($item->major eq '*') {
-				$recordPriority = 1;
-			} elsif ($item->major eq 'text' || ($item->minor eq 'plain' && $item->minor eq 'html')) {
-				$recordPriority = 1;
-			} elsif ($item->major eq 'application' && $item->minor eq 'json') {
-				$recordPriority = 1;
-			}
+		my $userPriorityMap = $accept->getPriorityMap();
+		while (my ($k, $v) = each(%$userPriorityMap)) {
+			$priorities{$k} = $v;
 		}
 
 		# nb. lower-priorities are higher, so the logic reads backward
-		# TODO: Should probably have a priorityFromItem, or prioritiesFromIndex?  Would elimiate loop above at least
-		if ($userPriorities{'application/json'} < $userPriorities{'*/*'}) {
+		if ($priorities{'application/json'} <= $priorities{'*/*'}) {
 			$contentType = $CONTENT_TYPE_JSON;
-		} elsif ($userPriorities{'application/json'} < $userPriorities{'text/plain'}) {
+		} elsif ($priorities{'application/json'} <= $priorities{'text/plain'}) {
 			$contentType = $CONTENT_TYPE_JSON;
-		} elsif ($userPriorities{'application/json'} < $userPriorities{'text/html'}) {
+		} elsif ($priorities{'application/json'} <= $priorities{'text/html'}) {
 			$contentType = $CONTENT_TYPE_JSON;
 		}
 	}
