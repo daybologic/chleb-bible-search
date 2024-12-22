@@ -745,9 +745,11 @@ get '/2/votd' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
+		$server->dic->logger->trace('2/votd returned as HTML');
 		send_as html => $result;
 	}
 
+	$server->dic->logger->trace('2/votd returned as JSON');
 	return $result;
 };
 
