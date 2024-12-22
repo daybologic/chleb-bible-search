@@ -363,6 +363,33 @@ sub testMultiTypeWeightedAndWhitespace {
 	return EXIT_SUCCESS;
 }
 
+sub testMalformed {
+	my ($self) = @_;
+
+	my $input = 'text/plain,application/xhtml+xml,*/*;q=0.8,application/xml;q=0.9;application/json;q=100';
+
+	eval {
+		Chleb::Server::MediaType->parseAcceptHeader($input);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		my $description = 'Accept: Validation failed for \'Num\' with value "0.9;application/json;q=100"';
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => $description,
+				location    => undef,
+				statusCode  => 406,
+			),
+		), "'${input}': ${description}");
+	} else {
+		fail("'${input}': No exception raised, as was expected");
+	}
+
+
+	return EXIT_SUCCESS;
+}
+
 sub __mockLogger {
 	my ($self) = @_;
 	$self->dic->logger(Chleb::DI::MockLogger->new());
