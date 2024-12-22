@@ -38,9 +38,12 @@ use Chleb::Server::MediaType::Args::ToString;
 has verbose => (is => 'ro', isa => 'Bool', default => 0);
 
 sub makeDummy {
-	my ($class, $args) = @_; # TODO; ignored $class
-	return $args if ($args); # shortcut
-	return Chleb::Server::MediaType::Args::ToString->new();
+	my ($class, $args) = @_;
+	if ($args) {
+		return $args if ($args->isa($class));
+		die('$args must be of type ' . $class);
+	}
+	return $class->new();
 }
 
 1;

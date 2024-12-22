@@ -97,7 +97,7 @@ C<$args> must be a L<Chleb::Server::MediaType::Args::ToString> object, if presen
 
 sub toString {
 	my ($self, $args) = @_;
-	$args = Chleb::Args::Base::makeDummy($args);
+	$args = Chleb::Args::Base::makeDummy('Chleb::Server::MediaType::Args::ToString', $args);
 
 	my $str = join('/', $self->major, $self->minor);
 
