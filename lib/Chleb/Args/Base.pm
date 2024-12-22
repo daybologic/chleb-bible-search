@@ -28,11 +28,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Server::MediaType::Args::ToString;
+package Chleb::Args::Base;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Chleb::Args::Base';
+has verbose => (is => 'ro', isa => 'Bool', default => 0);
 
 1;
