@@ -270,7 +270,7 @@ sub __votd {
 			'text/plain' => 0,
 			'text/html' => 0,
 			'*/*' => 0,
-			$CONTENT_TYPE_JSON => 1,
+			$CONTENT_TYPE_JSON => 9_999_999, # lowest priority
 		);
 
 		my $userPriorityMap = $accept->getPriorityMap();
@@ -281,9 +281,11 @@ sub __votd {
 		# nb. lower-priorities are higher, so the logic reads backward
 		if ($priorities{$CONTENT_TYPE_JSON} <= $priorities{'*/*'}) {
 			$contentType = $CONTENT_TYPE_JSON;
-		} elsif ($priorities{$CONTENT_TYPE_JSON} <= $priorities{'text/plain'}) {
+		}
+		if ($priorities{$CONTENT_TYPE_JSON} <= $priorities{'text/plain'}) {
 			$contentType = $CONTENT_TYPE_JSON;
-		} elsif ($priorities{$CONTENT_TYPE_JSON} <= $priorities{'text/html'}) {
+		}
+		if ($priorities{$CONTENT_TYPE_JSON} <= $priorities{'text/html'}) {
 			$contentType = $CONTENT_TYPE_JSON;
 		}
 	}
