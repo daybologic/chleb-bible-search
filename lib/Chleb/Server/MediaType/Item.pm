@@ -43,7 +43,7 @@ One media item type from an Accept header
 
 =cut
 
-use Chleb::Utils;
+use Chleb::Args::Base;
 use Moose::Util::TypeConstraints;
 
 =head1 ATTRIBUTES
@@ -97,7 +97,7 @@ C<$args> must be a L<Chleb::Server::MediaType::Args::ToString> object, if presen
 
 sub toString {
 	my ($self, $args) = @_;
-	$args = Chleb::Utils::makeDummyArgs($args);
+	$args = Chleb::Args::Base::makeDummy($args);
 
 	my $str = join('/', $self->major, $self->minor);
 

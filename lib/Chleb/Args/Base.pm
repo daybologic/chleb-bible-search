@@ -33,6 +33,14 @@ use strict;
 use warnings;
 use Moose;
 
+use Chleb::Server::MediaType::Args::ToString;
+
 has verbose => (is => 'ro', isa => 'Bool', default => 0);
+
+sub makeDummy {
+	my ($class, $args) = @_; # TODO; ignored $class
+	return $args if ($args); # shortcut
+	return Chleb::Server::MediaType::Args::ToString->new();
+}
 
 1;
