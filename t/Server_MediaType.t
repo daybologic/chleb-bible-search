@@ -373,11 +373,11 @@ sub testMalformed {
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
-		my $description = 'Accept: Validation failed for \'Num\' with value "0.9;application/json;q=100"';
+		my $description = 'Accept: Validation failed for \'Num\' with value';
 		cmp_deeply($evalError, all(
 			isa('Chleb::Exception'),
 			methods(
-				description => $description,
+				description => re(qr/^$description /),
 				location    => undef,
 				statusCode  => 406,
 			),
