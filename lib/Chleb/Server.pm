@@ -54,8 +54,12 @@ use Readonly;
 use Time::Duration;
 use UUID::Tiny ':std';
 
-Readonly our $CONTENT_TYPE_JSON => 'application/json';
-Readonly our $CONTENT_TYPE_TEXT => 'text/plain';
+Readonly our $CONTENT_TYPE_HTML    => 'text/html';
+Readonly our $CONTENT_TYPE_JSON    => 'application/json';
+Readonly our $CONTENT_TYPE_DEFAULT => $CONTENT_TYPE_HTML;
+
+Readonly our $CONTENT_TYPE_PRIO_HIGHEST => 0;
+Readonly our $CONTENT_TYPE_PRIO_LOWEST  => 9_999_999;
 
 =head1 METHODS
 
@@ -262,32 +266,47 @@ sub __votd {
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
 
-	my $contentType = $CONTENT_TYPE_TEXT;
+	my $contentType = 'x';
 	if (my $accept = $params->{accept}) {
 		my $items = $accept->items;
 		my %priorities = (
 			# defaults
-			'text/plain' => 0,
-			'text/html' => 0,
-			'*/*' => 0,
-			$CONTENT_TYPE_JSON => 9_999_999, # lowest priority
+			$CONTENT_TYPE_HTML => $CONTENT_TYPE_PRIO_HIGHEST,
+			'text/*'           => $CONTENT_TYPE_PRIO_HIGHEST,
+			'*/*'              => $CONTENT_TYPE_PRIO_HIGHEST,
+			$CONTENT_TYPE_JSON => $CONTENT_TYPE_PRIO_LOWEST,
 		);
 
 		my $userPriorityMap = $accept->getPriorityMap();
-		while (my ($k, $v) = each(%$userPriorityMap)) {
-			$priorities{$k} = $v;
+		while (my ($type, $priority) = each(%priorities)) {
+			my $userPriority = $userPriorityMap->{$type};
+			next unless (defined($userPriority));
+
+			if ($priority == $userPriority) {
+				$self->dic->logger->trace(sprintf("No change to default priority %d for '%s'", $priority, $type));
+				next;
+			}
+
+			$self->dic->logger->trace(sprintf("User-priority override for '%s' %d (default) -> %d",
+			    $type, $priority, $userPriority));
+
+			$priorities{$type} = $userPriority;
 		}
 
 		# nb. lower-priorities are higher, so the logic reads backward
-		if ($priorities{$CONTENT_TYPE_JSON} <= $priorities{'*/*'}) {
-			$contentType = $CONTENT_TYPE_JSON;
+		foreach my $type (keys(%priorities)) {
+			next if ($type eq $CONTENT_TYPE_JSON);
+			if ($priorities{$CONTENT_TYPE_JSON} <= $priorities{$type}) {
+				$self->dic->logger->trace(sprintf(
+					"Set Content-type: '%s' (was '%s'), because priority of '%s' (%d) is <= '%s' (%d)",
+					$CONTENT_TYPE_JSON, $contentType, $CONTENT_TYPE_JSON, $priorities{$CONTENT_TYPE_JSON}, $type, $priorities{$type},
+				));
+
+				$contentType = $CONTENT_TYPE_JSON;
+			}
 		}
-		if ($priorities{$CONTENT_TYPE_JSON} <= $priorities{'text/plain'}) {
-			$contentType = $CONTENT_TYPE_JSON;
-		}
-		if ($priorities{$CONTENT_TYPE_JSON} <= $priorities{'text/html'}) {
-			$contentType = $CONTENT_TYPE_JSON;
-		}
+	} else {
+		$contentType = $CONTENT_TYPE_DEFAULT;
 	}
 
 	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
@@ -319,7 +338,7 @@ sub __votd {
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 		return $json[0] if ($contentType eq $CONTENT_TYPE_JSON); # application/json
 
-		if ($contentType eq $CONTENT_TYPE_TEXT) { # text/plain
+		if ($contentType eq $CONTENT_TYPE_HTML) { # text/plain
 			# TODO: This can't handle continuation of more than one verse, and should probably be in a sub
 			my $translation = 'unknown'; # FIXME: Where is it in the JSON?
 			my $attributes = $json[0]->{data}->[0]->{attributes};
@@ -331,7 +350,7 @@ sub __votd {
 				$translation,
 			);
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'HTML or text only');
+			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $CONTENT_TYPE_HTML is supported");
 		}
 	}
 
