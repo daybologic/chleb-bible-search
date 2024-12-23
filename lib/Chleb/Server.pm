@@ -656,7 +656,7 @@ package main;
 use strict;
 use warnings;
 
-use Dancer2;
+use Dancer2 0.2;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:is);
 use POSIX qw(EXIT_SUCCESS);
