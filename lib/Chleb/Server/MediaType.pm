@@ -212,11 +212,11 @@ sub getWeightMap {
 =cut
 
 sub acceptToContentType {
-	my ($params, $default) = @_;
+	my ($accept, $default) = @_;
 
 	my $contentType = $default;
 
-	if (my $accept = $params->{accept}) {
+	if ($accept) {
 		foreach my $item (reverse(@{ $accept->items })) {
 			if ($item->major eq 'text') {
 				if ($item->minor eq 'html' || $item->minor eq '*') {
