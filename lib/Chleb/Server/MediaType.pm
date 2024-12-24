@@ -55,6 +55,9 @@ use Scalar::Util qw(blessed);
 Readonly my $DEFAULT_HEADER => '*/*';
 Readonly my $MINIMUM_LENGTH => 3;
 
+Readonly our $CONTENT_TYPE_HTML => 'text/html';
+Readonly our $CONTENT_TYPE_JSON => 'application/json';
+
 =head1 ATTRIBUTES
 
 =over
@@ -202,6 +205,38 @@ sub getWeightMap {
 	}
 
 	return \%weightMap;
+}
+
+=item C<acceptToContentType($params, $default)>
+
+=cut
+
+sub acceptToContentType {
+	my ($params, $default) = @_;
+
+	my $contentType = $default;
+
+	if (my $accept = $params->{accept}) {
+		foreach my $item (reverse(@{ $accept->items })) {
+			if ($item->major eq 'text') {
+				if ($item->minor eq 'html' || $item->minor eq '*') {
+					$contentType = $CONTENT_TYPE_HTML;
+					last;
+				} elsif ($item->minor ne '*') {
+					$contentType = '';
+				}
+			} elsif ($item->major eq 'application') {
+				if ($item->minor eq 'json' || $item->minor eq '*') {
+					$contentType = $CONTENT_TYPE_JSON;
+					last;
+				} elsif ($item->minor ne '*') {
+					$contentType = '';
+				}
+			}
+		}
+	}
+
+	return $contentType;
 }
 
 =item C<toString([$args])>

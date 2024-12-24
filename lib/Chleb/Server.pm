@@ -54,9 +54,7 @@ use Readonly;
 use Time::Duration;
 use UUID::Tiny ':std';
 
-Readonly our $CONTENT_TYPE_HTML    => 'text/html';
-Readonly our $CONTENT_TYPE_JSON    => 'application/json';
-Readonly our $CONTENT_TYPE_DEFAULT => $CONTENT_TYPE_HTML;
+Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 
 =head1 METHODS
 
@@ -263,26 +261,7 @@ sub __votd {
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
 
-	my $contentType = $CONTENT_TYPE_DEFAULT;
-	if (my $accept = $params->{accept}) {
-		foreach my $item (reverse(@{ $accept->items })) {
-			if ($item->major eq 'text') {
-				if ($item->minor eq 'html' || $item->minor eq '*') {
-					$contentType = $CONTENT_TYPE_HTML;
-					last;
-				} elsif ($item->minor ne '*') {
-					$contentType = '';
-				}
-			} elsif ($item->major eq 'application') {
-				if ($item->minor eq 'json' || $item->minor eq '*') {
-					$contentType = $CONTENT_TYPE_JSON;
-					last;
-				} elsif ($item->minor ne '*') {
-					$contentType = '';
-				}
-			}
-		}
-	}
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($params, $CONTENT_TYPE_DEFAULT);
 
 	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
 	    if ($redirect && $version > 1);
@@ -311,9 +290,9 @@ sub __votd {
 		}
 
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
-		return $json[0] if ($contentType eq $CONTENT_TYPE_JSON); # application/json
+		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
-		if ($contentType eq $CONTENT_TYPE_HTML) { # text/plain
+		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/plain
 			# TODO: This can't handle continuation of more than one verse, and should probably be in a sub
 			my $translation = 'unknown'; # FIXME: Where is it in the JSON?
 			my $attributes = $json[0]->{data}->[0]->{attributes};
@@ -325,7 +304,7 @@ sub __votd {
 				$translation,
 			);
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $CONTENT_TYPE_HTML is supported");
+			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
 	}
 
