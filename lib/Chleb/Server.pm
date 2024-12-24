@@ -296,11 +296,11 @@ sub __votd {
 			# TODO: This can't handle continuation of more than one verse, and should probably be in a sub
 			my $translation = 'unknown'; # FIXME: Where is it in the JSON?
 			my $attributes = $json[0]->{data}->[0]->{attributes};
-			return sprintf("%s\r\n\r\n%s %d:%d (%s)\r\n",
-				$attributes->{text},
+			return sprintf("%s %d:%d %s [%s]\r\n",
 				$attributes->{book},
 				$attributes->{chapter},
 				$attributes->{ordinal},
+				$attributes->{text},
 				$translation,
 			);
 		} else {
