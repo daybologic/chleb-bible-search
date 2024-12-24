@@ -58,9 +58,6 @@ Readonly our $CONTENT_TYPE_HTML    => 'text/html';
 Readonly our $CONTENT_TYPE_JSON    => 'application/json';
 Readonly our $CONTENT_TYPE_DEFAULT => $CONTENT_TYPE_HTML;
 
-Readonly our $CONTENT_TYPE_PRIO_HIGHEST => 0;
-Readonly our $CONTENT_TYPE_PRIO_LOWEST  => 9_999_999;
-
 =head1 METHODS
 
 =over
@@ -266,47 +263,25 @@ sub __votd {
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
 
-	my $contentType = 'x';
+	my $contentType = $CONTENT_TYPE_DEFAULT;
 	if (my $accept = $params->{accept}) {
-		my $items = $accept->items;
-		my %priorities = (
-			# defaults
-			$CONTENT_TYPE_HTML => $CONTENT_TYPE_PRIO_HIGHEST,
-			'text/*'           => $CONTENT_TYPE_PRIO_HIGHEST,
-			'*/*'              => $CONTENT_TYPE_PRIO_HIGHEST,
-			$CONTENT_TYPE_JSON => $CONTENT_TYPE_PRIO_LOWEST,
-		);
-
-		my $userPriorityMap = $accept->getPriorityMap();
-		while (my ($type, $priority) = each(%priorities)) {
-			my $userPriority = $userPriorityMap->{$type};
-			next unless (defined($userPriority));
-
-			if ($priority == $userPriority) {
-				$self->dic->logger->trace(sprintf("No change to default priority %d for '%s'", $priority, $type));
-				next;
-			}
-
-			$self->dic->logger->trace(sprintf("User-priority override for '%s' %d (default) -> %d",
-			    $type, $priority, $userPriority));
-
-			$priorities{$type} = $userPriority;
-		}
-
-		# nb. lower-priorities are higher, so the logic reads backward
-		foreach my $type (keys(%priorities)) {
-			next if ($type eq $CONTENT_TYPE_JSON);
-			if ($priorities{$CONTENT_TYPE_JSON} <= $priorities{$type}) {
-				$self->dic->logger->trace(sprintf(
-					"Set Content-type: '%s' (was '%s'), because priority of '%s' (%d) is <= '%s' (%d)",
-					$CONTENT_TYPE_JSON, $contentType, $CONTENT_TYPE_JSON, $priorities{$CONTENT_TYPE_JSON}, $type, $priorities{$type},
-				));
-
-				$contentType = $CONTENT_TYPE_JSON;
+		foreach my $item (reverse(@{ $accept->items })) {
+			if ($item->major eq 'text') {
+				if ($item->minor eq 'html' || $item->minor eq '*') {
+					$contentType = $CONTENT_TYPE_HTML;
+					last;
+				} elsif ($item->minor ne '*') {
+					$contentType = '';
+				}
+			} elsif ($item->major eq 'application') {
+				if ($item->minor eq 'json' || $item->minor eq '*') {
+					$contentType = $CONTENT_TYPE_JSON;
+					last;
+				} elsif ($item->minor ne '*') {
+					$contentType = '';
+				}
 			}
 		}
-	} else {
-		$contentType = $CONTENT_TYPE_DEFAULT;
 	}
 
 	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
