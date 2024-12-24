@@ -217,7 +217,7 @@ sub acceptToContentType {
 	my $contentType = $default;
 
 	if ($accept) {
-		foreach my $item (reverse(@{ $accept->items })) {
+		foreach my $item (@{ $accept->items }) {
 			if ($item->major eq 'text') {
 				if ($item->minor eq 'html' || $item->minor eq '*') {
 					$contentType = $CONTENT_TYPE_HTML;
