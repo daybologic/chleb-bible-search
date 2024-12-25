@@ -186,6 +186,9 @@ Numerical verse ordinal within C<chapter>
 
 sub __lookup {
 	my ($self, $params) = @_;
+
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
+
 	my @verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
 
 	my @json;
@@ -221,7 +224,13 @@ sub __lookup {
 		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $id) . Chleb::Utils::queryParamsHelper($params);
 	}
 
-	return $json[0];
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		return $json[0];
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __verseToHtml(\@json);
+	}
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 }
 
 =item C<__random($params)>
@@ -772,15 +781,30 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $verse = param('verse');
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
+	my $dancerRequest = request();
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+
 	my $result;
 	eval {
-		$result = $server->__lookup({ book => $book, chapter => $chapter, verse => $verse, translations => $translations });
+		$result = $server->__lookup({
+			accept       => $mediaType,
+			book         => $book,
+			chapter      => $chapter,
+			translations => $translations,
+			verse        => $verse,
+		});
 	};
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
 	}
 
+	if (ref($result) ne 'HASH') {
+		$server->dic->logger->trace('1/lookup returned as HTML');
+		send_as html => $result;
+	}
+
+	$server->dic->logger->trace('1/lookup returned as JSON');
 	return $result;
 
 };
