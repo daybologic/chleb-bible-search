@@ -242,19 +242,15 @@ sub __random {
 	my $verse = $self->__library->random($params);
 	my $json = __verseToJsonApi($verse, $params);
 
-	my $return;
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		my $version = 1;
 		$json->{links}->{self} = '/' . join('/', $version, 'random');
-		$return = $json;
+		return $json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		$return = __verseToHtml([$json]);
-	} else {
-		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+		return __verseToHtml([$json]);
 	}
 
-	$self->dic->logger->trace("1/random returned as $contentType");
-	return $return;
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 }
 
 =item C<__votd($params)>
@@ -706,6 +702,12 @@ get '/1/random' => sub {
 		handleException($exception);
 	}
 
+	if (ref($result) ne 'HASH') {
+		$server->dic->logger->trace('1/random returned as HTML');
+		send_as html => $result;
+	}
+
+	$server->dic->logger->trace('1/random returned as JSON');
 	return $result;
 };
 
