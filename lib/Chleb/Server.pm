@@ -293,15 +293,32 @@ sub __votd {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			# TODO: This can't handle continuation of more than one verse, and should probably be in a sub
-			my $attributes = $json[0]->{data}->[0]->{attributes};
-			return sprintf("%s %d:%d %s [%s]\r\n",
-				$attributes->{book},
-				$attributes->{chapter},
-				$attributes->{ordinal},
-				$attributes->{text},
-				$attributes->{translation},
-			);
+			# TODO: This should probably be in a sub
+			my $output = '';
+			my $verseCount = scalar(@{ $json[0]->{data} });
+			for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
+				my $attributes = $json[0]->{data}->[$verseIndex]->{attributes};
+				$output .= sprintf('%s %d:%d %s',
+					$attributes->{book},
+					$attributes->{chapter},
+					$attributes->{ordinal},
+					$attributes->{text},
+				);
+
+				if ($verseIndex < $verseCount-1) { # not last verse
+					$output .= "\r\n";
+				}
+			}
+
+			my $translation = $json[0]->{data}->[0]->{attributes}->{translation};
+
+			if ($verseCount == 1) {
+				$output .= sprintf(" [%s]\r\n", $translation);
+			} else {
+				$output .= sprintf("\r\n\t(%s)\r\n", $translation);
+			}
+
+			return $output;
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
