@@ -173,14 +173,18 @@ sub acceptToContentType {
 
 	if ($accept) {
 		foreach my $item (@{ $accept->items }) {
+			if ($item->major eq '*') {
+				$logBecause = 'handling everything/anything (major *)';
+				last;
+			}
 			if ($item->major eq 'text') {
 				if ($item->minor eq 'html' || $item->minor eq '*') {
 					$contentType = $CONTENT_TYPE_HTML;
 					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
 					last;
 				} elsif ($item->minor ne '*') {
-					$logBecause = sprintf("invalid minor '%s' for major supported type '%s'", $item->minor, $item->major);
 					$contentType = '';
+					$logBecause = sprintf("invalid minor '%s' for major supported type '%s'", $item->minor, $item->major);
 				}
 			} elsif ($item->major eq 'application') {
 				if ($item->minor eq 'json' || $item->minor eq '*') {
@@ -188,9 +192,12 @@ sub acceptToContentType {
 					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
 					last;
 				} elsif ($item->minor ne '*') {
-					$logBecause = sprintf("invalid minor '%s' for major supported type '%s'", $item->minor, $item->major);
 					$contentType = '';
+					$logBecause = sprintf("invalid minor '%s' for major supported type '%s'", $item->minor, $item->major);
 				}
+			} else {
+				$contentType = '';
+				$logBecause = sprintf("because major '%s' is unhandled", sprintf($item->major));
 			}
 		}
 	}
