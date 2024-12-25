@@ -293,32 +293,7 @@ sub __votd {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			# TODO: This should probably be in a sub
-			my $output = '';
-			my $verseCount = scalar(@{ $json[0]->{data} });
-			for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
-				my $attributes = $json[0]->{data}->[$verseIndex]->{attributes};
-				$output .= sprintf('%s %d:%d %s',
-					$attributes->{book},
-					$attributes->{chapter},
-					$attributes->{ordinal},
-					$attributes->{text},
-				);
-
-				if ($verseIndex < $verseCount-1) { # not last verse
-					$output .= "\r\n";
-				}
-			}
-
-			my $translation = $json[0]->{data}->[0]->{attributes}->{translation};
-
-			if ($verseCount == 1) {
-				$output .= sprintf(" [%s]\r\n", $translation);
-			} else {
-				$output .= sprintf("\r\n\r\n\t(%s)\r\n", $translation);
-			}
-
-			return $output;
+			return __verseToHtml(\@json);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -635,6 +610,36 @@ sub __verseToJsonApi {
 	});
 
 	return \%hash;
+}
+
+sub __verseToHtml {
+	my ($json) = @_;
+
+	my $output = '';
+	my $verseCount = scalar(@{ $json->[0]->{data} });
+	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
+		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
+		$output .= sprintf('%s %d:%d %s',
+			$attributes->{book},
+			$attributes->{chapter},
+			$attributes->{ordinal},
+			$attributes->{text},
+		);
+
+		if ($verseIndex < $verseCount-1) { # not last verse
+			$output .= "\r\n";
+		}
+	}
+
+	my $translation = $json->[0]->{data}->[0]->{attributes}->{translation};
+
+	if ($verseCount == 1) {
+		$output .= sprintf(" [%s]\r\n", $translation);
+	} else {
+		$output .= sprintf("\r\n\r\n\t(%s)\r\n", $translation);
+	}
+
+	return $output;
 }
 
 =back
