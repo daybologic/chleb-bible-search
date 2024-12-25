@@ -294,14 +294,13 @@ sub __votd {
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 			# TODO: This can't handle continuation of more than one verse, and should probably be in a sub
-			my $translation = 'unknown'; # FIXME: Where is it in the JSON?
 			my $attributes = $json[0]->{data}->[0]->{attributes};
 			return sprintf("%s %d:%d %s [%s]\r\n",
 				$attributes->{book},
 				$attributes->{chapter},
 				$attributes->{ordinal},
 				$attributes->{text},
-				$translation,
+				$attributes->{translation},
 			);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
