@@ -160,53 +160,6 @@ sub parseAcceptHeader {
 	return $object;
 }
 
-=item C<priorityFromTypeStr($typeStr)>
-
-=cut
-
-sub priorityFromTypeStr {
-	my ($self, $typeStr) = @_;
-
-	for (my $priority = 0; $priority < scalar(@{ $self->items }); $priority++) {
-		my $item = $self->items->[$priority];
-		return $priority if ($item->toString() eq $typeStr);
-	}
-
-	#return -1;
-	return 9_999_999; # lowest priority
-}
-
-=item C<getPriorityMap()>
-
-=cut
-
-sub getPriorityMap {
-	my ($self) = @_;
-
-	my %priorityMap = ( );
-	for (my $priority = 0; $priority < scalar(@{ $self->items }); $priority++) { # decreasing priorities
-		my $item = $self->items->[$priority];
-		$priorityMap{ $item->toString() } = $priority;
-	}
-
-	return \%priorityMap;
-}
-
-=item C<getWeightMap()>
-
-=cut
-
-sub getWeightMap {
-	my ($self) = @_;
-
-	my %weightMap = ( );
-	foreach my $item (@{ $self->items }) {
-		$weightMap{ $item->toString() } = $item->weight;
-	}
-
-	return \%weightMap;
-}
-
 =item C<acceptToContentType($params, $default)>
 
 =cut
