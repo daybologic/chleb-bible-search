@@ -58,7 +58,8 @@ sub test_translation_kjv {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $json = $self->sut->__random();
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__random({ accept => $mediaType });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -141,7 +142,8 @@ sub test_translation_asv {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $json = $self->sut->__random({ translations => ['asv'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -224,7 +226,8 @@ sub test_translation_all {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $json = $self->sut->__random({ translations => ['all'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['all'] });
 	cmp_deeply($json, {
 		data => [
 			{

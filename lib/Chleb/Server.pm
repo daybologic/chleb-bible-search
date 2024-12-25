@@ -236,13 +236,21 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 sub __random {
 	my ($self, $params) = @_;
+
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
+
 	my $verse = $self->__library->random($params);
-
 	my $json = __verseToJsonApi($verse, $params);
-	my $version = 1;
-	$json->{links}->{self} =  '/' . join('/', $version, 'random');
 
-	return $json;
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		my $version = 1;
+		$json->{links}->{self} = '/' . join('/', $version, 'random');
+		return $json;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __verseToHtml([$json]);
+	}
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 }
 
 =item C<__votd($params)>
@@ -682,15 +690,24 @@ sub handleException {
 get '/1/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
+	my $dancerRequest = request();
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+
 	my $result;
 	eval {
-		$result = $server->__random({ translations => $translations });
+		$result = $server->__random({ accept => $mediaType, translations => $translations });
 	};
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
 	}
 
+	if (ref($result) ne 'HASH') {
+		$server->dic->logger->trace('1/random returned as HTML');
+		send_as html => $result;
+	}
+
+	$server->dic->logger->trace('1/random returned as JSON');
 	return $result;
 };
 
