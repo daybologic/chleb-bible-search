@@ -238,11 +238,18 @@ sub __random {
 	my ($self, $params) = @_;
 	my $verse = $self->__library->random($params);
 
-	my $json = __verseToJsonApi($verse, $params);
-	my $version = 1;
-	$json->{links}->{self} =  '/' . join('/', $version, 'random');
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
-	return $json;
+	my $json = __verseToJsonApi($verse, $params);
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		my $version = 1;
+		$json->{links}->{self} =  '/' . join('/', $version, 'random');
+		return $json;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __verseToHtml([$json]);
+	}
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 }
 
 =item C<__votd($params)>
