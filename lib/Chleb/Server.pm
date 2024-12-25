@@ -693,9 +693,12 @@ sub handleException {
 get '/1/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
+	my $dancerRequest = request();
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+
 	my $result;
 	eval {
-		$result = $server->__random({ translations => $translations });
+		$result = $server->__random({ accept => $mediaType, translations => $translations });
 	};
 
 	if (my $exception = $EVAL_ERROR) {
