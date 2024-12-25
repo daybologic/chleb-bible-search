@@ -167,27 +167,36 @@ sub parseAcceptHeader {
 sub acceptToContentType {
 	my ($accept, $default) = @_;
 
+	my $logBecause = 'it is the default';
 	my $contentType = $default;
+	my $dic = Chleb::DI::Container->instance;
 
 	if ($accept) {
 		foreach my $item (@{ $accept->items }) {
 			if ($item->major eq 'text') {
 				if ($item->minor eq 'html' || $item->minor eq '*') {
 					$contentType = $CONTENT_TYPE_HTML;
+					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
 					last;
 				} elsif ($item->minor ne '*') {
+					$logBecause = sprintf("invalid minor '%s' for major supported type '%s'", $item->minor, $item->major);
 					$contentType = '';
 				}
 			} elsif ($item->major eq 'application') {
 				if ($item->minor eq 'json' || $item->minor eq '*') {
 					$contentType = $CONTENT_TYPE_JSON;
+					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
 					last;
 				} elsif ($item->minor ne '*') {
+					$logBecause = sprintf("invalid minor '%s' for major supported type '%s'", $item->minor, $item->major);
 					$contentType = '';
 				}
 			}
 		}
 	}
+
+	$dic->logger->trace(sprintf("acceptToContentType returns '%s' because %s",
+	    $contentType, $logBecause));
 
 	return $contentType;
 }

@@ -236,13 +236,13 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 sub __random {
 	my ($self, $params) = @_;
-	my $verse = $self->__library->random($params);
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
+	my $verse = $self->__library->random($params);
 	my $json = __verseToJsonApi($verse, $params);
-	my $return;
 
+	my $return;
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		my $version = 1;
 		$json->{links}->{self} = '/' . join('/', $version, 'random');
