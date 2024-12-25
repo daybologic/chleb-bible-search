@@ -43,7 +43,9 @@ Accept / Content-Type header
 
 =cut
 
+use Chleb::DI::Container;
 use Chleb::Exception;
+use Chleb::Server::MediaType::Args::ToString;
 use Chleb::Server::MediaType::Item;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
@@ -52,6 +54,9 @@ use Scalar::Util qw(blessed);
 
 Readonly my $DEFAULT_HEADER => '*/*';
 Readonly my $MINIMUM_LENGTH => 3;
+
+Readonly our $CONTENT_TYPE_HTML => 'text/html';
+Readonly our $CONTENT_TYPE_JSON => 'application/json';
 
 =head1 ATTRIBUTES
 
@@ -93,11 +98,15 @@ but L<HTTP::Headers> is also accepted, and we'll process the right header.
 sub parseAcceptHeader {
 	my ($class, $str) = @_;
 
+	my $dic = Chleb::DI::Container->instance;
+
 	$str = __resolveObject($str);
-	if (!defined($str) || length($str) == 0) {
+	if (!defined($str) || length($str) < $MINIMUM_LENGTH) {
+		# invalid header under minimum length is not something worth handling, pretend it was valid and */*
 		$str = $DEFAULT_HEADER;
-	} elsif (length($str) < $MINIMUM_LENGTH) {
-		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: header too short');
+		$dic->logger->trace('Short Accept header, substituting default wildcard');
+	} else {
+		$dic->logger->trace("Accept header: '$str'");
 	}
 
 	$str =~ s/\s+//g; # remove all whitespace
@@ -139,21 +148,73 @@ sub parseAcceptHeader {
 
 	@items = sort { $b->weight <=> $a->weight } @items;
 
-	return $class->new({
+	my $object = $class->new({
 		items => \@items,
 		original => $str,
 	});
+
+	$dic->logger->trace('Created MediaType object: ' . $object->toString(
+		Chleb::Server::MediaType::Args::ToString->new(verbose => 1)
+	));
+
+	return $object;
 }
 
-=item C<toString()>
+=item C<acceptToContentType($params, $default)>
+
+=cut
+
+sub acceptToContentType {
+	my ($accept, $default) = @_;
+
+	my $contentType = $default;
+
+	if ($accept) {
+		foreach my $item (@{ $accept->items }) {
+			if ($item->major eq 'text') {
+				if ($item->minor eq 'html' || $item->minor eq '*') {
+					$contentType = $CONTENT_TYPE_HTML;
+					last;
+				} elsif ($item->minor ne '*') {
+					$contentType = '';
+				}
+			} elsif ($item->major eq 'application') {
+				if ($item->minor eq 'json' || $item->minor eq '*') {
+					$contentType = $CONTENT_TYPE_JSON;
+					last;
+				} elsif ($item->minor ne '*') {
+					$contentType = '';
+				}
+			}
+		}
+	}
+
+	return $contentType;
+}
+
+=item C<toString([$args])>
 
 Return a human-readable string for logging purposes
+
+C<$args> must be a L<Chleb::Server::MediaType::Args::ToString> object, if present.
 
 =cut
 
 sub toString {
-	my ($self) = @_;
-	return $self->original;
+	my ($self, $args) = @_;
+
+	my $str = $self->original;
+	if ($args->verbose) {
+		$str .= "\n";
+
+		for (my $priority = 0; $priority < scalar(@{ $self->items }); $priority++) {
+			my $item = $self->items->[$priority];
+			$str .= sprintf('[%d] %s', $priority, $item->toString($args));
+			$str .= "\n" if ($priority < scalar(@{ $self->items }) - 1);
+		}
+	}
+
+	return $str;
 }
 
 =back
