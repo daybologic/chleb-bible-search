@@ -242,9 +242,10 @@ sub __random {
 
 	my $json = __verseToJsonApi($verse, $params);
 	my $return;
+
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		my $version = 1;
-		$json->{links}->{self} =  '/' . join('/', $version, 'random');
+		$json->{links}->{self} = '/' . join('/', $version, 'random');
 		$return = $json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		$return = __verseToHtml([$json]);
