@@ -315,7 +315,7 @@ sub __votd {
 			if ($verseCount == 1) {
 				$output .= sprintf(" [%s]\r\n", $translation);
 			} else {
-				$output .= sprintf("\r\n\t(%s)\r\n", $translation);
+				$output .= sprintf("\r\n\r\n\t(%s)\r\n", $translation);
 			}
 
 			return $output;
