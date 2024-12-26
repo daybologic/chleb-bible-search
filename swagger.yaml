@@ -90,6 +90,9 @@ paths:
         '200':
           description: Successfully retrieved verse
           content:
+            text/html:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object
@@ -205,6 +208,9 @@ paths:
         '200':
           description: Successfully retrieved verse
           content:
+            text/html:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object
@@ -268,6 +274,9 @@ paths:
         '200':
           description: Success
           content:
+            text/html:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object
@@ -333,6 +342,9 @@ paths:
         '200':
           description: Success
           content:
+            text/html:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object
