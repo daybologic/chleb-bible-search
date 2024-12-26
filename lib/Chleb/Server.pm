@@ -440,6 +440,8 @@ sub __search {
 
 	my $wholeword = int($search->{wholeword});
 
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($search->{accept}, $CONTENT_TYPE_DEFAULT);
+
 	my $query = $self->__library->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
 	my $results = $query->run();
 
@@ -516,7 +518,13 @@ sub __search {
 
 	$hash{links}->{self} = '/1/search?term=' . $search->{term} . '&wholeword=' . $wholeword .'&limit=' . $limit;
 
-	return \%hash;
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __searchResultsToHtml(\%hash);
+	}
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 }
 
 =item C<__getUptime()>
@@ -657,6 +665,25 @@ sub __verseToHtml {
 	}
 
 	return $output;
+}
+
+sub __searchResultsToHtml {
+	my ($hash) = @_;
+
+	my $text = '';
+	for (my $resultI = 0; $resultI < scalar(@{ $hash->{data} }); $resultI++) {
+		my $verse = $hash->{data}->[$resultI];
+		my $attributes = $verse->{attributes};
+		$text .= sprintf("[%s]\r\n%s %d:%d %s\r\n\r\n",
+			$attributes->{title},
+			$attributes->{book},
+			$attributes->{chapter},
+			$attributes->{ordinal},
+			$attributes->{text},
+		);
+	}
+
+	return $text;
 }
 
 =back
@@ -813,7 +840,19 @@ get '/1/search' => sub {
 	my $limit = param('limit');
 	my $term = param('term');
 	my $wholeword = param('wholeword');
-	return $server->__search({ limit => $limit, term => $term, wholeword => $wholeword });
+
+	my $dancerRequest = request();
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+
+	my $result = $server->__search({ accept => $mediaType, limit => $limit, term => $term, wholeword => $wholeword });
+
+	if (ref($result) ne 'HASH') {
+		$server->dic->logger->trace('1/search returned as HTML');
+		send_as html => $result;
+	}
+
+	$server->dic->logger->trace('1/search returned as JSON');
+	return $result;
 };
 
 get '/1/ping' => sub {
