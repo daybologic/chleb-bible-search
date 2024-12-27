@@ -2,3 +2,4 @@ etc/chleb-bible-search.service /usr/lib/systemd/system/
 etc/log4perl.conf /etc/chleb-bible-search/
 etc/main.conf /etc/chleb-bible-search/
 data/*.bin.gz /usr/share/chleb-bible-search/
+etc/logrotate/chleb-bible-search /etc/logrotate.d/
