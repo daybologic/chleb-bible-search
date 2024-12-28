@@ -44,9 +44,10 @@ Dancer2 server for stand-alone HTTP server for Chleb Bible Search
 =cut
 
 use Chleb;
-use Chleb::Exception;
 use Chleb::DI::Container;
+use Chleb::Exception;
 use Chleb::Server::MediaType;
+use Chleb::Token;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
 use JSON;
@@ -774,6 +775,8 @@ get '/2/votd' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
 	my $dancerRequest = request();
+	my $sessionToken = Chleb::Token->new();
+	cookie sessionToken => $sessionToken->value;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
