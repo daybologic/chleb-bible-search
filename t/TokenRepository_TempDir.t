@@ -45,7 +45,7 @@ sub testSaveLoad {
 
 		cmp_ok($token->expires, '==', $now + 604_800, 'default expiry in one week');
 		cmp_ok($token->expires($now + 5), '==', $now + 5, 'set expiry time five seconds from now');
-		cmp_ok($token->created, '==', $now, "created is now (setting expires doesn't change that");
+		cmp_ok($token->created, '==', $now, "created is now (setting expires doesn't change that)");
 
 		lives_ok {
 			$token->save();
