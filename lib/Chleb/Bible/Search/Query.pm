@@ -1,5 +1,5 @@
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
