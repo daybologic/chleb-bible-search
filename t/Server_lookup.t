@@ -38,10 +38,11 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
+use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible::DI::Container;
-use Chleb::Bible::DI::MockLogger;
-use Chleb::Bible::Server;
+use Chleb::DI::Container;
+use Chleb::DI::MockLogger;
+use Chleb::Server;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -49,7 +50,7 @@ sub setUp {
 	my ($self) = @_;
 
 	$self->__mockLogger();
-	$self->sut(Chleb::Bible::Server->new());
+	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
 }
@@ -58,7 +59,8 @@ sub test_translation_all {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $json = $self->sut->__lookup({ book => 'Psalms', chapter => 110, verse => 1, translations => [ 'all' ] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__lookup({ accept => $mediaType, book => 'Psalms', chapter => 110, verse => 1, translations => [ 'all' ] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -171,11 +173,35 @@ sub test_translation_all {
 	return EXIT_SUCCESS;
 }
 
+sub test_not_found {
+	my ($self) = @_;
+	plan tests => 1;
+
+	eval {
+		$self->sut->__lookup({ book => 'Acts', chapter => 29, verse => 1, translations => [ 'kjv' ] });
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => 'Chapter 29 not found in Acts',
+				location    => undef,
+				statusCode  => 404,
+			),
+		), 'correctly not found');
+	} else {
+		fail('No exception raised, as was expected');
+	}
+
+	return EXIT_SUCCESS;
+}
+
 sub __mockLogger {
 	my ($self) = @_;
 
-	my $dic = Chleb::Bible::DI::Container->instance;
-	$dic->logger(Chleb::Bible::DI::MockLogger->new());
+	my $dic = Chleb::DI::Container->instance;
+	$dic->logger(Chleb::DI::MockLogger->new());
 
 	return;
 }

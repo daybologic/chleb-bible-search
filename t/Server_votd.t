@@ -39,9 +39,10 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible::DI::Container;
-use Chleb::Bible::DI::MockLogger;
-use Chleb::Bible::Server;
+use Chleb::DI::Container;
+use Chleb::DI::MockLogger;
+use Chleb::Server;
+use English qw(-no_match_vars);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -49,7 +50,7 @@ sub setUp {
 	my ($self) = @_;
 
 	$self->__mockLogger();
-	$self->sut(Chleb::Bible::Server->new());
+	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
 }
@@ -143,7 +144,8 @@ sub testV2 {
 	plan tests => 1;
 
 	my $when = '1971-04-28T12:00:00+0100';
-	my $json = $self->sut->__votd({ version => 2, when => $when });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ version => 2, when => $when, accept => $mediaType });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -291,7 +293,8 @@ sub testV2_translations_asv_asv {
 	plan tests => 1;
 
 	my $when = '2024-10-30T21:36:26+0000';
-	my $json = $self->sut->__votd({ version => 2, when => $when, translations => ['asv', 'asv'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['asv', 'asv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -375,7 +378,8 @@ sub testV2_translations_kjv_asv {
 	plan tests => 1;
 
 	my $when = '2024-10-30T21:36:26+0000';
-	my $json = $self->sut->__votd({ version => 2, when => $when, translations => ['kjv', 'asv'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['kjv', 'asv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -491,7 +495,8 @@ sub testV2_translations_all {
 	plan tests => 1;
 
 	my $when = '2021-10-30T21:36:26+0000';
-	my $json = $self->sut->__votd({ version => 2, when => $when, translations => ['all'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['all'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -698,11 +703,57 @@ sub testV2_translations_all {
 	return EXIT_SUCCESS;
 }
 
+sub testRedirectV2 {
+	my ($self) = @_;
+
+	eval {
+		$self->sut->__votd({ redirect => 1, version => 2 });
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => 'votd redirect is only supported on version 1',
+				statusCode  => 400,
+			),
+		), 'correct error');
+	} else {
+		fail('No exception raised, as was expected');
+	}
+
+	return EXIT_SUCCESS;
+}
+
+sub testRedirectV1 {
+	my ($self) = @_;
+
+	eval {
+		my $when = '2021-10-30T21:36:26+0000';
+		$self->sut->__votd({ redirect => 1, version => 1, when => $when });
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => undef,
+				location    => '/1/lookup/num/16/8',
+				statusCode  => 307,
+			),
+		), 'correct redirect');
+	} else {
+		fail('No exception raised, as was expected');
+	}
+
+	return EXIT_SUCCESS;
+}
+
 sub __mockLogger {
 	my ($self) = @_;
 
-	my $dic = Chleb::Bible::DI::Container->instance;
-	$dic->logger(Chleb::Bible::DI::MockLogger->new());
+	my $dic = Chleb::DI::Container->instance;
+	$dic->logger(Chleb::DI::MockLogger->new());
 
 	return;
 }

@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Chleb Bible Search
   description: Query the bible, or get a verse of the day.
-  version: 0.11.0
+  version: 0.12.0
 servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
@@ -90,6 +90,9 @@ paths:
         '200':
           description: Successfully retrieved verse
           content:
+            text/html:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object
@@ -133,6 +136,13 @@ paths:
             default: false
           required: false
           description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+        - in: query
+          name: redirect
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Provide a 307 redirect to the appropriate verse lookup
       security: [] # No security
       responses:
         '200':
@@ -150,6 +160,8 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Stats'
+        '307':
+          description: Temporary Redirect
         '429':
           description: Rate-limited
         '500':
@@ -196,6 +208,9 @@ paths:
         '200':
           description: Successfully retrieved verse
           content:
+            text/html:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object
@@ -259,6 +274,9 @@ paths:
         '200':
           description: Success
           content:
+            text/html:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object
@@ -324,6 +342,9 @@ paths:
         '200':
           description: Success
           content:
+            text/html:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object

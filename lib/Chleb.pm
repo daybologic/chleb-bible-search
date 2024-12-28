@@ -45,10 +45,10 @@ use Time::HiRes ();
 
 use Chleb::Bible;
 use Chleb::Bible::Backend;
-use Chleb::Bible::DI::Container;
-use Chleb::Bible::Server::Exception;
+use Chleb::Exception;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
+use Chleb::DI::Container;
 
 Readonly my $TRANSLATION_DEFAULT => 'kjv';
 
@@ -57,7 +57,7 @@ has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__mak
 has __bibles => (is => 'ro', isa => 'HashRef[Str]', lazy => 1, default => \&__makeBibles); # use 'bibles' to access
 
 BEGIN {
-	our $VERSION = '0.11.0';
+	our $VERSION = '0.12.0';
 }
 
 sub BUILD {
@@ -224,7 +224,7 @@ sub __getBible {
 		push(@bible, $self->bibles($translation));
 	}
 
-	die Chleb::Bible::Server::Exception->raise(HTTP_NOT_FOUND, 'No recognized bible translations')
+	die Chleb::Exception->raise(HTTP_NOT_FOUND, 'No recognized bible translations')
 	    if (scalar(@bible) == 0);
 
 	return @bible;

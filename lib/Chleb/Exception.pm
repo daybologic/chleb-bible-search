@@ -1,4 +1,3 @@
-#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,56 +28,33 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package RandomTests;
+package Chleb::Exception;
 use strict;
 use warnings;
 use Moose;
 
-use lib 'externals/libtest-module-runnable-perl/lib';
+use HTTP::Status qw(:is);
 
-extends 'Test::Module::Runnable';
+has description => (is => 'ro', isa => 'Str');
 
-use POSIX qw(EXIT_SUCCESS);
-use Chleb;
-use Chleb::DI::MockLogger;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
-use Test::More 0.96;
+has statusCode => (is => 'ro', isa => 'Int', default => 200);
 
-sub setUp {
-	my ($self) = @_;
+has location => (is => 'ro', isa => 'Str');
 
-	$self->sut(Chleb->new());
-	$self->__mockLogger();
+sub raise {
+	my ($class, $statusCode, $thing) = @_;
 
-	return EXIT_SUCCESS;
+	my %params = (
+		statusCode => $statusCode,
+	);
+
+	if (is_redirect($statusCode)) {
+		$params{location} = $thing;
+	} else {
+		$params{description} = $thing;
+	}
+
+	return $class->new(\%params);
 }
 
-sub test {
-	my ($self) = @_;
-	plan tests => 1;
-
-	my $verse = $self->sut->random();
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => isa('Chleb::Bible::Book'),
-			chapter => isa('Chleb::Bible::Chapter'),
-			ordinal => re(qr/^\d+$/),
-			text    => ignore(),
-		),
-	), 'verse inspection') or diag(explain($verse->toString()));
-
-	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
-}
-
-package main;
-use strict;
-use warnings;
-
-exit(RandomTests->new->run());
+1;

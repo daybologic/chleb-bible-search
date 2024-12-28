@@ -11,7 +11,7 @@ extends 'Test::Module::Runnable';
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Chleb::Bible::Base;
-use Chleb::Bible::DI::MockLogger;
+use Chleb::DI::MockLogger;
 use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
 use Test::More;
@@ -101,7 +101,7 @@ sub testMangledPlus {
 
 sub __mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
+	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
 	return;
 }
 

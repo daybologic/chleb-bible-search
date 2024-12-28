@@ -39,9 +39,9 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Bible::DI::Container;
-use Chleb::Bible::DI::MockLogger;
-use Chleb::Bible::Server;
+use Chleb::DI::Container;
+use Chleb::DI::MockLogger;
+use Chleb::Server;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -49,7 +49,7 @@ sub setUp {
 	my ($self) = @_;
 
 	$self->__mockLogger();
-	$self->sut(Chleb::Bible::Server->new());
+	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
 }
@@ -58,7 +58,8 @@ sub test_translation_kjv {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $json = $self->sut->__random();
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__random({ accept => $mediaType });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -141,7 +142,8 @@ sub test_translation_asv {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $json = $self->sut->__random({ translations => ['asv'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -224,7 +226,8 @@ sub test_translation_all {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $json = $self->sut->__random({ translations => ['all'] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['all'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -306,8 +309,8 @@ sub test_translation_all {
 sub __mockLogger {
 	my ($self) = @_;
 
-	my $dic = Chleb::Bible::DI::Container->instance;
-	$dic->logger(Chleb::Bible::DI::MockLogger->new());
+	my $dic = Chleb::DI::Container->instance;
+	$dic->logger(Chleb::DI::MockLogger->new());
 
 	return;
 }

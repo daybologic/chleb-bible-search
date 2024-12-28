@@ -1,4 +1,3 @@
-#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,56 +28,87 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package RandomTests;
-use strict;
-use warnings;
+package Chleb::Server::MediaType::Item;
 use Moose;
-
-use lib 'externals/libtest-module-runnable-perl/lib';
-
-extends 'Test::Module::Runnable';
-
-use POSIX qw(EXIT_SUCCESS);
-use Chleb;
-use Chleb::DI::MockLogger;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
-use Test::More 0.96;
-
-sub setUp {
-	my ($self) = @_;
-
-	$self->sut(Chleb->new());
-	$self->__mockLogger();
-
-	return EXIT_SUCCESS;
-}
-
-sub test {
-	my ($self) = @_;
-	plan tests => 1;
-
-	my $verse = $self->sut->random();
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => isa('Chleb::Bible::Book'),
-			chapter => isa('Chleb::Bible::Chapter'),
-			ordinal => re(qr/^\d+$/),
-			text    => ignore(),
-		),
-	), 'verse inspection') or diag(explain($verse->toString()));
-
-	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
-}
-
-package main;
 use strict;
 use warnings;
 
-exit(RandomTests->new->run());
+=head1 NAME
+
+Chleb::Server::MediaType::Item
+
+=head1 DESCRIPTION
+
+One media item type from an Accept header
+
+=cut
+
+use Chleb::Args::Base;
+use Moose::Util::TypeConstraints;
+
+=head1 ATTRIBUTES
+
+=over
+
+=item C<major>
+
+The major media type, such as 'application', or 'text'.
+
+=item C<minor>
+
+The minor media type, such as 'html', or 'json'.
+
+=cut
+
+subtype 'Part',
+	as 'Str',
+	where {
+		defined($_) && length($_) > 0 && m/^\S+$/ && ! m@^/+$@
+	},
+	message {
+		'incomplete spec'
+	};
+
+has [qw(major minor)] => (is => 'ro', required => 1, isa => 'Part');
+
+=item C<weight>
+
+The weight, whose default is always 1.0.  Lower values indicate a backup priority only.
+
+TODO: 1.1 and above is illegal, I think?  Check the standards.
+
+=cut
+
+has weight => (is => 'ro', required => 1, isa => 'Num', default => 1.0, required => 1);
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<toString([$args])>
+
+Return the media type in the standard major/minor format.
+
+C<$args> must be a L<Chleb::Server::MediaType::Args::ToString> object, if present.
+
+=cut
+
+sub toString {
+	my ($self, $args) = @_;
+	$args = Chleb::Args::Base::makeDummy('Chleb::Server::MediaType::Args::ToString', $args);
+
+	my $str = join('/', $self->major, $self->minor);
+
+	$str .= sprintf(';q=%.1f', $self->weight)
+	    if ($args->verbose);
+
+	return $str;
+}
+
+=back
+
+=cut
+
+1;

@@ -28,22 +28,47 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Bible::Server::Exception;
+package Chleb::DI::MockLogger;
+use Moose;
 use strict;
 use warnings;
-use Moose;
 
-has description => (is => 'ro', isa => 'Str');
+use Test::More;
 
-has statusCode => (is => 'ro', isa => 'Int', default => 200);
+sub BUILD {
+	return;
+}
 
-sub raise {
-	my ($class, $statusCode, $description) = @_;
+sub log {
+	my ($self, $msg) = @_;
+	return unless ($ENV{TEST_VERBOSE});
+	diag($msg);
+	return;
+}
 
-	return $class->new({
-		description => $description,
-		statusCode  => $statusCode,
-	});
+sub info {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
+}
+
+sub error {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
+}
+
+sub warn {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
+}
+
+sub debug {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
+}
+
+sub trace {
+	my ($self, $msg) = @_;
+	return $self->log($msg);
 }
 
 1;

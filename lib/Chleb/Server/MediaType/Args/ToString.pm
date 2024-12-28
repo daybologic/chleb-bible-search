@@ -28,47 +28,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Bible::DI::MockLogger;
-use Moose;
+package Chleb::Server::MediaType::Args::ToString;
 use strict;
 use warnings;
+use Moose;
 
-use Test::More;
-
-sub BUILD {
-	return;
-}
-
-sub log {
-	my ($self, $msg) = @_;
-	return unless ($ENV{TEST_VERBOSE});
-	diag($msg);
-	return;
-}
-
-sub info {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub error {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub warn {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub debug {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub trace {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
+extends 'Chleb::Args::Base';
 
 1;

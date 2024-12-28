@@ -42,8 +42,8 @@ use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
 use Chleb;
 use Chleb::Bible::Book;
-use Chleb::Bible::DI::MockLogger;
 use Chleb::Bible::Verse;
+use Chleb::DI::MockLogger;
 use Test::Deep qw(cmp_deeply);
 use Test::Exception;
 use Test::More 0.96;
@@ -117,7 +117,7 @@ sub test {
 
 sub __mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::Bible::DI::MockLogger->new());
+	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
 	return;
 }
 

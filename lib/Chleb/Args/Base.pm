@@ -28,46 +28,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Bible::DI::Container;
-use MooseX::Singleton;
+package Chleb::Args::Base;
+use strict;
+use warnings;
 use Moose;
 
-use Log::Log4perl;
-use Chleb::Bible::DI::Config;
-use Chleb::Bible::Exclusions;
+use Chleb::Server::MediaType::Args::ToString;
 
-has bible => (is => 'rw');
+has verbose => (is => 'ro', isa => 'Bool', default => 0);
 
-has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
-
-has config => (is => 'rw', lazy => 1, builder => '_makeConfig');
-
-has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
-
-sub _makeLogger {
-	foreach my $path ('etc/log4perl.conf', '/etc/chleb-bible-search/log4perl.conf') {
-		next unless (-e $path);
-		Log::Log4perl->init($path);
-		last;
+sub makeDummy {
+	my ($class, $args) = @_;
+	if ($args) {
+		return $args if ($args->isa($class));
+		die('$args must be of type ' . $class);
 	}
-
-	return Log::Log4perl->get_logger('chleb');
-}
-
-sub _makeConfig {
-	my ($self) = @_;
-
-	foreach my $path ('etc/main.conf', '/etc/chleb-bible-search/main.conf') {
-		next unless (-e $path);
-		return Chleb::Bible::DI::Config->new({ dic => $self, path => $path });
-	}
-
-	die('No config available!');
-}
-
-sub _makeExclusions {
-	my ($self) = @_;
-	return Chleb::Bible::Exclusions->new({ dic => $self });
+	return $class->new();
 }
 
 1;
