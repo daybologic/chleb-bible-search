@@ -40,7 +40,7 @@ use English qw(-no_match_vars);
 use Readonly;
 
 BEGIN {
-	our $VERSION = '0.11.0';
+	our $VERSION = '0.12.0';
 }
 
 Readonly my $DEFAULT_EXPIRES_SECONDS => 604_800; # one week
