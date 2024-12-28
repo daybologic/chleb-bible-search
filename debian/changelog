@@ -1,8 +1,10 @@
 chleb-bible-search (0.12.0) stable; urgency=medium
 
-  * TODO: Add release notes here
+  * 💥 backwards incompatible change: you must pass Accept: application/json for all requests which require JSON output!
+  * 🚸 better 404 and other HTTP error codes
+  * ✨ support 1/votd 307 redirect to 1/lookup
 
- -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Thu, 26 Dec 2024 23:32:19 +0000
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 28 Dec 2024 17:18:44 +0000
 
 chleb-bible-search (0.11.0) stable; urgency=medium
 
