@@ -14,7 +14,7 @@ use Chleb::DI::MockLogger;
 use Chleb::Token;
 use Chleb::Token::Repository;
 use Chleb::Token::Repository::Dummy;
-use Test::Deep qw(cmp_deeply all isa methods bool re);
+use Test::Deep qw(cmp_deeply all isa methods bool re shallow);
 use Test::Exception;
 use Test::More 0.96;
 
@@ -105,7 +105,7 @@ sub testSave {
 	$self->sut->save();
 
 	my $mockCalls = $self->mockCalls($mockPackage, $mockMethod);
-	cmp_deeply($mockCalls, [[]], sprintf('one call to %s/%s', $mockPackage, $mockMethod)) or diag(explain($mockCalls));
+	cmp_deeply($mockCalls, [[shallow($self->sut)]], sprintf('one call to %s/%s', $mockPackage, $mockMethod)) or diag(explain($mockCalls));
 
 	return EXIT_SUCCESS;
 }
