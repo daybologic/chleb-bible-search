@@ -48,7 +48,7 @@ has __repo => (is => 'ro', isa => 'Chleb::Token::Repository', lazy => 1, default
 });
 
 BEGIN {
-	our $VERSION = '0.11.0';
+	our $VERSION = '0.12.0';
 }
 
 sub create {
