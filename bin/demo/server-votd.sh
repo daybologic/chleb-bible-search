@@ -1,6 +1,6 @@
 #!/bin/sh
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#now='2024-07-27T09:00:00%2B0100'
+#now='2024-2025-07-27T09:00:00%2B0100'
 H=chleb-api.daybologic.co.uk
 
 if [ -x /usr/bin/curl ]; then
