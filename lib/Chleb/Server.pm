@@ -47,7 +47,6 @@ use Chleb;
 use Chleb::DI::Container;
 use Chleb::Exception;
 use Chleb::Server::MediaType;
-use Chleb::Token::Repository::TempDir;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
 use JSON;
@@ -776,8 +775,7 @@ get '/2/votd' => sub {
 	my $when = param('when');
 	my $dancerRequest = request();
 
-	my $tokenRepo = Chleb::Token::Repository::TempDir->new();
-	my $sessionToken = $tokenRepo->create();
+	my $sessionToken = $server->dic->tokenRepo->create();
 	cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
