@@ -48,6 +48,7 @@ via this "DIC" so that they may be reliably replaced during the test suites.
 use Log::Log4perl;
 use Chleb::Bible::Exclusions;
 use Chleb::DI::Config;
+use Chleb::Token::Repository::TempDir;
 
 has bible => (is => 'rw'); # TODO: deprecated
 
@@ -82,6 +83,14 @@ TODO
 =cut
 
 has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
+
+=item C<tokenRepo>
+
+TODO
+
+=cut
+
+has tokenRepo => (is => 'rw', lazy => 1, builder => '_makeTokenRepo');
 
 =back
 
@@ -141,6 +150,17 @@ TODO
 sub _makeExclusions {
 	my ($self) = @_;
 	return Chleb::Bible::Exclusions->new({ dic => $self });
+}
+
+=item C<_makeTokenRepo()>
+
+TODO
+
+=cut
+
+sub _makeTokenRepo {
+	my ($self) = @_;
+	return Chleb::Token::Repository::TempDir->new({ dic => $self });
 }
 
 =back
