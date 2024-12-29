@@ -778,7 +778,7 @@ get '/2/votd' => sub {
 
 	my $tokenRepo = Chleb::Token::Repository::TempDir->new();
 	my $sessionToken = $tokenRepo->create();
-	cookie sessionToken => $sessionToken->value;
+	cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
