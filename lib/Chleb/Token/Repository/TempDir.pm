@@ -78,13 +78,21 @@ sub load {
 	# FIXME: Need a way to associate actual data with the key?
 	# Perhaps not though, perhaps keep in memory with shared memcached?
 	# That would keep session ids simple
-	my $token = Chleb::Token->new({
-		_repo   => $self->__repo,
-		_source => $self,
-		_value  => $value,
-		expires => $data->{expires},
-		now     => $data->{created},
-	});
+	my $token;
+	eval {
+		$token = Chleb::Token->new({
+			dic     => $self->dic,
+			_repo   => $self->__repo,
+			_source => $self,
+			_value  => $value,
+			expires => $data->{expires},
+			now     => $data->{created},
+		});
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->error($evalError);
+	}
 
 	die Chleb::Exception->raise(HTTP_FORBIDDEN, 'Token not recognized via ' . __PACKAGE__)
 	    if ($token->expired);
@@ -120,7 +128,9 @@ sub __getFilePath {
 	my ($self, $value) = @_;
 
 	$value .= '.session';
-	return join('/', $self->dir, $value);
+	$value = join('/', $self->dir, $value);
+	$self->dic->logger->trace('session file path: ' . $value);
+	return $value;
 }
 
 1;
