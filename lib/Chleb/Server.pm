@@ -775,8 +775,16 @@ get '/2/votd' => sub {
 	my $when = param('when');
 	my $dancerRequest = request();
 
-	my $sessionToken = $server->dic->tokenRepo->create();
-	cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
+	my $tokenRepo = $server->dic->tokenRepo;
+	my $sessionToken;
+	if ($sessionToken = cookie('sessionToken')) {
+		$server->dic->logger->trace("Got session token '$sessionToken' from client");
+		# FIXME: Load from repo?
+	} else {
+		$sessionToken = $tokenRepo->create();
+		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+		cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
+	}
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
