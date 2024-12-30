@@ -779,7 +779,8 @@ get '/2/votd' => sub {
 	my $sessionToken;
 	if ($sessionToken = cookie('sessionToken')) {
 		$server->dic->logger->trace("Got session token '$sessionToken' from client");
-		# FIXME: Load from repo?
+		$sessionToken = $tokenRepo->load($sessionToken);
+		$server->dic->logger->trace('session token found!  ' . $sessionToken->toString());
 	} else {
 		$sessionToken = $tokenRepo->create();
 		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
