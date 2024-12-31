@@ -89,18 +89,22 @@ sub load {
 	my $token;
 	eval {
 		$token = Chleb::Token->new({
-			dic     => $self->dic,
-			_repo   => $self->__repo,
-			_source => $self,
-			_value  => $value,
-			expires => $data->{expires},
-			now     => $data->{created},
+			dic      => $self->dic,
+			_repo    => $self->__repo,
+			_source  => $self,
+			_value   => $value,
+			expires  => $data->{expires},
+			now      => $data->{created},
+			_version => $data->{version},
 		});
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error($evalError);
-		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data');
+		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data'); # This should not happen!
+	} elsif ($token->version != $Chleb::Token::DATA_VERSION) {
+		$self->dic->logger->error(sprintf('Version mismatch in %s, (store %d, expect %d), stale data?', $token->toString(), $token->version, $Chleb::Token::DATA_VERSION));
+		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Sorry, the token went state because of a version mismatch, remove your sessionToken cookie and you'll get a new one");
 	} elsif ($token->expired) {
 		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__);
 	}
