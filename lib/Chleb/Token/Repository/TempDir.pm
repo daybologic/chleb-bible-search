@@ -58,7 +58,8 @@ sub create {
 	my ($self) = @_;
 
 	return Chleb::Token->new({
-		_repo => $self->__repo,
+		dic     => $self->dic,
+		_repo   => $self->__repo,
 		_source => $self,
 	});
 }
@@ -73,9 +74,11 @@ sub load {
 		$self->dic->logger->trace(Dumper $data);
 	};
 
-	if (my $evalError = $EVAL_ERROR || !$data) {
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->error($evalError);
 		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken unrecognized via ' . __PACKAGE__);
-		# TODO logger?
+	} elsif (!$data) {
+		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Session token is an empty file');
 	}
 
 	# FIXME: Need a way to associate actual data with the key?
@@ -85,6 +88,7 @@ sub load {
 	eval {
 		$token = Chleb::Token->new({
 			dic     => $self->dic,
+			#dic     => 'FIXME',
 			_repo   => $self->__repo,
 			_source => $self,
 			_value  => $value,
@@ -95,10 +99,10 @@ sub load {
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error($evalError);
+		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, $evalError);
+	} elsif ($token->expired) {
+		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__);
 	}
-
-	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__)
-	    if ($token->expired);
 
 	return $token;
 }

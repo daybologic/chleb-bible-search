@@ -708,17 +708,24 @@ set content_type => $Chleb::Server::CONTENT_TYPE_JSON;
 sub handleException {
 	my ($exception) = @_;
 
-	if (blessed($exception) && $exception->isa('Chleb::Exception')) {
-		$server->dic->logger->debug(sprintf('Returning HTTP status code %d', $exception->statusCode));
-		if (is_redirect($exception->statusCode)) {
-			return redirect $exception->location, $exception->statusCode;
-		} else {
-			send_error($exception->description, $exception->statusCode);
+	my $str;
+	if (blessed($exception)) {
+		if ($exception->isa('Chleb::Exception')) {
+			$server->dic->logger->debug('Returning ' . $exception->toString());
+			if (is_redirect($exception->statusCode)) {
+				return redirect $exception->location, $exception->statusCode;
+			} else {
+				send_error($exception->description, $exception->statusCode);
+			}
+		} elsif ($exception->can('toString')) {
+			$str = $exception->toString();
 		}
 	} else {
-		$server->dic->logger->error("Internal Server Error: $exception");
-		send_error($exception, 500);
+		$str = $exception;
 	}
+
+	$server->dic->logger->error("Internal Server Error: $exception");
+	send_error($exception, 500);
 
 	return;
 }
@@ -792,6 +799,13 @@ get '/2/votd' => sub {
 		$sessionToken = $tokenRepo->create();
 		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
 		cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
+
+		eval {
+			$sessionToken->save();
+		};
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
 	}
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
