@@ -44,6 +44,7 @@ BEGIN {
 }
 
 Readonly my $DEFAULT_EXPIRES_SECONDS => 604_800; # one week
+Readonly our $DATA_VERSION => 1;
 
 has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
 	my ($self) = @_;
@@ -52,6 +53,10 @@ has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
 
 has created => (is => 'rw', isa => 'Int', init_arg => 'now', default => sub {
 	return time();
+});
+
+has version => (is => 'ro', isa => 'Int', init_arg => '_version', required => 1, default => sub {
+	return $DATA_VERSION;
 });
 
 has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, init_arg => '_repo');
@@ -89,6 +94,7 @@ sub TO_JSON {
 		created => $self->created,
 		expires => $self->expires,
 		value   => $self->value,
+		version => $self->version,
 	};
 }
 
