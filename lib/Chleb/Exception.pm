@@ -57,4 +57,9 @@ sub raise {
 	return $class->new(\%params);
 }
 
+sub toString {
+	my ($self) = @_;
+	return sprintf('HTTP code %d: %s', $self->statusCode, $self->description);
+}
+
 1;
