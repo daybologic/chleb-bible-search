@@ -779,7 +779,14 @@ get '/2/votd' => sub {
 	my $sessionToken;
 	if ($sessionToken = cookie('sessionToken')) {
 		$server->dic->logger->trace("Got session token '$sessionToken' from client");
-		$sessionToken = $tokenRepo->load($sessionToken);
+
+		eval {
+			$sessionToken = $tokenRepo->load($sessionToken);
+		};
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
+
 		$server->dic->logger->trace('session token found!  ' . $sessionToken->toString());
 	} else {
 		$sessionToken = $tokenRepo->create();

@@ -38,6 +38,7 @@ extends 'Chleb::Token::Repository::Base';
 use Chleb::Exception;
 use Chleb::Token;
 use Chleb::Token::Repository;
+use Data::Dumper;
 #use IO::File;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
@@ -66,8 +67,10 @@ sub load {
 	my ($self, $value) = @_;
 
 	my $data;
+	my $filePath = $self->__getFilePath($value);
 	eval {
-		$data = retrieve($self->__getFilePath($value));
+		$data = retrieve($filePath);
+		$self->dic->logger->trace(Dumper $data);
 	};
 
 	if (my $evalError = $EVAL_ERROR || !$data) {
