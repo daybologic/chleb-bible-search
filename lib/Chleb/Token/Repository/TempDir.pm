@@ -90,7 +90,6 @@ sub load {
 	eval {
 		$token = Chleb::Token->new({
 			dic     => $self->dic,
-			#dic     => 'FIXME',
 			_repo   => $self->__repo,
 			_source => $self,
 			_value  => $value,
@@ -101,7 +100,7 @@ sub load {
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error($evalError);
-		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, $evalError);
+		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data');
 	} elsif ($token->expired) {
 		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__);
 	}
