@@ -74,7 +74,7 @@ sub load {
 	};
 
 	if (my $evalError = $EVAL_ERROR || !$data) {
-		die Chleb::Exception->raise(HTTP_FORBIDDEN, 'Token not recognized via ' . __PACKAGE__);
+		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken unrecognized via ' . __PACKAGE__);
 		# TODO logger?
 	}
 
@@ -97,7 +97,7 @@ sub load {
 		$self->dic->logger->error($evalError);
 	}
 
-	die Chleb::Exception->raise(HTTP_FORBIDDEN, 'Token not recognized via ' . __PACKAGE__)
+	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__)
 	    if ($token->expired);
 
 	return $token;

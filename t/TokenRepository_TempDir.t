@@ -92,11 +92,11 @@ sub testSaveLoad {
 			cmp_deeply($evalError, all(
 				isa('Chleb::Exception'),
 				methods(
-					description => 'Token not recognized via Chleb::Token::Repository::TempDir',
+					description => 'sessionToken expired via Chleb::Token::Repository::TempDir',
 					location    => undef,
-					statusCode  => 403,
+					statusCode  => 401,
 				),
-			), '403 Forbidden'); # TODO: Different description for expired?  Hmm?
+			), '403 Unauthorized');
 		} else {
 			fail('No exception raised, as was expected');
 		}
@@ -120,11 +120,11 @@ sub testLoadNotFound {
 		cmp_deeply($evalError, all(
 			isa('Chleb::Exception'),
 			methods(
-				description => 'Token not recognized via Chleb::Token::Repository::TempDir',
+				description => 'sessionToken unrecognized via Chleb::Token::Repository::TempDir',
 				location    => undef,
-				statusCode  => 403,
+				statusCode  => 401,
 			),
-		), '403 Forbidden');
+		), '401 Unauthorized');
 	} else {
 		fail('No exception raised, as was expected');
 	}
