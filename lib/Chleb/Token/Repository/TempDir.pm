@@ -67,6 +67,8 @@ sub create {
 sub load {
 	my ($self, $value) = @_;
 
+	$value = $value->value if (ref($value) && $value->isa('Dancer2::Core::Cookie'));
+
 	my $data;
 	my $filePath = $self->__getFilePath($value);
 	eval {
