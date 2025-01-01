@@ -730,11 +730,43 @@ sub handleException {
 	return;
 }
 
+sub handleSessionToken {
+	my $tokenRepo = $server->dic->tokenRepo;
+	my $sessionToken;
+	if ($sessionToken = cookie('sessionToken')) {
+		$server->dic->logger->trace("Got session token '$sessionToken' from client");
+
+		eval {
+			$sessionToken = $tokenRepo->load($sessionToken);
+		};
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
+
+		$server->dic->logger->trace('session token found!  ' . $sessionToken->toString());
+	} else {
+		$sessionToken = $tokenRepo->create();
+		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+		cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
+
+		eval {
+			$sessionToken->save();
+		};
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
+	}
+
+	return;
+}
+
 get '/1/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+
+	handleSessionToken();
 
 	my $result;
 	eval {
@@ -782,31 +814,7 @@ get '/2/votd' => sub {
 	my $when = param('when');
 	my $dancerRequest = request();
 
-	my $tokenRepo = $server->dic->tokenRepo;
-	my $sessionToken;
-	if ($sessionToken = cookie('sessionToken')) {
-		$server->dic->logger->trace("Got session token '$sessionToken' from client");
-
-		eval {
-			$sessionToken = $tokenRepo->load($sessionToken);
-		};
-		if (my $exception = $EVAL_ERROR) {
-			handleException($exception);
-		}
-
-		$server->dic->logger->trace('session token found!  ' . $sessionToken->toString());
-	} else {
-		$sessionToken = $tokenRepo->create();
-		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
-		cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
-
-		eval {
-			$sessionToken->save();
-		};
-		if (my $exception = $EVAL_ERROR) {
-			handleException($exception);
-		}
-	}
+	handleSessionToken();
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
