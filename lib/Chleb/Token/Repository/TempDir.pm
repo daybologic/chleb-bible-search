@@ -68,6 +68,7 @@ sub load {
 	my ($self, $value) = @_;
 
 	$value = $value->value if (ref($value) && $value->isa('Dancer2::Core::Cookie'));
+	__valueValidate($value);
 
 	my $data;
 	my $filePath = $self->__getFilePath($value);
@@ -140,6 +141,13 @@ sub __getFilePath {
 	$value = join('/', $self->dir, $value);
 	$self->dic->logger->trace('session file path: ' . $value);
 	return $value;
+}
+
+sub __valueValidate {
+	my ($value) = @_;
+	return 1 if ($value =~ m/^[0-9a-f]{64}$/);
+
+	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be SHA-256');
 }
 
 1;

@@ -113,7 +113,7 @@ sub testLoadNotFound {
 
 	my $token;
 	eval {
-		$token = $self->sut->load($self->uniqueStr());
+		$token = $self->sut->load('a6b2934af53fbfa4c42266765075c4fd7b602345089a5aa825c9117847535aa6');
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
@@ -121,6 +121,33 @@ sub testLoadNotFound {
 			isa('Chleb::Exception'),
 			methods(
 				description => 'sessionToken unrecognized via Chleb::Token::Repository::TempDir',
+				location    => undef,
+				statusCode  => 401,
+			),
+		), '401 Unauthorized');
+	} else {
+		fail('No exception raised, as was expected');
+	}
+
+	ok(!$token, 'token not set');
+
+	return EXIT_SUCCESS;
+}
+
+sub testLoadNotInvalidHash {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $token;
+	eval {
+		$token = $self->sut->load($self->uniqueStr());
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => 'The sessionToken format must be SHA-256',
 				location    => undef,
 				statusCode  => 401,
 			),
