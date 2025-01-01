@@ -83,9 +83,6 @@ sub load {
 		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Session token is an empty file');
 	}
 
-	# FIXME: Need a way to associate actual data with the key?
-	# Perhaps not though, perhaps keep in memory with shared memcached?
-	# That would keep session ids simple
 	my $token;
 	eval {
 		$token = Chleb::Token->new({
