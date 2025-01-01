@@ -852,6 +852,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
+	handleSessionToken();
+
 	my $result;
 	eval {
 		$result = $server->__lookup({
@@ -885,6 +887,8 @@ get '/1/search' => sub {
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
+	handleSessionToken();
+
 	my $result = $server->__search({ accept => $mediaType, limit => $limit, term => $term, wholeword => $wholeword });
 
 	if (ref($result) ne 'HASH') {
@@ -897,6 +901,7 @@ get '/1/search' => sub {
 };
 
 get '/1/ping' => sub {
+	handleSessionToken();
 	return $server->__ping();
 };
 
@@ -912,6 +917,7 @@ get '/1/version' => sub {
 };
 
 get '/1/uptime' => sub {
+	handleSessionToken();
 	return $server->__uptime();
 };
 
