@@ -35,7 +35,7 @@ use Moose;
 
 has count => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeCount);
 
-has query => (is => 'ro', isa => 'Chleb::Bible::Search::Query', required => 1);
+has query => (is => 'ro', isa => 'Chleb::Bible::Search::Query', required => 0);
 
 has verses => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Verse]', required => 1);
 
@@ -52,6 +52,22 @@ sub __makeCount {
 sub toString {
 	my ($self) = @_;
 	return sprintf("%s count %d for term '%s'", 'Results', $self->count, $self->query->text);
+}
+
+sub TO_JSON {
+	my ($self) = @_;
+
+	my %json = (
+		count       => $self->count,
+		msec        => $self->msec,
+		verses      => [ ],
+	);
+
+	foreach (my $verseI = 0; $verseI < $self->count; $verseI++) {
+		$json{verses}->[$verseI] = $self->verses->[$verseI]->TO_JSON();
+	}
+
+	return \%json;
 }
 
 1;
