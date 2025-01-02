@@ -73,6 +73,7 @@ sub test_TO_JSON {
 	cmp_deeply($json, {
 		count => 3,
 		msec => 0,
+		text => '', # TODO
 		verses => [
 			{
 				book => 'short book 1',

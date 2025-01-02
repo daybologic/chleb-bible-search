@@ -37,6 +37,8 @@ has count => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeCount);
 
 has query => (is => 'ro', isa => 'Chleb::Bible::Search::Query', required => 0);
 
+has queryText => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeQueryText);
+
 has verses => (is => 'ro', isa => 'ArrayRef[Chleb::Bible::Verse]', required => 1);
 
 has msec => (is => 'rw', isa => 'Int', default => 0);
@@ -51,16 +53,17 @@ sub __makeCount {
 
 sub toString {
 	my ($self) = @_;
-	return sprintf("%s count %d for term '%s'", 'Results', $self->count, $self->query->text);
+	return sprintf("%s count %d for term '%s'", 'Results', $self->count, $self->queryText);
 }
 
 sub TO_JSON {
 	my ($self) = @_;
 
 	my %json = (
-		count       => $self->count,
-		msec        => $self->msec,
-		verses      => [ ],
+		count  => $self->count,
+		msec   => $self->msec,
+		text   => $self->queryText,
+		verses => [ ],
 	);
 
 	foreach (my $verseI = 0; $verseI < $self->count; $verseI++) {
@@ -68,6 +71,11 @@ sub TO_JSON {
 	}
 
 	return \%json;
+}
+
+sub __makeQueryText {
+	my ($self) = @_;
+	return defined($self->query) ? $self->query->text : '';
 }
 
 1;
