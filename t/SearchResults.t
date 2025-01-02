@@ -64,8 +64,10 @@ sub test_TO_JSON {
 	my ($self) = @_;
 	plan tests => 1;
 
+	my $queryText = $self->uniqueStr();
 	$self->sut(Chleb::Bible::Search::Results->new({
 		dic => $self->dic,
+		queryText => $queryText,
 		verses => $self->__makeVerses(),
 	}));
 
@@ -73,7 +75,7 @@ sub test_TO_JSON {
 	cmp_deeply($json, {
 		count => 3,
 		msec => 0,
-		text => '', # TODO
+		text => $queryText,
 		verses => [
 			{
 				book => 'short book 1',
