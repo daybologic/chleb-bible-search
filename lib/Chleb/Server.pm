@@ -44,8 +44,8 @@ Dancer2 server for stand-alone HTTP server for Chleb Bible Search
 =cut
 
 use Chleb;
-use Chleb::Exception;
 use Chleb::DI::Container;
+use Chleb::Exception;
 use Chleb::Server::MediaType;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
@@ -708,16 +708,53 @@ set content_type => $Chleb::Server::CONTENT_TYPE_JSON;
 sub handleException {
 	my ($exception) = @_;
 
-	if (blessed($exception) && $exception->isa('Chleb::Exception')) {
-		$server->dic->logger->debug(sprintf('Returning HTTP status code %d', $exception->statusCode));
-		if (is_redirect($exception->statusCode)) {
-			return redirect $exception->location, $exception->statusCode;
-		} else {
-			send_error($exception->description, $exception->statusCode);
+	my $str;
+	if (blessed($exception)) {
+		if ($exception->isa('Chleb::Exception')) {
+			$server->dic->logger->debug('Returning ' . $exception->toString());
+			if (is_redirect($exception->statusCode)) {
+				return redirect $exception->location, $exception->statusCode;
+			} else {
+				send_error($exception->description, $exception->statusCode);
+			}
+		} elsif ($exception->can('toString')) {
+			$str = $exception->toString();
 		}
 	} else {
-		$server->dic->logger->error("Internal Server Error: $exception");
-		send_error($exception, 500);
+		$str = $exception;
+	}
+
+	$server->dic->logger->error("Internal Server Error: $exception");
+	send_error($exception, 500);
+
+	return;
+}
+
+sub handleSessionToken {
+	my $tokenRepo = $server->dic->tokenRepo;
+	my $sessionToken;
+	if ($sessionToken = cookie('sessionToken')) {
+		$server->dic->logger->trace("Got session token '$sessionToken' from client");
+
+		eval {
+			$sessionToken = $tokenRepo->load($sessionToken);
+		};
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
+
+		$server->dic->logger->trace('session token found!  ' . $sessionToken->toString());
+	} else {
+		$sessionToken = $tokenRepo->create();
+		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+		cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
+
+		eval {
+			$sessionToken->save();
+		};
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
 	}
 
 	return;
@@ -728,6 +765,8 @@ get '/1/random' => sub {
 
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+
+	handleSessionToken();
 
 	my $result;
 	eval {
@@ -775,6 +814,8 @@ get '/2/votd' => sub {
 	my $when = param('when');
 	my $dancerRequest = request();
 
+	handleSessionToken();
+
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
 	my $result;
@@ -811,6 +852,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
+	handleSessionToken();
+
 	my $result;
 	eval {
 		$result = $server->__lookup({
@@ -844,6 +887,8 @@ get '/1/search' => sub {
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
+	handleSessionToken();
+
 	my $result = $server->__search({ accept => $mediaType, limit => $limit, term => $term, wholeword => $wholeword });
 
 	if (ref($result) ne 'HASH') {
@@ -856,6 +901,7 @@ get '/1/search' => sub {
 };
 
 get '/1/ping' => sub {
+	handleSessionToken();
 	return $server->__ping();
 };
 
@@ -871,6 +917,7 @@ get '/1/version' => sub {
 };
 
 get '/1/uptime' => sub {
+	handleSessionToken();
 	return $server->__uptime();
 };
 

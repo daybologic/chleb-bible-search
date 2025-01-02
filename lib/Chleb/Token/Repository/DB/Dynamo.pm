@@ -28,38 +28,72 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Exception;
+package Chleb::Token::Repository::DB::Dynamo;
 use strict;
 use warnings;
 use Moose;
 
-use HTTP::Status qw(:is);
+extends 'Chleb::Token::Repository::Base';
 
-has description => (is => 'ro', isa => 'Str');
+use Chleb::Exception;
+use Chleb::Token;
+use Chleb::Token::Repository;
+#use IO::File;
+use English qw(-no_match_vars);
+use HTTP::Status qw(:constants);
+use Storable qw(retrieve store);
 
-has statusCode => (is => 'ro', isa => 'Int', default => 200);
+has __repo => (is => 'ro', isa => 'Chleb::Token::Repository', lazy => 1, default => sub {
+	return Chleb::Token::Repository->new();
+});
 
-has location => (is => 'ro', isa => 'Str');
-
-sub raise {
-	my ($class, $statusCode, $thing) = @_;
-
-	my %params = (
-		statusCode => $statusCode,
-	);
-
-	if (is_redirect($statusCode)) {
-		$params{location} = $thing;
-	} else {
-		$params{description} = $thing;
-	}
-
-	return $class->new(\%params);
+BEGIN {
+	our $VERSION = '0.12.0';
 }
 
-sub toString {
+sub create {
 	my ($self) = @_;
-	return sprintf('HTTP code %d: %s', $self->statusCode, $self->description);
+
+	return Chleb::Token->new({
+		_repo => $self->__repo,
+		_source => $self,
+	});
+}
+
+sub load {
+	my ($self, $value) = @_;
+
+	my $data;
+
+	if (my $evalError = $EVAL_ERROR || !$data) {
+		die Chleb::Exception->raise(HTTP_FORBIDDEN, 'Token not recognized via ' . __PACKAGE__);
+		# TODO logger?
+	}
+
+	return Chleb::Token->new({
+		_repo => $self->__repo,
+		_source => $self,
+		_value => $value,
+		# FIXME: Need a way to associate actual data with the key?  Perhaps not though, perhaps keep in memory with shared memcached?  This would keep session cooks simple
+	});
+}
+
+sub save {
+	my ($self, $token) = @_;
+
+	my $filePath = $self->__getFilePath($token->value);
+	eval {
+		# TODO: We're not storing anything useful aside the token
+		store($token->TO_JSON(), $filePath);
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->error(sprintf("Failed to store %s in %s to '%s': %s",
+		    $token->toString(), __PACKAGE__, $filePath, $evalError));
+
+		die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token');
+	}
+
+	return;
 }
 
 1;

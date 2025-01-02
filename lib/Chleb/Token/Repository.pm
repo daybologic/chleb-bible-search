@@ -28,38 +28,37 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Exception;
+package Chleb::Token::Repository;
 use strict;
 use warnings;
 use Moose;
 
-use HTTP::Status qw(:is);
+extends 'Chleb::Bible::Base';
 
-has description => (is => 'ro', isa => 'Str');
+use Chleb::Token::Repository::TempDir;
 
-has statusCode => (is => 'ro', isa => 'Int', default => 200);
-
-has location => (is => 'ro', isa => 'Str');
-
-sub raise {
-	my ($class, $statusCode, $thing) = @_;
-
-	my %params = (
-		statusCode => $statusCode,
-	);
-
-	if (is_redirect($statusCode)) {
-		$params{location} = $thing;
-	} else {
-		$params{description} = $thing;
-	}
-
-	return $class->new(\%params);
+BEGIN {
+	our $VERSION = '0.12.0';
 }
 
-sub toString {
-	my ($self) = @_;
-	return sprintf('HTTP code %d: %s', $self->statusCode, $self->description);
+sub repo {
+	my ($self, $name) = @_;
+
+	if (defined($name)) {
+		if ($name eq 'Dummy') {
+			return Chleb::Token::Repository::Dummy->new();
+		} elsif ($name eq 'TempDir') {
+			return Chleb::Token::Repository::TempDir->new();
+		}
+	}
+
+	...
+}
+
+sub load {
+	my ($self, $tokenValue) = @_;
+
+	return $self->repo('TempDir')->load($tokenValue);
 }
 
 1;
