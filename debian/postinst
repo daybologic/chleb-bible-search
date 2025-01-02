@@ -17,11 +17,14 @@ if ! getent passwd | grep -q "^$SERVER_USER:"; then
 fi
 
 usermod -c "$SERVER_NAME" $SERVER_USER
-chown $SERVER_USER /var/log/chleb-bible-search
+chown $SERVER_USER /var/log/chleb-bible-search /var/cache/chleb-bible-search
 
 if [ -f /var/log/chleb-bible-search/default.log ]; then
 	chown $SERVER_USER /var/log/chleb-bible-search/default.log
 fi
+
+echo 'clearing bible translation cache'
+rm -f /var/cache/chleb-bible-search/*.bin
 
 invoke-rc.d chleb-bible-search restart || :
 
