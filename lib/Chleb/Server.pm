@@ -696,7 +696,7 @@ use warnings;
 
 use Dancer2 0.2;
 use English qw(-no_match_vars);
-use HTTP::Status qw(:is);
+use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
 use Scalar::Util qw(blessed);
 
@@ -704,6 +704,17 @@ my $server;
 
 set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::CONTENT_TYPE_JSON;
+
+my $dampenTime = 0;
+sub dampen {
+	my $k = time();
+	if ($dampenTime == $k) {
+		return 1;
+	}
+
+	$dampenTime = $k;
+	return 0;
+}
 
 sub handleException {
 	my ($exception) = @_;
@@ -744,6 +755,13 @@ sub handleSessionToken {
 		}
 
 		$server->dic->logger->trace('session token found!  ' . $sessionToken->toString());
+	} elsif (dampen()) {
+		eval {
+			die Chleb::Exception->raise(HTTP_TOO_MANY_REQUESTS, 'Slow down, or respect the sessionToken cookie');
+		};
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
 	} else {
 		$sessionToken = $tokenRepo->create();
 		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
