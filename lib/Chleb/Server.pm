@@ -867,10 +867,10 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $verse = param('verse');
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
+	handleSessionToken();
+
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
-
-	handleSessionToken();
 
 	my $result;
 	eval {
@@ -902,10 +902,10 @@ get '/1/search' => sub {
 	my $term = param('term');
 	my $wholeword = param('wholeword');
 
+	handleSessionToken();
+
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
-
-	handleSessionToken();
 
 	my $result = $server->__search({ accept => $mediaType, limit => $limit, term => $term, wholeword => $wholeword });
 
