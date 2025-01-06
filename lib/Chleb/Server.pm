@@ -756,12 +756,10 @@ sub handleSessionToken {
 
 		$server->dic->logger->trace('session token found!  ' . $sessionToken->toString());
 	} elsif (dampen()) {
-		eval {
-			die Chleb::Exception->raise(HTTP_TOO_MANY_REQUESTS, 'Slow down, or respect the sessionToken cookie');
-		};
-		if (my $exception = $EVAL_ERROR) {
-			handleException($exception);
-		}
+		handleException(Chleb::Exception->raise(
+			HTTP_TOO_MANY_REQUESTS,
+			'Slow down, or respect the sessionToken cookie',
+		));
 	} else {
 		$sessionToken = $tokenRepo->create();
 		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
