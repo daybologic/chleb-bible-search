@@ -705,14 +705,18 @@ my $server;
 set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::CONTENT_TYPE_JSON;
 
-my $dampenTime = 0;
+my %dampenTime = ( );
 sub dampen {
-	my $k = time();
-	if ($dampenTime == $k) {
+	my $ipAddress = request()->address();
+	my $currentTime = time();
+
+	my $previousTime = $dampenTime{$ipAddress};
+	if ($previousTime && $previousTime == $currentTime) {
+		$server->dic->logger->warn(sprintf('Saw %s already this second, denying request', $ipAddress));
 		return 1;
 	}
 
-	$dampenTime = $k;
+	$dampenTime{$ipAddress} = $currentTime;
 	return 0;
 }
 
@@ -744,6 +748,7 @@ sub handleException {
 sub handleSessionToken {
 	my $tokenRepo = $server->dic->tokenRepo;
 	my $sessionToken;
+
 	if ($sessionToken = cookie('sessionToken')) {
 		$server->dic->logger->trace("Got session token '$sessionToken' from client");
 
@@ -828,10 +833,10 @@ get '/2/votd' => sub {
 	my $redirect = param('redirect');
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
-	my $dancerRequest = request();
 
 	handleSessionToken();
 
+	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
 	my $result;
