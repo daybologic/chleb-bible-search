@@ -39,12 +39,25 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use Chleb;
+use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::MediaType;
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods re ignore num);
+use Test::Exception;
 use Test::More 0.96;
+
+has dic => (isa => 'Chleb::DI::Container', is => 'rw');
+
+sub setUp {
+	my ($self) = @_;
+
+	$self->dic(Chleb::DI::Container->instance);
+	$self->__mockLogger();
+
+	return EXIT_SUCCESS;
+}
 
 sub testAny {
 	my ($self) = @_;
@@ -103,28 +116,30 @@ sub testAnyText {
 
 sub testTooShort {
 	my ($self) = @_;
-	plan tests => 10;
+	plan tests => 10 * 2;
 
 	my $check = sub {
 		my ($input) = @_;
 
-		eval {
-			Chleb::Server::MediaType->parseAcceptHeader($input);
-		};
+		my $mediaType;
+		lives_ok {
+			$mediaType = Chleb::Server::MediaType->parseAcceptHeader($input);
+		} "parseAcceptHeader returned successfully for $input";
 
-		if (my $evalError = $EVAL_ERROR) {
-			my $description = 'Accept: header too short';
-			cmp_deeply($evalError, all(
-				isa('Chleb::Exception'),
-				methods(
-					description => $description,
-					location    => undef,
-					statusCode  => 406,
-				),
-			), "'${input}': ${description}");
-		} else {
-			fail('No exception raised, as was expected');
-		}
+		cmp_deeply($mediaType, all(
+			isa('Chleb::Server::MediaType'),
+			methods(
+				items => [
+					all(
+						isa('Chleb::Server::MediaType::Item'),
+						methods(
+							major => '*',
+							minor => '*',
+						),
+					),
+				],
+			),
+		), "type inspection $input is */*") or diag(explain($mediaType->toString()));
 	};
 
 	foreach my $char (qw(a/ /a a 0 / // */ /*)) {
@@ -346,6 +361,39 @@ sub testMultiTypeWeightedAndWhitespace {
 	), 'type inspection') or diag(explain($mediaType->toString()));
 
 	return EXIT_SUCCESS;
+}
+
+sub testMalformed {
+	my ($self) = @_;
+
+	my $input = 'text/plain,application/xhtml+xml,*/*;q=0.8,application/xml;q=0.9;application/json;q=100';
+
+	eval {
+		Chleb::Server::MediaType->parseAcceptHeader($input);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		my $description = 'Accept: Validation failed for \'Num\' with value';
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => re(qr/^$description /),
+				location    => undef,
+				statusCode  => 406,
+			),
+		), "'${input}': ${description}");
+	} else {
+		fail("'${input}': No exception raised, as was expected");
+	}
+
+
+	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->dic->logger(Chleb::DI::MockLogger->new());
+	return;
 }
 
 package main;

@@ -46,11 +46,15 @@ Dancer2 server for stand-alone HTTP server for Chleb Bible Search
 use Chleb;
 use Chleb::Exception;
 use Chleb::DI::Container;
+use Chleb::Server::MediaType;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
 use JSON;
+use Readonly;
 use Time::Duration;
 use UUID::Tiny ':std';
+
+Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 
 =head1 METHODS
 
@@ -87,10 +91,6 @@ sub dic {
 
 =over
 
-=item C<__title()>
-
-Logs that the server has started, including information about the administrator.
-This is a local log only, and is not transmitted to the consumer/user.
 This should only be called once, and at server startup time.
 There is no return value.
 
@@ -261,6 +261,8 @@ sub __votd {
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
 
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
+
 	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
 	    if ($redirect && $version > 1);
 
@@ -288,7 +290,13 @@ sub __votd {
 		}
 
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
-		return $json[0];
+		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
+
+		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+			return __verseToHtml(\@json);
+		} else {
+			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+		}
 	}
 
 	die Chleb::Exception->raise(
@@ -604,6 +612,36 @@ sub __verseToJsonApi {
 	return \%hash;
 }
 
+sub __verseToHtml {
+	my ($json) = @_;
+
+	my $output = '';
+	my $verseCount = scalar(@{ $json->[0]->{data} });
+	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
+		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
+		$output .= sprintf('%s %d:%d %s',
+			$attributes->{book},
+			$attributes->{chapter},
+			$attributes->{ordinal},
+			$attributes->{text},
+		);
+
+		if ($verseIndex < $verseCount-1) { # not last verse
+			$output .= "\r\n";
+		}
+	}
+
+	my $translation = $json->[0]->{data}->[0]->{attributes}->{translation};
+
+	if ($verseCount == 1) {
+		$output .= sprintf(" [%s]\r\n", $translation);
+	} else {
+		$output .= sprintf("\r\n\r\n\t(%s)\r\n", $translation);
+	}
+
+	return $output;
+}
+
 =back
 
 =cut
@@ -612,7 +650,7 @@ package main;
 use strict;
 use warnings;
 
-use Dancer2;
+use Dancer2 0.2;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:is);
 use POSIX qw(EXIT_SUCCESS);
@@ -621,6 +659,7 @@ use Scalar::Util qw(blessed);
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
+set content_type => $Chleb::Server::CONTENT_TYPE_JSON;
 
 sub handleException {
 	my ($exception) = @_;
@@ -662,7 +701,11 @@ get '/1/votd' => sub {
 
 	my $result;
 	eval {
-		$result = $server->__votd({ parental => $parental, redirect => $redirect, when => $when });
+		$result = $server->__votd({
+			parental    => $parental,
+			redirect    => $redirect,
+			when        => $when,
+		});
 	};
 
 	if (my $exception = $EVAL_ERROR) {
@@ -677,16 +720,32 @@ get '/2/votd' => sub {
 	my $redirect = param('redirect');
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
+	my $dancerRequest = request();
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
 	my $result;
 	eval {
-		$result = $server->__votd({ version => 2, when => $when, parental => $parental, translations => $translations, redirect => $redirect });
+		$result = $server->__votd({
+			accept       => $mediaType,
+			version      => 2,
+			when         => $when,
+			parental     => $parental,
+			translations => $translations,
+			redirect     => $redirect,
+		});
 	};
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
 	}
 
+	if (ref($result) ne 'HASH') {
+		$server->dic->logger->trace('2/votd returned as HTML');
+		send_as html => $result;
+	}
+
+	$server->dic->logger->trace('2/votd returned as JSON');
 	return $result;
 };
 

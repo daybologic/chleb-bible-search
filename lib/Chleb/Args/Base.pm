@@ -28,87 +28,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Server::MediaType::Item;
-use Moose;
+package Chleb::Args::Base;
 use strict;
 use warnings;
+use Moose;
 
-=head1 NAME
+use Chleb::Server::MediaType::Args::ToString;
 
-Chleb::Server::MediaType::Item
+has verbose => (is => 'ro', isa => 'Bool', default => 0);
 
-=head1 DESCRIPTION
-
-One media item type from an Accept header
-
-=cut
-
-use Chleb::Args::Base;
-use Moose::Util::TypeConstraints;
-
-=head1 ATTRIBUTES
-
-=over
-
-=item C<major>
-
-The major media type, such as 'application', or 'text'.
-
-=item C<minor>
-
-The minor media type, such as 'html', or 'json'.
-
-=cut
-
-subtype 'Part',
-	as 'Str',
-	where {
-		defined($_) && length($_) > 0 && m/^\S+$/ && ! m@^/+$@
-	},
-	message {
-		'incomplete spec'
-	};
-
-has [qw(major minor)] => (is => 'ro', required => 1, isa => 'Part');
-
-=item C<weight>
-
-The weight, whose default is always 1.0.  Lower values indicate a backup priority only.
-
-TODO: 1.1 and above is illegal, I think?  Check the standards.
-
-=cut
-
-has weight => (is => 'ro', required => 1, isa => 'Num', default => 1.0, required => 1);
-
-=back
-
-=head1 METHODS
-
-=over
-
-=item C<toString([$args])>
-
-Return the media type in the standard major/minor format.
-
-C<$args> must be a L<Chleb::Server::MediaType::Args::ToString> object, if present.
-
-=cut
-
-sub toString {
-	my ($self, $args) = @_;
-	$args = Chleb::Args::Base::makeDummy('Chleb::Server::MediaType::Args::ToString', $args);
-
-	my $str = join('/', $self->major, $self->minor);
-
-	$str .= sprintf(';q=%.1f', $self->weight)
-	    if ($args->verbose);
-
-	return $str;
+sub makeDummy {
+	my ($class, $args) = @_;
+	if ($args) {
+		return $args if ($args->isa($class));
+		die('$args must be of type ' . $class);
+	}
+	return $class->new();
 }
-
-=back
-
-=cut
 
 1;
