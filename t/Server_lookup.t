@@ -59,7 +59,8 @@ sub test_translation_all {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $json = $self->sut->__lookup({ book => 'Psalms', chapter => 110, verse => 1, translations => [ 'all' ] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__lookup({ accept => $mediaType, book => 'Psalms', chapter => 110, verse => 1, translations => [ 'all' ] });
 	cmp_deeply($json, {
 		data => [
 			{

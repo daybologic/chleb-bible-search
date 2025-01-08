@@ -219,6 +219,19 @@ sub testAcceptApplicationTypoOnly {
 	return EXIT_SUCCESS;
 }
 
+sub testOnlyUnhandled {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('audio/basic');
+
+	my $default = $self->uniqueStr();
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
+	is($contentType, '');
+
+	return EXIT_SUCCESS;
+}
+
 sub __mockLogger {
 	my ($self) = @_;
 
