@@ -1,6 +1,6 @@
 #!/bin/sh
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-H=chleb-api.daybologic.co.uk
+H=localhost:3000
 
-curl -s https://$H/1/lookup/prov/16/18 | jq .
+curl -s --header 'Accept: application/json' http://$H/1/lookup/prov/16/18 | jq .

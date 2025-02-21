@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,8 @@ sub test_translation_all {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $json = $self->sut->__lookup({ book => 'Psalms', chapter => 110, verse => 1, translations => [ 'all' ] });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__lookup({ accept => $mediaType, book => 'Psalms', chapter => 110, verse => 1, translations => [ 'all' ] });
 	cmp_deeply($json, {
 		data => [
 			{

@@ -1,5 +1,5 @@
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,6 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use English qw(-no_match_vars);
-use File::Temp;
 use IO::File;
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use List::Util qw(sum);
@@ -71,42 +70,30 @@ Readonly my $BOOK_OFFSET_VERSES_TO_KEYS => ++$offsetMaster; # Relative book vers
 
 has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
-has tmpPath => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeTmpPath);
-
 has compressedPath => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeCompressedPath);
 
 has data => (is => 'ro', isa => 'ArrayRef', lazy => 1, default => \&__makeData);
 
-has tmpDir => (is => 'rw', isa => 'File::Temp::Dir', lazy => 1, default => \&__makeTmpDir);
+has cachePath => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeCachePath);
 
 has dataDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDataDir);
+
+has cacheDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeCacheDir);
 
 sub __makeCompressedPath {
 	my ($self) = @_;
 	return join('/', $self->dataDir, $self->__bibleFileName(compressed => 1));
 }
 
-sub __makeTmpDir {
+sub __makeCachePath {
 	my ($self) = @_;
 
-	my $tmpSubDir = ref($self);
-	$tmpSubDir =~ s/::/_/g;
+	my $path = join('/', $self->cacheDir, $self->__bibleFileName());
 
-	my $template = join('.', $tmpSubDir, 'XXXXXXXXXX');
-	if (my $dir = File::Temp->newdir($template, CLEANUP => 1, TMPDIR => 1)) {
-		return $dir;
+	unless (-f $path) {
+		gunzip $self->compressedPath => $path
+		   or die("gunzip \"" . $self->compressedPath . "\" failed: $GunzipError\n");
 	}
-
-	die('Cannot create temporary directory');
-}
-
-sub __makeTmpPath {
-	my ($self) = @_;
-
-	my $path = join('/', $self->tmpDir, $self->__bibleFileName());
-
-	gunzip $self->compressedPath => $path
-	   or die("gunzip \"" . $self->compressedPath . "\" failed: $GunzipError\n");
 
 	return $path;
 }
@@ -116,11 +103,11 @@ sub __makeData {
 
 	my $data;
 	eval {
-		$data = retrieve($self->tmpPath);
+		$data = retrieve($self->cachePath);
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->error("Storable backend failure -- probably not a bible data file in '" . $self->tmpPath . "'");
+		$self->dic->logger->error("Storable backend failure -- probably not a bible data file in '" . $self->cachePath . "'");
 		die($evalError);
 	}
 
@@ -234,6 +221,17 @@ sub __makeDataDir {
 	}
 
 	return $PATHS[0];
+}
+
+sub __makeCacheDir {
+	my ($self) = @_;
+
+	Readonly my @PATHS => ('cache', '/var/cache/chleb-bible-search');
+	foreach my $path (@PATHS) {
+		return $path if (-d $path);
+	}
+
+	die('No cache dir available');
 }
 
 sub __bibleFileName {

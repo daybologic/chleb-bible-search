@@ -1,6 +1,6 @@
 #!/bin/sh
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,9 +33,9 @@ H=localhost:3000
 
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		curl -s "http://$H/1/random" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
+		curl --header 'Accept: application/json' -s "http://$H/1/random" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
 	else
-		curl -s "http://$H/1/random" | tr -d '\n' | grep -o '"text":[^"]*"[^"]*"'
+		curl --header 'Accept: text/html' -s "http://$H/1/random"
 	fi
 
 fi
