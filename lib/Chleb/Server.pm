@@ -91,6 +91,8 @@ sub dic {
 
 =over
 
+=item C<__title()>
+
 This should only be called once, and at server startup time.
 There is no return value.
 
