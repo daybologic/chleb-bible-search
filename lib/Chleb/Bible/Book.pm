@@ -33,6 +33,8 @@ use strict;
 use warnings;
 use Moose;
 
+extends 'Chleb::Bible::Base';
+
 =head1 NAME
 
 Chleb::Bible::Book - One book within a Chleb::Bible
