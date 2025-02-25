@@ -115,6 +115,19 @@ sub queryParamsHelper {
 	return $str;
 }
 
+sub boolean {
+	my ($value, $default) = @_;
+
+	if (defined($value)) {
+		$value = lc($value);
+
+		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
+		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
+	}
+
+	return defined($default) ? $default : 0;
+}
+
 =back
 
 =cut
