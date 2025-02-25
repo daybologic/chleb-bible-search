@@ -2,8 +2,13 @@ chleb-bible-search (1.0.0) stable; urgency=medium
 
   * 💥 backwards incompatible change: you must pass Accept: application/json for
      all requests which require JSON output!
+
   * 🚸 better 404 and other HTTP error codes
   * ✨ support 1/votd 307 redirect to 1/lookup
+
+  * 🐛 BUG fix 4e03075-wholeword-boolean-swagger
+    The problem here was merely using '?wholeword=true' in the URI,
+    and '?wholeword=1' had to be used before this fix.  Regression test introduced.
 
  -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 22 Feb 2025 10:55:10 +0000
 
