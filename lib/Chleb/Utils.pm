@@ -118,11 +118,33 @@ sub queryParamsHelper {
 sub boolean {
 	my ($value, $default) = @_;
 
+	my $isTrue = sub {
+		my ($v) = @_;
+		return 1 if ($v eq '1' || $v eq 'true' || $v eq 'on' || $v eq 'yes' || $v =~ m/^enable/);
+		return 0;
+	};
+
+	my $isFalse = sub {
+		my ($v) = @_;
+		return 1 if ($v eq '0' || $v eq 'false' || $v eq 'off' || $v eq 'no' || $v =~ m/^disable/);
+		return 0;
+	};
+
+	if (defined($default)) {
+		if ($isTrue->($default)) {
+			$default = 1;
+		} elsif ($isFalse->($default)) {
+			$default = 0;
+		} else {
+			die("Illegal default value: '$default'");
+		}
+	}
+
 	if (defined($value)) {
 		$value = lc($value);
 
-		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
-		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
+		return 1 if ($isTrue->($value));
+		return 0 if ($isFalse->($value));
 	}
 
 	return defined($default) ? $default : 0;
