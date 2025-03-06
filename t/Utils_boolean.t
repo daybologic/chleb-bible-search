@@ -39,7 +39,7 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Utils;
+use Chleb::Util::BooleanParser;
 use Readonly;
 use Test::Exception;
 use Test::More 0.96;
@@ -70,7 +70,7 @@ sub testTrueLower {
 	plan tests => scalar(@TRUE_VALUES);
 
 	foreach my $v (@TRUE_VALUES) {
-		ok(Chleb::Utils::boolean($v), "value: $v");
+		ok(Chleb::Util::BooleanParser::parse($v), "value: $v");
 	}
 
 	return EXIT_SUCCESS;
@@ -83,7 +83,7 @@ sub testTrueUpper {
 
 	foreach my $v (@TRUE_VALUES) {
 		my $ucv = uc($v);
-		ok(Chleb::Utils::boolean($ucv), "value: $ucv");
+		ok(Chleb::Util::BooleanParser::parse($ucv), "value: $ucv");
 	}
 
 	return EXIT_SUCCESS;
@@ -95,11 +95,11 @@ sub testFalseLower {
 	plan tests => scalar(@FALSE_VALUES) + 2;
 
 	foreach my $v (@FALSE_VALUES) {
-		ok(!Chleb::Utils::boolean($v), "value: '$v'");
+		ok(!Chleb::Util::BooleanParser::parse($v), "value: '$v'");
 	}
 
-	ok(!Chleb::Utils::boolean(undef), "value: <undef>");
-	ok(!Chleb::Utils::boolean('unknown'), "value: 'unknown'");
+	ok(!Chleb::Util::BooleanParser::parse(undef), "value: <undef>");
+	ok(!Chleb::Util::BooleanParser::parse('unknown'), "value: 'unknown'");
 
 	return EXIT_SUCCESS;
 }
@@ -111,7 +111,7 @@ sub testFalseUpper {
 
 	foreach my $v (@FALSE_VALUES) {
 		my $ucv = uc($v);
-		ok(!Chleb::Utils::boolean($ucv), "value: $ucv");
+		ok(!Chleb::Util::BooleanParser::parse($ucv), "value: $ucv");
 	}
 
 	return EXIT_SUCCESS;
@@ -121,10 +121,10 @@ sub testDefaultLegal {
 	my ($self) = @_;
 	plan tests => 4;
 
-	ok(Chleb::Utils::boolean('unknown', 1), 'unknown with default 1 is 1');
-	ok(!Chleb::Utils::boolean('unknown', 0), 'unknown with default 0 is 0');
-	ok(Chleb::Utils::boolean(1, 0), '1 with default 0 is 1');
-	ok(!Chleb::Utils::boolean(0, 1), '0 with default 1 is 0');
+	ok(Chleb::Util::BooleanParser::parse('unknown', 1), 'unknown with default 1 is 1');
+	ok(!Chleb::Util::BooleanParser::parse('unknown', 0), 'unknown with default 0 is 0');
+	ok(Chleb::Util::BooleanParser::parse(1, 0), '1 with default 0 is 1');
+	ok(!Chleb::Util::BooleanParser::parse(0, 1), '0 with default 1 is 0');
 
 	return EXIT_SUCCESS;
 }
@@ -137,7 +137,7 @@ sub testDefaultIllegal {
 
 	foreach my $v (@BASE_VALUES) {
 		throws_ok {
-			Chleb::Utils::boolean($v, 'stranger')
+			Chleb::Util::BooleanParser::parse($v, 'stranger')
 		} qr/Illegal default value: 'stranger'/, "$v with default stranger is illegal";
 	}
 
