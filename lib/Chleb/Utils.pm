@@ -115,6 +115,7 @@ sub queryParamsHelper {
 	return $str;
 }
 
+# TODO: Remove this and migrate to BooleanParser
 sub boolean {
 	my ($value, $default) = @_;
 

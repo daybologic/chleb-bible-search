@@ -107,6 +107,41 @@ public class BooleanParser {
 		throw new BooleanParserUserException(key, String.format("Mandatory value for key '%s' not supplied", key));
 	}
 
+	sub parse {
+		my ($value, $default) = @_;
+
+		my $isTrue = sub {
+			my ($v) = @_;
+			return 1 if ($v eq '1' || $v eq 'true' || $v eq 'on' || $v eq 'yes' || $v =~ m/^enable/);
+			return 0;
+		};
+
+		my $isFalse = sub {
+			my ($v) = @_;
+			return 1 if ($v eq '0' || $v eq 'false' || $v eq 'off' || $v eq 'no' || $v =~ m/^disable/);
+			return 0;
+		};
+
+		if (defined($default)) {
+			if ($isTrue->($default)) {
+				$default = 1;
+			} elsif ($isFalse->($default)) {
+				$default = 0;
+			} else {
+				die("Illegal default value: '$default'");
+			}
+		}
+
+		if (defined($value)) {
+			$value = lc($value);
+
+			return 1 if ($isTrue->($value));
+			return 0 if ($isFalse->($value));
+		}
+
+		return defined($default) ? $default : 0;
+	}
+
 	/**
 	 * See {@link #parse(final String key, String value, String defaultValue)}.
 	 * This method is for the convenience of users who do not want to supply a default.
