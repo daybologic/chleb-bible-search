@@ -158,6 +158,48 @@ sub testDefaultIllegal {
 	return EXIT_SUCCESS;
 }
 
+sub __defaultNone {
+	my ($code) = @_;
+	throws_ok {
+		$code->();
+	} qr/^Mandatory value for key '$KEY' not supplied /, 'value is mandatory';
+
+	return;
+}
+
+sub testDefaultNone_null {
+	my ($self) = @_;
+	plan tests => 1;
+
+	__defaultNone(sub {
+		Chleb::Util::BooleanParser::parse($KEY, undef);
+	});
+
+	return EXIT_SUCCESS;
+}
+
+sub testDefaultNone_empty {
+	my ($self) = @_;
+	plan tests => 1;
+
+	__defaultNone(sub {
+		Chleb::Util::BooleanParser::parse($KEY, '');
+	});
+
+	return EXIT_SUCCESS;
+}
+
+sub testDefaultNone_onlyWhitespace {
+	my ($self) = @_;
+	plan tests => 1;
+
+	__defaultNone(sub {
+		Chleb::Util::BooleanParser::parse($KEY, ' ');
+	});
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;
