@@ -158,44 +158,23 @@ sub testDefaultIllegal {
 	return EXIT_SUCCESS;
 }
 
-sub __defaultNone {
-	my ($code) = @_;
-	throws_ok {
-		$code->();
-	} qr/^Mandatory value for key '$KEY' not supplied /, 'value is mandatory';
-
-	return;
-}
-
-sub testDefaultNone_null {
+sub testDefaultNone {
 	my ($self) = @_;
-	plan tests => 1;
 
-	__defaultNone(sub {
-		Chleb::Util::BooleanParser::parse($KEY, undef);
-	});
+	my $code = sub {
+		my ($value) = @_;
+		my $descr = 'value ' . (defined($value) ? "'$value'" : '<undef>') . ' is mandatory';
+		throws_ok {
+			Chleb::Util::BooleanParser::parse($KEY, $value);
+		} qr/^Mandatory value for key '$KEY' not supplied /, $descr;
+	};
 
-	return EXIT_SUCCESS;
-}
+	my @values = (undef, '', ' ');
+	plan tests => scalar(@values);
 
-sub testDefaultNone_empty {
-	my ($self) = @_;
-	plan tests => 1;
-
-	__defaultNone(sub {
-		Chleb::Util::BooleanParser::parse($KEY, '');
-	});
-
-	return EXIT_SUCCESS;
-}
-
-sub testDefaultNone_onlyWhitespace {
-	my ($self) = @_;
-	plan tests => 1;
-
-	__defaultNone(sub {
-		Chleb::Util::BooleanParser::parse($KEY, ' ');
-	});
+	foreach my $value (@values) {
+		$code->($value);
+	}
 
 	return EXIT_SUCCESS;
 }
