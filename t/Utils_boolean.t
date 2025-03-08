@@ -130,15 +130,39 @@ sub testDefaultLegal {
 	plan tests => 4;
 
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN, 1)
+		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN, '1')
 	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "$VALUE_UNKNOWN with default 1 is 1";
 
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN, 0)
+		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN, '0')
 	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "$VALUE_UNKNOWN with default 0 is 0";
 
-	ok(Chleb::Util::BooleanParser::parse($KEY, 1, 0), '1 with default 0 is 1');
-	ok(!Chleb::Util::BooleanParser::parse($KEY, 0, 1), '0 with default 1 is 0');
+	ok(Chleb::Util::BooleanParser::parse($KEY, '1', '0'), '1 with default 0 is 1');
+	ok(!Chleb::Util::BooleanParser::parse($KEY, '0', '1'), '0 with default 1 is 0');
+
+	return EXIT_SUCCESS;
+}
+
+sub testDefaultLegalUnused {
+	plan tests => 2;
+
+	ok(Chleb::Util::BooleanParser::parse($KEY, '1', '0'), '1 with default 0');
+	ok(!Chleb::Util::BooleanParser::parse($KEY, '0', '1'), '0 with default 1');
+
+	return EXIT_SUCCESS;
+}
+
+sub testDefaultLegalUsed {
+	plan tests => 6;
+
+	ok(Chleb::Util::BooleanParser::parse($KEY, undef, 'TRUE'), 'null with default TRUE');
+	ok(!Chleb::Util::BooleanParser::parse($KEY, undef, 'FALSE'), 'null with default FALSE');
+
+	ok(Chleb::Util::BooleanParser::parse($KEY, undef, '1'), 'null with default 1');
+	ok(!Chleb::Util::BooleanParser::parse($KEY, undef, '0'), 'null with default 0');
+
+	ok(Chleb::Util::BooleanParser::parse($KEY, '', '1'), 'empty with default 1');
+	ok(!Chleb::Util::BooleanParser::parse($KEY, '', '0'), 'empty with default 0');
 
 	return EXIT_SUCCESS;
 }
