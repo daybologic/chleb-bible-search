@@ -44,7 +44,8 @@ use Readonly;
 use Test::Exception;
 use Test::More 0.96;
 
-Readonly my $KEY => 'marketing';
+Readonly my $KEY => 'marketing'; # arbitary
+Readonly my $VALUE_UNKNOWN => 'unknown'; # not true nor false
 
 Readonly my @TRUE_VALUES => (qw(
 	true
@@ -104,10 +105,9 @@ sub testFalseLower {
 		Chleb::Util::BooleanParser::parse($KEY, undef)
 	} qr/^Mandatory value for key '$KEY' not supplied /, 'value: <undef>';
 
-	my $value = 'unknown';
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, $value)
-	} qr/^Illegal user-supplied value: '$value' for key '$KEY' /, "value: '$value'";
+		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN)
+	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "value: '$VALUE_UNKNOWN'";
 
 	return EXIT_SUCCESS;
 }
@@ -129,14 +129,13 @@ sub testDefaultLegal {
 	my ($self) = @_;
 	plan tests => 4;
 
-	my $value = 'unknown';
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, $value, 1)
-	} qr/^Illegal user-supplied value: '$value' for key '$KEY' /, "$value with default 1 is 1";
+		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN, 1)
+	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "$VALUE_UNKNOWN with default 1 is 1";
 
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, $value, 0)
-	} qr/^Illegal user-supplied value: '$value' for key '$KEY' /, "$value with default 0 is 0";
+		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN, 0)
+	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "$VALUE_UNKNOWN with default 0 is 0";
 
 	ok(Chleb::Util::BooleanParser::parse($KEY, 1, 0), '1 with default 0 is 1');
 	ok(!Chleb::Util::BooleanParser::parse($KEY, 0, 1), '0 with default 1 is 0');
@@ -148,7 +147,7 @@ sub testDefaultIllegal {
 	my ($self) = @_;
 	plan tests => 3;
 
-	Readonly my @BASE_VALUES => ('unknown', 1, 0);
+	Readonly my @BASE_VALUES => ($VALUE_UNKNOWN, 1, 0);
 
 	foreach my $v (@BASE_VALUES) {
 		throws_ok {
