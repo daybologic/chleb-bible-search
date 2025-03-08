@@ -143,16 +143,30 @@ sub testDefaultLegal {
 	return EXIT_SUCCESS;
 }
 
+sub defaultIllegal {
+	my ($value, $defaultValue) = @_;
+
+	my $expect = "Illegal default value: '$defaultValue' for key '$KEY'";
+	throws_ok {
+		Chleb::Util::BooleanParser::parse($KEY, $value, $defaultValue);
+	} qr/^$expect /, $expect;
+
+	return;
+}
+
 sub testDefaultIllegal {
-	my ($self) = @_;
-	plan tests => 3;
-
 	Readonly my @BASE_VALUES => ($VALUE_UNKNOWN, 1, 0);
+	plan tests => scalar(@BASE_VALUES);
 
-	foreach my $v (@BASE_VALUES) {
-		throws_ok {
-			Chleb::Util::BooleanParser::parse($KEY, $v, 'stranger')
-		} qr/Illegal default value: 'stranger'/, "$v with default stranger is illegal";
+	foreach my $value (@BASE_VALUES) {
+		subtest "value: '$value'" => sub {
+			plan tests => 4;
+
+			defaultIllegal($value, " 1");
+			defaultIllegal($value, "1 ");
+			defaultIllegal($value, " 0");
+			defaultIllegal($value, "0 ");
+		};
 	}
 
 	return EXIT_SUCCESS;
