@@ -38,9 +38,11 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
-use POSIX qw(EXIT_SUCCESS);
 use Chleb::Utils;
+use English qw(-no_match_vars);
+use POSIX qw(EXIT_SUCCESS);
 use Readonly;
+use Test::Deep qw(all cmp_deeply isa methods);
 use Test::Exception;
 use Test::More 0.96;
 
@@ -95,19 +97,55 @@ sub testTrueUpper {
 sub testFalseLower {
 	my ($self) = @_;
 
-	plan tests => scalar(@FALSE_VALUES) + 2;
+	plan tests => scalar(@FALSE_VALUES) + 1;
 
 	foreach my $v (@FALSE_VALUES) {
 		ok(!Chleb::Utils::boolean($KEY, $v), "value: '$v'");
 	}
 
-	throws_ok {
-		Chleb::Utils::boolean($KEY, undef)
-	} qr/^Mandatory value for key '$KEY' not supplied /, 'value: <undef>';
+	subtest 'false misuse' => sub {
+		plan tests => 2;
 
-	throws_ok {
-		Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN)
-	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "value: '$VALUE_UNKNOWN'";
+		my $exceptionType = 'Chleb::Utils::BooleanParserUserException';
+
+		subtest 'value: <undef>' => sub {
+			plan tests => 2;
+
+			throws_ok {
+				Chleb::Utils::boolean($KEY, undef)
+			} $exceptionType, $exceptionType;
+
+			my $description = "Mandatory value for key '$KEY' not supplied";
+			cmp_deeply($EVAL_ERROR, all(
+				isa($exceptionType),
+				methods(
+					description => $description,
+					key => $KEY,
+					location => undef,
+					statusCode => 400,
+				),
+			), $description);
+		};
+
+		subtest "value: '$VALUE_UNKNOWN'" => sub {
+			plan tests => 2;
+
+			throws_ok {
+				Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN)
+			} $exceptionType, $exceptionType;
+
+			my $description = "Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY'";
+			cmp_deeply($EVAL_ERROR, all(
+				isa($exceptionType),
+				methods(
+					description => $description,
+					key => $KEY,
+					location => undef,
+					statusCode => 400,
+				),
+			), $description);
+		};
+	};
 
 	return EXIT_SUCCESS;
 }
@@ -129,13 +167,44 @@ sub testDefaultLegal {
 	my ($self) = @_;
 	plan tests => 4;
 
-	throws_ok {
-		Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN, '1')
-	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "$VALUE_UNKNOWN with default 1 is 1";
+	my $exceptionType = 'Chleb::Utils::BooleanParserUserException';
+	my $description = "Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY'";
 
-	throws_ok {
-		Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN, '0')
-	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "$VALUE_UNKNOWN with default 0 is 0";
+	subtest "$VALUE_UNKNOWN with default 1 is 1" => sub {
+		plan tests => 2;
+
+		throws_ok {
+			Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN, '1')
+		} $exceptionType, $exceptionType;
+
+		cmp_deeply($EVAL_ERROR, all(
+			isa($exceptionType),
+			methods(
+				description => $description,
+				key => $KEY,
+				location => undef,
+				statusCode => 400,
+			),
+		), $description);
+	};
+
+	subtest "$VALUE_UNKNOWN with default 0 is 0" => sub {
+		plan tests => 2;
+
+		throws_ok {
+			Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN, '0')
+		} $exceptionType, $exceptionType;
+
+		cmp_deeply($EVAL_ERROR, all(
+			isa($exceptionType),
+			methods(
+				description => $description,
+				key => $KEY,
+				location => undef,
+				statusCode => 400,
+			),
+		), $description);
+	};
 
 	ok(Chleb::Utils::boolean($KEY, '1', '0'), '1 with default 0 is 1');
 	ok(!Chleb::Utils::boolean($KEY, '0', '1'), '0 with default 1 is 0');
@@ -170,10 +239,25 @@ sub testDefaultLegalUsed {
 sub defaultIllegal {
 	my ($value, $defaultValue) = @_;
 
-	my $expect = "Illegal default value: '$defaultValue' for key '$KEY'";
-	throws_ok {
-		Chleb::Utils::boolean($KEY, $value, $defaultValue);
-	} qr/^$expect /, $expect;
+	subtest "value: $value, defaultValue: $defaultValue" => sub {
+		plan tests => 2;
+
+		my $exceptionType = 'Chleb::Utils::BooleanParserSystemException';
+		throws_ok {
+			Chleb::Utils::boolean($KEY, $value, $defaultValue);
+		} $exceptionType, $exceptionType;
+
+		my $description = "Illegal default value: '$defaultValue' for key '$KEY'";
+		cmp_deeply($EVAL_ERROR, all(
+			isa($exceptionType),
+			methods(
+				description => $description,
+				key => $KEY,
+				location => undef,
+				statusCode => 500,
+			),
+		), $description);
+	};
 
 	return;
 }
@@ -201,10 +285,27 @@ sub testDefaultNone {
 
 	my $code = sub {
 		my ($value) = @_;
-		my $descr = 'value ' . (defined($value) ? "'$value'" : '<undef>') . ' is mandatory';
-		throws_ok {
-			Chleb::Utils::boolean($KEY, $value);
-		} qr/^Mandatory value for key '$KEY' not supplied /, $descr;
+
+		my $diag = 'value ' . (defined($value) ? "'$value'" : '<undef>') . ' is mandatory';
+		subtest $diag => sub {
+			plan tests => 2;
+
+			my $exceptionType = 'Chleb::Utils::BooleanParserUserException';
+			throws_ok {
+				Chleb::Utils::boolean($KEY, $value);
+			} $exceptionType, $exceptionType;
+
+			my $description = "Mandatory value for key '$KEY' not supplied";
+			cmp_deeply($EVAL_ERROR, all(
+				isa($exceptionType),
+				methods(
+					description => $description,
+					key => $KEY,
+					location => undef,
+					statusCode => 400,
+				),
+			), $description);
+		};
 	};
 
 	my @values = (undef, '', ' ');

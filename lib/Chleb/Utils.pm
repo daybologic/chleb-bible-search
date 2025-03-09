@@ -12,6 +12,8 @@ Functions for miscellaneous internal purposes
 
 =cut
 
+use Chleb::Utils::BooleanParserSystemException;
+use Chleb::Utils::BooleanParserUserException;
 use Readonly;
 use Scalar::Util qw(blessed);
 
@@ -190,8 +192,11 @@ sub boolean {
 		if ($isTrue->($defaultValue)) {
 			$defaultValueReturned = 1;
 		} elsif (!$isFalse->($defaultValue)) {
-			#die(BooleanParserSystemException->new($key, "Illegal default value: '$defaultValue' for key '$key'"));
-			die "Illegal default value: '$defaultValue' for key '$key'";
+			die(Chleb::Utils::BooleanParserSystemException->raise(
+				undef,
+				"Illegal default value: '$defaultValue' for key '$key'",
+				$key,
+			));
 		}
 	}
 
@@ -210,14 +215,21 @@ sub boolean {
 			return 1 if ($isTrue->($value));
 			return 0 if ($isFalse->($value));
 
-			#die(BooleanParserUserException->new($key, "Illegal user-supplied value: '$value' for key '$key'"));
-			die "Illegal user-supplied value: '$value' for key '$key'";
+			die(Chleb::Utils::BooleanParserUserException->raise(
+				undef,
+				"Illegal user-supplied value: '$value' for key '$key'",
+				$key,
+			));
 		}
 	}
 
 	return $defaultValueReturned if (defined($defaultValue)); # Apply default, if supplied/available
-	#die(BooleanParserUserException->new($key, "Mandatory value for key '$key' not supplied"));
-	die "Mandatory value for key '$key' not supplied";
+
+	die(Chleb::Utils::BooleanParserUserException->raise(
+		undef,
+		"Mandatory value for key '$key' not supplied",
+		$key,
+	));
 }
 
 =back
