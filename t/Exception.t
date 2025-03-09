@@ -44,6 +44,7 @@ use Chleb::Util::BooleanParserUserException;
 use HTTP::Status qw(:constants);
 use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods);
+use Test::Exception;
 use Test::More 0.96;
 
 sub testRaiseBaseException {
@@ -133,6 +134,20 @@ sub testRaiseBooleanParserUserException {
 			statusCode  => 400,
 		),
 	), 'default statusCode');
+
+	return EXIT_SUCCESS;
+}
+
+sub testRaiseBooleanParserException {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $description = $self->uniqueStr();
+	my $key = $self->uniqueStr();
+
+	throws_ok {
+		Chleb::Util::BooleanParserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key);
+	} qr/^Chleb::Util::BooleanParserException is abstract /, 'cannot instantiate abstract class';
 
 	return EXIT_SUCCESS;
 }

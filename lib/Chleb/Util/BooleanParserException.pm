@@ -41,8 +41,16 @@ has key => (is => 'ro', isa => 'Str', required => 1);
 
 sub raise {
 	my ($class, $statusCode, $thing, $key) = @_;
-	$statusCode = HTTP_INTERNAL_SERVER_ERROR if (!defined($statusCode));
-	return $class->SUPER::raise($statusCode, $thing, { key => $key });
+
+	my @caller = caller();
+	if (my $usingClass = $caller[0]) {
+		if ($usingClass =~ m/^Chleb::Util::BooleanParser\w+Exception$/) {
+			$statusCode = HTTP_INTERNAL_SERVER_ERROR if (!defined($statusCode));
+			return $class->SUPER::raise($statusCode, $thing, { key => $key });
+		}
+	}
+
+	die(__PACKAGE__ . ' is abstract');
 }
 
 1;
