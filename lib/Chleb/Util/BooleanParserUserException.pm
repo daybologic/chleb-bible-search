@@ -38,10 +38,10 @@ extends 'Chleb::Util::BooleanParserException';
 use HTTP::Status qw(:constants);
 
 sub raise {
-	my ($class, $statusCode, $thing) = @_;
+	my ($class, $statusCode, $thing, $key) = @_;
 
 	$statusCode = HTTP_BAD_REQUEST if (!defined($statusCode));
-	return $class->SUPER::raise($statusCode, $thing);
+	return $class->SUPER::raise($statusCode, $thing, $key);
 }
 
 1;

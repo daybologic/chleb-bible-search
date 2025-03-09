@@ -42,10 +42,14 @@ has statusCode => (is => 'ro', isa => 'Int', default => 200);
 has location => (is => 'ro', isa => 'Str');
 
 sub raise {
-	my ($class, $statusCode, $thing) = @_;
+	my ($class, $statusCode, $thing, $additional) = @_;
+
+	my %additionalDeref = ( );
+	%additionalDeref = %$additional if ($additional);
 
 	my %params = (
 		statusCode => $statusCode,
+		%additionalDeref,
 	);
 
 	if (is_redirect($statusCode)) {

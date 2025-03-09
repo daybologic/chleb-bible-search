@@ -70,7 +70,8 @@ sub testRaiseBooleanParserSystemException {
 	plan tests => 1;
 
 	my $description = $self->uniqueStr();
-	$self->sut(Chleb::Util::BooleanParserSystemException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description));
+	my $key = $self->uniqueStr();
+	$self->sut(Chleb::Util::BooleanParserSystemException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key));
 
 	cmp_deeply($self->sut, all(
 		isa('Chleb::Exception'),
@@ -78,6 +79,7 @@ sub testRaiseBooleanParserSystemException {
 		isa('Chleb::Util::BooleanParserSystemException'),
 		methods(
 			description => $description,
+			key         => $key,
 			location    => undef,
 			statusCode  => 451,
 		),
@@ -91,7 +93,8 @@ sub testRaiseBooleanParserUserException {
 	plan tests => 1;
 
 	my $description = $self->uniqueStr();
-	$self->sut(Chleb::Util::BooleanParserUserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description));
+	my $key = $self->uniqueStr();
+	$self->sut(Chleb::Util::BooleanParserUserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key));
 
 	cmp_deeply($self->sut, all(
 		isa('Chleb::Exception'),
@@ -99,6 +102,7 @@ sub testRaiseBooleanParserUserException {
 		isa('Chleb::Util::BooleanParserUserException'),
 		methods(
 			description => $description,
+			key         => $key,
 			location    => undef,
 			statusCode  => 451,
 		),
