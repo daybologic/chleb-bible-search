@@ -39,12 +39,14 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use Chleb::Exception;
+use Chleb::Util::BooleanParserSystemException;
+use Chleb::Util::BooleanParserUserException;
 use HTTP::Status qw(:constants);
 use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods);
 use Test::More 0.96;
 
-sub testRaise {
+sub testRaiseBaseException {
 	my ($self) = @_;
 	plan tests => 1;
 
@@ -53,6 +55,48 @@ sub testRaise {
 
 	cmp_deeply($self->sut, all(
 		isa('Chleb::Exception'),
+		methods(
+			description => $description,
+			location    => undef,
+			statusCode  => 451,
+		),
+	), 'exception object fields correct');
+
+	return EXIT_SUCCESS;
+}
+
+sub testRaiseBooleanParserSystemException {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $description = $self->uniqueStr();
+	$self->sut(Chleb::Util::BooleanParserSystemException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description));
+
+	cmp_deeply($self->sut, all(
+		isa('Chleb::Exception'),
+		isa('Chleb::Util::BooleanParserException'),
+		isa('Chleb::Util::BooleanParserSystemException'),
+		methods(
+			description => $description,
+			location    => undef,
+			statusCode  => 451,
+		),
+	), 'exception object fields correct');
+
+	return EXIT_SUCCESS;
+}
+
+sub testRaiseBooleanParserUserException {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $description = $self->uniqueStr();
+	$self->sut(Chleb::Util::BooleanParserUserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description));
+
+	cmp_deeply($self->sut, all(
+		isa('Chleb::Exception'),
+		isa('Chleb::Util::BooleanParserException'),
+		isa('Chleb::Util::BooleanParserUserException'),
 		methods(
 			description => $description,
 			location    => undef,
