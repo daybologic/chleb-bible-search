@@ -67,7 +67,7 @@ sub testRaiseBaseException {
 
 sub testRaiseBooleanParserSystemException {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $description = $self->uniqueStr();
 	my $key = $self->uniqueStr();
@@ -85,12 +85,25 @@ sub testRaiseBooleanParserSystemException {
 		),
 	), 'exception object fields correct');
 
+	$self->sut(Chleb::Util::BooleanParserSystemException->raise(undef, $description, $key));
+	cmp_deeply($self->sut, all(
+		isa('Chleb::Exception'),
+		isa('Chleb::Util::BooleanParserException'),
+		isa('Chleb::Util::BooleanParserSystemException'),
+		methods(
+			description => $description,
+			key         => $key,
+			location    => undef,
+			statusCode  => 500,
+		),
+	), 'default statusCode');
+
 	return EXIT_SUCCESS;
 }
 
 sub testRaiseBooleanParserUserException {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $description = $self->uniqueStr();
 	my $key = $self->uniqueStr();
@@ -107,6 +120,19 @@ sub testRaiseBooleanParserUserException {
 			statusCode  => 451,
 		),
 	), 'exception object fields correct');
+
+	$self->sut(Chleb::Util::BooleanParserUserException->raise(undef, $description, $key));
+	cmp_deeply($self->sut, all(
+		isa('Chleb::Exception'),
+		isa('Chleb::Util::BooleanParserException'),
+		isa('Chleb::Util::BooleanParserUserException'),
+		methods(
+			description => $description,
+			key         => $key,
+			location    => undef,
+			statusCode  => 400,
+		),
+	), 'default statusCode');
 
 	return EXIT_SUCCESS;
 }
