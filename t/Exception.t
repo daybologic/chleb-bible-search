@@ -39,8 +39,8 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use Chleb::Exception;
-use Chleb::Util::BooleanParserSystemException;
-use Chleb::Util::BooleanParserUserException;
+use Chleb::Utils::BooleanParserSystemException;
+use Chleb::Utils::BooleanParserUserException;
 use HTTP::Status qw(:constants);
 use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods);
@@ -72,12 +72,12 @@ sub testRaiseBooleanParserSystemException {
 
 	my $description = $self->uniqueStr();
 	my $key = $self->uniqueStr();
-	$self->sut(Chleb::Util::BooleanParserSystemException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key));
+	$self->sut(Chleb::Utils::BooleanParserSystemException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key));
 
 	cmp_deeply($self->sut, all(
 		isa('Chleb::Exception'),
-		isa('Chleb::Util::BooleanParserException'),
-		isa('Chleb::Util::BooleanParserSystemException'),
+		isa('Chleb::Utils::BooleanParserException'),
+		isa('Chleb::Utils::BooleanParserSystemException'),
 		methods(
 			description => $description,
 			key         => $key,
@@ -86,11 +86,11 @@ sub testRaiseBooleanParserSystemException {
 		),
 	), 'exception object fields correct');
 
-	$self->sut(Chleb::Util::BooleanParserSystemException->raise(undef, $description, $key));
+	$self->sut(Chleb::Utils::BooleanParserSystemException->raise(undef, $description, $key));
 	cmp_deeply($self->sut, all(
 		isa('Chleb::Exception'),
-		isa('Chleb::Util::BooleanParserException'),
-		isa('Chleb::Util::BooleanParserSystemException'),
+		isa('Chleb::Utils::BooleanParserException'),
+		isa('Chleb::Utils::BooleanParserSystemException'),
 		methods(
 			description => $description,
 			key         => $key,
@@ -108,12 +108,12 @@ sub testRaiseBooleanParserUserException {
 
 	my $description = $self->uniqueStr();
 	my $key = $self->uniqueStr();
-	$self->sut(Chleb::Util::BooleanParserUserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key));
+	$self->sut(Chleb::Utils::BooleanParserUserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key));
 
 	cmp_deeply($self->sut, all(
 		isa('Chleb::Exception'),
-		isa('Chleb::Util::BooleanParserException'),
-		isa('Chleb::Util::BooleanParserUserException'),
+		isa('Chleb::Utils::BooleanParserException'),
+		isa('Chleb::Utils::BooleanParserUserException'),
 		methods(
 			description => $description,
 			key         => $key,
@@ -122,11 +122,11 @@ sub testRaiseBooleanParserUserException {
 		),
 	), 'exception object fields correct');
 
-	$self->sut(Chleb::Util::BooleanParserUserException->raise(undef, $description, $key));
+	$self->sut(Chleb::Utils::BooleanParserUserException->raise(undef, $description, $key));
 	cmp_deeply($self->sut, all(
 		isa('Chleb::Exception'),
-		isa('Chleb::Util::BooleanParserException'),
-		isa('Chleb::Util::BooleanParserUserException'),
+		isa('Chleb::Utils::BooleanParserException'),
+		isa('Chleb::Utils::BooleanParserUserException'),
 		methods(
 			description => $description,
 			key         => $key,
@@ -146,8 +146,8 @@ sub testRaiseBooleanParserException {
 	my $key = $self->uniqueStr();
 
 	throws_ok {
-		Chleb::Util::BooleanParserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key);
-	} qr/^Chleb::Util::BooleanParserException is abstract /, 'cannot instantiate abstract class';
+		Chleb::Utils::BooleanParserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key);
+	} qr/^Chleb::Utils::BooleanParserException is abstract /, 'cannot instantiate abstract class';
 
 	return EXIT_SUCCESS;
 }

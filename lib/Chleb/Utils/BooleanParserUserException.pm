@@ -28,27 +28,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Util::BooleanParserException; # nb. this is abstract, don't use it directly
+package Chleb::Utils::BooleanParserUserException;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Chleb::Exception';
+extends 'Chleb::Utils::BooleanParserException';
 
 use HTTP::Status qw(:constants);
-
-has key => (is => 'ro', isa => 'Str', required => 1);
 
 sub raise {
 	my ($class, $statusCode, $thing, $key) = @_;
 
-	my @caller = caller();
-	my $usingClass = $caller[0];
-	if ($usingClass =~ m/^Chleb::Util::BooleanParser\w+Exception$/) {
-		return $class->SUPER::raise($statusCode, $thing, { key => $key });
-	}
-
-	die(__PACKAGE__ . ' is abstract');
+	$statusCode = HTTP_BAD_REQUEST if (!defined($statusCode));
+	return $class->SUPER::raise($statusCode, $thing, $key);
 }
 
 1;

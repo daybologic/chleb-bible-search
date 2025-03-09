@@ -28,19 +28,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Util::BooleanParserUserException;
+package Chleb::Utils::BooleanParserSystemException;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Chleb::Util::BooleanParserException';
+extends 'Chleb::Utils::BooleanParserException';
 
 use HTTP::Status qw(:constants);
 
 sub raise {
 	my ($class, $statusCode, $thing, $key) = @_;
 
-	$statusCode = HTTP_BAD_REQUEST if (!defined($statusCode));
+	$statusCode = HTTP_INTERNAL_SERVER_ERROR if (!defined($statusCode));
 	return $class->SUPER::raise($statusCode, $thing, $key);
 }
 

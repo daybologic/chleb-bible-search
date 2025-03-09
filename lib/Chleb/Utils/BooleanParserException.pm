@@ -28,20 +28,27 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Util::BooleanParserSystemException;
+package Chleb::Utils::BooleanParserException; # nb. this is abstract, don't use it directly
 use strict;
 use warnings;
 use Moose;
 
-extends 'Chleb::Util::BooleanParserException';
+extends 'Chleb::Exception';
 
 use HTTP::Status qw(:constants);
+
+has key => (is => 'ro', isa => 'Str', required => 1);
 
 sub raise {
 	my ($class, $statusCode, $thing, $key) = @_;
 
-	$statusCode = HTTP_INTERNAL_SERVER_ERROR if (!defined($statusCode));
-	return $class->SUPER::raise($statusCode, $thing, $key);
+	my @caller = caller();
+	my $usingClass = $caller[0];
+	if ($usingClass =~ m/^Chleb::Utils::BooleanParser\w+Exception$/) {
+		return $class->SUPER::raise($statusCode, $thing, { key => $key });
+	}
+
+	die(__PACKAGE__ . ' is abstract');
 }
 
 1;
