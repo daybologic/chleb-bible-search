@@ -39,7 +39,7 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use POSIX qw(EXIT_SUCCESS);
-use Chleb::Util::BooleanParser;
+use Chleb::Utils;
 use Readonly;
 use Test::Exception;
 use Test::More 0.96;
@@ -73,7 +73,7 @@ sub testTrueLower {
 	plan tests => scalar(@TRUE_VALUES);
 
 	foreach my $v (@TRUE_VALUES) {
-		ok(Chleb::Util::BooleanParser::parse($KEY, $v), "value: $v");
+		ok(Chleb::Utils::boolean($KEY, $v), "value: $v");
 	}
 
 	return EXIT_SUCCESS;
@@ -86,7 +86,7 @@ sub testTrueUpper {
 
 	foreach my $v (@TRUE_VALUES) {
 		my $ucv = uc($v);
-		ok(Chleb::Util::BooleanParser::parse($KEY, $ucv), "value: $ucv");
+		ok(Chleb::Utils::boolean($KEY, $ucv), "value: $ucv");
 	}
 
 	return EXIT_SUCCESS;
@@ -98,15 +98,15 @@ sub testFalseLower {
 	plan tests => scalar(@FALSE_VALUES) + 2;
 
 	foreach my $v (@FALSE_VALUES) {
-		ok(!Chleb::Util::BooleanParser::parse($KEY, $v), "value: '$v'");
+		ok(!Chleb::Utils::boolean($KEY, $v), "value: '$v'");
 	}
 
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, undef)
+		Chleb::Utils::boolean($KEY, undef)
 	} qr/^Mandatory value for key '$KEY' not supplied /, 'value: <undef>';
 
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN)
+		Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN)
 	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "value: '$VALUE_UNKNOWN'";
 
 	return EXIT_SUCCESS;
@@ -119,7 +119,7 @@ sub testFalseUpper {
 
 	foreach my $v (@FALSE_VALUES) {
 		my $ucv = uc($v);
-		ok(!Chleb::Util::BooleanParser::parse($KEY, $ucv), "value: $ucv");
+		ok(!Chleb::Utils::boolean($KEY, $ucv), "value: $ucv");
 	}
 
 	return EXIT_SUCCESS;
@@ -130,15 +130,15 @@ sub testDefaultLegal {
 	plan tests => 4;
 
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN, '1')
+		Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN, '1')
 	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "$VALUE_UNKNOWN with default 1 is 1";
 
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, $VALUE_UNKNOWN, '0')
+		Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN, '0')
 	} qr/^Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY' /, "$VALUE_UNKNOWN with default 0 is 0";
 
-	ok(Chleb::Util::BooleanParser::parse($KEY, '1', '0'), '1 with default 0 is 1');
-	ok(!Chleb::Util::BooleanParser::parse($KEY, '0', '1'), '0 with default 1 is 0');
+	ok(Chleb::Utils::boolean($KEY, '1', '0'), '1 with default 0 is 1');
+	ok(!Chleb::Utils::boolean($KEY, '0', '1'), '0 with default 1 is 0');
 
 	return EXIT_SUCCESS;
 }
@@ -146,8 +146,8 @@ sub testDefaultLegal {
 sub testDefaultLegalUnused {
 	plan tests => 2;
 
-	ok(Chleb::Util::BooleanParser::parse($KEY, '1', '0'), '1 with default 0');
-	ok(!Chleb::Util::BooleanParser::parse($KEY, '0', '1'), '0 with default 1');
+	ok(Chleb::Utils::boolean($KEY, '1', '0'), '1 with default 0');
+	ok(!Chleb::Utils::boolean($KEY, '0', '1'), '0 with default 1');
 
 	return EXIT_SUCCESS;
 }
@@ -155,14 +155,14 @@ sub testDefaultLegalUnused {
 sub testDefaultLegalUsed {
 	plan tests => 6;
 
-	ok(Chleb::Util::BooleanParser::parse($KEY, undef, 'TRUE'), 'null with default TRUE');
-	ok(!Chleb::Util::BooleanParser::parse($KEY, undef, 'FALSE'), 'null with default FALSE');
+	ok(Chleb::Utils::boolean($KEY, undef, 'TRUE'), 'null with default TRUE');
+	ok(!Chleb::Utils::boolean($KEY, undef, 'FALSE'), 'null with default FALSE');
 
-	ok(Chleb::Util::BooleanParser::parse($KEY, undef, '1'), 'null with default 1');
-	ok(!Chleb::Util::BooleanParser::parse($KEY, undef, '0'), 'null with default 0');
+	ok(Chleb::Utils::boolean($KEY, undef, '1'), 'null with default 1');
+	ok(!Chleb::Utils::boolean($KEY, undef, '0'), 'null with default 0');
 
-	ok(Chleb::Util::BooleanParser::parse($KEY, '', '1'), 'empty with default 1');
-	ok(!Chleb::Util::BooleanParser::parse($KEY, '', '0'), 'empty with default 0');
+	ok(Chleb::Utils::boolean($KEY, '', '1'), 'empty with default 1');
+	ok(!Chleb::Utils::boolean($KEY, '', '0'), 'empty with default 0');
 
 	return EXIT_SUCCESS;
 }
@@ -172,7 +172,7 @@ sub defaultIllegal {
 
 	my $expect = "Illegal default value: '$defaultValue' for key '$KEY'";
 	throws_ok {
-		Chleb::Util::BooleanParser::parse($KEY, $value, $defaultValue);
+		Chleb::Utils::boolean($KEY, $value, $defaultValue);
 	} qr/^$expect /, $expect;
 
 	return;
@@ -203,7 +203,7 @@ sub testDefaultNone {
 		my ($value) = @_;
 		my $descr = 'value ' . (defined($value) ? "'$value'" : '<undef>') . ' is mandatory';
 		throws_ok {
-			Chleb::Util::BooleanParser::parse($KEY, $value);
+			Chleb::Utils::boolean($KEY, $value);
 		} qr/^Mandatory value for key '$KEY' not supplied /, $descr;
 	};
 

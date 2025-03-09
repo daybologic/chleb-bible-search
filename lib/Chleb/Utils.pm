@@ -12,7 +12,30 @@ Functions for miscellaneous internal purposes
 
 =cut
 
+use Readonly;
 use Scalar::Util qw(blessed);
+
+=head1 PRIVATE CONSTANTS
+
+=over
+
+=item C<@TRUE_VALUES>
+
+known true values; a fixed list.
+
+=cut
+
+Readonly my @TRUE_VALUES => ('1', 'true', 'on', 'yes');
+
+=item C<@FALSE_VALUES>
+
+known false values; a fixed list.
+
+=cut
+
+Readonly my @FALSE_VALUES => ('0', 'false', 'off', 'no');
+
+=back
 
 =head1 FUNCTIONS
 
@@ -115,40 +138,86 @@ sub queryParamsHelper {
 	return $str;
 }
 
-# TODO: Remove this and migrate to BooleanParser
+=item C<parse($key, $value, [$defaultValue])>
+
+Parse a user-supplied config boolean into a simple type.
+
+The value may be undef or anything supplied by the user, without sanity checking,
+if the value is recognized from one of the known values: true/false, 1/0,
+enabled/disabled, on/off, yes/no and so on, we return a simple scalar value.
+
+If the value is undef and a default value is specified, that default will be returned.
+If no default is specified, the value is considered mandatory and L<Chleb::Utils::BooleanParserUserException> is
+thrown.  If the default is not properly specified and not undef, we throw
+L<Chleb::Utils::BooleanParserSystemException>, which means you need to fix your code.
+
+@param key String
+@param value String
+@param defaultValue String
+@return boolean
+@throws BooleanParserUserException
+@throws BooleanParserSystemException
+
+=cut
+
 sub boolean {
-	my ($value, $default) = @_;
+	my ($key, $value, $defaultValue) = @_;
+	my $defaultValueReturned = 0;
 
 	my $isTrue = sub {
 		my ($v) = @_;
-		return 1 if ($v eq '1' || $v eq 'true' || $v eq 'on' || $v eq 'yes' || $v =~ m/^enable/);
-		return 0;
+
+		foreach my $trueValues (@TRUE_VALUES) {
+			return 1 if ($v eq $trueValues);
+		}
+
+		return ($v =~ m/^enable/);
 	};
 
 	my $isFalse = sub {
 		my ($v) = @_;
-		return 1 if ($v eq '0' || $v eq 'false' || $v eq 'off' || $v eq 'no' || $v =~ m/^disable/);
-		return 0;
+
+		foreach my $falseValues (@FALSE_VALUES) {
+			return 1 if ($v eq $falseValues);
+		}
+
+		return ($v =~ m/^disable/);
 	};
 
-	if (defined($default)) {
-		if ($isTrue->($default)) {
-			$default = 1;
-		} elsif ($isFalse->($default)) {
-			$default = 0;
-		} else {
-			die("Illegal default value: '$default'");
+	# Let's run this block first so we trap invalid defaults even when they aren't used
+	if (defined($defaultValue)) {
+		$defaultValue = lc($defaultValue);
+		if ($isTrue->($defaultValue)) {
+			$defaultValueReturned = 1;
+		} elsif (!$isFalse->($defaultValue)) {
+			#die(BooleanParserSystemException->new($key, "Illegal default value: '$defaultValue' for key '$key'"));
+			die "Illegal default value: '$defaultValue' for key '$key'";
 		}
 	}
 
 	if (defined($value)) {
-		$value = lc($value);
+		my $trim = sub {
+			my ($v) = @_;
+			$v =~ s/^\s+//;
+			$v =~ s/\s+$//;
+			return $v;
+		};
 
-		return 1 if ($isTrue->($value));
-		return 0 if ($isFalse->($value));
+		$value = $trim->($value);
+		if (length($value) > 0) {
+			$value = lc($value);
+
+			return 1 if ($isTrue->($value));
+			return 0 if ($isFalse->($value));
+
+			#die(BooleanParserUserException->new($key, "Illegal user-supplied value: '$value' for key '$key'"));
+			die "Illegal user-supplied value: '$value' for key '$key'";
+		}
 	}
 
-	return defined($default) ? $default : 0;
+	return $defaultValueReturned if (defined($defaultValue)); # Apply default, if supplied/available
+	#die(BooleanParserUserException->new($key, "Mandatory value for key '$key' not supplied"));
+	die "Mandatory value for key '$key' not supplied";
 }
 
 =back
