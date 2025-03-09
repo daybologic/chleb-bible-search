@@ -43,11 +43,9 @@ sub raise {
 	my ($class, $statusCode, $thing, $key) = @_;
 
 	my @caller = caller();
-	if (my $usingClass = $caller[0]) {
-		if ($usingClass =~ m/^Chleb::Util::BooleanParser\w+Exception$/) {
-			$statusCode = HTTP_INTERNAL_SERVER_ERROR if (!defined($statusCode));
-			return $class->SUPER::raise($statusCode, $thing, { key => $key });
-		}
+	my $usingClass = $caller[0];
+	if ($usingClass =~ m/^Chleb::Util::BooleanParser\w+Exception$/) {
+		return $class->SUPER::raise($statusCode, $thing, { key => $key });
 	}
 
 	die(__PACKAGE__ . ' is abstract');
