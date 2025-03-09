@@ -440,7 +440,7 @@ sub __search {
 	my $limit = int($search->{limit});
 	$limit ||= 5;
 
-	my $wholeword = Chleb::Utils::boolean($search->{wholeword});
+	my $wholeword = Chleb::Utils::boolean('wholeword', $search->{wholeword}, 0);
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($search->{accept}, $CONTENT_TYPE_DEFAULT);
 
