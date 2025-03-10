@@ -246,9 +246,10 @@ sub defaultIllegal {
 		throws_ok {
 			Chleb::Utils::boolean($KEY, $value, $defaultValue);
 		} $exceptionType, $exceptionType;
+		my $evalError = $EVAL_ERROR; # save ASAP
 
 		my $description = "Illegal default value: '$defaultValue' for key '$KEY'";
-		cmp_deeply($EVAL_ERROR, all(
+		cmp_deeply($evalError, all(
 			isa($exceptionType),
 			methods(
 				description => $description,
