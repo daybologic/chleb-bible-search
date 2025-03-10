@@ -114,9 +114,10 @@ sub testFalseLower {
 			throws_ok {
 				Chleb::Utils::boolean($KEY, undef)
 			} $exceptionType, $exceptionType;
+			my $evalError = $EVAL_ERROR; # save ASAP
 
 			my $description = "Mandatory value for key '$KEY' not supplied";
-			cmp_deeply($EVAL_ERROR, all(
+			cmp_deeply($evalError, all(
 				isa($exceptionType),
 				methods(
 					description => $description,
@@ -133,9 +134,10 @@ sub testFalseLower {
 			throws_ok {
 				Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN)
 			} $exceptionType, $exceptionType;
+			my $evalError = $EVAL_ERROR; # save ASAP
 
 			my $description = "Illegal user-supplied value: '$VALUE_UNKNOWN' for key '$KEY'";
-			cmp_deeply($EVAL_ERROR, all(
+			cmp_deeply($evalError, all(
 				isa($exceptionType),
 				methods(
 					description => $description,
@@ -176,8 +178,9 @@ sub testDefaultLegal {
 		throws_ok {
 			Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN, '1')
 		} $exceptionType, $exceptionType;
+		my $evalError = $EVAL_ERROR; # save ASAP
 
-		cmp_deeply($EVAL_ERROR, all(
+		cmp_deeply($evalError, all(
 			isa($exceptionType),
 			methods(
 				description => $description,
@@ -194,8 +197,9 @@ sub testDefaultLegal {
 		throws_ok {
 			Chleb::Utils::boolean($KEY, $VALUE_UNKNOWN, '0')
 		} $exceptionType, $exceptionType;
+		my $evalError = $EVAL_ERROR; # save ASAP
 
-		cmp_deeply($EVAL_ERROR, all(
+		cmp_deeply($evalError, all(
 			isa($exceptionType),
 			methods(
 				description => $description,
@@ -295,9 +299,10 @@ sub testDefaultNone {
 			throws_ok {
 				Chleb::Utils::boolean($KEY, $value);
 			} $exceptionType, $exceptionType;
+			my $evalError = $EVAL_ERROR; # save ASAP
 
 			my $description = "Mandatory value for key '$KEY' not supplied";
-			cmp_deeply($EVAL_ERROR, all(
+			cmp_deeply($evalError, all(
 				isa($exceptionType),
 				methods(
 					description => $description,
