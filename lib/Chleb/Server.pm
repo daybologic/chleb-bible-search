@@ -846,7 +846,19 @@ get '/1/search' => sub {
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
-	my $result = $server->__search({ accept => $mediaType, limit => $limit, term => $term, wholeword => $wholeword });
+	my $result;
+	eval {
+		$server->__search({
+			accept    => $mediaType,
+			limit     => $limit,
+			term      => $term,
+			wholeword => $wholeword,
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
 
 	if (ref($result) ne 'HASH') {
 		$server->dic->logger->trace('1/search returned as HTML');
