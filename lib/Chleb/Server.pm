@@ -848,7 +848,7 @@ get '/1/search' => sub {
 
 	my $result;
 	eval {
-		$server->__search({
+		$result = $server->__search({
 			accept    => $mediaType,
 			limit     => $limit,
 			term      => $term,
