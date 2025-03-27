@@ -705,7 +705,7 @@ use Scalar::Util qw(blessed);
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
-set content_type => $Chleb::Server::CONTENT_TYPE_JSON;
+set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
 
 sub handleException {
 	my ($exception) = @_;
