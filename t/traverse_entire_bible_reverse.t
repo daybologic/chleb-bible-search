@@ -43,6 +43,7 @@ use POSIX qw(EXIT_SUCCESS);
 use Chleb;
 use Chleb::DI::MockLogger;
 use Test::More 0.96;
+use Readonly;
 
 sub setUp {
 	my ($self) = @_;
@@ -54,8 +55,22 @@ sub setUp {
 }
 
 sub testTraversalReverse {
+	my ($self, $translation) = @_;
+	Readonly my $TEST_COUNT => 4;
+	plan tests => $TEST_COUNT;
+
+	my $testComprehensive = !$ENV{TEST_QUICK};
+	SKIP: {
+		skip 'TEST_QUICK environment variable is set', $TEST_COUNT unless $testComprehensive;
+
+		$self->__testTraversalReverseWork();
+	};
+
+	return EXIT_SUCCESS;
+}
+
+sub __testTraversalReverseWork {
 	my ($self) = @_;
-	plan tests => 4;
 
 	my @bible = $self->sut->__getBible();
 	my $book = $bible[0]->getBookByOrdinal(-1);
@@ -95,7 +110,7 @@ sub testTraversalReverse {
 	my $expectBibleVerseCount = 31_102;
 	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
 
-	return EXIT_SUCCESS;
+	return;
 }
 
 sub __mockLogger {
