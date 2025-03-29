@@ -32,11 +32,12 @@
 package TraverseEntireBibleReverseTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_SUCCESS);
@@ -61,7 +62,7 @@ sub testTraversalReverse {
 
 	my $testComprehensive = !$ENV{TEST_QUICK};
 	SKIP: {
-		skip 'TEST_QUICK environment variable is set', $TEST_COUNT unless $testComprehensive;
+		skip 'TEST_QUICK environment variable is set', $TEST_COUNT unless $self->_isTestComprehensive();
 
 		$self->__testTraversalReverseWork();
 	};
