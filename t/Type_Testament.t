@@ -63,6 +63,29 @@ sub testValid {
 	return EXIT_SUCCESS;
 }
 
+sub testValidViaConstant {
+	my ($self) = @_;
+	plan tests => 3;
+
+	foreach my $value (
+		$Chleb::Type::Testament::ANY,
+		$Chleb::Type::Testament::OLD,
+		$Chleb::Type::Testament::NEW,
+	) {
+		$self->sut(Chleb::Type::Testament->new({ value => $value }));
+
+		cmp_deeply($self->sut, all(
+			isa('Chleb::Type::Testament'),
+			methods(
+				value => $value,
+				toString => $value,
+			),
+		), $value);
+	}
+
+	return EXIT_SUCCESS;
+}
+
 sub testInvalid {
 	my ($self) = @_;
 	plan tests => 4;
