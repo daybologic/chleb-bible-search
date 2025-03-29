@@ -113,18 +113,6 @@ sub __title {
 	return;
 }
 
-=item C<__json()>
-
-FIXME: THIS APPEARS TO NOT BE CALLED ANYWHERE
-
-=cut
-
-sub __json {
-	my ($self) = @_;
-	$self->{__json} ||= JSON->new();
-	return $self->{__json};
-}
-
 =item C<__library()>
 
 Server accessor for L<Chleb> itself; core library.
