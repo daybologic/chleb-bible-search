@@ -14,6 +14,9 @@ Functions for miscellaneous internal purposes
 
 use Chleb::Utils::BooleanParserSystemException;
 use Chleb::Utils::BooleanParserUserException;
+use Chleb::Utils::TypeParserException;
+use English qw(-no_match_vars);
+use HTTP::Status qw(:constants);
 use Readonly;
 use Scalar::Util qw(blessed);
 
@@ -230,6 +233,44 @@ sub boolean {
 		"Mandatory value for key '$key' not supplied",
 		$key,
 	));
+}
+
+=item C<parseIntoType($outputType, $name, $value, $default)>
+
+=cut
+
+sub parseIntoType {
+	my ($outputType, $name, $value, $default) = @_;
+
+	die(Chleb::Utils::TypeParserException->raise(
+		HTTP_INTERNAL_SERVER_ERROR,
+		'No name supplied in call to parseIntoType()',
+		undef,
+	)) if (!defined($name) || length($name) == 0);
+
+	die(Chleb::Utils::TypeParserException->raise(
+		HTTP_INTERNAL_SERVER_ERROR,
+		sprintf("No default value supplied for '%s'", $name),
+		$name,
+	)) unless (defined($default));
+
+	unless (defined($value)) {
+		return $outputType->new({ value => $default });
+	}
+
+	my $output;
+	eval {
+		$output = $outputType->new({ value => $value });
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		die(Chleb::Utils::TypeParserException->raise(
+			undef,
+			sprintf("Illegal value '%s' for '%s'", $value, $name),
+			$name,
+		));
+	}
+
+	return $output;
 }
 
 =back

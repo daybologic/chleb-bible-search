@@ -47,6 +47,7 @@ use Chleb;
 use Chleb::Exception;
 use Chleb::DI::Container;
 use Chleb::Server::MediaType;
+use Chleb::Type::Testament;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
 use JSON;
@@ -267,6 +268,12 @@ sub __votd {
 
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
+	my $testament = Chleb::Utils::parseIntoType(
+		'Chleb::Type::Testament',
+		'testament',
+		$params->{testament},
+		$Chleb::Type::Testament::ANY,
+	);
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
@@ -763,6 +770,7 @@ get '/2/votd' => sub {
 	my $redirect = param('redirect');
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
+	my $testament = param('testament');
 	my $dancerRequest = request();
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
@@ -776,6 +784,7 @@ get '/2/votd' => sub {
 			parental     => $parental,
 			translations => $translations,
 			redirect     => $redirect,
+			testament    => $testament,
 		});
 	};
 
