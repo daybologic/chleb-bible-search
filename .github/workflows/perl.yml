@@ -2,7 +2,7 @@ name: Perl CI
 
 on:
   push:
-    branches: [ "develop", "master", "f/202409-lintian" ]
+    branches: [ "develop", "master", "private/⚡️/tests-1" ]
   pull_request:
     branches: [ "develop" ]
 

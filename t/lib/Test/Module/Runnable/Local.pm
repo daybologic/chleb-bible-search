@@ -48,7 +48,7 @@ sub _isTestComprehensive {
 
 	if ($testComprehensive) {
 		# Sourcehut: https://man.sr.ht/builds.sr.ht/#build-environment
-		$testComprehensive = 0 if ($ENV{JOB_ID} || $ENV{PATCHSET_ID});
+		$testComprehensive = 0 if ($ENV{CI} || $ENV{JOB_ID} || $ENV{PATCHSET_ID});
 	}
 
 	return $testComprehensive;
