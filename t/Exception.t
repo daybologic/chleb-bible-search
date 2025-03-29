@@ -41,6 +41,7 @@ extends 'Test::Module::Runnable';
 use Chleb::Exception;
 use Chleb::Utils::BooleanParserSystemException;
 use Chleb::Utils::BooleanParserUserException;
+use Chleb::Utils::TypeParserException;
 use HTTP::Status qw(:constants);
 use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods);
@@ -148,6 +149,40 @@ sub testRaiseBooleanParserException {
 	throws_ok {
 		Chleb::Utils::BooleanParserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key);
 	} qr/^Chleb::Utils::BooleanParserException is abstract /, 'cannot instantiate abstract class';
+
+	return EXIT_SUCCESS;
+}
+
+sub testRaiseTypeParserException {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $description = $self->uniqueStr();
+	my $key = $self->uniqueStr();
+	$self->sut(Chleb::Utils::TypeParserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key));
+
+	cmp_deeply($self->sut, all(
+		isa('Chleb::Exception'),
+		isa('Chleb::Utils::TypeParserException'),
+		methods(
+			description => $description,
+			key         => $key,
+			location    => undef,
+			statusCode  => 451,
+		),
+	), 'exception object fields correct');
+
+	$self->sut(Chleb::Utils::TypeParserException->raise(undef, $description, $key));
+	cmp_deeply($self->sut, all(
+		isa('Chleb::Exception'),
+		isa('Chleb::Utils::TypeParserException'),
+		methods(
+			description => $description,
+			key         => $key,
+			location    => undef,
+			statusCode  => 400,
+		),
+	), 'default statusCode');
 
 	return EXIT_SUCCESS;
 }
