@@ -71,6 +71,57 @@ sub testMissingName {
 	return EXIT_SUCCESS;
 }
 
+sub testEmptyName {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::parseIntoType('DummyType', '')
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = 'No name supplied in call to parseIntoType()';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => undef,
+			location => undef,
+			statusCode => 500,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
+sub testMissingDefault {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+	my $name = $self->uniqueStr();
+
+	throws_ok {
+		Chleb::Utils::parseIntoType('DummyType', $name)
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = "No default value supplied for '$name'";
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => $name,
+			location => undef,
+			statusCode => 500,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;
