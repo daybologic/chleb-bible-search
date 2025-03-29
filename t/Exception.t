@@ -158,28 +158,28 @@ sub testRaiseTypeParserException {
 	plan tests => 2;
 
 	my $description = $self->uniqueStr();
-	my $key = $self->uniqueStr();
-	$self->sut(Chleb::Utils::TypeParserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $key));
+	my $name = $self->uniqueStr();
+	$self->sut(Chleb::Utils::TypeParserException->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description, $name));
 
 	cmp_deeply($self->sut, all(
 		isa('Chleb::Exception'),
 		isa('Chleb::Utils::TypeParserException'),
 		methods(
 			description => $description,
-			key         => $key,
 			location    => undef,
+			name        => $name,
 			statusCode  => 451,
 		),
 	), 'exception object fields correct');
 
-	$self->sut(Chleb::Utils::TypeParserException->raise(undef, $description, $key));
+	$self->sut(Chleb::Utils::TypeParserException->raise(undef, $description, $name));
 	cmp_deeply($self->sut, all(
 		isa('Chleb::Exception'),
 		isa('Chleb::Utils::TypeParserException'),
 		methods(
 			description => $description,
-			key         => $key,
 			location    => undef,
+			name        => $name,
 			statusCode  => 400,
 		),
 	), 'default statusCode');

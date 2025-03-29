@@ -37,11 +37,13 @@ extends 'Chleb::Exception';
 
 use HTTP::Status qw(:constants);
 
+has name => (is => 'ro', isa => 'Str', required => 1);
+
 sub raise {
-	my ($class, $statusCode, $thing, $key) = @_;
+	my ($class, $statusCode, $thing, $name) = @_;
 
 	$statusCode = HTTP_BAD_REQUEST if (!defined($statusCode));
-	return $class->SUPER::raise($statusCode, $thing, { key => $key });
+	return $class->SUPER::raise($statusCode, $thing, { name => $name });
 }
 
 1;
