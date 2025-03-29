@@ -155,7 +155,7 @@ sub testRaiseBooleanParserException {
 
 sub testRaiseTypeParserException {
 	my ($self) = @_;
-	plan tests => 2;
+	plan tests => 3;
 
 	my $description = $self->uniqueStr();
 	my $name = $self->uniqueStr();
@@ -183,6 +183,18 @@ sub testRaiseTypeParserException {
 			statusCode  => 400,
 		),
 	), 'default statusCode');
+
+	$self->sut(Chleb::Utils::TypeParserException->raise(undef, $description, undef));
+	cmp_deeply($self->sut, all(
+		isa('Chleb::Exception'),
+		isa('Chleb::Utils::TypeParserException'),
+		methods(
+			description => $description,
+			location    => undef,
+			name        => undef,
+			statusCode  => 400,
+		),
+	), 'no name');
 
 	return EXIT_SUCCESS;
 }

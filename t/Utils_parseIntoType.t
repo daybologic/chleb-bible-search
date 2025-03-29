@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,22 +29,50 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Utils::TypeParserException;
+package UtilsParseIntoTypeTests;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Chleb::Exception';
+use lib 'externals/libtest-module-runnable-perl/lib';
 
-use HTTP::Status qw(:constants);
+extends 'Test::Module::Runnable';
 
-has name => (is => 'ro', isa => 'Maybe[Str]');
+use Chleb::Utils;
+use English qw(-no_match_vars);
+use POSIX qw(EXIT_SUCCESS);
+use Readonly;
+use Test::Deep qw(all cmp_deeply isa methods);
+use Test::Exception;
+use Test::More 0.96;
 
-sub raise {
-	my ($class, $statusCode, $thing, $name) = @_;
+sub testMissingName {
+	my ($self) = @_;
+	plan tests => 2;
 
-	$statusCode = HTTP_BAD_REQUEST if (!defined($statusCode));
-	return $class->SUPER::raise($statusCode, $thing, { name => $name });
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::parseIntoType('DummyType', undef)
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = 'No name supplied in call to parseIntoType()';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => undef,
+			location => undef,
+			statusCode => 500,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
 }
 
-1;
+package main;
+use strict;
+use warnings;
+
+exit(UtilsParseIntoTypeTests->new->run());
