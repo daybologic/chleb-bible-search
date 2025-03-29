@@ -76,6 +76,30 @@ sub testInvalid {
 	return EXIT_SUCCESS;
 }
 
+sub testReadOnly {
+	my ($self) = @_;
+	plan tests => 6;
+
+	$self->sut(Chleb::Type::Testament->new({ value => 'old' }));
+
+	throws_ok {
+		$self->sut->value('old');
+	} qr/read-only/, 'read-only value';
+	is($self->sut->value, 'old', 'still old value');
+
+	throws_ok {
+		$self->sut->value('new');
+	} qr/read-only/, 'read-only value';
+	is($self->sut->value, 'old', 'still old value');
+
+	throws_ok {
+		$self->sut->value('old');
+	} qr/read-only/, 'read-only value';
+	is($self->sut->value, 'old', 'still old value');
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;
