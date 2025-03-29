@@ -83,7 +83,21 @@ sub testTraversal_asv {
 
 sub __checkTraversal {
 	my ($self, $translation) = @_;
-	plan tests => 4;
+	Readonly my $TEST_COUNT => 4;
+	plan tests => $TEST_COUNT;
+
+	my $testComprehensive = !$ENV{TEST_QUICK};
+	SKIP: {
+		skip 'TEST_QUICK environment variable is set', $TEST_COUNT unless $testComprehensive;
+
+		$self->__checkTraversalWork($translation);
+	};
+
+	return;
+}
+
+sub __checkTraversalWork {
+	my ($self, $translation) = @_;
 
 	my %args = ( );
 	$args{translations} = [ $translation ] if ($translation);

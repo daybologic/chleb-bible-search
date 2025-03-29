@@ -70,7 +70,7 @@ package MY;
 sub MY::postamble {
     return q~
 cover :: pure_all
-	HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
+	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
 
 clean :: pure_all
 	rm -rf cover_db
