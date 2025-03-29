@@ -54,8 +54,8 @@ sub testValid {
 		cmp_deeply($self->sut, all(
 			isa('Chleb::Type::Testament'),
 			methods(
-				value => $value,
 				toString => $value,
+				value => $value,
 			),
 		), $value);
 	}
@@ -77,8 +77,8 @@ sub testValidViaConstant {
 		cmp_deeply($self->sut, all(
 			isa('Chleb::Type::Testament'),
 			methods(
-				value => $value,
 				toString => $value,
+				value => $value,
 			),
 		), $value);
 	}
