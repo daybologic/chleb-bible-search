@@ -32,16 +32,18 @@
 package UtilsParseIntoTypeTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb::Utils;
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Readonly;
+use Test::Chleb::DummyType;
 use Test::Deep qw(all cmp_deeply isa methods);
 use Test::Exception;
 use Test::More 0.96;
@@ -116,6 +118,34 @@ sub testMissingDefault {
 			name => $name,
 			location => undef,
 			statusCode => 500,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
+sub testIllegalValue {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+	my $name = $self->uniqueStr();
+	my $value = $self->uniqueStr();
+	my $default = 'acceptable'; # permitted in Test::Chleb::DummyType
+
+	throws_ok {
+		Chleb::Utils::parseIntoType('Test::Chleb::DummyType', $name, $value, $default)
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = "Illegal value '$value' for '$name'";
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => $name,
+			location => undef,
+			statusCode => 400,
 		),
 	), $description);
 
