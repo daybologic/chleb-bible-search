@@ -85,6 +85,17 @@ paths:
           style: form
           explode: false
           description: Requested/accepted bible translations
+        - in: query
+          name: testament
+          schema:
+            type: string
+            enum:
+              - any
+              - old
+              - new
+            default: any
+          required: false
+          description: Only retrieve a verse from the given testament
       security: [] # No security
       responses:
         '200':
