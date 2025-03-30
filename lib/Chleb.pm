@@ -326,7 +326,8 @@ sub __isTestamentMatch {
 	return 1 if ($verse->book->testament eq $testament->value);
 
 	$self->dic->logger->trace(sprintf(
-		'Testament mismatch, wanted %s, but this is %s',
+		'Verse %s testament mismatch, wanted %s, but this is %s',
+		$verse->toString(),
 		$testament->toString(),
 		$verse->book->testament, # TODO: use testamentFuture
 	));
