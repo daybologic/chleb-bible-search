@@ -268,19 +268,14 @@ sub __votd {
 
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
-	my $testament = Chleb::Utils::parseIntoType(
-		'Chleb::Type::Testament',
-		'testament',
-		$params->{testament},
-		$Chleb::Type::Testament::ANY,
-	);
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
 	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
 	    if ($redirect && $version > 1);
 
-	my $verse = $self->__library->votd($params);
+	my $verse = $self->verseFromVoTDLoop($params); # FIXME: Think up a good name
+
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
 
@@ -683,6 +678,45 @@ sub __searchResultsToHtml {
 	return $text;
 }
 
+=item C<verseFromVoTDLoop>
+
+TODO: Should this be moved into library?
+
+=cut
+
+sub verseFromVoTDLoop {
+	my ($self, $params) = @_;
+
+	my $testament = Chleb::Utils::parseIntoType(
+		'Chleb::Type::Testament',
+		'testament',
+		$params->{testament},
+		$Chleb::Type::Testament::ANY,
+	);
+
+	my $verse = undef;
+	do {
+		my $maybeVerse = $self->__library->votd($params);
+		if ($testament->value eq $Chleb::Type::Testament::ANY) {
+			$verse = $maybeVerse;
+		} else {
+			#if ($maybeVerse->book->testamentFuture->equals($testament)) {
+			if ($maybeVerse->book->testament eq $testament->value) {
+				$verse = $maybeVerse;
+			} else {
+				$self->dic->logger->trace(sprintf(
+					'Testament mismatch, wanted %s, but this is %s',
+					$testament->toString(),
+					#$maybeVerse->book->testamentFuture->toString(),
+					$maybeVerse->book->testament,
+				));
+			}
+		}
+	} while (!defined($verse));
+
+	return $verse;
+}
+
 =back
 
 =cut
@@ -748,6 +782,7 @@ get '/1/votd' => sub {
 	my $parental = int(param('parental'));
 	my $redirect = param('redirect');
 	my $when = param('when');
+	my $testament = param('testament');
 
 	my $result;
 	eval {
@@ -755,6 +790,7 @@ get '/1/votd' => sub {
 			parental    => $parental,
 			redirect    => $redirect,
 			when        => $when,
+			testament   => $testament,
 		});
 	};
 
