@@ -274,8 +274,7 @@ sub __votd {
 	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
 	    if ($redirect && $version > 1);
 
-	my $verse = $self->verseFromVoTDLoop($params); # FIXME: Think up a good name
-
+	my $verse = $self->__library->votd($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
 
@@ -676,46 +675,6 @@ sub __searchResultsToHtml {
 	}
 
 	return $text;
-}
-
-=item C<verseFromVoTDLoop>
-
-TODO: Should this be moved into library?
-
-=cut
-
-sub verseFromVoTDLoop {
-	my ($self, $params) = @_;
-
-	my $testament = Chleb::Utils::parseIntoType(
-		'Chleb::Type::Testament',
-		'testament',
-		$params->{testament},
-		$Chleb::Type::Testament::ANY,
-	);
-
-	my $verse = undef;
-	do {
-		my $potentialVerse = $self->__library->votd($params);
-		my $firstVerseInSet = (ref($potentialVerse) eq 'ARRAY') ? $potentialVerse->[0] : $potentialVerse;
-		if ($testament->value eq $Chleb::Type::Testament::ANY) {
-			$verse = $potentialVerse;
-		} else {
-			#if ($firstVerseInSet->book->testamentFuture->equals($testament)) {
-			if ($firstVerseInSet->book->testament eq $testament->value) {
-				$verse = $potentialVerse;
-			} else {
-				$self->dic->logger->trace(sprintf(
-					'Testament mismatch, wanted %s, but this is %s',
-					$testament->toString(),
-					#$firstVerseInSet->book->testamentFuture->toString(),
-					$firstVerseInSet->book->testament,
-				));
-			}
-		}
-	} while (!defined($verse));
-
-	return $verse;
 }
 
 =back

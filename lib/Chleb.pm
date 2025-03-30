@@ -35,6 +35,7 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Type::Testament;
 use Data::Dumper;
 use Digest::CRC qw(crc32);
 use HTTP::Status qw(:constants);
@@ -49,6 +50,7 @@ use Chleb::Exception;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 use Chleb::DI::Container;
+use Chleb::Utils;
 
 Readonly my $TRANSLATION_DEFAULT => 'kjv';
 
@@ -133,7 +135,15 @@ sub votd {
 	my ($self, $args) = @_;
 	my $startTiming = Time::HiRes::time();
 	__fixTranslationsParam($args);
-	my ($when, $version, $parental) = @{$args}{qw(when version parental)};
+	my ($when, $version, $parental, $testament) = @{$args}{qw(when version parental testament)};
+
+	$testament = Chleb::Utils::parseIntoType(
+		'Chleb::Type::Testament',
+		'testament',
+		$testament,
+		$Chleb::Type::Testament::ANY,
+	);
+	$self->dic->logger->trace('Looking for testament: ' . $testament->toString());
 
 	my (@bible) = $self->__getBible($args);
 	$when = $self->_resolveISO8601($when);
@@ -148,6 +158,8 @@ sub votd {
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
+
+		next unless ($self->__isTestamentMatch($verse, $testament));
 
 		last if (!$parental || !$verse->parental);
 		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
@@ -293,6 +305,21 @@ sub __fixTranslationsParam {
 sub __allTranslationsList {
 	# TODO: Can we make this dynamic?  If we can, we can drop in custom translations dynamically
 	return ('asv', 'kjv');
+}
+
+sub __isTestamentMatch {
+	my ($self, $verse, $testament) = @_;
+
+	return 1 if ($testament->value eq $Chleb::Type::Testament::ANY);
+	return 1 if ($verse->book->testament eq $testament->value);
+
+	$self->dic->logger->trace(sprintf(
+		'Testament mismatch, wanted %s, but this is %s',
+		$testament->toString(),
+		$verse->book->testament, # TODO: use testamentFuture
+	));
+
+	return 0;
 }
 
 1;
