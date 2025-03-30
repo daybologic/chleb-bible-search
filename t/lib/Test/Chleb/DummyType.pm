@@ -43,9 +43,4 @@ has value => (
 	required => 1,
 );
 
-sub toString {
-	my ($self) = @_;
-	return $self->value;
-}
-
 1;

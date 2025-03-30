@@ -152,6 +152,55 @@ sub testIllegalValue {
 	return EXIT_SUCCESS;
 }
 
+sub testUnknownType {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+	my $name = $self->uniqueStr();
+	my $value = 'acceptable';
+	my $default = 'acceptable'; # permitted in Test::Chleb::DummyType
+
+	throws_ok {
+		Chleb::Utils::parseIntoType('TypeDoesNotExist', $name, $value, $default)
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = "Illegal value '$value' for '$name'";
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => $name,
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
+sub testSuccess {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+	my $name = $self->uniqueStr();
+	my $value = 'acceptable';
+	my $default = 'acceptable'; # permitted in Test::Chleb::DummyType
+
+	my $dummyType = Chleb::Utils::parseIntoType('Test::Chleb::DummyType', $name, $value, $default);
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	ok(!$evalError, 'no exception');
+	cmp_deeply($dummyType, all(
+		isa('Test::Chleb::DummyType'),
+		methods(value => $value),
+	), 'dummyType seems legit');
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;
