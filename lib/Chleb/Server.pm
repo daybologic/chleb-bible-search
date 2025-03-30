@@ -696,19 +696,20 @@ sub verseFromVoTDLoop {
 
 	my $verse = undef;
 	do {
-		my $maybeVerse = $self->__library->votd($params);
+		my $potentialVerse = $self->__library->votd($params);
+		my $firstVerseInSet = (ref($potentialVerse) eq 'ARRAY') ? $potentialVerse->[0] : $potentialVerse;
 		if ($testament->value eq $Chleb::Type::Testament::ANY) {
-			$verse = $maybeVerse;
+			$verse = $potentialVerse;
 		} else {
-			#if ($maybeVerse->book->testamentFuture->equals($testament)) {
-			if ($maybeVerse->book->testament eq $testament->value) {
-				$verse = $maybeVerse;
+			#if ($firstVerseInSet->book->testamentFuture->equals($testament)) {
+			if ($firstVerseInSet->book->testament eq $testament->value) {
+				$verse = $potentialVerse;
 			} else {
 				$self->dic->logger->trace(sprintf(
 					'Testament mismatch, wanted %s, but this is %s',
 					$testament->toString(),
-					#$maybeVerse->book->testamentFuture->toString(),
-					$maybeVerse->book->testament,
+					#$firstVerseInSet->book->testamentFuture->toString(),
+					$firstVerseInSet->book->testament,
 				));
 			}
 		}
