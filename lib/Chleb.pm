@@ -115,12 +115,24 @@ sub random { # TODO: parental?
 	my ($self, $args) = @_;
 
 	my $startTiming = Time::HiRes::time();
+
+	my $testament = Chleb::Utils::parseIntoType(
+		'Chleb::Type::Testament',
+		'testament',
+		$args->{testament},
+		$Chleb::Type::Testament::ANY,
+	);
+	$self->dic->logger->trace('Looking for testament: ' . $testament->toString());
+
 	__fixTranslationsParam($args);
 	my (@bible) = $self->__getBible($args);
 	@bible = shuffle(@bible);
 
-	my $verseOrdinal = 1 + rand($bible[0]->verseCount);
-	my $verse = $bible[0]->getVerseByOrdinal($verseOrdinal);
+	my $verse;
+	do {
+		my $verseOrdinal = 1 + rand($bible[0]->verseCount);
+		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal);
+	} until ($self->__isTestamentMatch($verse, $testament));
 
 	my $endTiming = Time::HiRes::time();
 	my $msecAll = int(1000 * ($endTiming - $startTiming));

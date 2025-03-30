@@ -722,7 +722,11 @@ get '/1/random' => sub {
 
 	my $result;
 	eval {
-		$result = $server->__random({ accept => $mediaType, translations => $translations });
+		$result = $server->__random({
+			accept => $mediaType,
+			translations => $translations,
+			testament => param('testament'),
+		});
 	};
 
 	if (my $exception = $EVAL_ERROR) {
