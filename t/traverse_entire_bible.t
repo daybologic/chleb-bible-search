@@ -32,11 +32,12 @@
 package TraverseEntireBibleTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb;
 use Chleb::DI::MockLogger;
@@ -83,7 +84,21 @@ sub testTraversal_asv {
 
 sub __checkTraversal {
 	my ($self, $translation) = @_;
-	plan tests => 4;
+	Readonly my $TEST_COUNT => 4;
+	plan tests => $TEST_COUNT;
+
+	my $testComprehensive = !$ENV{TEST_QUICK};
+	SKIP: {
+		skip 'TEST_QUICK environment variable is set', $TEST_COUNT unless $self->_isTestComprehensive();
+
+		$self->__checkTraversalWork($translation);
+	};
+
+	return;
+}
+
+sub __checkTraversalWork {
+	my ($self, $translation) = @_;
 
 	my %args = ( );
 	$args{translations} = [ $translation ] if ($translation);

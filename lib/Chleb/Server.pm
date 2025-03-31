@@ -47,6 +47,7 @@ use Chleb;
 use Chleb::Exception;
 use Chleb::DI::Container;
 use Chleb::Server::MediaType;
+use Chleb::Type::Testament;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
 use JSON;
@@ -111,18 +112,6 @@ sub __title {
 	));
 
 	return;
-}
-
-=item C<__json()>
-
-FIXME: THIS APPEARS TO NOT BE CALLED ANYWHERE
-
-=cut
-
-sub __json {
-	my ($self) = @_;
-	$self->{__json} ||= JSON->new();
-	return $self->{__json};
 }
 
 =item C<__library()>
@@ -440,7 +429,7 @@ sub __search {
 	my $limit = int($search->{limit});
 	$limit ||= 5;
 
-	my $wholeword = Chleb::Utils::boolean($search->{wholeword});
+	my $wholeword = Chleb::Utils::boolean('wholeword', $search->{wholeword}, 0);
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($search->{accept}, $CONTENT_TYPE_DEFAULT);
 
@@ -705,7 +694,7 @@ use Scalar::Util qw(blessed);
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
-set content_type => $Chleb::Server::CONTENT_TYPE_JSON;
+set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
 
 sub handleException {
 	my ($exception) = @_;
@@ -733,7 +722,11 @@ get '/1/random' => sub {
 
 	my $result;
 	eval {
-		$result = $server->__random({ accept => $mediaType, translations => $translations });
+		$result = $server->__random({
+			accept => $mediaType,
+			translations => $translations,
+			testament => param('testament'),
+		});
 	};
 
 	if (my $exception = $EVAL_ERROR) {
@@ -753,6 +746,7 @@ get '/1/votd' => sub {
 	my $parental = int(param('parental'));
 	my $redirect = param('redirect');
 	my $when = param('when');
+	my $testament = param('testament');
 
 	my $result;
 	eval {
@@ -760,6 +754,7 @@ get '/1/votd' => sub {
 			parental    => $parental,
 			redirect    => $redirect,
 			when        => $when,
+			testament   => $testament,
 		});
 	};
 
@@ -775,6 +770,7 @@ get '/2/votd' => sub {
 	my $redirect = param('redirect');
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
+	my $testament = param('testament');
 	my $dancerRequest = request();
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
@@ -788,6 +784,7 @@ get '/2/votd' => sub {
 			parental     => $parental,
 			translations => $translations,
 			redirect     => $redirect,
+			testament    => $testament,
 		});
 	};
 
@@ -846,7 +843,19 @@ get '/1/search' => sub {
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
-	my $result = $server->__search({ accept => $mediaType, limit => $limit, term => $term, wholeword => $wholeword });
+	my $result;
+	eval {
+		$result = $server->__search({
+			accept    => $mediaType,
+			limit     => $limit,
+			term      => $term,
+			wholeword => $wholeword,
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
 
 	if (ref($result) ne 'HASH') {
 		$server->dic->logger->trace('1/search returned as HTML');

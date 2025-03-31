@@ -29,99 +29,102 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package TraverseEntireBibleReverseTests;
+package TypeTestamentTests;
 use strict;
 use warnings;
-use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable::Local';
+extends 'Test::Module::Runnable';
 
-use Test::Deep qw(all cmp_deeply isa methods);
+use Chleb::Type::Testament;
 use POSIX qw(EXIT_SUCCESS);
-use Chleb;
-use Chleb::DI::MockLogger;
+use Test::Deep qw(all cmp_deeply isa methods);
+use Test::Exception;
 use Test::More 0.96;
-use Readonly;
 
-sub setUp {
+sub testValid {
 	my ($self) = @_;
+	plan tests => 3;
 
-	$self->sut(Chleb->new());
-	$self->__mockLogger();
+	foreach my $value (qw(any old new)) {
+		$self->sut(Chleb::Type::Testament->new({ value => $value }));
+
+		cmp_deeply($self->sut, all(
+			isa('Chleb::Type::Testament'),
+			methods(
+				toString => $value,
+				value => $value,
+			),
+		), $value);
+	}
 
 	return EXIT_SUCCESS;
 }
 
-sub testTraversalReverse {
-	my ($self, $translation) = @_;
-	Readonly my $TEST_COUNT => 4;
-	plan tests => $TEST_COUNT;
+sub testValidViaConstant {
+	my ($self) = @_;
+	plan tests => 3;
 
-	my $testComprehensive = !$ENV{TEST_QUICK};
-	SKIP: {
-		skip 'TEST_QUICK environment variable is set', $TEST_COUNT unless $self->_isTestComprehensive();
+	foreach my $value (
+		$Chleb::Type::Testament::ANY,
+		$Chleb::Type::Testament::OLD,
+		$Chleb::Type::Testament::NEW,
+	) {
+		$self->sut(Chleb::Type::Testament->new({ value => $value }));
 
-		$self->__testTraversalReverseWork();
-	};
+		cmp_deeply($self->sut, all(
+			isa('Chleb::Type::Testament'),
+			methods(
+				toString => $value,
+				value => $value,
+			),
+		), $value);
+	}
 
 	return EXIT_SUCCESS;
 }
 
-sub __testTraversalReverseWork {
+sub testInvalid {
 	my ($self) = @_;
+	plan tests => 4;
 
-	my @bible = $self->sut->__getBible();
-	my $book = $bible[0]->getBookByOrdinal(-1);
-	cmp_deeply($book, all(
-		isa('Chleb::Bible::Book'),
-		methods(shortName => 'Rev'),
-	), 'Book lookup for Revelation');
+	foreach my $value ('ANY', '', undef, 0) {
+		throws_ok {
+			Chleb::Type::Testament->new({ value => $value })
+		} qr/Validation failed/, (defined($value) ? "'$value'" : '<undef>');
+	}
 
-	my $verse = $book->getVerseByOrdinal(-1);
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => methods(ordinal => 66),
-			chapter => methods(ordinal => 22),
-			ordinal => 21,
-		),
-	), 'Last verse in bible correct: ' . $verse->toString());
-
-	my $previousVerse;
-	my $actualBibleVerseCount = 0;
-	do {
-		$actualBibleVerseCount++;
-		$previousVerse = $verse;
-		$verse = $verse->getPrev();
-	} while ($verse);
-
-	$verse = $previousVerse;
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book => methods(ordinal => 1),
-			chapter => methods(ordinal => 1),
-			ordinal => 1,
-		),
-	), 'first verse in bible correct: ' . $verse->toString());
-
-	my $expectBibleVerseCount = 31_102;
-	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
-
-	return;
+	return EXIT_SUCCESS;
 }
 
-sub __mockLogger {
+sub testReadOnly {
 	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
+	plan tests => 6;
+
+	$self->sut(Chleb::Type::Testament->new({ value => 'old' }));
+
+	throws_ok {
+		$self->sut->value('old');
+	} qr/read-only/, 'read-only value';
+	is($self->sut->value, 'old', 'still old value');
+
+	throws_ok {
+		$self->sut->value('new');
+	} qr/read-only/, 'read-only value';
+	is($self->sut->value, 'old', 'still old value');
+
+	throws_ok {
+		$self->sut->value('old');
+	} qr/read-only/, 'read-only value';
+	is($self->sut->value, 'old', 'still old value');
+
+	return EXIT_SUCCESS;
 }
 
 package main;
 use strict;
 use warnings;
 
-exit(TraverseEntireBibleReverseTests->new->run());
+exit(TypeTestamentTests->new->run());

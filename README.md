@@ -15,7 +15,7 @@ The service also provides a determinsitic verse of the day lookup.
 
 For up to date documentation, please ensure you are viewing the latest copy at [GitHub](https://github.com/daybologic/chleb-bible-search/blob/master/README.md)
 
-For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible_search/1.0.0)
+For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.0.0)
 
 ## Availability
 

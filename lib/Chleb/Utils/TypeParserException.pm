@@ -28,37 +28,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Exception;
+package Chleb::Utils::TypeParserException;
 use strict;
 use warnings;
 use Moose;
 
-use HTTP::Status qw(:is);
+extends 'Chleb::Exception';
 
-has description => (is => 'ro', isa => 'Str');
+use HTTP::Status qw(:constants);
 
-has statusCode => (is => 'ro', isa => 'Int', default => 200);
-
-has location => (is => 'ro', isa => 'Str');
+has name => (is => 'ro', isa => 'Maybe[Str]');
 
 sub raise {
-	my ($class, $statusCode, $thing, $additional) = @_;
+	my ($class, $statusCode, $thing, $name) = @_;
 
-	my %additionalDeref = ( );
-	%additionalDeref = %$additional if ($additional);
-
-	my %params = (
-		statusCode => $statusCode,
-		%additionalDeref,
-	);
-
-	if (is_redirect($statusCode)) {
-		$params{location} = $thing;
-	} else {
-		$params{description} = $thing;
-	}
-
-	return $class->new(\%params);
+	$statusCode = HTTP_BAD_REQUEST if (!defined($statusCode));
+	return $class->SUPER::raise($statusCode, $thing, { name => $name });
 }
 
 1;

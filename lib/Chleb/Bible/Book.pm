@@ -124,7 +124,8 @@ This cannot be changed.
 
 =cut
 
-has testament => (is => 'ro', isa => enum(['old', 'new']));
+has testament => (is => 'ro', isa => enum(['old', 'new'])); # FIXME _testament will replace this
+has testamentFuture => (is => 'ro', isa => 'Chleb::Type::Testament');
 
 =item C<type>
 

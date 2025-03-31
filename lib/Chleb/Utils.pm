@@ -12,7 +12,35 @@ Functions for miscellaneous internal purposes
 
 =cut
 
+use Chleb::Utils::BooleanParserSystemException;
+use Chleb::Utils::BooleanParserUserException;
+use Chleb::Utils::TypeParserException;
+use English qw(-no_match_vars);
+use HTTP::Status qw(:constants);
+use Readonly;
 use Scalar::Util qw(blessed);
+
+=head1 PRIVATE CONSTANTS
+
+=over
+
+=item C<@TRUE_VALUES>
+
+known true values; a fixed list.
+
+=cut
+
+Readonly my @TRUE_VALUES => ('1', 'true', 'on', 'yes');
+
+=item C<@FALSE_VALUES>
+
+known false values; a fixed list.
+
+=cut
+
+Readonly my @FALSE_VALUES => ('0', 'false', 'off', 'no');
+
+=back
 
 =head1 FUNCTIONS
 
@@ -115,17 +143,134 @@ sub queryParamsHelper {
 	return $str;
 }
 
+=item C<parse($key, $value, [$defaultValue])>
+
+Parse a user-supplied config boolean into a simple type.
+
+The value may be undef or anything supplied by the user, without sanity checking,
+if the value is recognized from one of the known values: true/false, 1/0,
+enabled/disabled, on/off, yes/no and so on, we return a simple scalar value.
+
+If the value is undef and a default value is specified, that default will be returned.
+If no default is specified, the value is considered mandatory and L<Chleb::Utils::BooleanParserUserException> is
+thrown.  If the default is not properly specified and not undef, we throw
+L<Chleb::Utils::BooleanParserSystemException>, which means you need to fix your code.
+
+@param key String
+@param value String
+@param defaultValue String
+@return boolean
+@throws BooleanParserUserException
+@throws BooleanParserSystemException
+
+=cut
+
 sub boolean {
-	my ($value, $default) = @_;
+	my ($key, $value, $defaultValue) = @_;
+	my $defaultValueReturned = 0;
 
-	if (defined($value)) {
-		$value = lc($value);
+	my $isTrue = sub {
+		my ($v) = @_;
 
-		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
-		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
+		foreach my $trueValues (@TRUE_VALUES) {
+			return 1 if ($v eq $trueValues);
+		}
+
+		return ($v =~ m/^enable/);
+	};
+
+	my $isFalse = sub {
+		my ($v) = @_;
+
+		foreach my $falseValues (@FALSE_VALUES) {
+			return 1 if ($v eq $falseValues);
+		}
+
+		return ($v =~ m/^disable/);
+	};
+
+	# Let's run this block first so we trap invalid defaults even when they aren't used
+	if (defined($defaultValue)) {
+		$defaultValue = lc($defaultValue);
+		if ($isTrue->($defaultValue)) {
+			$defaultValueReturned = 1;
+		} elsif (!$isFalse->($defaultValue)) {
+			die(Chleb::Utils::BooleanParserSystemException->raise(
+				undef,
+				"Illegal default value: '$defaultValue' for key '$key'",
+				$key,
+			));
+		}
 	}
 
-	return defined($default) ? $default : 0;
+	if (defined($value)) {
+		my $trim = sub {
+			my ($v) = @_;
+			$v =~ s/^\s+//;
+			$v =~ s/\s+$//;
+			return $v;
+		};
+
+		$value = $trim->($value);
+		if (length($value) > 0) {
+			$value = lc($value);
+
+			return 1 if ($isTrue->($value));
+			return 0 if ($isFalse->($value));
+
+			die(Chleb::Utils::BooleanParserUserException->raise(
+				undef,
+				"Illegal user-supplied value: '$value' for key '$key'",
+				$key,
+			));
+		}
+	}
+
+	return $defaultValueReturned if (defined($defaultValue)); # Apply default, if supplied/available
+
+	die(Chleb::Utils::BooleanParserUserException->raise(
+		undef,
+		"Mandatory value for key '$key' not supplied",
+		$key,
+	));
+}
+
+=item C<parseIntoType($outputType, $name, $value, $default)>
+
+=cut
+
+sub parseIntoType {
+	my ($outputType, $name, $value, $default) = @_;
+
+	die(Chleb::Utils::TypeParserException->raise(
+		HTTP_INTERNAL_SERVER_ERROR,
+		'No name supplied in call to parseIntoType()',
+		undef,
+	)) if (!defined($name) || length($name) == 0);
+
+	die(Chleb::Utils::TypeParserException->raise(
+		HTTP_INTERNAL_SERVER_ERROR,
+		sprintf("No default value supplied for '%s'", $name),
+		$name,
+	)) unless (defined($default));
+
+	unless (defined($value)) {
+		return $outputType->new({ value => $default });
+	}
+
+	my $output;
+	eval {
+		$output = $outputType->new({ value => $value });
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		die(Chleb::Utils::TypeParserException->raise(
+			undef,
+			sprintf("Illegal value '%s' for '%s'", $value, $name),
+			$name,
+		));
+	}
+
+	return $output;
 }
 
 =back

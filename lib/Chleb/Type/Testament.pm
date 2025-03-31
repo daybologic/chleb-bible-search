@@ -28,37 +28,97 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Exception;
+package Chleb::Type::Testament;
 use strict;
 use warnings;
 use Moose;
 
-use HTTP::Status qw(:is);
+=head1 NAME
 
-has description => (is => 'ro', isa => 'Str');
+Chleb::Type::Testament - Which half of the bible
 
-has statusCode => (is => 'ro', isa => 'Int', default => 200);
+=head1 DESCRIPTION
 
-has location => (is => 'ro', isa => 'Str');
+Object representing one testament name within The Holy Bible
 
-sub raise {
-	my ($class, $statusCode, $thing, $additional) = @_;
+=cut
 
-	my %additionalDeref = ( );
-	%additionalDeref = %$additional if ($additional);
+extends 'Chleb::Bible::Base';
 
-	my %params = (
-		statusCode => $statusCode,
-		%additionalDeref,
-	);
+use Moose::Util::TypeConstraints qw(enum);
+use Readonly;
 
-	if (is_redirect($statusCode)) {
-		$params{location} = $thing;
-	} else {
-		$params{description} = $thing;
-	}
+=head1 CONSTANTS
 
-	return $class->new(\%params);
+=over
+
+=item C<$ANY>
+
+Either testament is acceptable, if seeking.  If the owning object
+represents something already sought, then this means the testament is
+unknown, which should not be possible.
+
+=cut
+
+Readonly our $ANY => 'any';
+
+=back
+
+=item C<$OLD>
+
+The Old Testament.
+
+=cut
+
+Readonly our $OLD => 'old';
+
+=back
+
+=item C<$NEW>
+
+The New Testament.
+
+=cut
+
+Readonly our $NEW => 'new';
+
+=back
+
+=head1 ATTRIBUTES
+
+=over
+
+=item C<value>
+
+The testament.
+
+=cut
+
+has value => (
+	is => 'ro',
+	isa => enum([$ANY, $OLD, $NEW]),
+	required => 1,
+);
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<toString()>
+
+Human-readable representation.
+
+=cut
+
+sub toString {
+	my ($self) = @_;
+	return $self->value;
 }
+
+=back
+
+=cut
 
 1;

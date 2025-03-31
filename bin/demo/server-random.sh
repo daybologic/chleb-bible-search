@@ -33,7 +33,7 @@ H=localhost:3000
 
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		curl --header 'Accept: application/json' -s "http://$H/1/random" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
+		curl --header 'Accept: application/json' -s "http://$H/1/random?testament=new" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
 	else
 		curl --header 'Accept: text/html' -s "http://$H/1/random"
 	fi

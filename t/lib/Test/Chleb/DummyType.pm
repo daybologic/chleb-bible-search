@@ -28,37 +28,19 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Exception;
+package Test::Chleb::DummyType;
 use strict;
 use warnings;
 use Moose;
 
-use HTTP::Status qw(:is);
+extends 'Chleb::Bible::Base';
 
-has description => (is => 'ro', isa => 'Str');
+use Moose::Util::TypeConstraints qw(enum);
 
-has statusCode => (is => 'ro', isa => 'Int', default => 200);
-
-has location => (is => 'ro', isa => 'Str');
-
-sub raise {
-	my ($class, $statusCode, $thing, $additional) = @_;
-
-	my %additionalDeref = ( );
-	%additionalDeref = %$additional if ($additional);
-
-	my %params = (
-		statusCode => $statusCode,
-		%additionalDeref,
-	);
-
-	if (is_redirect($statusCode)) {
-		$params{location} = $thing;
-	} else {
-		$params{description} = $thing;
-	}
-
-	return $class->new(\%params);
-}
+has value => (
+	is => 'ro',
+	isa => enum(['acceptable']),
+	required => 1,
+);
 
 1;

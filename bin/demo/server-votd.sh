@@ -36,7 +36,7 @@ H='localhost:3000'
 
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		json=$(curl -s --header 'Accept: application/json' "http://${H}/2/votd?when=$now")
+		json=$(curl -s --header 'Accept: application/json' "http://${H}/2/votd?when=$now&testament=new")
 		i=0
 		while true; do
 			line=$(echo "$json" | jq -r '.data['$i'].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text');
@@ -47,6 +47,6 @@ if [ -x /usr/bin/curl ]; then
 			i=$i+1
 		done
 	else
-		curl --header 'Accept: text/plain' -s "http://$H/2/votd?when=$now"
+		curl --header 'Accept: text/plain' -s "http://$H/2/votd?when=$now?testament=new"
 	fi
 fi

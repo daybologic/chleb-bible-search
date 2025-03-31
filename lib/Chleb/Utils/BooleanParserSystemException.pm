@@ -28,37 +28,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Exception;
+package Chleb::Utils::BooleanParserSystemException;
 use strict;
 use warnings;
 use Moose;
 
-use HTTP::Status qw(:is);
+extends 'Chleb::Utils::BooleanParserException';
 
-has description => (is => 'ro', isa => 'Str');
-
-has statusCode => (is => 'ro', isa => 'Int', default => 200);
-
-has location => (is => 'ro', isa => 'Str');
+use HTTP::Status qw(:constants);
 
 sub raise {
-	my ($class, $statusCode, $thing, $additional) = @_;
+	my ($class, $statusCode, $thing, $key) = @_;
 
-	my %additionalDeref = ( );
-	%additionalDeref = %$additional if ($additional);
-
-	my %params = (
-		statusCode => $statusCode,
-		%additionalDeref,
-	);
-
-	if (is_redirect($statusCode)) {
-		$params{location} = $thing;
-	} else {
-		$params{description} = $thing;
-	}
-
-	return $class->new(\%params);
+	$statusCode = HTTP_INTERNAL_SERVER_ERROR if (!defined($statusCode));
+	return $class->SUPER::raise($statusCode, $thing, $key);
 }
 
 1;

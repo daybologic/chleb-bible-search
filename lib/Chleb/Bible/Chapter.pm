@@ -110,7 +110,7 @@ sub TO_JSON {
 
 	return {
 		book    => $self->book->shortName,
-		ordinal => $self->ordinal,
+		ordinal => $self->ordinal+0,
 	};
 }
 
