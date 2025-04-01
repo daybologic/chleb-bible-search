@@ -134,8 +134,8 @@ This cannot be changed.
 
 =cut
 
-has testament => (is => 'ro', isa => enum(['old', 'new'])); # FIXME _testament will replace this
-has testamentFuture => (is => 'ro', isa => 'Chleb::Type::Testament');
+has testament => (is => 'ro', isa => enum(['old', 'new'])); # FIXME testamentFuture will replace this and this will be removed
+has testamentFuture => (is => 'ro', isa => 'Chleb::Type::Testament'); # Replaces 'testament', which will be removed soon
 
 =item C<type>
 
@@ -318,6 +318,7 @@ sub TO_JSON {
 		short_name     => $self->shortName,
 		short_name_raw => $self->shortNameRaw,
 		testament      => $self->testament,
+		testament      => $self->testamentFuture ? $self->testamentFuture->value : $self->testament,
 		translation    => $self->bible->translation,
 		verse_count    => $self->verseCount+0,
 	};

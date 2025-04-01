@@ -344,13 +344,19 @@ sub __isTestamentMatch {
 	my ($self, $verse, $testament) = @_;
 
 	return 1 if ($testament->value eq $Chleb::Type::Testament::ANY);
-	return 1 if ($verse->book->testament eq $testament->value);
+	if ($verse->book->testamentFuture) {
+		return 1 if ($verse->book->testamentFuture->value eq $testament->value); # TODO: Can we have an equals() method within Chleb::Type::Testament
+	} else {
+		$self->dic->logger->warn('Legacy testament attribute used because testamentFuture not set');
+		return 1 if ($verse->book->testament eq $testament->value);
+	}
 
 	$self->dic->logger->trace(sprintf(
 		'Verse %s testament mismatch, wanted %s, but this is %s',
 		$verse->toString(),
 		$testament->toString(),
-		$verse->book->testament, # TODO: use testamentFuture
+		#$verse->book->testamentFuture->toString(),
+		($verse->book->testamentFuture ? $verse->book->testamentFuture->toString() : $verse->book->testament),
 	));
 
 	return 0;
