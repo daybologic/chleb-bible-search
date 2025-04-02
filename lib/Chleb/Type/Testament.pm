@@ -106,6 +106,18 @@ has value => (
 
 =over
 
+=item C<createFromBackendValue($value)>
+
+=cut
+
+sub createFromBackendValue {
+	my ($class, $backendValue) = @_;
+
+	my $value = $NEW;
+	$value = $OLD if ($backendValue eq 'O');
+	return $class->new({ value => $value });
+}
+
 =item C<toString()>
 
 Human-readable representation.

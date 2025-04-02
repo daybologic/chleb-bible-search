@@ -135,7 +135,7 @@ This cannot be changed.
 =cut
 
 has testament => (is => 'ro', isa => enum(['old', 'new'])); # FIXME testamentFuture will replace this and this will be removed
-has testamentFuture => (is => 'ro', isa => 'Chleb::Type::Testament'); # Replaces 'testament', which will be removed soon
+has testamentFuture => (is => 'ro', isa => 'Chleb::Type::Testament', required => 1); # Replaces 'testament', which will be removed soon
 
 =item C<type>
 
