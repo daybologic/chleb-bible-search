@@ -10,7 +10,7 @@ chleb-bible-search (1.0.0) stable; urgency=medium
     The problem here was merely using '?wholeword=true' in the URI,
     and '?wholeword=1' had to be used before this fix.  Regression test introduced.
 
- -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 22 Feb 2025 10:55:10 +0000
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Tue, 08 Apr 2025 21:15:37 +0100
 
 chleb-bible-search (0.11.0) stable; urgency=medium
 
