@@ -210,6 +210,8 @@ sub test {
 			attributes => {
 				book => 'Mat',
 				ordinal => 4,
+				translation => 'kjv',
+				verse_count => 25,
 			},
 			id => 'kjv/mat/4',
 			relationships => {
@@ -236,6 +238,8 @@ sub test {
 			attributes => {
 				book => 'Mat',
 				ordinal => 10,
+				translation => 'kjv',
+				verse_count => 42,
 			},
 			id => 'kjv/mat/10',
 			relationships => {
@@ -262,6 +266,8 @@ sub test {
 			attributes => {
 				book => 'Mat',
 				ordinal => 14,
+				translation => 'kjv',
+				verse_count => 36,
 			},
 			id => 'kjv/mat/14',
 			relationships => {
@@ -288,6 +294,8 @@ sub test {
 			attributes => {
 				book => 'Mat',
 				ordinal => 14,
+				translation => 'kjv',
+				verse_count => 36,
 			},
 			id => 'kjv/mat/14',
 			relationships => {
@@ -314,6 +322,8 @@ sub test {
 			attributes => {
 				book => 'Mat',
 				ordinal => 15,
+				translation => 'kjv',
+				verse_count => 39,
 			},
 			id => 'kjv/mat/15',
 			relationships => {

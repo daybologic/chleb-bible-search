@@ -101,6 +101,8 @@ sub test {
 				attributes => {
 					book => 'Psa',
 					ordinal => 55,
+					translation => 'kjv',
+					verse_count => 23,
 				},
 				id => 'kjv/psa/55',
 				type => 'chapter',
@@ -253,6 +255,8 @@ sub testV2 {
 				attributes => {
 					book => 'Num',
 					ordinal => 33,
+					translation => 'kjv',
+					verse_count => 56,
 				},
 				id => 'kjv/num/33',
 				type => 'chapter',
@@ -341,6 +345,8 @@ sub testV2_translations_asv_asv {
 				attributes => {
 					book => 'Psa',
 					ordinal => 122,
+					translation => 'asv',
+					verse_count => 9,
 				},
 				id => 'asv/psa/122',
 				type => 'chapter',
@@ -461,6 +467,8 @@ sub testV2_translations_kjv_asv {
 				attributes => {
 					book => 'Psa',
 					ordinal => 122,
+					translation => 'asv',
+					verse_count => 9,
 				},
 				id => 'asv/psa/122',
 				type => 'chapter',
@@ -677,6 +685,8 @@ sub testV2_translations_all {
 				attributes => {
 					book => 'Num',
 					ordinal => 16,
+					translation => 'asv',
+					verse_count => 50,
 				},
 				id => 'asv/num/16',
 				type => 'chapter',

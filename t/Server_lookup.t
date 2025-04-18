@@ -133,6 +133,8 @@ sub test_translation_all {
 				attributes => {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
+					translation => 'asv',
+					verse_count => 7,
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
 				type => 'chapter',

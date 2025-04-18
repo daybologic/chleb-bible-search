@@ -109,8 +109,10 @@ sub TO_JSON {
 	my ($self) = @_;
 
 	return {
-		book    => $self->book->shortName,
-		ordinal => $self->ordinal+0,
+		book        => $self->book->shortName,
+		ordinal     => $self->ordinal+0,
+		translation => $self->book->bible->translation,
+		verse_count => $self->verseCount+0,
 	};
 }
 

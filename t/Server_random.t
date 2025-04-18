@@ -100,6 +100,8 @@ sub test_translation_kjv {
 				attributes => {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
+					translation => 'kjv',
+					verse_count => re(qr/^\d{1,3}$/),
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
 				type => 'chapter',
@@ -187,6 +189,8 @@ sub test_translation_asv {
 				attributes => {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
+					translation => 'asv',
+					verse_count => re(qr/^\d{1,3}$/),
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
 				type => 'chapter',
@@ -274,6 +278,8 @@ sub test_translation_all {
 				attributes => {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
+					translation => re(qr/^(asv|kjv)$/),
+					verse_count => re(qr/^\d{1,3}$/),
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
 				type => 'chapter',
