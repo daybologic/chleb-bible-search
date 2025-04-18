@@ -536,16 +536,14 @@ sub __info {
 	my $info = $self->__library->info();
 	my %hash = __makeJsonApi();
 
-	foreach my $bible (@{ $info->bibles }) {
-		push(@{ $hash{data} }, {
-			type => $info->type,
-			id => $info->id,
-			attributes => {
-				translation => $bible->translation,
-				# TODO: Hmm... how do we get counts etc?  Do we put most things in included?
-			},
-		});
-	}
+	push(@{ $hash{data} }, {
+		type => $info->type,
+		id => $info->id,
+		attributes => {
+			translation_count => scalar(@{ $info->bibles }),
+			# TODO: Hmm... how do we get counts etc?  Do we put most things in included?
+		},
+	});
 
 	my $version = 1;
 	$hash{links}->{self} = '/' . join('/', $version, 'info');

@@ -61,6 +61,18 @@ use Chleb::Exception;
 
 =over
 
+=item C<id>
+
+=cut
+
+has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
+
+=item C<type>
+
+=cut
+
+has type => (is => 'ro', isa => 'Str', default => sub { 'bible' });
+
 =item C<bookCount>
 
 The count (number) of books in the bible.  Whilst most bibles will contain C<66> books,
@@ -396,6 +408,15 @@ Lazy-initializer for L</books>.
 sub __makeBooks {
 	my ($self) = @_;
 	return $self->__backend->getBooks();
+}
+
+=item C<__makeId>
+
+=cut
+
+sub __makeId {
+	my ($self) = @_;
+	return join('/', $self->type, $self->translation);
 }
 
 =back
