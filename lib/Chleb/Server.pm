@@ -560,6 +560,15 @@ sub __info {
 				type => $book->type,
 				attributes => $book->TO_JSON(),
 			});
+
+			for (my $chapterOrdinal = 1; $chapterOrdinal <= $book->chapterCount; $chapterOrdinal++) {
+				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+				push(@{ $hash{included} }, {
+					id => $chapter->id,
+					type => $chapter->type,
+					attributes => $chapter->TO_JSON(),
+				});
+			}
 		}
 	}
 
