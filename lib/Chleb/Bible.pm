@@ -367,6 +367,20 @@ sub fetch {
 	return $verse;
 }
 
+=item C<TO_JSON()>
+
+Returns the JSON:API C<attributes> associated with this Book.
+
+=cut
+
+sub TO_JSON {
+	my ($self) = @_;
+
+	return {
+		translation => $self->translation,
+	};
+}
+
 =back
 
 =head1 PRIVATE METHODS

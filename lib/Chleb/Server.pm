@@ -548,6 +548,21 @@ sub __info {
 		},
 	});
 
+	foreach my $bible (@{ $info->bibles }) { # translations
+		push(@{ $hash{included} }, {
+			id => $bible->id,
+			type => $bible->type,
+			attributes => $bible->TO_JSON(),
+		});
+		foreach my $book (@{ $bible->books }) {
+			push(@{ $hash{included} }, {
+				id => $book->id,
+				type => $book->type,
+				attributes => $book->TO_JSON(),
+			});
+		}
+	}
+
 	my $version = 1;
 	$hash{links}->{self} = '/' . join('/', $version, 'info');
 
