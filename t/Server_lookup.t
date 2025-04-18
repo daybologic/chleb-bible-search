@@ -150,6 +150,7 @@ sub test_translation_all {
 					chapter_count => 150,
 					ordinal => re(qr/^\d{1,2}$/),
 					testament => re(qr/^\w{3}$/),
+					translation => 'asv',
 					verse_count => 2_461,
 				},
 				id => ignore(),

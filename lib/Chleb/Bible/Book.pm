@@ -288,6 +288,7 @@ sub TO_JSON {
 		chapter_count => $self->chapterCount+0,
 		ordinal       => $self->ordinal+0,
 		testament     => $self->testament,
+		translation   => $self->bible->translation,
 		verse_count   => $self->verseCount+0,
 	};
 }
