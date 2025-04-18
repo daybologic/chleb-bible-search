@@ -35,6 +35,7 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Info;
 use Chleb::Type::Testament;
 use Data::Dumper;
 use Digest::CRC qw(crc32);
@@ -141,6 +142,20 @@ sub random { # TODO: parental?
 	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(1), $msecAll));
 
 	return $verse;
+}
+
+sub info {
+	my ($self) = @_;
+
+	my $startTiming = Time::HiRes::time();
+
+	my (@bible) = $self->__getBible({ translations => ['all'] });
+
+	my $info = Chleb::Info->new({
+		bibles => \@bible,
+	});
+
+	return $info;
 }
 
 sub votd {

@@ -518,6 +518,41 @@ sub __search {
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 }
 
+=item C<__info($params)>
+
+Return information about the data we are serving as a C<JSON:API> structure.
+
+returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
+
+=cut
+
+sub __info {
+	my ($self, $params) = @_;
+
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_JSON is supported")
+	    if ($contentType ne $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
+
+	my $info = $self->__library->info();
+	my %hash = __makeJsonApi();
+
+	foreach my $bible (@{ $info->bibles }) {
+		push(@{ $hash{data} }, {
+			type => $info->type,
+			id => $info->id,
+			attributes => {
+				translation => $bible->translation,
+				# TODO: Hmm... how do we get counts etc?  Do we put most things in included?
+			},
+		});
+	}
+
+	my $version = 1;
+	$hash{links}->{self} = '/' . join('/', $version, 'info');
+
+	return \%hash;
+}
+
 =item C<__getUptime()>
 
 Return the number of seconds the server has been running.
@@ -883,6 +918,15 @@ get '/1/version' => sub {
 
 get '/1/uptime' => sub {
 	return $server->__uptime();
+};
+
+get '/1/info' => sub {
+	my $result;
+	eval {
+		$result = $server->__info();
+	};
+
+	return $result;
 };
 
 unless (caller()) {
