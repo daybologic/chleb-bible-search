@@ -71,7 +71,7 @@ sub test_translation_all {
 					text => 'Jehovah saith unto my Lord, Sit thou at my right hand, Until I make thine enemies thy footstool.',
 					translation => 'asv',
 				},
-				id => 'psa/110/1', # TODO shall we add translation here?
+				id => 'asv/psa/110/1',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/psa/109/31?translations=asv',
@@ -81,14 +81,14 @@ sub test_translation_all {
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'asv/psa',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'psa/110',
+							id => 'asv/psa/110',
 							type => 'chapter',
 						},
 						links => {},
@@ -103,7 +103,7 @@ sub test_translation_all {
 					text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
 					translation => 'kjv',
 				},
-				id => 'psa/110/1',
+				id => 'kjv/psa/110/1',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/psa/109/31?translations=kjv',
@@ -113,14 +113,14 @@ sub test_translation_all {
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'kjv/psa',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'psa/110',
+							id => 'kjv/psa/110',
 							type => 'chapter',
 						},
 						links => {},
@@ -134,7 +134,7 @@ sub test_translation_all {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
 				},
-				id => re(qr@^\w+/\d{1,3}$@),
+				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
 				type => 'chapter',
 				relationships => {
 					book => {

@@ -185,7 +185,7 @@ sub __lookup {
 	my @json;
 	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
 		push(@json, __verseToJsonApi($verse[$verseI], $params));
-		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->id) . Chleb::Utils::queryParamsHelper($params);
+		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath()) . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
@@ -195,24 +195,24 @@ sub __lookup {
 	foreach my $type (qw(next prev)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
 
-		my $id;
+		my $pickVerse;
 		if ($type eq 'prev') {
 			if (my $prevVerse = $verse[0]->getPrev()) {
-				$id = $prevVerse->id;
+				$pickVerse = $prevVerse;
 			} else {
 				next;
 			}
 		} elsif ($type eq 'next') {
 			if (my $nextVerse = $verse[0]->getNext()) {
-				$id = $nextVerse->id;
+				$pickVerse = $nextVerse;
 			} else {
 				next;
 			}
 		} else {
-			$id = $verse[0]->id;
+			$pickVerse = $verse[0]->id;
 		}
 
-		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $id) . Chleb::Utils::queryParamsHelper($params);
+		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath()) . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
@@ -636,15 +636,15 @@ sub __verseToJsonApi {
 
 	my %links = (
 		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
-		self => '/' . join('/', 1, 'lookup', $verse->id) . $queryParams,
+		self => '/' . join('/', 1, 'lookup', $verse->getPath()) . $queryParams,
 	);
 
 	if (my $nextVerse = $verse->getNext()) {
-		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->id) . $queryParams;
+		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->getPath()) . $queryParams;
 	}
 
 	if (my $prevVerse = $verse->getPrev()) {
-		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->id) . $queryParams;
+		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->getPath()) . $queryParams;
 	}
 
 	push(@{ $hash{data} }, {

@@ -346,7 +346,7 @@ Lazy-initializer for L</id>.
 
 sub __makeId {
        my ($self) = @_;
-       return lc($self->shortName);
+       return join('/', $self->bible->translation, lc($self->shortName));
 }
 
 =back
