@@ -115,8 +115,10 @@ sub test {
 			},
 			{
 				attributes => {
+					chapter_count => 150,
 					ordinal => 19,
 					testament => 'old',
+					verse_count => 2_461,
 				},
 				id => 'psa',
 				relationships => {},
@@ -264,8 +266,10 @@ sub testV2 {
 			},
 			{
 				attributes => {
+					chapter_count => 36,
 					ordinal => 4,
 					testament => 'old',
+					verse_count => 1_288,
 				},
 				id => 'num',
 				relationships => {},
@@ -349,8 +353,10 @@ sub testV2_translations_asv_asv {
 			},
 			{
 				attributes => {
+					chapter_count => 150,
 					ordinal => 19,
 					testament => 'old',
+					verse_count => 2_461,
 				},
 				id => 'psa',
 				relationships => {},
@@ -466,8 +472,10 @@ sub testV2_translations_kjv_asv {
 			},
 			{
 				attributes => {
+					chapter_count => 150,
 					ordinal => 19,
 					testament => 'old',
+					verse_count => 2_461,
 				},
 				id => 'psa',
 				relationships => {},
@@ -679,8 +687,10 @@ sub testV2_translations_all {
 			},
 			{
 				attributes => {
+					chapter_count => 36,
 					ordinal => 4,
 					testament => 'old',
+					verse_count => 1_288,
 				},
 				id => 'num',
 				relationships => {},

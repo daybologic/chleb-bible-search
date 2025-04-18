@@ -223,8 +223,10 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
 				ordinal => 40,
 				testament => 'new',
+				verse_count => 1_071,
 			},
 			id => 'mat',
 			relationships => {},
@@ -246,8 +248,10 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
 				ordinal => 40,
 				testament => 'new',
+				verse_count => 1_071,
 			},
 			id => 'mat',
 			relationships => {},
@@ -269,8 +273,10 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
 				ordinal => 40,
 				testament => 'new',
+				verse_count => 1_071,
 			},
 			id => 'mat',
 			relationships => {},
@@ -292,8 +298,10 @@ sub test {
 			'type' => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
 				ordinal => 40,
 				testament => 'new',
+				verse_count => 1_071,
 			},
 			id => 'mat',
 			relationships => {},
@@ -315,8 +323,10 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
 				ordinal => 40,
 				testament => 'new',
+				verse_count => 1_071,
 			},
 			id => 'mat',
 			relationships => {},
