@@ -534,6 +534,7 @@ sub __info {
 	    if ($contentType ne $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 	my $info = $self->__library->info();
+	my @translations = map { $_->translation } @{ $info->bibles };
 	my %hash = __makeJsonApi();
 
 	push(@{ $hash{data} }, {
@@ -542,6 +543,8 @@ sub __info {
 		attributes => {
 			translation_count => scalar(@{ $info->bibles }),
 			# TODO: Hmm... how do we get counts etc?  Do we put most things in included?
+			#   What else do we want?
+			translations => \@translations,
 		},
 	});
 
