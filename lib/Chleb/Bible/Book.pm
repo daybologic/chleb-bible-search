@@ -285,10 +285,10 @@ sub TO_JSON {
 	my ($self) = @_;
 
 	return {
-		chapter_count => $self->chapterCount,
-		ordinal       => $self->ordinal,
+		chapter_count => $self->chapterCount+0,
+		ordinal       => $self->ordinal+0,
 		testament     => $self->testament,
-		verse_count   => $self->verseCount,
+		verse_count   => $self->verseCount+0,
 	};
 }
 
