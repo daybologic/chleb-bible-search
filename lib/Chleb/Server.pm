@@ -536,7 +536,7 @@ sub __info {
 	my $info = $self->__library->info();
 	my %hash = __makeJsonApi();
 
-	my @books = ( );
+	my (@bookShortNames, @bookShortNamesRaw, @bookLongNames);
 	my %uniqueBookNames = ( );
 	foreach my $bible (@{ $info->bibles }) { # translations
 		push(@{ $hash{included} }, {
@@ -546,7 +546,9 @@ sub __info {
 		});
 		foreach my $book (@{ $bible->books }) {
 			next if (++$uniqueBookNames{ $book->shortName } > 1); # ensure book names are listed only once
-			push(@books, $book->shortName);
+			push(@bookShortNames, $book->shortName);
+			push(@bookShortNamesRaw, $book->shortNameRaw);
+			push(@bookLongNames, $book->longName);
 
 			push(@{ $hash{included} }, {
 				id => $book->id,
@@ -574,8 +576,10 @@ sub __info {
 			translation_count => scalar(@{ $info->bibles }),
 			translations => \@translations,
 			#   What else do we want?
-			books_count => scalar(@books),
-			books => \@books,
+			book_count => scalar(@bookShortNames),
+			book_names_short => \@bookShortNames,
+			book_names_short_raw => \@bookShortNamesRaw,
+			book_names_long => \@bookLongNames,
 		},
 	});
 
