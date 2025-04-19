@@ -575,11 +575,10 @@ sub __info {
 		attributes => {
 			translation_count => scalar(@{ $info->bibles }),
 			translations => \@translations,
-			#   What else do we want?
 			book_count => scalar(@bookShortNames),
+			book_names_long => \@bookLongNames,
 			book_names_short => \@bookShortNames,
 			book_names_short_raw => \@bookShortNamesRaw,
-			book_names_long => \@bookLongNames,
 		},
 	});
 
