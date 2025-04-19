@@ -537,6 +537,7 @@ sub __info {
 	my %hash = __makeJsonApi();
 
 	my @books = ( );
+	my %uniqueBookNames = ( );
 	foreach my $bible (@{ $info->bibles }) { # translations
 		push(@{ $hash{included} }, {
 			id => $bible->id,
@@ -544,7 +545,8 @@ sub __info {
 			attributes => $bible->TO_JSON(),
 		});
 		foreach my $book (@{ $bible->books }) {
-			push(@books, $book->shortName); # FIXME: What to do about multiple translations?  You get 132 entries here, ie. twice as many as we need
+			next if (++$uniqueBookNames{ $book->shortName } > 1); # ensure book names are listed only once
+			push(@books, $book->shortName);
 
 			push(@{ $hash{included} }, {
 				id => $book->id,
