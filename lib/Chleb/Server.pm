@@ -574,6 +574,7 @@ sub __info {
 			translation_count => scalar(@{ $info->bibles }),
 			translations => \@translations,
 			#   What else do we want?
+			books_count => scalar(@books),
 			books => \@books,
 		},
 	});
