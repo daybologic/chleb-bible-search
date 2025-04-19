@@ -102,7 +102,7 @@ sub getPrev {
 
 sub toString {
 	my ($self) = @_;
-	return sprintf('%s %d', $self->book->shortName, $self->ordinal);
+	return sprintf('%s %d', $self->book->shortNameRaw, $self->ordinal);
 }
 
 sub TO_JSON {
@@ -118,8 +118,8 @@ sub TO_JSON {
 
 sub __makeVerseCount {
 	my ($self) = @_;
-	my $bookInfo = $self->bible->__backend->getBookInfoByShortName($self->book->shortName);
-	die 'FIXME: ' . $self->book->shortName unless ($bookInfo);
+	my $bookInfo = $self->bible->__backend->getBookInfoByShortName($self->book->shortNameRaw);
+	die 'FIXME: ' . $self->book->shortNameRaw unless ($bookInfo);
 	my $count = $bookInfo->{v}->{ $self->ordinal };
 	die("FIXME: ${count}, " . $self->ordinal) unless ($count);
 	return $count;

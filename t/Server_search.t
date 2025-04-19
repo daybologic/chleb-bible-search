@@ -72,7 +72,7 @@ sub test {
 	cmp_deeply($json, {
 		data => [{
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 4,
 				ordinal => 18,
 				text => 'And Jesus, walking by the sea of Galilee, saw two brethren, Simon called Peter, and Andrew his brother, casting a net into the sea: for they were fishers.',
@@ -99,7 +99,7 @@ sub test {
 			},
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 10,
 				ordinal => 2,
 				text => 'Now the names of the twelve apostles are these; The first, Simon, who is called Peter, and Andrew his brother; James [the son] of Zebedee, and John his brother;',
@@ -126,7 +126,7 @@ sub test {
 			},
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 14,
 				ordinal => 28,
 				text => 'And Peter answered him and said, Lord, if it be thou, bid me come unto thee on the water.',
@@ -153,7 +153,7 @@ sub test {
 			type => 'verse',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 14,
 				ordinal => 29,
 				text => 'And he said, Come. And when Peter was come down out of the ship, he walked on the water, to go to Jesus.',
@@ -180,7 +180,7 @@ sub test {
 			type => 'verse',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 15,
 				ordinal => 15,
 				text => 'Then answered Peter and said unto him, Declare unto us this parable.',
@@ -208,7 +208,7 @@ sub test {
 		}],
 		included => [{
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 4,
 				translation => 'kjv',
 				verse_count => 25,
@@ -226,7 +226,9 @@ sub test {
 		}, {
 			attributes => {
 				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
 				testament => 'new',
 				translation => 'kjv',
 				verse_count => 1_071,
@@ -236,7 +238,7 @@ sub test {
 			type => 'book',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 10,
 				translation => 'kjv',
 				verse_count => 42,
@@ -254,7 +256,9 @@ sub test {
 		}, {
 			attributes => {
 				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
 				testament => 'new',
 				translation => 'kjv',
 				verse_count => 1_071,
@@ -264,7 +268,7 @@ sub test {
 			type => 'book',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 14,
 				translation => 'kjv',
 				verse_count => 36,
@@ -282,7 +286,9 @@ sub test {
 		}, {
 			attributes => {
 				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
 				testament => 'new',
 				translation => 'kjv',
 				verse_count => 1_071,
@@ -292,7 +298,7 @@ sub test {
 			type => 'book',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 14,
 				translation => 'kjv',
 				verse_count => 36,
@@ -310,7 +316,9 @@ sub test {
 		}, {
 			attributes => {
 				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
 				testament => 'new',
 				translation => 'kjv',
 				verse_count => 1_071,
@@ -320,7 +328,7 @@ sub test {
 			type => 'book',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 15,
 				translation => 'kjv',
 				verse_count => 39,
@@ -338,7 +346,9 @@ sub test {
 		}, {
 			attributes => {
 				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
 				testament => 'new',
 				translation => 'kjv',
 				verse_count => 1_071,

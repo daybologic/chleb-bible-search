@@ -73,21 +73,25 @@ sub testPeaceSearch_defaultTranslation {
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
-				ordinal      => 40,
-				shortName    => 'Mat',
 				chapterCount => 28,
-				verseCount   => 1071,
+				longName     => 'Matthew',
+				ordinal      => 40,
+				shortName    => 'mat',
+				shortNameRaw => 'Mat',
 				testament    => 'new',
+				verseCount   => 1_071,
 			),
 		),
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
-				ordinal      => 42,
-				shortName    => 'Luke',
 				chapterCount => 24,
-				verseCount   => 1151,
+				longName     => 'Luke',
+				ordinal      => 42,
+				shortName    => 'luke',
+				shortNameRaw => 'Luke',
 				testament    => 'new',
+				verseCount   => 1_151,
 			),
 		),
 	);
@@ -181,11 +185,13 @@ sub testPeaceSearch_asvTranslation {
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
-				ordinal      => 40,
-				shortName    => 'Mat',
 				chapterCount => 28,
-				verseCount   => 1071,
+				longName     => 'Matthew',
+				ordinal      => 40,
+				shortName    => 'mat',
+				shortNameRaw => 'Mat',
 				testament    => 'new',
+				verseCount   => 1_071,
 			),
 		),
 	);
@@ -234,11 +240,13 @@ sub testPeaceSearch_asvTranslation {
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
-				ordinal      => 42,
-				shortName    => 'Luke',
 				chapterCount => 24,
-				verseCount   => 1151,
+				longName     => 'Luke',
+				ordinal      => 42,
+				shortName    => 'luke',
+				shortNameRaw => 'Luke',
 				testament    => 'new',
+				verseCount   => 1_151,
 			),
 		),
 	);
@@ -295,11 +303,13 @@ sub testPeaceSearch_asvTranslationViaBible_textParam {
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
-				ordinal      => 42,
-				shortName    => 'Luke',
+				longName     => 'Luke',
 				chapterCount => 24,
-				verseCount   => 1151,
+				ordinal      => 42,
+				shortName    => 'luke',
+				shortNameRaw => 'Luke',
 				testament    => 'new',
+				verseCount   => 1_151,
 			),
 		),
 	);
@@ -356,8 +366,10 @@ sub testPeaceSearch_asvTranslationViaBible_direct {
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
+				longName     => 'Luke',
 				ordinal      => 42,
-				shortName    => 'Luke',
+				shortName    => 'luke',
+				shortNameRaw => 'Luke',
 				chapterCount => 24,
 				verseCount   => 1151,
 				testament    => 'new',

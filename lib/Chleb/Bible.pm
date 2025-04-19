@@ -161,15 +161,8 @@ in the key C<nonFatal> within the B<optional> C<$args> C<HASH>.
 sub getBookByShortName {
 	my ($self, $shortName, $args) = @_;
 
-	$shortName ||= '';
-	if ($shortName =~ m/^(\d)(\w+)$/) {
-		$shortName = "$1\u$2";
-	} else {
-		$shortName = "\u$shortName";
-	}
-
 	foreach my $book (@{ $self->books }) {
-		next if ($book->shortName ne $shortName);
+		next unless ($book->equals($shortName));
 		return $book;
 	}
 

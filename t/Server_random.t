@@ -117,7 +117,9 @@ sub test_translation_kjv {
 			{
 				attributes => {
 					chapter_count => re(qr/^\d{1,3}$/),
+					long_name => ignore(),
 					ordinal => re(qr/^\d{1,2}$/),
+					short_name => re(qr/^\w+$/),
 					testament => re(qr/^\w{3}$/),
 					translation => 'kjv',
 					verse_count => re(qr/^\d{1,4}$/),
@@ -206,7 +208,9 @@ sub test_translation_asv {
 			{
 				attributes => {
 					chapter_count => re(qr/^\d{1,3}$/),
+					long_name => ignore(),
 					ordinal => re(qr/^\d{1,2}$/),
+					short_name => re(qr/^\w+$/),
 					testament => re(qr/^\w{3}$/),
 					translation => 'asv',
 					verse_count => re(qr/^\d{1,4}$/),
@@ -295,7 +299,9 @@ sub test_translation_all {
 			{
 				attributes => {
 					chapter_count => re(qr/^\d{1,3}$/),
+					long_name => ignore(),
 					ordinal => re(qr/^\d{1,2}$/),
+					short_name => re(qr/^\w+$/),
 					testament => re(qr/^\w{3}$/),
 					translation => re(qr/^\w{3}$/),
 					verse_count => re(qr/^\d{1,4}$/),

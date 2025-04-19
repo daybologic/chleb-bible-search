@@ -71,10 +71,11 @@ sub testPride_default {
 			isa('Chleb::Bible::Verse'),
 			methods(
 				book    => methods(
-					ordinal   => 20,
-					longName  => 'Proverbs',
-					shortName => 'Prov',
-					testament => 'old',
+					longName     => 'Proverbs',
+					ordinal      => 20,
+					shortName    => 'prov',
+					shortNameRaw => 'Prov',
+					testament    => 'old',
 				),
 				chapter => methods(
 					ordinal => 16,
@@ -98,11 +99,12 @@ sub testPride_allTranslations {
 			isa('Chleb::Bible::Verse'),
 			methods(
 				book    => methods(
-					bible     => methods(translation => 'asv'),
-					ordinal   => 20,
-					longName  => 'Proverbs',
-					shortName => 'Prov',
-					testament => 'old',
+					bible        => methods(translation => 'asv'),
+					longName     => 'Proverbs',
+					ordinal      => 20,
+					shortName    => 'prov',
+					shortNameRaw => 'Prov',
+					testament    => 'old',
 				),
 				chapter => methods(
 					ordinal => 16,
@@ -115,11 +117,12 @@ sub testPride_allTranslations {
 			isa('Chleb::Bible::Verse'),
 			methods(
 				book    => methods(
-					bible     => methods(translation => 'kjv'),
-					ordinal   => 20,
-					longName  => 'Proverbs',
-					shortName => 'Prov',
-					testament => 'old',
+					bible        => methods(translation => 'kjv'),
+					longName     => 'Proverbs',
+					ordinal      => 20,
+					shortName    => 'prov',
+					shortNameRaw => 'Prov',
+					testament    => 'old',
 				),
 				chapter => methods(
 					ordinal => 16,

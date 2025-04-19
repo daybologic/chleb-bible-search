@@ -65,7 +65,7 @@ sub test_translation_all {
 		data => [
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					chapter => 110,
 					ordinal => 1,
 					text => 'Jehovah saith unto my Lord, Sit thou at my right hand, Until I make thine enemies thy footstool.',
@@ -97,7 +97,7 @@ sub test_translation_all {
 			},
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					chapter => 110,
 					ordinal => 1,
 					text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
@@ -150,7 +150,9 @@ sub test_translation_all {
 			{
 				attributes => {
 					chapter_count => 150,
+					long_name => 'Psalms',
 					ordinal => re(qr/^\d{1,2}$/),
+					short_name => 'psa',
 					testament => re(qr/^\w{3}$/),
 					translation => 'asv',
 					verse_count => 2_461,

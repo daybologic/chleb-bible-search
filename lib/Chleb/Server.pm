@@ -534,20 +534,9 @@ sub __info {
 	    if ($contentType ne $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 	my $info = $self->__library->info();
-	my @translations = map { $_->translation } @{ $info->bibles };
 	my %hash = __makeJsonApi();
 
-	push(@{ $hash{data} }, {
-		type => $info->type,
-		id => $info->id,
-		attributes => {
-			translation_count => scalar(@{ $info->bibles }),
-			# TODO: Hmm... how do we get counts etc?  Do we put most things in included?
-			#   What else do we want?
-			translations => \@translations,
-		},
-	});
-
+	my @books = ( );
 	foreach my $bible (@{ $info->bibles }) { # translations
 		push(@{ $hash{included} }, {
 			id => $bible->id,
@@ -555,6 +544,8 @@ sub __info {
 			attributes => $bible->TO_JSON(),
 		});
 		foreach my $book (@{ $bible->books }) {
+			push(@books, $book->shortName); # FIXME: What to do about multiple translations?  You get 132 entries here, ie. twice as many as we need
+
 			push(@{ $hash{included} }, {
 				id => $book->id,
 				type => $book->type,
@@ -571,6 +562,19 @@ sub __info {
 			}
 		}
 	}
+
+	my @translations = map { $_->translation } @{ $info->bibles };
+
+	push(@{ $hash{data} }, {
+		type => $info->type,
+		id => $info->id,
+		attributes => {
+			translation_count => scalar(@{ $info->bibles }),
+			translations => \@translations,
+			#   What else do we want?
+			books => \@books,
+		},
+	});
 
 	my $version = 1;
 	$hash{links}->{self} = '/' . join('/', $version, 'info');

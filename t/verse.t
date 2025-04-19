@@ -61,11 +61,11 @@ sub test {
 
 	my @bible = $self->sut->__getBible();
 	my $book = Chleb::Bible::Book->new({
-		bible     => $bible[0],
-		longName  => 'Book of Morman',
-		ordinal   => 21,
-		shortName => 'Susana',
-		testament => 'old',
+		bible        => $bible[0],
+		longName     => 'Book of Morman',
+		ordinal      => 21,
+		shortNameRaw => 'Susana',
+		testament    => 'old',
 	});
 
 	my $translation = 'kjv';
@@ -86,13 +86,14 @@ sub test {
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
-				ordinal   => 21,
-				longName  => 'Book of Morman',
-				shortName => 'Susana',
-				testament => 'old',
+				longName     => 'Book of Morman',
+				ordinal      => 21,
+				shortName    => 'susana',
+				shortNameRaw => 'Susana',
+				testament    => 'old',
 			),
 			chapter => methods(
-				ordinal => 1121,
+				ordinal => 1_121,
 			),
 			ordinal => 5,
 			text    => $text,
@@ -105,8 +106,8 @@ sub test {
 
 	my $json = $verse->TO_JSON();
 	cmp_deeply($json, {
-		book        => 'Susana',
-		chapter     => 1121,
+		book        => 'susana',
+		chapter     => 1_121,
 		ordinal     => 5,
 		text        => $text,
 		translation => $translation,

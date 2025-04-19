@@ -77,7 +77,11 @@ sub __testTraversalReverseWork {
 	my $book = $bible[0]->getBookByOrdinal(-1);
 	cmp_deeply($book, all(
 		isa('Chleb::Bible::Book'),
-		methods(shortName => 'Rev'),
+		methods(
+			longName => 'Revelation of John',
+			shortName => 'rev',
+			shortNameRaw => 'Rev',
+		),
 	), 'Book lookup for Revelation');
 
 	my $verse = $book->getVerseByOrdinal(-1);
