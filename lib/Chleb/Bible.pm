@@ -370,7 +370,12 @@ sub TO_JSON {
 	my ($self) = @_;
 
 	return {
-		translation => $self->translation,
+		book_count           => $self->bookCount+0,
+		book_names_long      => [ map { $_->longName } @{ $self->books } ],
+		book_names_short     => [ map { $_->shortName } @{ $self->books } ],
+		book_names_short_raw => [ map { $_->shortNameRaw } @{ $self->books } ],
+		translation          => $self->translation,
+		verse_count          => $self->verseCount+0,
 	};
 }
 
