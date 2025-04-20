@@ -69,6 +69,9 @@ package MY;
 
 sub MY::postamble {
     return q~
+deb :: pure_all
+	sbuild -A
+
 cover :: pure_all
 	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
 
