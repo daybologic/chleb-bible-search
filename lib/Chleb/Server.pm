@@ -56,6 +56,7 @@ use Time::Duration;
 use UUID::Tiny ':std';
 
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+Readonly our $SEARCH_RESULTS_LIMIT => 50;
 
 =head1 METHODS
 
@@ -409,7 +410,7 @@ The following C<$params> (C<HASH>) are supported:
 
 =item C<limit>
 
-A limit for the number of results, whose default is C<5>.
+A limit for the number of results, whose default is C<50>.
 
 =item C<wholeword>
 
@@ -427,7 +428,7 @@ sub __search {
 	my ($self, $search) = @_;
 
 	my $limit = int($search->{limit});
-	$limit ||= 5;
+	$limit ||= $SEARCH_RESULTS_LIMIT;
 
 	my $wholeword = Chleb::Utils::boolean('wholeword', $search->{wholeword}, 0);
 
