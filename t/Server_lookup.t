@@ -153,6 +153,7 @@ sub test_translation_all {
 					long_name => 'Psalms',
 					ordinal => re(qr/^\d{1,2}$/),
 					short_name => 'psa',
+					short_name_raw => 'Psa',
 					testament => re(qr/^\w{3}$/),
 					translation => 'asv',
 					verse_count => 2_461,
