@@ -10,9 +10,9 @@ use Chleb::Bible;
 
 sub main {
 	my ($query) = (@ARGV);
-	my $bible = Chleb::Bible->new();
+	my $bible = Chleb::Bible->new({ translation => 'kjv' });
 
-	$query = $bible->newSearchQuery($query)->setLimit(2);
+	$query = $bible->newSearchQuery($query);
 	# FIXME: Need to limit to one book?  should be able to do this via Query.pm
 
 	my $results = $query->run();
