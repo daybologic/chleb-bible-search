@@ -717,11 +717,11 @@ sub __verseToHtml {
 		next if ($type ne 'book');
 		$self->dic->logger->trace(Dumper $includedItem);
 
-		$rawBookNameMap{ $includedItem->{attributes}->{book_names_short} }
-		    = $includedItem->{attributes}->{book_names_short_raw};
+		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
+		    = $includedItem->{attributes}->{short_name_raw};
 
 		$self->dic->logger->trace(sprintf("Record map '%s' -> '%s'",
-		    $includedItem->{attributes}->{book_names_short}, $includedItem->{attributes}->{book_names_short_raw}));
+		    $includedItem->{attributes}->{short_name}, $includedItem->{attributes}->{short_name_raw}));
 	}
 
 	my $verseCount = scalar(@{ $json->[0]->{data} });

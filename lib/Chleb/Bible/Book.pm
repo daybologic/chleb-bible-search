@@ -294,13 +294,14 @@ sub TO_JSON {
 	my ($self) = @_;
 
 	return {
-		chapter_count => $self->chapterCount+0,
-		long_name     => $self->longName,
-		ordinal       => $self->ordinal+0,
-		short_name    => $self->shortName,
-		testament     => $self->testament,
-		translation   => $self->bible->translation,
-		verse_count   => $self->verseCount+0,
+		chapter_count  => $self->chapterCount+0,
+		long_name      => $self->longName,
+		ordinal        => $self->ordinal+0,
+		short_name     => $self->shortName,
+		short_name_raw => $self->shortNameRaw,
+		testament      => $self->testament,
+		translation    => $self->bible->translation,
+		verse_count    => $self->verseCount+0,
 	};
 }
 
