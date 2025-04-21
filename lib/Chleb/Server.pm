@@ -44,8 +44,9 @@ Dancer2 server for stand-alone HTTP server for Chleb Bible Search
 =cut
 
 use Chleb;
-use Chleb::Exception;
+use Chleb::Bible::Search::Query;
 use Chleb::DI::Container;
+use Chleb::Exception;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
@@ -55,6 +56,7 @@ use Readonly;
 use Time::Duration;
 use UUID::Tiny ':std';
 
+Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 
 =head1 METHODS
@@ -409,7 +411,7 @@ The following C<$params> (C<HASH>) are supported:
 
 =item C<limit>
 
-A limit for the number of results, whose default is C<5>.
+A limit for the number of results, whose default is C<50>.
 
 =item C<wholeword>
 
@@ -427,7 +429,7 @@ sub __search {
 	my ($self, $search) = @_;
 
 	my $limit = int($search->{limit});
-	$limit ||= 5;
+	$limit ||= $SEARCH_RESULTS_LIMIT;
 
 	my $wholeword = Chleb::Utils::boolean('wholeword', $search->{wholeword}, 0);
 
@@ -705,7 +707,7 @@ sub __verseToHtml {
 	my $verseCount = scalar(@{ $json->[0]->{data} });
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
-		$output .= sprintf('%s %d:%d %s',
+		$output .= sprintf('<p>%s %d:%d %s</p>',
 			$attributes->{book},
 			$attributes->{chapter},
 			$attributes->{ordinal},
@@ -735,7 +737,7 @@ sub __searchResultsToHtml {
 	for (my $resultI = 0; $resultI < scalar(@{ $hash->{data} }); $resultI++) {
 		my $verse = $hash->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
-		$text .= sprintf("[%s]\r\n%s %d:%d %s\r\n\r\n",
+		$text .= sprintf("<p>[%s]<br />\r\n%s %d:%d %s\r\n\r\n</p>",
 			$attributes->{title},
 			$attributes->{book},
 			$attributes->{chapter},

@@ -82,6 +82,21 @@ sub testTraversal_asv {
 	return EXIT_SUCCESS;
 }
 
+sub testTraversalReverse {
+	my ($self, $translation) = @_;
+	Readonly my $TEST_COUNT => 4;
+	plan tests => $TEST_COUNT;
+
+	my $testComprehensive = !$ENV{TEST_QUICK};
+	SKIP: {
+		skip 'TEST_QUICK environment variable is set', $TEST_COUNT unless $self->_isTestComprehensive();
+
+		$self->__testTraversalReverseWork();
+	};
+
+	return EXIT_SUCCESS;
+}
+
 sub __checkTraversal {
 	my ($self, $translation) = @_;
 	Readonly my $TEST_COUNT => 4;
@@ -142,6 +157,50 @@ sub __checkTraversalWork {
 			text    => __getVerseText($translation, $VERSE_LAST),
 		),
 	), 'Last verse in bible correct: ' . $verse->toString());
+
+	my $expectBibleVerseCount = 31_102;
+	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
+
+	return;
+}
+
+sub __testTraversalReverseWork {
+	my ($self) = @_;
+
+	my @bible = $self->sut->__getBible();
+	my $book = $bible[0]->getBookByOrdinal(-1);
+	cmp_deeply($book, all(
+		isa('Chleb::Bible::Book'),
+		methods(shortName => 'Rev'),
+	), 'Book lookup for Revelation');
+
+	my $verse = $book->getVerseByOrdinal(-1);
+	cmp_deeply($verse, all(
+		isa('Chleb::Bible::Verse'),
+		methods(
+			book    => methods(ordinal => 66),
+			chapter => methods(ordinal => 22),
+			ordinal => 21,
+		),
+	), 'Last verse in bible correct: ' . $verse->toString());
+
+	my $previousVerse;
+	my $actualBibleVerseCount = 0;
+	do {
+		$actualBibleVerseCount++;
+		$previousVerse = $verse;
+		$verse = $verse->getPrev();
+	} while ($verse);
+
+	$verse = $previousVerse;
+	cmp_deeply($verse, all(
+		isa('Chleb::Bible::Verse'),
+		methods(
+			book => methods(ordinal => 1),
+			chapter => methods(ordinal => 1),
+			ordinal => 1,
+		),
+	), 'first verse in bible correct: ' . $verse->toString());
 
 	my $expectBibleVerseCount = 31_102;
 	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
