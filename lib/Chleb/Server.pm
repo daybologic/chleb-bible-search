@@ -637,7 +637,7 @@ sub __verseToHtml {
 	my $verseCount = scalar(@{ $json->[0]->{data} });
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
-		$output .= sprintf('%s %d:%d %s',
+		$output .= sprintf('<p>%s %d:%d %s</p>',
 			$attributes->{book},
 			$attributes->{chapter},
 			$attributes->{ordinal},
@@ -667,7 +667,7 @@ sub __searchResultsToHtml {
 	for (my $resultI = 0; $resultI < scalar(@{ $hash->{data} }); $resultI++) {
 		my $verse = $hash->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
-		$text .= sprintf("[%s]\r\n%s %d:%d %s\r\n\r\n",
+		$text .= sprintf("<p>[%s]<br />\r\n%s %d:%d %s\r\n\r\n</p>",
 			$attributes->{title},
 			$attributes->{book},
 			$attributes->{chapter},
