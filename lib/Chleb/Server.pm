@@ -704,11 +704,20 @@ sub __verseToHtml {
 	my ($json) = @_;
 
 	my $output = '';
+	my $includedCount = scalar(@{ $json->[0]->{included} });
+	my %rawBookNameMap = ( );
+	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
+		my $includedItem = $json->[0]->{included}->[$includedIndex];
+		my $type = $includedItem->{type};
+		next if ($type ne 'book');
+		$rawBookNameMap{ $includedItem->{book_name_short} } = $rawBookNameMap{ $includedItem->{book_name_short_raw} };
+	}
+
 	my $verseCount = scalar(@{ $json->[0]->{data} });
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
 		$output .= sprintf('<p>%s %d:%d %s</p>',
-			$attributes->{book},
+			$rawBookNameMap{ $attributes->{book} },
 			$attributes->{chapter},
 			$attributes->{ordinal},
 			$attributes->{text},
