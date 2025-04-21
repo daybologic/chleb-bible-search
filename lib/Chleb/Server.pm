@@ -742,15 +742,26 @@ sub __verseToHtml {
 }
 
 sub __searchResultsToHtml {
-	my ($hash) = @_;
+	my ($json) = @_;
+
+	my $includedCount = scalar(@{ $json->{included} });
+	my %rawBookNameMap = ( );
+	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
+		my $includedItem = $json->{included}->[$includedIndex];
+		my $type = $includedItem->{type};
+		next if ($type ne 'book');
+
+		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
+		    = $includedItem->{attributes}->{short_name_raw};
+	}
 
 	my $text = '';
-	for (my $resultI = 0; $resultI < scalar(@{ $hash->{data} }); $resultI++) {
-		my $verse = $hash->{data}->[$resultI];
+	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
+		my $verse = $json->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
 		$text .= sprintf("<p>[%s]<br />\r\n%s %d:%d %s\r\n\r\n</p>",
 			$attributes->{title},
-			$attributes->{book},
+			$rawBookNameMap{ $attributes->{book} },
 			$attributes->{chapter},
 			$attributes->{ordinal},
 			$attributes->{text},
