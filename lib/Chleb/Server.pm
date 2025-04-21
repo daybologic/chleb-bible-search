@@ -50,6 +50,7 @@ use Chleb::Exception;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
+use Data::Dumper;
 use HTTP::Status qw(:constants);
 use JSON;
 use Readonly;
@@ -220,7 +221,7 @@ sub __lookup {
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		return $json[0];
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml(\@json);
+		return $self->__verseToHtml(\@json);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -249,7 +250,7 @@ sub __random {
 		$json->{links}->{self} = '/' . join('/', $version, 'random');
 		return $json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml([$json]);
+		return $self->__verseToHtml([$json]);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -303,7 +304,7 @@ sub __votd {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml(\@json);
+			return $self->__verseToHtml(\@json);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -701,16 +702,26 @@ sub __verseToJsonApi {
 }
 
 sub __verseToHtml {
-	my ($json) = @_;
+	my ($self, $json) = @_;
 
 	my $output = '';
 	my $includedCount = scalar(@{ $json->[0]->{included} });
+	$self->dic->logger->trace("$includedCount included items in __verseToHtml");
 	my %rawBookNameMap = ( );
 	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
 		my $includedItem = $json->[0]->{included}->[$includedIndex];
 		my $type = $includedItem->{type};
+		$self->dic->logger->trace(sprintf("Looking for type '%s', this is '%s' at index %d",
+		    'book', $type, $includedIndex));
+
 		next if ($type ne 'book');
-		$rawBookNameMap{ $includedItem->{book_name_short} } = $rawBookNameMap{ $includedItem->{book_name_short_raw} };
+		$self->dic->logger->trace(Dumper $includedItem);
+
+		$rawBookNameMap{ $includedItem->{attributes}->{book_names_short} }
+		    = $includedItem->{attributes}->{book_names_short_raw};
+
+		$self->dic->logger->trace(sprintf("Record map '%s' -> '%s'",
+		    $includedItem->{attributes}->{book_names_short}, $includedItem->{attributes}->{book_names_short_raw}));
 	}
 
 	my $verseCount = scalar(@{ $json->[0]->{data} });
