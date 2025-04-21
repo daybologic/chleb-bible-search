@@ -38,11 +38,14 @@ extends 'Chleb::Bible::Base';
 use Data::Dumper;
 use Moose::Util::TypeConstraints qw(enum);
 use Chleb::Bible::Search::Results;
+use Readonly;
 use Time::HiRes ();
+
+Readonly our $SEARCH_RESULTS_LIMIT => 50;
 
 has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
-has limit => (is => 'rw', isa => 'Int', default => 25);
+has limit => (is => 'rw', isa => 'Int', default => $SEARCH_RESULTS_LIMIT);
 
 has testament => (is => 'ro', isa => enum(['old', 'new']), required => 0);
 

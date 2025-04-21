@@ -44,8 +44,9 @@ Dancer2 server for stand-alone HTTP server for Chleb Bible Search
 =cut
 
 use Chleb;
-use Chleb::Exception;
+use Chleb::Bible::Search::Query;
 use Chleb::DI::Container;
+use Chleb::Exception;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
@@ -55,8 +56,8 @@ use Readonly;
 use Time::Duration;
 use UUID::Tiny ':std';
 
+Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
-Readonly our $SEARCH_RESULTS_LIMIT => 50;
 
 =head1 METHODS
 
