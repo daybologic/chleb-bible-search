@@ -331,6 +331,14 @@ sub getChapterByOrdinal {
 	});
 }
 
+=item C<equals($otherBook)>
+
+Given another book, which may be a L</shortName>, L</shortNameRaw> or a L<Chleb::Bible::Book>,
+we determine if it is the same book as this one, regardless of translation, and return a true
+or false value.
+
+=cut
+
 sub equals {
 	my ($self, $otherBook) = @_;
 
