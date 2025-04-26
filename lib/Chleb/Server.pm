@@ -985,6 +985,10 @@ get '/1/info' => sub {
 		$result = $server->__info();
 	};
 
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
 	return $result;
 };
 
