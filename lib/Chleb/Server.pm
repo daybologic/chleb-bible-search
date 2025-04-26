@@ -531,6 +531,8 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 sub __info {
 	my ($self, $params) = @_;
 
+	my $startTiming = Time::HiRes::time();
+
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_JSON is supported")
 	    if ($contentType ne $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
@@ -586,6 +588,19 @@ sub __info {
 
 	my $version = 1;
 	$hash{links}->{self} = '/' . join('/', $version, 'info');
+
+	my $endTiming = Time::HiRes::time();
+	my $msec = int(1000 * ($endTiming - $startTiming));
+	$info->msec($msec); # override library figure, incorporate everything
+
+	push(@{ $hash{included} }, {
+		type => 'stats',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			msec => int($info->msec),
+		},
+		links => { },
+	});
 
 	return \%hash;
 }
