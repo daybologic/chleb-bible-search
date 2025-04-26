@@ -2,7 +2,7 @@ name: Perl CI
 
 on:
   push:
-    branches: [ "develop", "master", "rel/1.0", "f/*" ]
+    branches: [ "develop", "master", "rel/1.0", "f/*", "*/platform/*/gh", "platform/*/gh" ]
   pull_request:
     branches: [ "develop" ]
 
