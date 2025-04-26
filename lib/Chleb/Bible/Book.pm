@@ -344,7 +344,7 @@ sub equals {
 	my ($self, $otherBook) = @_;
 
 	my $notABook = sub {
-		die('Not a book, in Book/equals()');
+		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Not a book, in Book/equals()');
 	};
 
 	$notABook->() unless (defined($otherBook));

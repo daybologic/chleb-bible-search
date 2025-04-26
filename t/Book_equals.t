@@ -76,17 +76,36 @@ sub __makeBook {
 	});
 }
 
-sub testWrongObject { # TODO: Should we throw an error 500 for this?
+sub testWrongObject {
 	my ($self) = @_;
-	plan tests => 2;
+	return $self->__checkWrongObject($self);
+}
 
-	throws_ok {
-		$self->sut->equals(undef);
-	} qr/^Not a book/, 'undef is not a book';
+sub testNullObject {
+	my ($self) = @_;
+	return $self->__checkWrongObject(undef);
+}
 
-	throws_ok {
-		$self->sut->equals($self);
-	} qr/^Not a book/, 'unit test suite runner object is not a book (obviously)';
+sub __checkWrongObject {
+	my ($self, $object) = @_;
+	plan tests => 1;
+
+	eval {
+		$self->sut->equals($object);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => 'Not a book, in Book/equals()',
+				location    => undef,
+				statusCode  => 500,
+			),
+		), 'correctly not found');
+	} else {
+		fail('No exception raised, as was expected');
+	}
 
 	return EXIT_SUCCESS;
 }
