@@ -51,6 +51,7 @@ use Chleb::Exception;
 use HTTP::Status qw(:constants);
 use Moose::Util::TypeConstraints qw(enum);
 use Readonly;
+use Scalar::Util qw(blessed);
 
 =head1 ATTRIBUTES
 
@@ -342,22 +343,29 @@ or false value.
 sub equals {
 	my ($self, $otherBook) = @_;
 
+	my $notABook = sub {
+		die('Not a book, in Book/equals()');
+	};
+
+	$notABook->() unless (defined($otherBook));
+
 	if (my $otherBookObject = blessed($otherBook)) {
 		if ($otherBookObject->isa('Chleb::Bible::Book')) {
-			return 1 if (refaddr($self) == refaddr($otherBookObject));
+			return 1 if ($self->_cmpAddress($self, $otherBook));
 			return 1 if ($self->equals($otherBook->shortNameRaw));
-			return 1 if ($self->equals($otherBook->shortName));
 			return 0;
 		}
 
-		die('Not a book, in Book/equals()');
+		$notABook->();
 	}
 
-	# otherBook is *NOT* an object, rename for simplicity, so we're not confused
-	my $shortName = $otherBook || '';
+	my $shortName = $otherBook; # otherBook is *NOT* an object, rename for simplicity, so we're not confused
 
-	return 1 if ($self->shortNameRaw eq $shortName);
-	return 1 if ($self->shortName eq $shortName);
+	my $cmpResult = ($self->shortNameRaw eq $shortName);
+	$self->dic->logger->trace($self->toString() . ': Book comparison ' . ($cmpResult ? 'success' : 'failure')
+	    . " (shortNameRaw): $shortName");
+
+	return $cmpResult if ($cmpResult);
 
 	if ($shortName =~ m/^(\d)(\w+)$/) {
 		$shortName = "$1\u$2";

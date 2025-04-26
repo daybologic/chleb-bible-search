@@ -36,7 +36,7 @@ use Chleb::DI::Container;
 use DateTime;
 use DateTime::Format::Strptime;
 use English qw(-no_match_vars);
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 
 # TODO: Do we need a trap to ensure a fatal error occurs if the dic is constructed more than once?
 has dic => (isa => 'Chleb::DI::Container', is => 'rw', lazy => 1, default => \&__makeDIContainer);
@@ -75,6 +75,50 @@ sub _resolveISO8601 {
 
 	$self->dic->logger->error('NULL in _resolveISO8601!') unless (defined($iso8601));
 	return $iso8601;
+}
+
+=item C<_cmpAddress($a, $b)>
+
+Compare the addresses of two objects and return a true value if they are the same.
+If both objects are C<undef>, if this also considered success.  Logs at trace level
+the actual addresses of the objects involved.
+
+=cut
+
+sub _cmpAddress {
+	my ($self, @object) = @_;
+
+	my @ci = caller(0);
+	my $logMsg = sprintf('(%s L%d) ', $ci[1], $ci[2]);
+	my @result = ( );
+
+	my $c = 2;
+	if ($c != scalar(@object)) {
+		$logMsg .= sprintf('Must pass two objects to _cmpAddress, expected %d, received %d', $c, scalar(@object));
+		die($logMsg);
+	}
+
+	for (my $i = 0; $i < $c; $i++) {
+		if (my $address = refaddr($object[$i])) {
+			$result[$i] = $address;
+			$logMsg .= sprintf('0x%x', $address);
+		} else {
+			$result[$i] = 0;
+			$logMsg .= sprintf('0x%x', 0);
+		}
+
+		$logMsg .= ' == ' if ($i == 0);
+	}
+
+	if ($result[0] == $result[1]) {
+		$logMsg .= ' (*MATCH*)';
+	} else {
+		$logMsg .= ' (*mismatch*)';
+	}
+
+	$self->dic->logger->trace($logMsg);
+
+	return ($result[0] == $result[1]);
 }
 
 1;
