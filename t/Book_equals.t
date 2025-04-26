@@ -94,15 +94,16 @@ sub __checkWrongObject {
 		$self->sut->equals($object);
 	};
 
+	my $expectDescription = 'Not a book, in Book/equals()';
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
 			isa('Chleb::Exception'),
 			methods(
-				description => 'Not a book, in Book/equals()',
+				description => $expectDescription,
 				location    => undef,
 				statusCode  => 500,
 			),
-		), 'correctly not found');
+		), $expectDescription);
 	} else {
 		fail('No exception raised, as was expected');
 	}
