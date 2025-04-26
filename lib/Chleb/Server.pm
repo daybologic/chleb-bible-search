@@ -981,8 +981,14 @@ get '/1/uptime' => sub {
 
 get '/1/info' => sub {
 	my $result;
+
+	my $dancerRequest = request();
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+
 	eval {
-		$result = $server->__info();
+		$result = $server->__info({
+			accept => $mediaType,
+		});
 	};
 
 	if (my $exception = $EVAL_ERROR) {
