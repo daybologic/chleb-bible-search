@@ -155,6 +155,12 @@ sub info {
 		bibles => \@bible,
 	});
 
+	my $endTiming = Time::HiRes::time();
+	my $msec = int(1000 * ($endTiming - $startTiming));
+
+	$info->msec($msec);
+	$self->dic->logger->debug(sprintf('Info %s sought in %dms', $info->toString(), $msec));
+
 	return $info;
 }
 

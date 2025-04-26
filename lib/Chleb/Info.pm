@@ -12,6 +12,13 @@ has type => (is => 'ro', isa => 'Str', default => sub { 'info' });
 
 has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
 
+has msec => (is => 'rw', isa => 'Int', default => 0);
+
+sub toString {
+	my ($self) = @_;
+	return sprintf('%s about %d bibles', $self->type, scalar(@{ $self->bibles }));
+}
+
 sub __makeId {
 	my ($self) = @_;
 
