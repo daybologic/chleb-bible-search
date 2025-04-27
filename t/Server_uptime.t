@@ -72,30 +72,7 @@ sub testUptimeStatic {
 		}],
 		included => [ ],
 		links => { },
-	}, '__getUptime') or diag(explain($json));
-
-	return EXIT_SUCCESS;
-}
-
-sub testUptimeStatic {
-	my ($self) = @_;
-
-	my $uptime = 3661;
-	$self->mock(ref($self->sut), '__getUptime', [$uptime]);
-
-	my $json = $self->sut->__uptime();
-	cmp_deeply($json, {
-		data => [{
-			attributes => {
-				text => '1 hour, 1 minute, and 1 second',
-				uptime => 3661,
-			},
-			id => ignore(),
-			type => 'uptime',
-		}],
-		included => [ ],
-		links => { },
-	}, '__getUptime: ' . $json->{data}->[0]->{attributes}->{text}) or diag(explain($json));
+	}, '__uptime: ' . $json->{data}->[0]->{attributes}->{text}) or diag(explain($json));
 
 	return EXIT_SUCCESS;
 }
@@ -120,7 +97,7 @@ sub testUptimeDynamic {
 		}],
 		included => [ ],
 		links => { },
-	}, '__getUptime: ' . $json->{data}->[0]->{attributes}->{text}) or diag(explain($json));
+	}, '__uptime: ' . $json->{data}->[0]->{attributes}->{text}) or diag(explain($json));
 
 	return EXIT_SUCCESS;
 }
