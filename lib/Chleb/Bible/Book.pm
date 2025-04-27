@@ -352,8 +352,7 @@ sub equals {
 	if (my $otherBookObject = blessed($otherBook)) {
 		if ($otherBookObject->isa('Chleb::Bible::Book')) {
 			return 1 if ($self->_cmpAddress($self, $otherBook));
-			return 1 if ($self->equals($otherBook->shortNameRaw));
-			return 0;
+			return ($self->equals($otherBook->shortNameRaw));
 		}
 
 		$notABook->();
