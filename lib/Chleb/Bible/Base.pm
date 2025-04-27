@@ -104,7 +104,7 @@ sub _cmpAddress {
 			$logMsg .= sprintf('0x%x', $address);
 		} else {
 			$result[$i] = 0;
-			$logMsg .= sprintf('0x%x', 0);
+			$logMsg .= '0x0';
 		}
 
 		$logMsg .= ' == ' if ($i == 0);
