@@ -44,14 +44,15 @@ When contributing to the project, please fork from the GitHub repository and mak
 unless you are specifically patching a bug within an historical release, in which case, branch from the relevant rel/ branch.
 
 Please name your branch using this scheme:
-  * bugfix/&lt;ticket&gt;-&lt;description&gt;
-  * docs/&lt;description&gt;
-  * feature/&lt;description&gt;
-  * f/YYYYMM-&lt;description&gt;
-  * hotfix/&lt;description&gt;
-  * platform/&lt;uname&gt;/base
-  * platform/&lt;uname&gt;/&lt;dist&gt;
-  * rel/X.Y
-  * refactor/&lt;description&gt;
-  * tests/&lt;description&gt;
-  * &lt;user&gt;/&lt;hierarchy&gt;
+| branch | description |
+| ------ | ----------- |
+| bugfix/&lt;ticket&gt;-&lt;description&gt; | A user bug report, with the ticket number |
+| docs/&lt;description&gt; | Documentation changes _only_ |
+| feature/&lt;description&gt; | New functionality |
+| f/YYYYMM-&lt;description&gt; | Legacy features, please don't create new ones |
+| hotfix/&lt;description&gt; | Emergency fixes only |
+| platform/&lt;uname&gt;/base | Specific changes which can't be merged to master |
+| rel/X.Y | released 1.0, 2.0, 2.1 etc, which contain specific tags vX.Y.Z |
+| refactor/&lt;description&gt; | Not features, design changes |
+| tests/&lt;description&gt; | Unit tests, functional tests, sanity improvements |
+| &lt;user&gt;/&lt;hierarchy&gt; | Your GitHub username, followed by recognized hierarchies above |
