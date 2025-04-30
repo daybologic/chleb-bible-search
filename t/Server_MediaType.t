@@ -32,11 +32,12 @@
 package ServerMediaTypeTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb;
 use Chleb::DI::Container;
@@ -51,12 +52,8 @@ use Test::More 0.96;
 has dic => (isa => 'Chleb::DI::Container', is => 'rw');
 
 sub setUp {
-	my ($self) = @_;
-
-	$self->dic(Chleb::DI::Container->instance);
-	$self->__mockLogger();
-
-	return EXIT_SUCCESS;
+	my ($self, %params) = @_;
+	return $self->SUPER::setUp(%params);
 }
 
 sub testAny {
@@ -388,12 +385,6 @@ sub testMalformed {
 
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->dic->logger(Chleb::DI::MockLogger->new());
-	return;
 }
 
 package main;

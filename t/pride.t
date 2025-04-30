@@ -32,11 +32,12 @@
 package PrideTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb;
 use Chleb::DI::MockLogger;
@@ -47,18 +48,15 @@ use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
 
-	$self->sut(Chleb->new());
-	$self->__mockLogger();
+	if (EXIT_SUCCESS == $self->SUPER::setUp(%params)) {
+		$self->sut(Chleb->new({
+			dic => $self->_dic,
+		}));
+	}
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
 }
 
 sub testPride_default {
