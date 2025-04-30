@@ -44,15 +44,17 @@ When contributing to the project, please fork from the GitHub repository and mak
 unless you are specifically patching a bug within an historical release, in which case, branch from the relevant rel/ branch.
 
 Please name your branch using this scheme:
-| branch | description |
-| ------ | ----------- |
-| bugfix/&lt;ticket&gt;-&lt;description&gt; | A user bug report, with the ticket number |
-| docs/&lt;description&gt; | Documentation changes _only_ |
-| feature/&lt;description&gt; | New functionality |
-| f/YYYYMM-&lt;description&gt; | Legacy features, please don't create new ones |
-| hotfix/&lt;description&gt; | Emergency fixes only |
-| platform/&lt;uname&gt;/base | Specific changes which can't be merged to master |
-| rel/X.Y | released 1.0, 2.0, 2.1 etc, which contain specific tags vX.Y.Z |
-| refactor/&lt;description&gt; | Not features, design changes |
-| tests/&lt;description&gt; | Unit tests, functional tests, sanity improvements |
-| &lt;user&gt;/&lt;hierarchy&gt; | Your GitHub username, followed by recognized hierarchies above |
+| branch | description | FF allowed | rebase allowed |
+| ------ | ----------- | ---------- | -------------- |
+| bugfix/&lt;ticket&gt;-&lt;description&gt; | A user bug report, with the ticket number | NO | NO |
+| develop | Mainline merge point for all features | YES | NO |
+| docs/&lt;description&gt; | Documentation changes _only_ | NO | NO |
+| feature/&lt;description&gt; | New functionality | NO | NO |
+| f/YYYYMM-&lt;description&gt; | Legacy features, please don't create new ones | NO | NO |
+| hotfix/&lt;description&gt; | Emergency fixes only | NO | YES |
+| master | Pointer to latest stable release | YES | NO |
+| platform/&lt;uname&gt;/base | Specific changes which can't be merged to master | NO | NO |
+| rel/X.Y | released 1.0, 2.0, 2.1 etc, which contain specific tags vX.Y.Z | NO | NO |
+| refactor/&lt;description&gt; | Not features, design changes | NO | NO |
+| tests/&lt;description&gt; | Unit tests, functional tests, sanity improvements | NO | NO |
+| &lt;user&gt;/&lt;hierarchy&gt; | Your GitHub username, followed by recognized hierarchies above | NO | YES |
