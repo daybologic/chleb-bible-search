@@ -44,14 +44,14 @@ When contributing to the project, please fork from the GitHub repository and mak
 unless you are specifically patching a bug within an historical release, in which case, branch from the relevant rel/ branch.
 
 Please name your branch using this scheme:
-  * bugfix/<ticket>-<description>
-  * docs/<description>
-  * feature/<description>
-  * f/YYYYMM-<description>
-  * hotfix/<description>
-  * platform/<uname>/base
-  * platform/<uname>/<dist>
+  * bugfix/&lt;ticket&gt;-&lt;description&gt;
+  * docs/&lt;description&gt;
+  * feature/&lt;description&gt;
+  * f/YYYYMM-&lt;description&gt;
+  * hotfix/&lt;description&gt;
+  * platform/&lt;uname&gt;/base
+  * platform/&lt;uname&gt;/&lt;dist&gt;
   * rel/X.Y
-  * refactor/<description>
-  * tests/<description>
-  * <user>/<hierarchy>
+  * refactor/&lt;description&gt;
+  * tests/&lt;description&gt;
+  * &lt;user&gt;/&lt;hierarchy&gt;
