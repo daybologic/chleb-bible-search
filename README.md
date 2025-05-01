@@ -55,6 +55,7 @@ Please name your branch using this scheme:
 | hotfix/&lt;description&gt; | Emergency fixes only | NO | YES |
 | master | Pointer to latest stable release | YES | NO |
 | platform/&lt;uname&gt;/base | Specific changes which can't be merged to master | NO | NO |
+| private/&lt;user-defined&gt; | Undocumented hierarchy, maintainer-use only | YES | YES |
 | rel/X.Y | released 1.0, 2.0, 2.1 etc, which contain specific tags vX.Y.Z | NO | NO |
 | refactor/&lt;description&gt; | Not features, design changes | NO | NO |
 | tests/&lt;description&gt; | Unit tests, functional tests, sanity improvements | NO | NO |
