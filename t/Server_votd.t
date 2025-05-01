@@ -54,9 +54,7 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb::Server->new({
-		dic => $self->_dic,
-	}));
+	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
 }

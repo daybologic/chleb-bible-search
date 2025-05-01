@@ -39,7 +39,7 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable::Local';
 
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
+use POSIX qw(EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server;

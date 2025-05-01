@@ -39,7 +39,7 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable::Local';
 
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server;
@@ -49,11 +49,11 @@ use Test::More 0.96;
 sub setUp {
 	my ($self, %params) = @_;
 
-	if (EXIT_SUCCESS == $self->SUPER::setUp(%params)) {
-		$self->sut(Chleb::Server->new({
-			dic => $self->_dic,
-		}));
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
 	}
+
+	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
 }

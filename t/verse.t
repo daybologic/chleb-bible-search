@@ -40,7 +40,7 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable::Local';
 
 use Test::Deep qw(all cmp_deeply isa methods);
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb;
 use Chleb::Bible::Book;
 use Chleb::Bible::Verse;
@@ -52,11 +52,11 @@ use Test::More 0.96;
 sub setUp {
 	my ($self, %params) = @_;
 
-	if (EXIT_SUCCESS == $self->SUPER::setUp(%params)) {
-		$self->sut(Chleb->new({
-			dic => $self->_dic,
-		}));
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
 	}
+
+	$self->sut(Chleb->new());
 
 	return EXIT_SUCCESS;
 }

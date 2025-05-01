@@ -49,13 +49,6 @@ use Test::Deep qw(all cmp_deeply isa methods re ignore num);
 use Test::Exception;
 use Test::More 0.96;
 
-has dic => (isa => 'Chleb::DI::Container', is => 'rw');
-
-sub setUp {
-	my ($self, %params) = @_;
-	return $self->SUPER::setUp(%params);
-}
-
 sub testAny {
 	my ($self) = @_;
 	plan tests => 3;

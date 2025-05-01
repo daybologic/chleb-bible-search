@@ -41,7 +41,7 @@ extends 'Test::Module::Runnable::Local';
 
 use Chleb;
 use Chleb::DI::MockLogger;
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
 use Test::Deep qw(all cmp_deeply isa methods);
 use Test::More 0.96;
@@ -52,9 +52,11 @@ Readonly my $VERSE_LAST  => 1;
 sub setUp {
 	my ($self, %params) = @_;
 
-	if (EXIT_SUCCESS == $self->SUPER::setUp(%params)) {
-		$self->sut(Chleb->new());
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
 	}
+
+	$self->sut(Chleb->new());
 
 	return EXIT_SUCCESS;
 }
