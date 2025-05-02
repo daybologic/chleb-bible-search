@@ -534,8 +534,6 @@ sub __info {
 	my $startTiming = Time::HiRes::time();
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_JSON is supported")
-	    if ($contentType ne $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 	my $info = $self->__library->info();
 	my %hash = __makeJsonApi();
@@ -602,7 +600,13 @@ sub __info {
 		links => { },
 	});
 
-	return \%hash;
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __infoToHtml(\%hash);
+	}
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here');
 }
 
 =item C<__getUptime()>
@@ -782,6 +786,15 @@ sub __searchResultsToHtml {
 			$attributes->{text},
 		);
 	}
+
+	return $text;
+}
+
+sub __infoToHtml {
+	my ($json) = @_;
+
+	my $text = '<b>FIXME</b>';
+	$text .= "\n";
 
 	return $text;
 }
