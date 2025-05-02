@@ -794,7 +794,7 @@ sub __infoToHtml {
 	my ($json) = @_;
 
 	my $text = '<b>FIXME</b>';
-	$text .= "\n";
+	$text .= "\r\n";
 
 	return $text;
 }
