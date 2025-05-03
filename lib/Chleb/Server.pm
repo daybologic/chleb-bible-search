@@ -796,6 +796,21 @@ sub __infoToHtml {
 	my $text = '<b>FIXME</b>';
 	$text .= "\r\n";
 
+	my @bookNamesLong = ( );
+
+	$text = '';
+	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
+		my $verse = $json->{data}->[$resultI];
+		next if ($verse->{type} ne 'bible');
+		my $attributes = $verse->{attributes};
+		my $longNames = $attributes->{book_names_long};
+		push(@bookNamesLong, $longNames);
+	}
+
+	foreach my $bookNamesLong (@bookNamesLong) {
+		$text .= "<p>$bookNamesLong</p>\r\n";
+	}
+
 	return $text;
 }
 
