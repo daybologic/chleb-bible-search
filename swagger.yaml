@@ -17,6 +17,9 @@ paths:
         '200':
           description: Successfully retrieved info
           content:
+            text/html:
+              schema:
+                type: string
             application/json:
               schema:
                 type: object
