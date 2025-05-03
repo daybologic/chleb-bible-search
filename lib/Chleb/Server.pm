@@ -794,18 +794,19 @@ sub __infoToHtml {
 	my ($json) = @_;
 
 	my $printCell = sub {
-		my ($datum, $int) = @_;
+		my ($datum, $int, $header) = @_;
 		my $formatter = '%' . ($int ? 'd' : 's');
-		return sprintf("<td>$formatter</td>\r\n", $datum);
+		my $tag = ($header ? 'h' : 'd');
+		return sprintf("<t${tag}>${formatter}</t${tag}>\r\n", $datum);
 	};
 
 	my $text = "<table>\r\n";
 
 	$text .= "<tr>\r\n";
-	$text .= $printCell->("Book");
-	$text .= $printCell->("Chapters");
-	$text .= $printCell->("Verses");
-	$text .= $printCell->("Short name");
+	$text .= $printCell->("Book", 0, 1);
+	$text .= $printCell->("Chapters", 0, 1);
+	$text .= $printCell->("Verses", 0, 1);
+	$text .= $printCell->("Short name", 0, 1);
 	$text .= "</tr>\r\n";
 
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
