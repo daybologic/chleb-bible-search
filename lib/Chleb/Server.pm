@@ -793,13 +793,32 @@ sub __searchResultsToHtml {
 sub __infoToHtml {
 	my ($json) = @_;
 
-	my $text = '';
+	my $printCell = sub {
+		my ($datum, $int) = @_;
+		my $formatter = '%' . ($int ? 'd' : 's');
+		return sprintf("<td>$formatter</td>\r\n", $datum);
+	};
+
+	my $text = "<table>\r\n";
+
+	$text .= "<tr>\r\n";
+	$text .= $printCell->("Book");
+	$text .= $printCell->("Chapter count");
+	$text .= "</tr>\r\n";
+
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
 		my $included = $json->{included}->[$includedI];
 		next if ($included->{type} ne 'book');
+
 		my $attributes = $included->{attributes};
-		$text .= sprintf("<p>%s (%d)</p>\r\n", $attributes->{long_name}, $attributes->{chapter_count});
+
+		$text .= "<tr>\r\n";
+		$text .= $printCell->($attributes->{long_name});
+		$text .= $printCell->($attributes->{chapter_count}, 1);
+		$text .= "</tr>\r\n";
 	}
+
+	$text .= "</table>\r\n";
 
 	return $text;
 }
