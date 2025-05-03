@@ -800,11 +800,15 @@ sub __infoToHtml {
 		return sprintf("<t${tag}>${formatter}</t${tag}>\r\n", $datum);
 	};
 
+	my %bookNameCache = ( );
+
 	my $text = "<table>\r\n";
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book", 0, 1);
+	$text .= $printCell->("Ordinal", 0, 1);
 	$text .= $printCell->("Chapters", 0, 1);
+	$text .= $printCell->("Testament", 0, 1);
 	$text .= $printCell->("Verses", 0, 1);
 	$text .= $printCell->("Short name", 0, 1);
 	$text .= "</tr>\r\n";
@@ -815,11 +819,38 @@ sub __infoToHtml {
 
 		my $attributes = $included->{attributes};
 
+		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
+
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($attributes->{long_name});
+		$text .= $printCell->($attributes->{ordinal}, 1);
 		$text .= $printCell->($attributes->{chapter_count}, 1);
+		$text .= $printCell->($attributes->{testament});
 		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= $printCell->($attributes->{short_name});
+		$text .= "</tr>\r\n";
+	}
+
+	$text .= "</table><br/>\r\n";
+
+	$text .= "<table>\r\n";
+
+	$text .= "<tr>\r\n";
+	$text .= $printCell->("Book", 0, 1);
+	$text .= $printCell->("Chapter", 0, 1);
+	$text .= $printCell->("Verses", 0, 1);
+	$text .= "</tr>\r\n";
+
+	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
+		my $included = $json->{included}->[$includedI];
+		next if ($included->{type} ne 'chapter');
+
+		my $attributes = $included->{attributes};
+
+		$text .= "<tr>\r\n";
+		$text .= $printCell->($bookNameCache{ $attributes->{book} });
+		$text .= $printCell->($attributes->{ordinal}, 1);
+		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= "</tr>\r\n";
 	}
 
