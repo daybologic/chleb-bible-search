@@ -803,7 +803,7 @@ sub __infoToHtml {
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book");
-	$text .= $printCell->("short name");
+	$text .= $printCell->("Short name");
 	$text .= $printCell->("Chapters");
 	$text .= $printCell->("Verses");
 	$text .= "</tr>\r\n";
