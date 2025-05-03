@@ -803,6 +803,7 @@ sub __infoToHtml {
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book");
+	$text .= $printCell->("short name");
 	$text .= $printCell->("Chapters");
 	$text .= $printCell->("Verses");
 	$text .= "</tr>\r\n";
@@ -815,6 +816,7 @@ sub __infoToHtml {
 
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($attributes->{long_name});
+		$text .= $printCell->($attributes->{short_name});
 		$text .= $printCell->($attributes->{chapter_count}, 1);
 		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= "</tr>\r\n";
