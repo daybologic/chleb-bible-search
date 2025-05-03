@@ -534,8 +534,6 @@ sub __info {
 	my $startTiming = Time::HiRes::time();
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_JSON is supported")
-	    if ($contentType ne $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 	my $info = $self->__library->info();
 	my %hash = __makeJsonApi();
@@ -602,7 +600,13 @@ sub __info {
 		links => { },
 	});
 
-	return \%hash;
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __infoToHtml(\%hash);
+	}
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here');
 }
 
 =item C<__getUptime()>
@@ -782,6 +786,75 @@ sub __searchResultsToHtml {
 			$attributes->{text},
 		);
 	}
+
+	return $text;
+}
+
+sub __infoToHtml {
+	my ($json) = @_;
+
+	my $printCell = sub {
+		my ($datum, $int, $header) = @_;
+		my $formatter = '%' . ($int ? 'd' : 's');
+		my $tag = ($header ? 'h' : 'd');
+		return sprintf("<t${tag}>${formatter}</t${tag}>\r\n", $datum);
+	};
+
+	my %bookNameCache = ( );
+
+	my $text = "<table>\r\n";
+
+	$text .= "<tr>\r\n";
+	$text .= $printCell->("Book", 0, 1);
+	$text .= $printCell->("Ordinal", 0, 1);
+	$text .= $printCell->("Chapters", 0, 1);
+	$text .= $printCell->("Testament", 0, 1);
+	$text .= $printCell->("Verses", 0, 1);
+	$text .= $printCell->("Short name", 0, 1);
+	$text .= "</tr>\r\n";
+
+	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
+		my $included = $json->{included}->[$includedI];
+		next if ($included->{type} ne 'book');
+
+		my $attributes = $included->{attributes};
+
+		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
+
+		$text .= "<tr>\r\n";
+		$text .= $printCell->($attributes->{long_name});
+		$text .= $printCell->($attributes->{ordinal}, 1);
+		$text .= $printCell->($attributes->{chapter_count}, 1);
+		$text .= $printCell->($attributes->{testament});
+		$text .= $printCell->($attributes->{verse_count}, 1);
+		$text .= $printCell->($attributes->{short_name});
+		$text .= "</tr>\r\n";
+	}
+
+	$text .= "</table><br/>\r\n";
+
+	$text .= "<table>\r\n";
+
+	$text .= "<tr>\r\n";
+	$text .= $printCell->("Book", 0, 1);
+	$text .= $printCell->("Chapter", 0, 1);
+	$text .= $printCell->("Verses", 0, 1);
+	$text .= "</tr>\r\n";
+
+	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
+		my $included = $json->{included}->[$includedI];
+		next if ($included->{type} ne 'chapter');
+
+		my $attributes = $included->{attributes};
+
+		$text .= "<tr>\r\n";
+		$text .= $printCell->($bookNameCache{ $attributes->{book} });
+		$text .= $printCell->($attributes->{ordinal}, 1);
+		$text .= $printCell->($attributes->{verse_count}, 1);
+		$text .= "</tr>\r\n";
+	}
+
+	$text .= "</table>\r\n";
 
 	return $text;
 }
@@ -1010,6 +1083,12 @@ get '/1/info' => sub {
 		handleException($exception);
 	}
 
+	if (ref($result) ne 'HASH') {
+		$server->dic->logger->trace('1/info returned as HTML');
+		send_as html => $result;
+	}
+
+	$server->dic->logger->trace('1/info returned as JSON');
 	return $result;
 };
 

@@ -31,4 +31,6 @@
 
 H=localhost:3000
 
-curl -s http://$H/1/info | jq .
+curl --header 'Accept: application/json' http://$H/1/info | jq .
+sleep 5
+curl --header 'Accept: text/html' http://$H/1/info
