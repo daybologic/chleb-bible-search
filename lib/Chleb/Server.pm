@@ -1023,6 +1023,12 @@ get '/1/info' => sub {
 		handleException($exception);
 	}
 
+	if (ref($result) ne 'HASH') {
+		$server->dic->logger->trace('1/info returned as HTML');
+		send_as html => $result;
+	}
+
+	$server->dic->logger->trace('1/info returned as JSON');
 	return $result;
 };
 
