@@ -803,9 +803,9 @@ sub __infoToHtml {
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book");
-	$text .= $printCell->("Short name");
 	$text .= $printCell->("Chapters");
 	$text .= $printCell->("Verses");
+	$text .= $printCell->("Short name");
 	$text .= "</tr>\r\n";
 
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
@@ -816,9 +816,9 @@ sub __infoToHtml {
 
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($attributes->{long_name});
-		$text .= $printCell->($attributes->{short_name});
 		$text .= $printCell->($attributes->{chapter_count}, 1);
 		$text .= $printCell->($attributes->{verse_count}, 1);
+		$text .= $printCell->($attributes->{short_name});
 		$text .= "</tr>\r\n";
 	}
 
