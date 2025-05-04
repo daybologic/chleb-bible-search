@@ -44,14 +44,6 @@ use Test::Deep qw(cmp_deeply);
 use Test::Exception;
 use Test::More 0.96;
 
-sub setUp {
-	my ($self) = @_;
-
-#	$self->sut(Chleb->new());
-
-	return EXIT_SUCCESS;
-}
-
 sub testSimple {
 	my ($self) = @_;
 	plan tests => 4;

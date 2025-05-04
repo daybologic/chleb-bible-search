@@ -41,7 +41,7 @@ extends 'Test::Module::Runnable::Local';
 
 use Chleb;
 use Chleb::DI::MockLogger;
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
 use Test::Deep qw(all cmp_deeply isa methods);
 use Test::More 0.96;
@@ -50,10 +50,13 @@ Readonly my $VERSE_FIRST => 0;
 Readonly my $VERSE_LAST  => 1;
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
+
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
 
 	$self->sut(Chleb->new());
-	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
@@ -201,12 +204,6 @@ sub __testTraversalReverseWork {
 	my $expectBibleVerseCount = 31_102;
 	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
 
-	return;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
 	return;
 }
 

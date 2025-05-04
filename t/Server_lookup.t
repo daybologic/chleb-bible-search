@@ -32,14 +32,15 @@
 package LookupServerTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use English qw(-no_match_vars);
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server;
@@ -47,9 +48,12 @@ use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
 
-	$self->__mockLogger();
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
+
 	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
@@ -195,15 +199,6 @@ sub test_not_found {
 	}
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-
-	my $dic = Chleb::DI::Container->instance;
-	$dic->logger(Chleb::DI::MockLogger->new());
-
-	return;
 }
 
 package main;
