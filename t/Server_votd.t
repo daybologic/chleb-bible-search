@@ -69,13 +69,13 @@ sub test {
 		data => [
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					chapter => 55,
 					ordinal => 22,
 					text => 'Cast thy burden upon the LORD, and he shall sustain thee: he shall never suffer the righteous to be moved.',
 					translation => 'kjv',
 				},
-				id => 'psa/55/22',
+				id => 'kjv/psa/55/22',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/psa/55/21',
@@ -85,14 +85,14 @@ sub test {
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'kjv/psa',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'psa/55',
+							id => 'kjv/psa/55',
 							type => 'chapter',
 						},
 						links => {},
@@ -103,15 +103,17 @@ sub test {
 		included => [
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					ordinal => 55,
+					translation => 'kjv',
+					verse_count => 23,
 				},
-				id => 'psa/55',
+				id => 'kjv/psa/55',
 				type => 'chapter',
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'kjv/psa',
 							type => 'book',
 						},
 					},
@@ -119,10 +121,16 @@ sub test {
 			},
 			{
 				attributes => {
+					chapter_count => 150,
+					long_name => 'Psalms',
 					ordinal => 19,
+					short_name => 'psa',
+					short_name_raw => 'Psa',
 					testament => 'old',
+					translation => 'kjv',
+					verse_count => 2_461,
 				},
-				id => 'psa',
+				id => 'kjv/psa',
 				relationships => {},
 				type => 'book'
 			},
@@ -154,13 +162,13 @@ sub testV2 {
 		data => [
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					chapter => 33,
 					ordinal => 51,
 					text => 'Speak unto the children of Israel, and say unto them, When ye are passed over Jordan into the land of Canaan;',
 					translation => 'kjv',
 				},
-				id => 'num/33/51',
+				id => 'kjv/num/33/51',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/num/33/50',
@@ -170,14 +178,14 @@ sub testV2 {
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'kjv/num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'num/33',
+							id => 'kjv/num/33',
 							type => 'chapter',
 						},
 						links => {},
@@ -186,13 +194,13 @@ sub testV2 {
 			},
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					chapter => 33,
 					ordinal => 52,
 					text    => 'Then ye shall drive out all the inhabitants of the land from before you, and destroy all their pictures, and destroy all their molten images, and quite pluck down all their high places:',
 					translation => 'kjv',
 				},
-				id => 'num/33/52',
+				id => 'kjv/num/33/52',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/num/33/51',
@@ -202,14 +210,14 @@ sub testV2 {
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'kjv/num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'num/33',
+							id => 'kjv/num/33',
 							type => 'chapter',
 						},
 						links => {},
@@ -218,13 +226,13 @@ sub testV2 {
 			},
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					chapter => 33,
 					ordinal => 53,
 					text    => 'And ye shall dispossess [the inhabitants] of the land, and dwell therein: for I have given you the land to possess it.',
 					translation => 'kjv',
 				},
-				id => 'num/33/53',
+				id => 'kjv/num/33/53',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/num/33/52',
@@ -234,14 +242,14 @@ sub testV2 {
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'kjv/num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'num/33',
+							id => 'kjv/num/33',
 							type => 'chapter',
 						},
 						links => {},
@@ -252,15 +260,17 @@ sub testV2 {
 		included => [
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					ordinal => 33,
+					translation => 'kjv',
+					verse_count => 56,
 				},
-				id => 'num/33',
+				id => 'kjv/num/33',
 				type => 'chapter',
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'kjv/num',
 							type => 'book',
 						},
 					},
@@ -268,10 +278,16 @@ sub testV2 {
 			},
 			{
 				attributes => {
+					chapter_count => 36,
+					long_name => 'Numbers',
 					ordinal => 4,
+					short_name => 'num',
+					short_name_raw => 'Num',
 					testament => 'old',
+					translation => 'kjv',
+					verse_count => 1_288,
 				},
-				id => 'num',
+				id => 'kjv/num',
 				relationships => {},
 				type => 'book'
 			},
@@ -303,13 +319,13 @@ sub testV2_translations_asv_asv {
 		data => [
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					chapter => 122,
 					ordinal => 8,
 					text => "For my brethren and companions' sakes, I will now say, Peace be within thee.",
 					translation => 'asv',
 				},
-				id => 'psa/122/8',
+				id => 'asv/psa/122/8',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/psa/122/7?translations=asv',
@@ -319,14 +335,14 @@ sub testV2_translations_asv_asv {
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'asv/psa',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'psa/122',
+							id => 'asv/psa/122',
 							type => 'chapter',
 						},
 						links => {},
@@ -337,15 +353,17 @@ sub testV2_translations_asv_asv {
 		included => [
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					ordinal => 122,
+					translation => 'asv',
+					verse_count => 9,
 				},
-				id => 'psa/122',
+				id => 'asv/psa/122',
 				type => 'chapter',
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'asv/psa',
 							type => 'book',
 						},
 					},
@@ -353,10 +371,16 @@ sub testV2_translations_asv_asv {
 			},
 			{
 				attributes => {
+					chapter_count => 150,
+					long_name => 'Psalms',
 					ordinal => 19,
+					short_name => 'psa',
+					short_name_raw => 'Psa',
 					testament => 'old',
+					translation => 'asv',
+					verse_count => 2_461,
 				},
-				id => 'psa',
+				id => 'asv/psa',
 				relationships => {},
 				type => 'book'
 			},
@@ -388,13 +412,13 @@ sub testV2_translations_kjv_asv {
 		data => [
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					chapter => 122,
 					ordinal => 8,
 					text => "For my brethren and companions' sakes, I will now say, Peace be within thee.",
 					translation => 'asv',
 				},
-				id => 'psa/122/8',
+				id => 'asv/psa/122/8',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/psa/122/7?translations=asv',
@@ -404,14 +428,14 @@ sub testV2_translations_kjv_asv {
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'asv/psa',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'psa/122',
+							id => 'asv/psa/122',
 							type => 'chapter',
 						},
 						links => {},
@@ -420,13 +444,13 @@ sub testV2_translations_kjv_asv {
 			},
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					chapter => 122,
 					ordinal => 8,
 					text => "For my brethren and companions' sakes, I will now say, Peace [be] within thee.",
 					translation => 'kjv',
 				},
-				id => 'psa/122/8',
+				id => 'kjv/psa/122/8',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/psa/122/7?translations=kjv',
@@ -436,14 +460,14 @@ sub testV2_translations_kjv_asv {
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'kjv/psa',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'psa/122',
+							id => 'kjv/psa/122',
 							type => 'chapter',
 						},
 						links => {},
@@ -454,15 +478,17 @@ sub testV2_translations_kjv_asv {
 		included => [
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					ordinal => 122,
+					translation => 'asv',
+					verse_count => 9,
 				},
-				id => 'psa/122',
+				id => 'asv/psa/122',
 				type => 'chapter',
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'asv/psa',
 							type => 'book',
 						},
 					},
@@ -470,10 +496,16 @@ sub testV2_translations_kjv_asv {
 			},
 			{
 				attributes => {
+					chapter_count => 150,
+					long_name => 'Psalms',
 					ordinal => 19,
+					short_name => 'psa',
+					short_name_raw => 'Psa',
 					testament => 'old',
+					translation => 'asv',
+					verse_count => 2_461,
 				},
-				id => 'psa',
+				id => 'asv/psa',
 				relationships => {},
 				type => 'book'
 			},
@@ -505,13 +537,13 @@ sub testV2_translations_all {
 		data => [
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					chapter => 16,
 					ordinal => 8,
 					text => 'And Moses said unto Korah, Hear now, ye sons of Levi:',
 					translation => 'asv',
 				},
-				id => 'num/16/8',
+				id => 'asv/num/16/8',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/num/16/7?translations=asv',
@@ -521,14 +553,14 @@ sub testV2_translations_all {
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'asv/num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'num/16',
+							id => 'asv/num/16',
 							type => 'chapter',
 						},
 						links => {},
@@ -537,13 +569,13 @@ sub testV2_translations_all {
 			},
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					chapter => 16,
 					ordinal => 9,
 					text => '[seemeth it but] a small thing unto you, that the God of Israel hath separated you from the congregation of Israel, to bring you near to himself, to do the service of the tabernacle of Jehovah, and to stand before the congregation to minister unto them;',
 					translation => 'asv',
 				},
-				id => 'num/16/9',
+				id => 'asv/num/16/9',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/num/16/8?translations=asv',
@@ -553,14 +585,14 @@ sub testV2_translations_all {
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'asv/num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'num/16',
+							id => 'asv/num/16',
 							type => 'chapter',
 						},
 						links => {},
@@ -569,13 +601,13 @@ sub testV2_translations_all {
 			},
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					chapter => 16,
 					ordinal => 10,
 					text => 'and that he hath brought thee near, and all thy brethren the sons of Levi with thee? and seek ye the priesthood also?',
 					translation => 'asv',
 				},
-				id => 'num/16/10',
+				id => 'asv/num/16/10',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/num/16/9?translations=asv',
@@ -585,14 +617,14 @@ sub testV2_translations_all {
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'asv/num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'num/16',
+							id => 'asv/num/16',
 							type => 'chapter',
 						},
 						links => {},
@@ -601,13 +633,13 @@ sub testV2_translations_all {
 			},
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					chapter => 16,
 					ordinal => 8,
 					text => 'And Moses said unto Korah, Hear, I pray you, ye sons of Levi:',
 					translation => 'kjv',
 				},
-				id => 'num/16/8',
+				id => 'kjv/num/16/8',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/num/16/7?translations=kjv',
@@ -617,14 +649,14 @@ sub testV2_translations_all {
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'kjv/num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'num/16',
+							id => 'kjv/num/16',
 							type => 'chapter',
 						},
 						links => {},
@@ -633,13 +665,13 @@ sub testV2_translations_all {
 			},
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					chapter => 16,
 					ordinal => 9,
 					text => '[Seemeth it but] a small thing unto you, that the God of Israel hath separated you from the congregation of Israel, to bring you near to himself to do the service of the tabernacle of the LORD, and to stand before the congregation to minister unto them?',
 					translation => 'kjv',
 				},
-				id => 'num/16/9',
+				id => 'kjv/num/16/9',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/num/16/8?translations=kjv',
@@ -649,14 +681,14 @@ sub testV2_translations_all {
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'kjv/num',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'num/16',
+							id => 'kjv/num/16',
 							type => 'chapter',
 						},
 						links => {},
@@ -667,15 +699,17 @@ sub testV2_translations_all {
 		included => [
 			{
 				attributes => {
-					book => 'Num',
+					book => 'num',
 					ordinal => 16,
+					translation => 'asv',
+					verse_count => 50,
 				},
-				id => 'num/16',
+				id => 'asv/num/16',
 				type => 'chapter',
 				relationships => {
 					book => {
 						data => {
-							id => 'num',
+							id => 'asv/num',
 							type => 'book',
 						},
 					},
@@ -683,10 +717,16 @@ sub testV2_translations_all {
 			},
 			{
 				attributes => {
+					chapter_count => 36,
+					long_name => 'Numbers',
 					ordinal => 4,
+					short_name => 'num',
+					short_name_raw => 'Num',
 					testament => 'old',
+					translation => 'asv',
+					verse_count => 1_288,
 				},
-				id => 'num',
+				id => 'asv/num',
 				relationships => {},
 				type => 'book'
 			},

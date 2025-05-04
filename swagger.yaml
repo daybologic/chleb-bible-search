@@ -7,6 +7,27 @@ servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
 paths:
+  /1/info:
+    get:
+      summary: Get global facts
+      operationId: getInfo
+      description: Get cachable information about translations, books, chapters, and verses available
+      security: [] # No security
+      responses:
+        '200':
+          description: Successfully retrieved info
+          content:
+            text/html:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Info'
   /1/uptime:
     get:
       summary: Get server uptime
@@ -406,6 +427,49 @@ paths:
           description: Gateway Timeout
 components:
   schemas:
+    Info:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["info"]
+        attributes:
+          type: object
+          properties:
+            book_count:
+              type: integer
+              description: How many unique books available to query, across all translations, ie. could be more than 66 depending on translations loaded
+              example: 66
+            book_names_long:
+              type: array
+              items:
+                type: string
+                description: The full name of the book, arbitary length
+                example: II Corinthians
+            book_names_short:
+              type: array
+              items:
+                type: string
+                description: The short name of the book, which is used in all REST-related queries
+                example: 2cor
+            book_names_short_raw:
+              type: array
+              items:
+                type: string
+                description: The short name of the book, which is used for logging, backend lookups in the database, verse attributions
+                example: 2Cor
+            translation_count:
+              type: integer
+              description: How many translations are immediately available, includes core and plugin translations
+              example: 2
+            translations:
+              type: array
+              items:
+                type: string
+                description: Translations immediately available such as 'asv', 'kjv', and any additional translations loaded dynamically into the server, the reserved words 'any' and 'all' are not listed but are always available.
+                example: asv
     Version:
       type: object
       properties:

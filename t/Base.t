@@ -103,6 +103,91 @@ sub testMangledPlus {
 	return EXIT_SUCCESS;
 }
 
+sub testCmpAddress {
+	my ($self) = @_;
+	plan tests => 4;
+
+	$self->__checkCmpAddressBadArgCount();
+	$self->__checkCmpAddressMismatch();
+	$self->__checkCmpAddressMismatchNull();
+	$self->__checkCmpAddressMatch();
+
+	return EXIT_SUCCESS;
+}
+
+sub __checkCmpAddressBadArgCount {
+	my ($self) = @_;
+
+	my $this = (split(m/::/, (caller(0))[3]))[1];
+	subtest $this => sub {
+		my $c = 10;
+		plan tests => $c;
+
+		for (my $argCount = 0; $argCount <= $c; $argCount++) {
+			if ($argCount == 2) {
+				$self->debug("skipped argument count $argCount because this is permitted and expected");
+				next;
+			}
+
+			my @args = ( );
+			push(@args, (($self->uniqueStr()) x $argCount));
+			throws_ok {
+				$self->sut->_cmpAddress(@args)
+			} qr/Must pass two objects to _cmpAddress, expected 2, received $argCount /, "expected $argCount arguments";
+		}
+	};
+
+	return;
+}
+
+sub __checkCmpAddressMismatch {
+	my ($self) = @_;
+
+	my $this = (split(m/::/, (caller(0))[3]))[1];
+	subtest $this => sub {
+		plan tests => 2;
+
+		ok(!$self->sut->_cmpAddress($self, $self->sut), 'object address mismatch');
+		$self->sut->dic->logger->isLogged(qr/mismatch/);
+	};
+
+	return;
+}
+
+sub __checkCmpAddressMismatchNull {
+	my ($self) = @_;
+
+	my $this = (split(m/::/, (caller(0))[3]))[1];
+	subtest $this => sub {
+		plan tests => 2;
+
+		ok(!$self->sut->_cmpAddress(undef, $self->sut), 'object address mismatch NULL A');
+		ok(!$self->sut->_cmpAddress($self->sut, undef), 'object address mismatch NULL B');
+	};
+
+	return;
+}
+
+sub __checkCmpAddressMatch {
+	my ($self) = @_;
+
+	my $this = (split(m/::/, (caller(0))[3]))[1];
+	subtest $this => sub {
+		plan tests => 2;
+
+		ok($self->sut->_cmpAddress($self->sut, $self->sut), 'object address match');
+		$self->sut->dic->logger->isLogged(qr/MATCH/);
+	};
+
+	return;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
+	return;
+}
+
 package main;
 use strict;
 use warnings;

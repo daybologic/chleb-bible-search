@@ -125,7 +125,11 @@ sub __checkTraversalWork {
 	my $book = $bible[0]->getBookByOrdinal(1);
 	cmp_deeply($book, all(
 		isa('Chleb::Bible::Book'),
-		methods(shortName => 'Gen'),
+		methods(
+			longName => 'Genesis',
+			shortName => 'gen',
+			shortNameRaw => 'Gen',
+		),
 	), 'Book lookup for Genesis');
 
 	my $verse = $book->getVerseByOrdinal(1);
@@ -170,7 +174,8 @@ sub __testTraversalReverseWork {
 	my $book = $bible[0]->getBookByOrdinal(-1);
 	cmp_deeply($book, all(
 		isa('Chleb::Bible::Book'),
-		methods(shortName => 'Rev'),
+		methods(shortName => 'rev'),
+		methods(shortNameRaw => 'Rev'),
 	), 'Book lookup for Revelation');
 
 	my $verse = $book->getVerseByOrdinal(-1);

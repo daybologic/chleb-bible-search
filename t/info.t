@@ -29,101 +29,62 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package VerseTests;
+package InfoTests;
 use strict;
 use warnings;
-use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable::Local';
+extends 'Test::Module::Runnable';
 
-use Test::Deep qw(all cmp_deeply isa methods);
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
+use POSIX qw(EXIT_SUCCESS);
 use Chleb;
-use Chleb::Bible::Book;
-use Chleb::Bible::Verse;
 use Chleb::DI::MockLogger;
-use Test::Deep qw(cmp_deeply);
-use Test::Exception;
+use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
 sub setUp {
-	my ($self, %params) = @_;
-
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
+	my ($self) = @_;
 
 	$self->sut(Chleb->new());
+	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
 
 sub test {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 1;
 
-	my @bible = $self->sut->__getBible();
-	my $book = Chleb::Bible::Book->new({
-		bible        => $bible[0],
-		longName     => 'Book of Morman',
-		ordinal      => 21,
-		shortNameRaw => 'Susana',
-		testament    => 'old',
-	});
-
-	my $translation = 'kjv';
-	my $text = 'Blessed are the peacemakers, because they will be called sons of God';
-
-	my $verse = Chleb::Bible::Verse->new({
-		book    => $book,
-		chapter => Chleb::Bible::Chapter->new({
-			bible    => $bible[0],
-			book     => $book,
-			ordinal  => 1121,
-		}),
-		ordinal => 5,
-		text    => $text,
-	});
-
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
+	my $info = $self->sut->info();
+	cmp_deeply($info, all(
+		isa('Chleb::Info'),
 		methods(
-			book    => methods(
-				longName     => 'Book of Morman',
-				ordinal      => 21,
-				shortName    => 'susana',
-				shortNameRaw => 'Susana',
-				testament    => 'old',
-			),
-			chapter => methods(
-				ordinal => 1_121,
-			),
-			ordinal => 5,
-			text    => $text,
+			bibles => [
+				all(
+					isa('Chleb::Bible'),
+					methods(translation => 'asv'),
+				),
+				all(
+					isa('Chleb::Bible'),
+					methods(translation => 'kjv'),
+				),
+			],
 		),
-	), 'verse inspection') or diag(explain($verse));
-
-	is($verse->toString(), 'Susana 1121:5', 'toString default verbosity');
-	is($verse->toString(0), 'Susana 1121:5', 'toString non-verbose');
-	is($verse->toString(1), "Susana 1121:5 - $text [$translation]", 'toString verbose');
-
-	my $json = $verse->TO_JSON();
-	cmp_deeply($json, {
-		book        => 'susana',
-		chapter     => 1_121,
-		ordinal     => 5,
-		text        => $text,
-		translation => $translation,
-	}, 'TO_JSON') or diag(explain($json));
+	), 'info inspection') or diag(explain($info->toString()));
 
 	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
+	return;
 }
 
 package main;
 use strict;
 use warnings;
 
-exit(VerseTests->new->run());
+exit(InfoTests->new->run());

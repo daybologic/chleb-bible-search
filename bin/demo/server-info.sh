@@ -1,3 +1,4 @@
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,65 +29,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::DI::MockLogger;
-use Moose;
-use strict;
-use warnings;
+H=localhost:3000
 
-use Test::More;
-
-has __messages => (isa => 'ArrayRef[Str]', is => 'ro', lazy => 1, default => sub { [] });
-
-sub BUILD {
-	return;
-}
-
-sub log {
-	my ($self, $msg) = @_;
-	push(@{ $self->__messages }, $msg);
-	return unless ($ENV{TEST_VERBOSE});
-	diag($msg);
-	return;
-}
-
-sub isLogged {
-	my ($self, $regEx) = @_;
-
-	my $result = 0;
-	foreach my $msg (@{ $self->__messages }) {
-		if ($msg =~ m/$regEx/) {
-			$result++;
-			last;
-		}
-	}
-
-	ok($result, "LOGGED: $regEx");
-	return $result;
-}
-
-sub info {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub error {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub warn {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub debug {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-sub trace {
-	my ($self, $msg) = @_;
-	return $self->log($msg);
-}
-
-1;
+curl --header 'Accept: application/json' http://$H/1/info | jq .
+sleep 5
+curl --header 'Accept: text/html' http://$H/1/info

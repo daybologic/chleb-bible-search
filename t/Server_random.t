@@ -74,7 +74,7 @@ sub test_translation_kjv {
 					text => ignore(),
 					translation => 'kjv',
 				},
-				id => re(qr@^\w+/\d{1,3}/\d{1,3}$@),
+				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
 					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
@@ -104,8 +104,10 @@ sub test_translation_kjv {
 				attributes => {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
+					translation => 'kjv',
+					verse_count => re(qr/^\d{1,3}$/),
 				},
-				id => re(qr@^\w+/\d{1,3}$@),
+				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
 				type => 'chapter',
 				relationships => {
 					book => {
@@ -118,8 +120,14 @@ sub test_translation_kjv {
 			},
 			{
 				attributes => {
+					chapter_count => re(qr/^\d{1,3}$/),
+					long_name => ignore(),
 					ordinal => re(qr/^\d{1,2}$/),
+					short_name => re(qr/^\w+$/),
+					short_name_raw => re(qr/^\w+$/),
 					testament => re(qr/^\w{3}$/),
+					translation => 'kjv',
+					verse_count => re(qr/^\d{1,4}$/),
 				},
 				id => ignore(),
 				relationships => {},
@@ -158,7 +166,7 @@ sub test_translation_asv {
 					text => ignore(),
 					translation => 'asv',
 				},
-				id => re(qr@^\w+/\d{1,3}/\d{1,3}$@),
+				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
 					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
@@ -188,8 +196,10 @@ sub test_translation_asv {
 				attributes => {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
+					translation => 'asv',
+					verse_count => re(qr/^\d{1,3}$/),
 				},
-				id => re(qr@^\w+/\d{1,3}$@),
+				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
 				type => 'chapter',
 				relationships => {
 					book => {
@@ -202,8 +212,14 @@ sub test_translation_asv {
 			},
 			{
 				attributes => {
+					chapter_count => re(qr/^\d{1,3}$/),
+					long_name => ignore(),
 					ordinal => re(qr/^\d{1,2}$/),
+					short_name => re(qr/^\w+$/),
+					short_name_raw => re(qr/^\w+$/),
 					testament => re(qr/^\w{3}$/),
+					translation => 'asv',
+					verse_count => re(qr/^\d{1,4}$/),
 				},
 				id => ignore(),
 				relationships => {},
@@ -242,7 +258,7 @@ sub test_translation_all {
 					text => ignore(),
 					translation => re(qr/^\w{3}$/),
 				},
-				id => re(qr@^\w+/\d{1,3}/\d{1,3}$@),
+				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
 					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
@@ -272,8 +288,10 @@ sub test_translation_all {
 				attributes => {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
+					translation => re(qr/^(asv|kjv)$/),
+					verse_count => re(qr/^\d{1,3}$/),
 				},
-				id => re(qr@^\w+/\d{1,3}$@),
+				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
 				type => 'chapter',
 				relationships => {
 					book => {
@@ -286,8 +304,14 @@ sub test_translation_all {
 			},
 			{
 				attributes => {
+					chapter_count => re(qr/^\d{1,3}$/),
+					long_name => ignore(),
 					ordinal => re(qr/^\d{1,2}$/),
+					short_name => re(qr/^\w+$/),
+					short_name_raw => re(qr/^\w+$/),
 					testament => re(qr/^\w{3}$/),
+					translation => re(qr/^\w{3}$/),
+					verse_count => re(qr/^\d{1,4}$/),
 				},
 				id => ignore(),
 				relationships => {},

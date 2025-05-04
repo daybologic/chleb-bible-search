@@ -51,6 +51,7 @@ use Chleb::Exception;
 use HTTP::Status qw(:constants);
 use Moose::Util::TypeConstraints qw(enum);
 use Readonly;
+use Scalar::Util qw(blessed);
 
 =head1 ATTRIBUTES
 
@@ -79,7 +80,15 @@ has ordinal => (is => 'ro', isa => 'Int');
 =item C<shortName>
 
 The short name of this book within the bible, for example: C<gen> for 'Genesis'.
-This cannot be changed.
+This cannot be changed.  This is normalized and always lower-case.  This should
+be used within JSON and for REST/HTTP purposes.  For other display purposes, please
+use L</shortNameRaw>.
+
+=item C<shortNameRaw>
+
+The short name of this book within the bible, for example C<Gen> for 'Genesis',
+this may be used for display purposes and backend raw lookups.  For JSON, or REST
+purposes, please use L</shortName> instead.
 
 =item C<longName>
 
@@ -88,7 +97,8 @@ This cannot be changed.
 
 =cut
 
-has [qw(shortName longName)] => (is => 'ro', isa => 'Str');
+has [qw(shortNameRaw longName)] => (is => 'ro', isa => 'Str', required => 1);
+has shortName => (is => 'ro', isa => 'Str', lazy => 1, init_arg => undef, default => \&__makeShortName);
 
 =item C<chapterCount>
 
@@ -166,7 +176,7 @@ sub getVerseByOrdinal {
 
 	$ordinal = $self->verseCount if ($ordinal == -1);
 
-	my $bookVerseKey = join(':', $self->bible->translation, $self->shortName, $ordinal);
+	my $bookVerseKey = join(':', $self->bible->translation, $self->shortNameRaw, $ordinal);
 	if (my $verseKey = $self->bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
 		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
 		if (my $text = $self->bible->__backend->getVerseDataByKey($verseKey)) {
@@ -272,7 +282,7 @@ places where L</shortName> is accepted.
 
 sub toString {
 	my ($self) = @_;
-	return $self->shortName;
+	return $self->shortNameRaw;
 }
 
 =item C<TO_JSON()>
@@ -285,8 +295,14 @@ sub TO_JSON {
 	my ($self) = @_;
 
 	return {
-		testament => $self->testament,
-		ordinal   => $self->ordinal+0,
+		chapter_count  => $self->chapterCount+0,
+		long_name      => $self->longName,
+		ordinal        => $self->ordinal+0,
+		short_name     => $self->shortName,
+		short_name_raw => $self->shortNameRaw,
+		testament      => $self->testament,
+		translation    => $self->bible->translation,
+		verse_count    => $self->verseCount+0,
 	};
 }
 
@@ -316,6 +332,49 @@ sub getChapterByOrdinal {
 	});
 }
 
+=item C<equals($otherBook)>
+
+Given another book, which may be a L</shortName>, L</shortNameRaw> or a L<Chleb::Bible::Book>,
+we determine if it is the same book as this one, regardless of translation, and return a true
+or false value.
+
+=cut
+
+sub equals {
+	my ($self, $otherBook) = @_;
+
+	my $notABook = sub {
+		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Not a book, in Book/equals()');
+	};
+
+	$notABook->() unless (defined($otherBook));
+
+	if (my $otherBookObject = blessed($otherBook)) {
+		if ($otherBookObject->isa('Chleb::Bible::Book')) {
+			return 1 if ($self->_cmpAddress($self, $otherBook));
+			return ($self->equals($otherBook->shortNameRaw));
+		}
+
+		$notABook->();
+	}
+
+	my $shortName = $otherBook; # otherBook is *NOT* an object, rename for simplicity, so we're not confused
+
+	my $cmpResult = ($self->shortNameRaw eq $shortName);
+	$self->dic->logger->trace($self->toString() . ': Book comparison ' . ($cmpResult ? 'success' : 'failure')
+	    . " (shortNameRaw): $shortName");
+
+	return $cmpResult if ($cmpResult);
+
+	if ($shortName =~ m/^(\d)(\w+)$/) {
+		$shortName = "$1\u$2";
+	} else {
+		$shortName = "\u$shortName";
+	}
+
+	return ($self->shortNameRaw eq $shortName);
+}
+
 =back
 
 =head1 PRIVATE METHODS
@@ -332,7 +391,7 @@ Perhaps this would be better within the Backend, or as a Utils?
 
 sub __makeVerseKey {
 	my ($self, $chapterOrdinal, $verseOrdinal) = @_;
-	return join(':', $self->bible->translation, $self->shortName, $chapterOrdinal, $verseOrdinal);
+	return join(':', $self->bible->translation, $self->shortNameRaw, $chapterOrdinal, $verseOrdinal);
 }
 
 =item C<__makeId()>
@@ -343,7 +402,19 @@ Lazy-initializer for L</id>.
 
 sub __makeId {
        my ($self) = @_;
-       return lc($self->shortName);
+       return join('/', $self->bible->translation, lc($self->shortName));
+}
+
+=item C<__makeShortName>
+
+This sanity-checker inspects values as they are set in L</shortName>,
+and forced them to be lower-case.
+
+=cut
+
+sub __makeShortName {
+	my ($self) = @_;
+	return lc($self->shortNameRaw);
 }
 
 =back

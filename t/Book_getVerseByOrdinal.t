@@ -69,10 +69,11 @@ sub testSuccess {
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
-				ordinal   => 32, # 32nd book is 'Jonah'
-				longName  => 'Jonah',
-				shortName => 'Jonah',
-				testament => 'old',
+				longName     => 'Jonah',
+				ordinal      => 32, # 32nd book is 'Jonah'
+				shortName    => 'jonah',
+				shortNameRaw => 'Jonah',
+				testament    => 'old',
 			),
 			chapter => methods(
 				ordinal => 4,
@@ -88,10 +89,11 @@ sub testSuccess {
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
-				ordinal   => 20,
-				longName  => 'Proverbs',
-				shortName => 'Prov',
-				testament => 'old',
+				longName     => 'Proverbs',
+				ordinal      => 20,
+				shortName    => 'prov',
+				shortNameRaw => 'Prov',
+				testament    => 'old',
 			),
 			chapter => methods(
 				ordinal => 16,
@@ -107,10 +109,11 @@ sub testSuccess {
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
-				ordinal   => 1,
-				longName  => 'Genesis',
-				shortName => 'Gen',
-				testament => 'old',
+				longName     => 'Genesis',
+				ordinal      => 1,
+				shortName    => 'gen',
+				shortNameRaw => 'Gen',
+				testament    => 'old',
 			),
 			chapter => methods(
 				ordinal => 1,
@@ -125,10 +128,11 @@ sub testSuccess {
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
-				ordinal   => 1,
-				longName  => 'Genesis',
-				shortName => 'Gen',
-				testament => 'old',
+				longName     => 'Genesis',
+				ordinal      => 1,
+				shortName    => 'gen',
+				shortNameRaw => 'Gen',
+				testament    => 'old',
 			),
 			chapter => methods(
 				ordinal => 50,
@@ -144,10 +148,11 @@ sub testSuccess {
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
-				ordinal   => 66,
-				longName  => 'Revelation of John',
-				shortName => 'Rev',
-				testament => 'new',
+				longName     => 'Revelation of John',
+				ordinal      => 66,
+				shortName    => 'rev',
+				shortNameRaw => 'Rev',
+				testament    => 'new',
 			),
 			chapter => methods(
 				ordinal => 22,

@@ -76,26 +76,26 @@ sub test {
 	cmp_deeply($json, {
 		data => [{
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 4,
 				ordinal => 18,
 				text => 'And Jesus, walking by the sea of Galilee, saw two brethren, Simon called Peter, and Andrew his brother, casting a net into the sea: for they were fishers.',
 				title => "Result 1/5 from Chleb Bible Search 'peter'",
 				translation => 'kjv',
 			},
-			id => 'mat/4/18',
+			id => 'kjv/mat/4/18',
 			type => 'verse',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					},
 					links => {},
 				},
 				chapter => {
 					data => {
-						id => 'mat/4',
+						id => 'kjv/mat/4',
 						type => 'chapter',
 					},
 					links => {},
@@ -103,26 +103,26 @@ sub test {
 			},
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 10,
 				ordinal => 2,
 				text => 'Now the names of the twelve apostles are these; The first, Simon, who is called Peter, and Andrew his brother; James [the son] of Zebedee, and John his brother;',
 				title => 'Result 2/5 from Chleb Bible Search \'peter\'',
 				translation => 'kjv',
 			},
-			id => 'mat/10/2',
+			id => 'kjv/mat/10/2',
 			type => 'verse',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					},
 					links => {},
 				},
 				chapter => {
 					data => {
-						id => 'mat/10',
+						id => 'kjv/mat/10',
 						type => 'chapter',
 					},
 					'links' => {},
@@ -130,25 +130,25 @@ sub test {
 			},
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 14,
 				ordinal => 28,
 				text => 'And Peter answered him and said, Lord, if it be thou, bid me come unto thee on the water.',
 				title => 'Result 3/5 from Chleb Bible Search \'peter\'',
 				translation => 'kjv',
 			},
-			id => 'mat/14/28',
+			id => 'kjv/mat/14/28',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					},
 					links => {},
 				},
 				chapter => {
 					data => {
-						id => 'mat/14',
+						id => 'kjv/mat/14',
 						type => 'chapter',
 					},
 					'links' => {},
@@ -157,25 +157,25 @@ sub test {
 			type => 'verse',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 14,
 				ordinal => 29,
 				text => 'And he said, Come. And when Peter was come down out of the ship, he walked on the water, to go to Jesus.',
 				title => 'Result 4/5 from Chleb Bible Search \'peter\'',
 				translation => 'kjv',
 			},
-			id => 'mat/14/29',
+			id => 'kjv/mat/14/29',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					},
 					links => {},
 				},
 				chapter => {
 					data => {
-						id => 'mat/14',
+						id => 'kjv/mat/14',
 						type => 'chapter',
 					},
 					links => {},
@@ -184,25 +184,25 @@ sub test {
 			type => 'verse',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				chapter => 15,
 				ordinal => 15,
 				text => 'Then answered Peter and said unto him, Declare unto us this parable.',
 				title => 'Result 5/5 from Chleb Bible Search \'peter\'',
 				translation => 'kjv',
 			},
-			id => 'mat/15/15',
+			id => 'kjv/mat/15/15',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					},
 					links => {},
 				},
 				chapter => {
 					data => {
-						id => 'mat/15',
+						id => 'kjv/mat/15',
 						type => 'chapter',
 					},
 					links => {},
@@ -212,14 +212,16 @@ sub test {
 		}],
 		included => [{
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 4,
+				translation => 'kjv',
+				verse_count => 25,
 			},
-			id => 'mat/4',
+			id => 'kjv/mat/4',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					},
 				},
@@ -227,22 +229,30 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
+				short_name_raw => 'Mat',
 				testament => 'new',
+				translation => 'kjv',
+				verse_count => 1_071,
 			},
-			id => 'mat',
+			id => 'kjv/mat',
 			relationships => {},
 			type => 'book',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 10,
+				translation => 'kjv',
+				verse_count => 42,
 			},
-			id => 'mat/10',
+			id => 'kjv/mat/10',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					}
 				}
@@ -250,22 +260,30 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
+				short_name_raw => 'Mat',
 				testament => 'new',
+				translation => 'kjv',
+				verse_count => 1_071,
 			},
-			id => 'mat',
+			id => 'kjv/mat',
 			relationships => {},
 			type => 'book',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 14,
+				translation => 'kjv',
+				verse_count => 36,
 			},
-			id => 'mat/14',
+			id => 'kjv/mat/14',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					}
 				},
@@ -273,22 +291,30 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
+				short_name_raw => 'Mat',
 				testament => 'new',
+				translation => 'kjv',
+				verse_count => 1_071,
 			},
-			id => 'mat',
+			id => 'kjv/mat',
 			relationships => {},
 			type => 'book',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 14,
+				translation => 'kjv',
+				verse_count => 36,
 			},
-			id => 'mat/14',
+			id => 'kjv/mat/14',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					},
 				},
@@ -296,22 +322,30 @@ sub test {
 			'type' => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
+				short_name_raw => 'Mat',
 				testament => 'new',
+				translation => 'kjv',
+				verse_count => 1_071,
 			},
-			id => 'mat',
+			id => 'kjv/mat',
 			relationships => {},
 			type => 'book',
 		}, {
 			attributes => {
-				book => 'Mat',
+				book => 'mat',
 				ordinal => 15,
+				translation => 'kjv',
+				verse_count => 39,
 			},
-			id => 'mat/15',
+			id => 'kjv/mat/15',
 			relationships => {
 				book => {
 					data => {
-						id => 'mat',
+						id => 'kjv/mat',
 						type => 'book',
 					},
 				},
@@ -319,10 +353,16 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				chapter_count => 28,
+				long_name => 'Matthew',
 				ordinal => 40,
+				short_name => 'mat',
+				short_name_raw => 'Mat',
 				testament => 'new',
+				translation => 'kjv',
+				verse_count => 1_071,
 			},
-			id => 'mat',
+			id => 'kjv/mat',
 			relationships => {},
 			type => 'book',
 		}, {
