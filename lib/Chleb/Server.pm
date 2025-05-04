@@ -533,7 +533,7 @@ sub __info {
 
 	my $startTiming = Time::HiRes::time();
 
-	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 
 	my $info = $self->__library->info();
 	my %hash = __makeJsonApi();
