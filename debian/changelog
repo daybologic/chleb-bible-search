@@ -1,6 +1,7 @@
 chleb-bible-search (1.0.1) stable; urgency=medium
 
-  * Fix values in JSON which should be integer but were strings
+  * 🐛 Fix values in JSON which should be integer but were string
+  * 🩹 pass translation to bible object
 
  -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 04 May 2025 10:18:06 +0100
 
