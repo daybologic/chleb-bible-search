@@ -68,7 +68,7 @@ sub testDefaults {
 				admin_email => 'example@example.org',
 				admin_name => 'Unknown',
 				server_host => 'localhost',
-				version => '1.0.1',
+				version => '1.1.0',
 			},
 			id => ignore(),
 			type => 'version',

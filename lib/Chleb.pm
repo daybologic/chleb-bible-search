@@ -60,7 +60,7 @@ has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__mak
 has __bibles => (is => 'ro', isa => 'HashRef[Str]', lazy => 1, default => \&__makeBibles); # use 'bibles' to access
 
 BEGIN {
-	our $VERSION = '1.0.1';
+	our $VERSION = '1.1.0';
 }
 
 sub BUILD {
