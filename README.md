@@ -48,7 +48,7 @@ Please name your branch using this scheme:
 | ------ | ----------- | ---------- | -------------- |
 | bugfix/&lt;ticket&gt;-&lt;description&gt; | A user bug report, with the ticket number | NO | NO |
 | bugs/&lt;id&gt; | Reserved for the use of git-bug | NO | NO |
-| develop | Mainline merge point for all features | YES | NO |
+| develop | Mainline merge point for all features | NO | NO |
 | docs/&lt;description&gt; | Documentation changes _only_ | NO | NO |
 | feature/&lt;description&gt; | New functionality | NO | NO |
 | f/YYYYMM-&lt;description&gt; | Legacy features, please don't create new ones | NO | NO |
