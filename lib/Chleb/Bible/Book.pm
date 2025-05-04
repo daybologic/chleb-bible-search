@@ -286,7 +286,7 @@ sub TO_JSON {
 
 	return {
 		testament => $self->testament,
-		ordinal   => $self->ordinal,
+		ordinal   => $self->ordinal+0,
 	};
 }
 
