@@ -2,14 +2,15 @@
 package BaseTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use English qw(-no_match_vars);
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::Bible::Base;
 use Chleb::DI::MockLogger;
 use Test::Deep qw(cmp_deeply all isa methods bool re);
@@ -17,10 +18,13 @@ use Test::Exception;
 use Test::More;
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
+
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
 
 	$self->sut(Chleb::Bible::Base->new());
-	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }

@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package RandomTests;
+package VersionServerTests;
 use strict;
 use warnings;
 use lib 't/lib';
@@ -40,8 +40,9 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable::Local';
 
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb;
+use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -52,25 +53,29 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb->new());
+	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
 }
 
-sub test {
+sub testDefaults {
 	my ($self) = @_;
-	plan tests => 1;
 
-	my $verse = $self->sut->random();
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => isa('Chleb::Bible::Book'),
-			chapter => isa('Chleb::Bible::Chapter'),
-			ordinal => re(qr/^\d+$/),
-			text    => ignore(),
-		),
-	), 'verse inspection') or diag(explain($verse->toString()));
+	my $json = $self->sut->__version();
+	cmp_deeply($json, {
+		data => [{
+			attributes => {
+				admin_email => 'example@example.org',
+				admin_name => 'Unknown',
+				server_host => 'localhost',
+				version => '1.0.1',
+			},
+			id => ignore(),
+			type => 'version',
+		}],
+		included => [ ],
+		links => { },
+	}, '__version') or diag(explain($json));
 
 	return EXIT_SUCCESS;
 }
@@ -79,4 +84,4 @@ package main;
 use strict;
 use warnings;
 
-exit(RandomTests->new->run());
+exit(VersionServerTests->new->run());

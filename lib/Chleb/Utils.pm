@@ -115,13 +115,25 @@ and return a new C<ARRAY>.  The original is not modified.
 sub removeArrayEmptyItems {
 	my ($arrayRef) = @_;
 
+	return [ ] unless (defined($arrayRef));
+
+	die('no blessed object support') if (blessed($arrayRef));
+	die('no CODE support') if (ref($arrayRef) eq 'CODE');
+	die('no HASH support') if (ref($arrayRef) eq 'HASH');
+	die('$arrayRef must be an ARRAY ref') if (ref($arrayRef) ne 'ARRAY');
+
 	my @filtered = ( );
+	my $filteredCount = 0;
 	foreach my $value (@$arrayRef) {
-		next if (!defined($value));
-		next if (length($value) == 0);
+		if (!defined($value) || length($value) == 0) {
+			$filteredCount++;
+			next;
+		}
+
 		push(@filtered, $value);
 	}
-	return \@filtered;
+
+	return $filteredCount == 0 ? $arrayRef : \@filtered;
 }
 
 sub queryParamsHelper {

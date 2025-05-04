@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package RandomTests;
+package UptimeServerTests;
 use strict;
 use warnings;
 use lib 't/lib';
@@ -40,8 +40,9 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable::Local';
 
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb;
+use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -52,25 +53,55 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb->new());
+	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
 }
 
-sub test {
+sub testUptimeStatic {
 	my ($self) = @_;
-	plan tests => 1;
 
-	my $verse = $self->sut->random();
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => isa('Chleb::Bible::Book'),
-			chapter => isa('Chleb::Bible::Chapter'),
-			ordinal => re(qr/^\d+$/),
-			text    => ignore(),
-		),
-	), 'verse inspection') or diag(explain($verse->toString()));
+	my $uptime = 3661;
+	$self->mock(ref($self->sut), '__getUptime', [$uptime]);
+
+	my $json = $self->sut->__uptime();
+	cmp_deeply($json, {
+		data => [{
+			attributes => {
+				text => '1 hour, 1 minute, and 1 second',
+				uptime => 3661,
+			},
+			id => ignore(),
+			type => 'uptime',
+		}],
+		included => [ ],
+		links => { },
+	}, '__uptime: ' . $json->{data}->[0]->{attributes}->{text}) or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testUptimeDynamic {
+	my ($self) = @_;
+
+	local $ENV{TEST_UNIQUE} = int(rand(1000));
+	my $uptime = $self->unique % 60; # under one minute
+	$self->mock(ref($self->sut), '__getUptime', [$uptime]);
+	my $plural = ($uptime == 1) ? '' : 's';
+
+	my $json = $self->sut->__uptime();
+	cmp_deeply($json, {
+		data => [{
+			attributes => {
+				text => sprintf('%s second%s', $uptime, $plural),
+				uptime => $uptime,
+			},
+			id => ignore(),
+			type => 'uptime',
+		}],
+		included => [ ],
+		links => { },
+	}, '__uptime: ' . $json->{data}->[0]->{attributes}->{text}) or diag(explain($json));
 
 	return EXIT_SUCCESS;
 }
@@ -79,4 +110,4 @@ package main;
 use strict;
 use warnings;
 
-exit(RandomTests->new->run());
+exit(UptimeServerTests->new->run(n => ($ENV{TEST_QUICK} ? 1 : 250)));
