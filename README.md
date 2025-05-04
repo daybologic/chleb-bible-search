@@ -25,7 +25,7 @@ Hosting for Chleb Bible Search source code is provided at the following sites:
   * [GitHub](https://github.com/daybologic/chleb-bible-search)
   * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search)
 
-The latest release is version 1.0.0, which is available for download at the following sites:
+The latest release is version 1.0.1, which is available for download at the following sites:
 
   * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v1.0.1.tar.gz)
   * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/archive/v1.0.1.tar.gz)
