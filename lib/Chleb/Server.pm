@@ -58,6 +58,7 @@ use UUID::Tiny ':std';
 
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+Readonly my $MAX_TEXT_LENGTH => 120;
 
 =head1 METHODS
 
@@ -823,6 +824,14 @@ sub __infoToHtml {
 		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
 
 		my $verse = $self->__library->random();
+		my $verseText;
+		if (length($verse->text) > $MAX_TEXT_LENGTH) {
+			my $elipses = '...';
+			$verseText = substr($verse->text, 0, $MAX_TEXT_LENGTH - length($elipses));
+			$verseText .= $elipses;
+		} else {
+			$verseText = $verse->text; # simple
+		}
 
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($attributes->{long_name});
@@ -831,7 +840,7 @@ sub __infoToHtml {
 		$text .= $printCell->($attributes->{testament});
 		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= $printCell->($attributes->{short_name});
-		$text .= $printCell->(sprintf('%s [%d:%d]', $verse->text, $verse->chapter->ordinal, $verse->ordinal));
+		$text .= $printCell->(sprintf('%s [%d:%d]', $verseText, $verse->chapter->ordinal, $verse->ordinal));
 
 		$text .= "</tr>\r\n";
 	}
