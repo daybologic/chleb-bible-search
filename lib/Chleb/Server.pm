@@ -801,6 +801,17 @@ sub __infoToHtml {
 		return sprintf("<t${tag}>${formatter}</t${tag}>\r\n", $datum);
 	};
 
+	my $limitVerseText = sub {
+		my ($verse) = @_;
+
+		if (length($verse->text) > $MAX_TEXT_LENGTH) {
+			my $elipses = '...';
+			return substr($verse->text, 0, $MAX_TEXT_LENGTH - length($elipses)) . $elipses;
+		}
+
+		return $verse->text; # simple
+	};
+
 	my %bookNameCache = ( );
 
 	my $text = "<table>\r\n";
@@ -824,14 +835,7 @@ sub __infoToHtml {
 		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
 
 		my $verse = $self->__library->random();
-		my $verseText;
-		if (length($verse->text) > $MAX_TEXT_LENGTH) {
-			my $elipses = '...';
-			$verseText = substr($verse->text, 0, $MAX_TEXT_LENGTH - length($elipses));
-			$verseText .= $elipses;
-		} else {
-			$verseText = $verse->text; # simple
-		}
+		my $verseText = $limitVerseText->($verse);
 
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($attributes->{long_name});
@@ -853,6 +857,7 @@ sub __infoToHtml {
 	$text .= $printCell->("Book", 0, 1);
 	$text .= $printCell->("Chapter", 0, 1);
 	$text .= $printCell->("Verses", 0, 1);
+	$text .= $printCell->("Sample", 0, 1);
 	$text .= "</tr>\r\n";
 
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
@@ -861,10 +866,14 @@ sub __infoToHtml {
 
 		my $attributes = $included->{attributes};
 
+		my $verse = $self->__library->random();
+		my $verseText = $limitVerseText->($verse);
+
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($bookNameCache{ $attributes->{book} });
 		$text .= $printCell->($attributes->{ordinal}, 1);
 		$text .= $printCell->($attributes->{verse_count}, 1);
+		$text .= $printCell->(sprintf('%s [%d]', $verseText, $verse->ordinal));
 		$text .= "</tr>\r\n";
 	}
 
