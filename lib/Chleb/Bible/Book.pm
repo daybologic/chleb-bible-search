@@ -271,6 +271,13 @@ sub search {
 	return \@verses;
 }
 
+=item C<randomVerse()>
+
+Returns a random verse as a L<Chleb::Bible::Verse> object, from this Book.
+Call this method as many times as desired.  No specific promises are made.
+
+=cut
+
 sub randomVerse {
 	my ($self) = @_;
 	return $self->getVerseByOrdinal(1 + int(rand($self->verseCount)));
