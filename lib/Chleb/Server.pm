@@ -604,7 +604,7 @@ sub __info {
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		return \%hash;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return $self->__infoToHtml(\%hash);
+		return __infoToHtml(\%hash);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here');
@@ -792,7 +792,7 @@ sub __searchResultsToHtml {
 }
 
 sub __infoToHtml {
-	my ($self, $json) = @_;
+	my ($json) = @_;
 
 	my $printCell = sub {
 		my ($datum, $int, $header) = @_;
