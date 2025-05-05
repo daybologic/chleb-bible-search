@@ -294,10 +294,13 @@ Returns the JSON:API C<attributes> associated with this Book.
 sub TO_JSON {
 	my ($self) = @_;
 
+	my $sampleVerse = $self->bible->_library->random();
+
 	return {
 		chapter_count  => $self->chapterCount+0,
 		long_name      => $self->longName,
 		ordinal        => $self->ordinal+0,
+		sample_verse_text => $sampleVerse->text,
 		short_name     => $self->shortName,
 		short_name_raw => $self->shortNameRaw,
 		testament      => $self->testament,

@@ -156,6 +156,7 @@ sub test_translation_all {
 					chapter_count => 150,
 					long_name => 'Psalms',
 					ordinal => re(qr/^\d{1,2}$/),
+					sample_verse_text => ignore(),
 					short_name => 'psa',
 					short_name_raw => 'Psa',
 					testament => re(qr/^\w{3}$/),

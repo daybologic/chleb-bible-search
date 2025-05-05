@@ -465,6 +465,9 @@ components:
             ordinal:
               type: integer
               example: 4
+            sample_verse_text:
+              type: string
+              example: "The gates of the rivers shall be opened, and the palace shall be dissolved."
             short_name_raw:
               type: string
               example: "Mat"
