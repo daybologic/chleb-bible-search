@@ -28,6 +28,12 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Info'
+                  included:
+                    type: array
+                    items:
+                      - $ref: '#/components/schemas/Book'
+                      - $ref: '#/components/schemas/Chapter'
+                      - $ref: '#/components/schemas/Stats'
   /1/uptime:
     get:
       summary: Get server uptime
@@ -427,6 +433,64 @@ paths:
           description: Gateway Timeout
 components:
   schemas:
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["book"]
+        attributes:
+          type: object
+          properties:
+            chapter_count:
+              type: integer
+              example: 28
+            verse_count:
+              type: integer
+              example: 1071
+            long_name:
+              type: string
+              example: "Matthew"
+            testament:
+              type: string
+              enum: ["old", "new"]
+            short_name:
+              type: string
+              example: "mat"
+            translation:
+              type: string
+              example: "kjv"
+            ordinal:
+              type: integer
+              example: 4
+            short_name_raw:
+              type: string
+              example: "Mat"
+    Chapter:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["chapter"]
+        attributes:
+          type: object
+          properties:
+            book:
+              type: string
+              example: "rev"
+            verse_count:
+              type: integer
+              example: 404
+            translation:
+              type: string
+              example: "asv"
+            ordinal:
+              type: integer
+              example: 13
     Info:
       type: object
       properties:
