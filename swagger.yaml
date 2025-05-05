@@ -468,6 +468,14 @@ components:
             sample_verse_text:
               type: string
               example: "The gates of the rivers shall be opened, and the palace shall be dissolved."
+            sample_verse_chapter_ordinal:
+              description: Which chapter the sample verse (sample_verse_text) came from
+              type: integer
+              example: 1
+            sample_verse_ordinal_in_chapter:
+              description: The sample_verse_text verse number within a the chapter (sample_verse_chapter_ordinal).
+              type: integer
+              example: 1
             short_name_raw:
               type: string
               example: "Mat"

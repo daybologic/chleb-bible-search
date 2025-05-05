@@ -834,7 +834,12 @@ sub __infoToHtml {
 
 		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
 
-		my $verse = $self->__library->random();
+		my @verses = $self->__library->fetch(
+			$attributes->{short_name_raw},
+			$attributes->{sample_verse_chapter_ordinal},
+			$attributes->{sample_verse_ordinal_in_chapter},
+		);
+		my $verse = $verses[0];
 		my $verseText = $limitVerseText->($verse);
 
 		$text .= "<tr>\r\n";

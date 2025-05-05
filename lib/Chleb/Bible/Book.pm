@@ -301,6 +301,8 @@ sub TO_JSON {
 		long_name      => $self->longName,
 		ordinal        => $self->ordinal+0,
 		sample_verse_text => $sampleVerse->text,
+		sample_verse_chapter_ordinal => $sampleVerse->chapter->ordinal,
+		sample_verse_ordinal_in_chapter => $sampleVerse->ordinal,
 		short_name     => $self->shortName,
 		short_name_raw => $self->shortNameRaw,
 		testament      => $self->testament,
