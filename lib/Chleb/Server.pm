@@ -58,7 +58,6 @@ use UUID::Tiny ':std';
 
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
-Readonly my $MAX_TEXT_LENGTH => 120;
 
 =head1 METHODS
 
@@ -801,17 +800,6 @@ sub __infoToHtml {
 		return sprintf("<t${tag}>${formatter}</t${tag}>\r\n", $datum);
 	};
 
-	my $limitVerseText = sub {
-		my ($verseText) = @_;
-
-		if (length($verseText) > $MAX_TEXT_LENGTH) {
-			my $elipses = '...';
-			return substr($verseText, 0, $MAX_TEXT_LENGTH - length($elipses)) . $elipses;
-		}
-
-		return $verseText; # simple
-	};
-
 	my %bookNameCache = ( );
 
 	my $text = "<table>\r\n";
@@ -843,7 +831,7 @@ sub __infoToHtml {
 		$text .= $printCell->($attributes->{short_name});
 		$text .= $printCell->(sprintf(
 			'%s [%d:%d]',
-			$limitVerseText->($attributes->{sample_verse_text}),
+			Chleb::Utils::limitText($attributes->{sample_verse_text}),
 			$attributes->{sample_verse_chapter_ordinal},
 			$attributes->{sample_verse_ordinal_in_chapter},
 		));

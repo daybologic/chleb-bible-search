@@ -40,6 +40,14 @@ known false values; a fixed list.
 
 Readonly my @FALSE_VALUES => ('0', 'false', 'off', 'no');
 
+=item C<$MAX_TEXT_LENGTH>
+
+The maximum length of a string returned by L</limitText($text)>.
+
+=cut
+
+Readonly my $MAX_TEXT_LENGTH => 120;
+
 =back
 
 =head1 FUNCTIONS
@@ -283,6 +291,25 @@ sub parseIntoType {
 	}
 
 	return $output;
+}
+
+=item C<limitText($text)>
+
+Restricts the given string, C<$text> to C<$MAX_TEXT_LENGTH>, but if the
+string is truncated, elipses are added to the end of the string to visually
+show this, which takes another three characters of real content away.
+
+=cut
+
+sub limitText {
+	my ($text) = @_;
+
+	if (length($text) > $MAX_TEXT_LENGTH) {
+		my $elipses = '...';
+		return substr($text, 0, $MAX_TEXT_LENGTH - length($elipses)) . $elipses;
+	}
+
+	return $text; # simple
 }
 
 =back
