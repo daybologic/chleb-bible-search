@@ -603,7 +603,7 @@ sub __info {
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		return \%hash;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __infoToHtml(\%hash);
+		return $self->__infoToHtml(\%hash);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here');
@@ -791,7 +791,7 @@ sub __searchResultsToHtml {
 }
 
 sub __infoToHtml {
-	my ($json) = @_;
+	my ($self, $json) = @_;
 
 	my $printCell = sub {
 		my ($datum, $int, $header) = @_;
@@ -811,6 +811,7 @@ sub __infoToHtml {
 	$text .= $printCell->("Testament", 0, 1);
 	$text .= $printCell->("Verses", 0, 1);
 	$text .= $printCell->("Short name", 0, 1);
+	$text .= $printCell->("Sample", 0, 1);
 	$text .= "</tr>\r\n";
 
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
@@ -821,6 +822,8 @@ sub __infoToHtml {
 
 		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
 
+		my $verse = $self->__library->random();
+
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($attributes->{long_name});
 		$text .= $printCell->($attributes->{ordinal}, 1);
@@ -828,6 +831,8 @@ sub __infoToHtml {
 		$text .= $printCell->($attributes->{testament});
 		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= $printCell->($attributes->{short_name});
+		$text .= $printCell->(sprintf('%s [%d:%d]', $verse->text, $verse->chapter->ordinal, $verse->ordinal));
+
 		$text .= "</tr>\r\n";
 	}
 
