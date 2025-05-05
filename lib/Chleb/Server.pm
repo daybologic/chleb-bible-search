@@ -802,14 +802,14 @@ sub __infoToHtml {
 	};
 
 	my $limitVerseText = sub {
-		my ($verse) = @_;
+		my ($verseText) = @_;
 
-		if (length($verse->text) > $MAX_TEXT_LENGTH) {
+		if (length($verseText) > $MAX_TEXT_LENGTH) {
 			my $elipses = '...';
-			return substr($verse->text, 0, $MAX_TEXT_LENGTH - length($elipses)) . $elipses;
+			return substr($verseText, 0, $MAX_TEXT_LENGTH - length($elipses)) . $elipses;
 		}
 
-		return $verse->text; # simple
+		return $verseText; # simple
 	};
 
 	my %bookNameCache = ( );
@@ -834,14 +834,6 @@ sub __infoToHtml {
 
 		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
 
-		my @verses = $self->__library->fetch(
-			$attributes->{short_name_raw},
-			$attributes->{sample_verse_chapter_ordinal},
-			$attributes->{sample_verse_ordinal_in_chapter},
-		);
-		my $verse = $verses[0];
-		my $verseText = $limitVerseText->($verse);
-
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($attributes->{long_name});
 		$text .= $printCell->($attributes->{ordinal}, 1);
@@ -849,7 +841,12 @@ sub __infoToHtml {
 		$text .= $printCell->($attributes->{testament});
 		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= $printCell->($attributes->{short_name});
-		$text .= $printCell->(sprintf('%s [%d:%d]', $verseText, $verse->chapter->ordinal, $verse->ordinal));
+		$text .= $printCell->(sprintf(
+			'%s [%d:%d]',
+			$limitVerseText->($attributes->{sample_verse_text}),
+			$attributes->{sample_verse_chapter_ordinal},
+			$attributes->{sample_verse_ordinal_in_chapter},
+		));
 
 		$text .= "</tr>\r\n";
 	}

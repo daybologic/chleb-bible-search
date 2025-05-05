@@ -271,6 +271,11 @@ sub search {
 	return \@verses;
 }
 
+sub randomVerse {
+	my ($self) = @_;
+	return $self->getVerseByOrdinal(1 + int(rand($self->verseCount)));
+}
+
 =item C<toString()>
 
 Return an opaque, loggable version of this book's name.
@@ -294,7 +299,7 @@ Returns the JSON:API C<attributes> associated with this Book.
 sub TO_JSON {
 	my ($self) = @_;
 
-	my $sampleVerse = $self->bible->_library->random();
+	my $sampleVerse = $self->randomVerse();
 
 	return {
 		chapter_count  => $self->chapterCount+0,
