@@ -106,6 +106,13 @@ sub TO_JSON {
 	};
 }
 
+sub getPath {
+	my ($self) = @_;
+	my @id = split(m@/@, $self->id);
+	shift(@id);
+	return join('/', @id);
+}
+
 sub __makeId {
 	my ($self) = @_;
 	return join('/', $self->chapter->id, $self->ordinal);

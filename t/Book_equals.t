@@ -29,54 +29,117 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package RandomTests;
+#!/usr/bin/perl
+package Book_equalsTests;
 use strict;
 use warnings;
-use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable::Local';
+extends 'Test::Module::Runnable';
 
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb;
+use Chleb::Bible;
+use Chleb::Bible::Book;
 use Chleb::DI::MockLogger;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
-use Test::More 0.96;
+use English qw(-no_match_vars);
+use POSIX qw(EXIT_SUCCESS);
+use Test::Deep qw(cmp_deeply all isa methods bool re);
+use Test::Exception;
+use Test::More;
+
+has __bible => (isa => 'Chleb::Bible', is => 'rw');
 
 sub setUp {
-	my ($self, %params) = @_;
+	my ($self) = @_;
 
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
+	$self->__mockLogger();
 
-	$self->sut(Chleb->new());
+	$self->__bible(Chleb::Bible->new({
+		translation => 'asv',
+	}));
+
+	$self->sut($self->__makeBook());
 
 	return EXIT_SUCCESS;
 }
 
-sub test {
+sub __makeBook {
+	my ($self, $name) = @_;
+
+	$name = 'Genesis' unless ($name);
+
+	return Chleb::Bible::Book->new({
+		bible => $self->__bible,
+		longName => $name,
+		shortNameRaw => substr($name, 0, 3),
+	});
+}
+
+sub testWrongObject {
+	my ($self) = @_;
+	return $self->__checkWrongObject($self);
+}
+
+sub testNullObject {
+	my ($self) = @_;
+	return $self->__checkWrongObject(undef);
+}
+
+sub __checkWrongObject {
+	my ($self, $object) = @_;
+	plan tests => 1;
+
+	eval {
+		$self->sut->equals($object);
+	};
+
+	my $expectDescription = 'Not a book, in Book/equals()';
+	if (my $evalError = $EVAL_ERROR) {
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => $expectDescription,
+				location    => undef,
+				statusCode  => 500,
+			),
+		), $expectDescription);
+	} else {
+		fail('No exception raised, as was expected');
+	}
+
+	return EXIT_SUCCESS;
+}
+
+sub testSameBook {
+	my ($self) = @_;
+	plan tests => 2;
+
+	ok($self->sut->equals($self->sut), 'same object');
+	ok($self->sut->equals($self->__makeBook()), 'same book, different object');
+
+	return EXIT_SUCCESS;
+}
+
+sub testDifferentBook {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $verse = $self->sut->random();
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => isa('Chleb::Bible::Book'),
-			chapter => isa('Chleb::Bible::Chapter'),
-			ordinal => re(qr/^\d+$/),
-			text    => ignore(),
-		),
-	), 'verse inspection') or diag(explain($verse->toString()));
+	ok(!$self->sut->equals($self->__makeBook('Matthew')), 'different book');
 
 	return EXIT_SUCCESS;
+}
+
+sub __mockLogger {
+	my ($self) = @_;
+
+	my $dic = Chleb::DI::Container->instance;
+	$dic->logger(Chleb::DI::MockLogger->new());
+
+	return;
 }
 
 package main;
 use strict;
 use warnings;
-
-exit(RandomTests->new->run());
+exit(Book_equalsTests->new->run);

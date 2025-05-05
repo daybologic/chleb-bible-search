@@ -61,6 +61,18 @@ use Chleb::Exception;
 
 =over
 
+=item C<id>
+
+=cut
+
+has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
+
+=item C<type>
+
+=cut
+
+has type => (is => 'ro', isa => 'Str', default => sub { 'bible' });
+
 =item C<bookCount>
 
 The count (number) of books in the bible.  Whilst most bibles will contain C<66> books,
@@ -149,15 +161,8 @@ in the key C<nonFatal> within the B<optional> C<$args> C<HASH>.
 sub getBookByShortName {
 	my ($self, $shortName, $args) = @_;
 
-	$shortName ||= '';
-	if ($shortName =~ m/^(\d)(\w+)$/) {
-		$shortName = "$1\u$2";
-	} else {
-		$shortName = "\u$shortName";
-	}
-
 	foreach my $book (@{ $self->books }) {
-		next if ($book->shortName ne $shortName);
+		next unless ($book->equals($shortName));
 		return $book;
 	}
 
@@ -355,6 +360,25 @@ sub fetch {
 	return $verse;
 }
 
+=item C<TO_JSON()>
+
+Returns the JSON:API C<attributes> associated with this Book.
+
+=cut
+
+sub TO_JSON {
+	my ($self) = @_;
+
+	return {
+		book_count           => $self->bookCount+0,
+		book_names_long      => [ map { $_->longName } @{ $self->books } ],
+		book_names_short     => [ map { $_->shortName } @{ $self->books } ],
+		book_names_short_raw => [ map { $_->shortNameRaw } @{ $self->books } ],
+		translation          => $self->translation,
+		verse_count          => $self->verseCount+0,
+	};
+}
+
 =back
 
 =head1 PRIVATE METHODS
@@ -396,6 +420,15 @@ Lazy-initializer for L</books>.
 sub __makeBooks {
 	my ($self) = @_;
 	return $self->__backend->getBooks();
+}
+
+=item C<__makeId>
+
+=cut
+
+sub __makeId {
+	my ($self) = @_;
+	return join('/', $self->type, $self->translation);
 }
 
 =back

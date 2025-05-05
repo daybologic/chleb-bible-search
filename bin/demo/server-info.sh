@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,54 +29,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package RandomTests;
-use strict;
-use warnings;
-use lib 't/lib';
-use Moose;
+H=localhost:3000
 
-use lib 'externals/libtest-module-runnable-perl/lib';
-
-extends 'Test::Module::Runnable::Local';
-
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb;
-use Chleb::DI::MockLogger;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
-use Test::More 0.96;
-
-sub setUp {
-	my ($self, %params) = @_;
-
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
-
-	$self->sut(Chleb->new());
-
-	return EXIT_SUCCESS;
-}
-
-sub test {
-	my ($self) = @_;
-	plan tests => 1;
-
-	my $verse = $self->sut->random();
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => isa('Chleb::Bible::Book'),
-			chapter => isa('Chleb::Bible::Chapter'),
-			ordinal => re(qr/^\d+$/),
-			text    => ignore(),
-		),
-	), 'verse inspection') or diag(explain($verse->toString()));
-
-	return EXIT_SUCCESS;
-}
-
-package main;
-use strict;
-use warnings;
-
-exit(RandomTests->new->run());
+curl --header 'Accept: application/json' http://$H/1/info | jq .
+sleep 5
+curl --header 'Accept: text/html' http://$H/1/info

@@ -35,15 +35,33 @@ use warnings;
 
 use Test::More;
 
+has __messages => (isa => 'ArrayRef[Str]', is => 'ro', lazy => 1, default => sub { [] });
+
 sub BUILD {
 	return;
 }
 
 sub log {
 	my ($self, $msg) = @_;
+	push(@{ $self->__messages }, $msg);
 	return unless ($ENV{TEST_VERBOSE});
 	diag($msg);
 	return;
+}
+
+sub isLogged {
+	my ($self, $regEx) = @_;
+
+	my $result = 0;
+	foreach my $msg (@{ $self->__messages }) {
+		if ($msg =~ m/$regEx/) {
+			$result++;
+			last;
+		}
+	}
+
+	ok($result, "LOGGED: $regEx");
+	return $result;
 }
 
 sub info {

@@ -35,6 +35,7 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Info;
 use Chleb::Type::Testament;
 use Data::Dumper;
 use Digest::CRC qw(crc32);
@@ -59,7 +60,7 @@ has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__mak
 has __bibles => (is => 'ro', isa => 'HashRef[Str]', lazy => 1, default => \&__makeBibles); # use 'bibles' to access
 
 BEGIN {
-	our $VERSION = '1.0.0';
+	our $VERSION = '1.1.0';
 }
 
 sub BUILD {
@@ -141,6 +142,26 @@ sub random { # TODO: parental?
 	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(1), $msecAll));
 
 	return $verse;
+}
+
+sub info {
+	my ($self) = @_;
+
+	my $startTiming = Time::HiRes::time();
+
+	my (@bible) = $self->__getBible({ translations => ['all'] });
+
+	my $info = Chleb::Info->new({
+		bibles => \@bible,
+	});
+
+	my $endTiming = Time::HiRes::time();
+	my $msec = int(1000 * ($endTiming - $startTiming));
+
+	$info->msec($msec);
+	$self->dic->logger->debug(sprintf('Info %s sought in %dms', $info->toString(), $msec));
+
+	return $info;
 }
 
 sub votd {

@@ -32,23 +32,28 @@
 package VotdTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
+use lib '.';
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb;
 use Chleb::DI::MockLogger;
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
+
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
 
 	$self->sut(Chleb->new());
-	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
@@ -120,7 +125,11 @@ sub testParentalTerm {
 		methods(
 			book    => all(
 				isa('Chleb::Bible::Book'),
-				methods(shortName => 'Jer'),
+				methods(
+					longName => 'Jeremiah',
+					shortName => 'jer',
+					shortNameRaw => 'Jer',
+				),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
@@ -137,7 +146,11 @@ sub testParentalTerm {
 		methods(
 			book    => all(
 				isa('Chleb::Bible::Book'),
-				methods(shortName => 'Gen'),
+				methods(
+					longName => 'Genesis',
+					shortName => 'gen',
+					shortNameRaw => 'Gen',
+				),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
@@ -162,7 +175,11 @@ sub testParentalRef {
 		methods(
 			book    => all(
 				isa('Chleb::Bible::Book'),
-				methods(shortName => 'Deu'),
+				methods(
+					longName => 'Deuteronomy',
+					shortName => 'deu',
+					shortNameRaw => 'Deu',
+				),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
@@ -179,7 +196,11 @@ sub testParentalRef {
 		methods(
 			book    => all(
 				isa('Chleb::Bible::Book'),
-				methods(shortName => 'Isa'),
+				methods(
+					longName => 'Isaiah',
+					shortName => 'isa',
+					shortNameRaw => 'Isa',
+				),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
@@ -191,12 +212,6 @@ sub testParentalRef {
 	), 'verse inspection, parental') or diag(explain($verse->toString()));
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
 }
 
 package main;

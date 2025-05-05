@@ -38,10 +38,23 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
-#use Chleb::DI::MockLogger;
+use Chleb::DI::Container;
+use Chleb::DI::MockLogger;
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
+
+has _dic => (isa => 'Chleb::DI::Container', is => 'ro', lazy => 1, default => sub {
+	return Chleb::DI::Container->new();
+});
+
+sub setUp {
+	my ($self, %params) = @_;
+
+	$self->___mockLogger();
+
+	return EXIT_SUCCESS;
+}
 
 sub _isTestComprehensive {
 	my $testComprehensive = !$ENV{TEST_QUICK};
@@ -52,6 +65,17 @@ sub _isTestComprehensive {
 	}
 
 	return $testComprehensive;
+}
+
+sub ___mockLogger {
+	my ($self) = @_;
+
+	$self->_dic->logger(Chleb::DI::MockLogger->new({ dic => $self->_dic }));
+	if ($self->sut && $self->sut->can('dic') && $self->sut->dic) {
+		$self->sut->dic->logger($self->_dic->logger) unless ($self->sut->dic->logger);
+	}
+
+	return;
 }
 
 1;

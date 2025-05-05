@@ -187,7 +187,7 @@ sub __lookup {
 	my @json;
 	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
 		push(@json, __verseToJsonApi($verse[$verseI], $params));
-		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->id) . Chleb::Utils::queryParamsHelper($params);
+		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath()) . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
@@ -197,24 +197,24 @@ sub __lookup {
 	foreach my $type (qw(next prev)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
 
-		my $id;
+		my $pickVerse;
 		if ($type eq 'prev') {
 			if (my $prevVerse = $verse[0]->getPrev()) {
-				$id = $prevVerse->id;
+				$pickVerse = $prevVerse;
 			} else {
 				next;
 			}
 		} elsif ($type eq 'next') {
 			if (my $nextVerse = $verse[0]->getNext()) {
-				$id = $nextVerse->id;
+				$pickVerse = $nextVerse;
 			} else {
 				next;
 			}
 		} else {
-			$id = $verse[0]->id;
+			$pickVerse = $verse[0]->id;
 		}
 
-		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $id) . Chleb::Utils::queryParamsHelper($params);
+		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath()) . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
@@ -520,6 +520,95 @@ sub __search {
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 }
 
+=item C<__info($params)>
+
+Return information about the data we are serving as a C<JSON:API> structure.
+
+returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
+
+=cut
+
+sub __info {
+	my ($self, $params) = @_;
+
+	my $startTiming = Time::HiRes::time();
+
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
+
+	my $info = $self->__library->info();
+	my %hash = __makeJsonApi();
+
+	my (@bookShortNames, @bookShortNamesRaw, @bookLongNames);
+	my %uniqueBookNames = ( );
+	foreach my $bible (@{ $info->bibles }) { # translations
+		push(@{ $hash{included} }, {
+			id => $bible->id,
+			type => $bible->type,
+			attributes => $bible->TO_JSON(),
+		});
+		foreach my $book (@{ $bible->books }) {
+			next if (++$uniqueBookNames{ $book->shortName } > 1); # ensure book names are listed only once
+			push(@bookShortNames, $book->shortName);
+			push(@bookShortNamesRaw, $book->shortNameRaw);
+			push(@bookLongNames, $book->longName);
+
+			push(@{ $hash{included} }, {
+				id => $book->id,
+				type => $book->type,
+				attributes => $book->TO_JSON(),
+			});
+
+			for (my $chapterOrdinal = 1; $chapterOrdinal <= $book->chapterCount; $chapterOrdinal++) {
+				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+				push(@{ $hash{included} }, {
+					id => $chapter->id,
+					type => $chapter->type,
+					attributes => $chapter->TO_JSON(),
+				});
+			}
+		}
+	}
+
+	my @translations = map { $_->translation } @{ $info->bibles };
+
+	push(@{ $hash{data} }, {
+		type => $info->type,
+		id => $info->id,
+		attributes => {
+			translation_count => scalar(@{ $info->bibles }),
+			translations => \@translations,
+			book_count => scalar(@bookShortNames),
+			book_names_long => \@bookLongNames,
+			book_names_short => \@bookShortNames,
+			book_names_short_raw => \@bookShortNamesRaw,
+		},
+	});
+
+	my $version = 1;
+	$hash{links}->{self} = '/' . join('/', $version, 'info');
+
+	my $endTiming = Time::HiRes::time();
+	my $msec = int(1000 * ($endTiming - $startTiming));
+	$info->msec($msec); # override library figure, incorporate everything
+
+	push(@{ $hash{included} }, {
+		type => 'stats',
+		id => uuid_to_string(create_uuid()),
+		attributes => {
+			msec => int($info->msec),
+		},
+		links => { },
+	});
+
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __infoToHtml(\%hash);
+	}
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here');
+}
+
 =item C<__getUptime()>
 
 Return the number of seconds the server has been running.
@@ -587,15 +676,15 @@ sub __verseToJsonApi {
 
 	my %links = (
 		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
-		self => '/' . join('/', 1, 'lookup', $verse->id) . $queryParams,
+		self => '/' . join('/', 1, 'lookup', $verse->getPath()) . $queryParams,
 	);
 
 	if (my $nextVerse = $verse->getNext()) {
-		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->id) . $queryParams;
+		$links{next} = '/' . join('/', 1, 'lookup', $nextVerse->getPath()) . $queryParams;
 	}
 
 	if (my $prevVerse = $verse->getPrev()) {
-		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->id) . $queryParams;
+		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->getPath()) . $queryParams;
 	}
 
 	push(@{ $hash{data} }, {
@@ -634,11 +723,22 @@ sub __verseToHtml {
 	my ($json) = @_;
 
 	my $output = '';
+	my $includedCount = scalar(@{ $json->[0]->{included} });
+	my %rawBookNameMap = ( );
+	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
+		my $includedItem = $json->[0]->{included}->[$includedIndex];
+		my $type = $includedItem->{type};
+		next if ($type ne 'book');
+
+		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
+		    = $includedItem->{attributes}->{short_name_raw};
+	}
+
 	my $verseCount = scalar(@{ $json->[0]->{data} });
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
 		$output .= sprintf('<p>%s %d:%d %s</p>',
-			$attributes->{book},
+			$rawBookNameMap{ $attributes->{book} },
 			$attributes->{chapter},
 			$attributes->{ordinal},
 			$attributes->{text},
@@ -661,20 +761,100 @@ sub __verseToHtml {
 }
 
 sub __searchResultsToHtml {
-	my ($hash) = @_;
+	my ($json) = @_;
+
+	my $includedCount = scalar(@{ $json->{included} });
+	my %rawBookNameMap = ( );
+	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
+		my $includedItem = $json->{included}->[$includedIndex];
+		my $type = $includedItem->{type};
+		next if ($type ne 'book');
+
+		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
+		    = $includedItem->{attributes}->{short_name_raw};
+	}
 
 	my $text = '';
-	for (my $resultI = 0; $resultI < scalar(@{ $hash->{data} }); $resultI++) {
-		my $verse = $hash->{data}->[$resultI];
+	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
+		my $verse = $json->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
 		$text .= sprintf("<p>[%s]<br />\r\n%s %d:%d %s\r\n\r\n</p>",
 			$attributes->{title},
-			$attributes->{book},
+			$rawBookNameMap{ $attributes->{book} },
 			$attributes->{chapter},
 			$attributes->{ordinal},
 			$attributes->{text},
 		);
 	}
+
+	return $text;
+}
+
+sub __infoToHtml {
+	my ($json) = @_;
+
+	my $printCell = sub {
+		my ($datum, $int, $header) = @_;
+		my $formatter = '%' . ($int ? 'd' : 's');
+		my $tag = ($header ? 'h' : 'd');
+		return sprintf("<t${tag}>${formatter}</t${tag}>\r\n", $datum);
+	};
+
+	my %bookNameCache = ( );
+
+	my $text = "<table>\r\n";
+
+	$text .= "<tr>\r\n";
+	$text .= $printCell->("Book", 0, 1);
+	$text .= $printCell->("Ordinal", 0, 1);
+	$text .= $printCell->("Chapters", 0, 1);
+	$text .= $printCell->("Testament", 0, 1);
+	$text .= $printCell->("Verses", 0, 1);
+	$text .= $printCell->("Short name", 0, 1);
+	$text .= "</tr>\r\n";
+
+	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
+		my $included = $json->{included}->[$includedI];
+		next if ($included->{type} ne 'book');
+
+		my $attributes = $included->{attributes};
+
+		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
+
+		$text .= "<tr>\r\n";
+		$text .= $printCell->($attributes->{long_name});
+		$text .= $printCell->($attributes->{ordinal}, 1);
+		$text .= $printCell->($attributes->{chapter_count}, 1);
+		$text .= $printCell->($attributes->{testament});
+		$text .= $printCell->($attributes->{verse_count}, 1);
+		$text .= $printCell->($attributes->{short_name});
+		$text .= "</tr>\r\n";
+	}
+
+	$text .= "</table><br/>\r\n";
+
+	$text .= "<table>\r\n";
+
+	$text .= "<tr>\r\n";
+	$text .= $printCell->("Book", 0, 1);
+	$text .= $printCell->("Chapter", 0, 1);
+	$text .= $printCell->("Verses", 0, 1);
+	$text .= "</tr>\r\n";
+
+	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
+		my $included = $json->{included}->[$includedI];
+		next if ($included->{type} ne 'chapter');
+
+		my $attributes = $included->{attributes};
+
+		$text .= "<tr>\r\n";
+		$text .= $printCell->($bookNameCache{ $attributes->{book} });
+		$text .= $printCell->($attributes->{ordinal}, 1);
+		$text .= $printCell->($attributes->{verse_count}, 1);
+		$text .= "</tr>\r\n";
+	}
+
+	$text .= "</table>\r\n";
 
 	return $text;
 }
@@ -885,6 +1065,31 @@ get '/1/version' => sub {
 
 get '/1/uptime' => sub {
 	return $server->__uptime();
+};
+
+get '/1/info' => sub {
+	my $result;
+
+	my $dancerRequest = request();
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+
+	eval {
+		$result = $server->__info({
+			accept => $mediaType,
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	if (ref($result) ne 'HASH') {
+		$server->dic->logger->trace('1/info returned as HTML');
+		send_as html => $result;
+	}
+
+	$server->dic->logger->trace('1/info returned as JSON');
+	return $result;
 };
 
 unless (caller()) {

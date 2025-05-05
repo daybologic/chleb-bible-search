@@ -1,3 +1,19 @@
+chleb-bible-search (1.1.0) stable; urgency=medium
+
+  * ✨ support 1/info;
+    This new feature provides a summary of books in the bible for end-users,
+    and a processable list of how many chapters are in which books for JSON
+    users, including all available translations names.
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 04 May 2025 12:36:27 +0100
+
+chleb-bible-search (1.0.1) stable; urgency=medium
+
+  * 🐛 Fix values in JSON which should be integer but were string
+  * 🩹 pass translation to bible object
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 04 May 2025 10:18:06 +0100
+
 chleb-bible-search (1.0.0) stable; urgency=medium
 
   * 💥 backwards incompatible change: you must pass Accept: application/json for
