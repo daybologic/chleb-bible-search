@@ -865,9 +865,6 @@ sub __infoToHtml {
 
 		my $attributes = $included->{attributes};
 
-		my $verse = $self->__library->random();
-		my $verseText = $limitVerseText->($verse);
-
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($bookNameCache{ $attributes->{book} });
 		$text .= $printCell->($attributes->{ordinal}, 1);
