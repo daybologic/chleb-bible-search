@@ -814,6 +814,18 @@ sub __infoToHtml {
 	$text .= $printCell->("Sample", 0, 1);
 	$text .= "</tr>\r\n";
 
+	my $linkMaker = sub {
+		my ($bookShortName, $chapterOrdinal, $verseOrdinal) = @_;
+		return sprintf(
+			'<a href="https://chleb-api.daybologic.co.uk/1/lookup/%s/%d/%d">%d:%d</a>',
+			$bookShortName,
+			$chapterOrdinal,
+			$verseOrdinal,
+			$chapterOrdinal,
+			$verseOrdinal,
+		);
+	};
+
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
 		my $included = $json->{included}->[$includedI];
 		next if ($included->{type} ne 'book');
@@ -830,12 +842,14 @@ sub __infoToHtml {
 		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= $printCell->($attributes->{short_name});
 		$text .= $printCell->(sprintf(
-			'%s [%d:%d]',
+			'%s [%s]',
 			Chleb::Utils::limitText($attributes->{sample_verse_text}),
-			$attributes->{sample_verse_chapter_ordinal},
-			$attributes->{sample_verse_ordinal_in_chapter},
+			$linkMaker->(
+				$attributes->{short_name},
+				$attributes->{sample_verse_chapter_ordinal},
+				$attributes->{sample_verse_ordinal_in_chapter},
+			),
 		));
-
 		$text .= "</tr>\r\n";
 	}
 
