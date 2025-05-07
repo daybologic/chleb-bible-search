@@ -37,12 +37,11 @@ extends 'Chleb::Bible::Base';
 
 use Chleb::Cache::Key::Value;
 
+# TODO: Is there still any point to the Factory?
 sub create {
 	my ($self) = @_;
 
-	return Chleb::Cache::Key::Value->new({
-		value => '6baa607e-2b84-11f0-a7ac-a72bcc3e876e',
-	});
+	return Chleb::Cache::Key::Value->new();
 }
 
 1;

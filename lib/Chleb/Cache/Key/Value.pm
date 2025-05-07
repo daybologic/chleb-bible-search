@@ -39,6 +39,8 @@ has value => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeValue, ini
 
 has __url => (is => 'rw', isa => 'Str', init_arg => undef);
 
+has __contentType => (is => 'rw', isa => 'Str', init_arg => undef);
+
 has __finalized => (is => 'rw', isa => 'Bool', default => 0, init_arg => undef);
 
 use overload
@@ -49,6 +51,7 @@ sub finalize {
 
 	die('cache key value has already been finalized') if ($self->__finalized);
 	die('cannot finalize before URL is set') unless ($self->__url);
+	die('cannot finalize before Content-Type is set') unless ($self->__contentType);
 
 	$self->__finalized(1);
 
@@ -64,6 +67,15 @@ sub setUrl {
 	return $self;
 }
 
+sub setContentType {
+	my ($self, $contentType) = @_;
+
+	die('Content-Type already set in cache key value') if ($self->__contentType);
+	$self->__contentType($contentType);
+
+	return $self;
+}
+
 sub __getValue {
 	my ($self) = @_;
 
@@ -74,7 +86,7 @@ sub __getValue {
 
 sub __makeValue {
 	my ($self) = @_;
-	return $self->__url;
+	return $self->__url . '//' . $self->__contentType; # FIXME; better hashing
 }
 
 1;
