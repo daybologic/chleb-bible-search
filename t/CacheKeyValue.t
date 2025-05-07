@@ -41,9 +41,10 @@ extends 'Test::Module::Runnable';
 use POSIX qw(EXIT_SUCCESS);
 use Chleb::Cache::Key::Value;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::Exception;
 use Test::More 0.96;
 
-sub test {
+sub testSuccess {
 	my ($self) = @_;
 	plan tests => 2;
 
@@ -58,6 +59,33 @@ sub test {
 
 	my $v = "$info";
 	is($v, $value, "stringify renders value: '$v'");
+
+	return EXIT_SUCCESS;
+}
+
+sub testIllegal {
+	my ($self) = @_;
+	plan tests => 2;
+
+	throws_ok {
+		Chleb::Cache::Key::Value->new({ value => undef })
+	} qr/Validation failed/;
+
+	throws_ok {
+		Chleb::Cache::Key::Value->new({ })
+	} qr/required/;
+
+	return EXIT_SUCCESS;
+}
+
+sub testReadOnly {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $info = Chleb::Cache::Key::Value->new({ value => $self->uniqueStr() });
+	throws_ok {
+		$info->value($self->uniqueStr());
+	} qr/read-only/;
 
 	return EXIT_SUCCESS;
 }
