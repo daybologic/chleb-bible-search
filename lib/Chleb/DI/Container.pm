@@ -83,6 +83,14 @@ TODO
 
 has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
 
+=item C<cache>
+
+TODO
+
+=cut
+
+has cache => (is => 'rw', lazy => 1, builder => '_makeCache');
+
 =back
 
 =head1 PROTECTED METHODS
@@ -141,6 +149,17 @@ TODO
 sub _makeExclusions {
 	my ($self) = @_;
 	return Chleb::Bible::Exclusions->new({ dic => $self });
+}
+
+=item C<_makeCache()>
+
+TODO
+
+=cut
+
+sub _makeCache {
+	my ($self) = @_;
+	return Chleb::DI::Cache->new({ dic => $self });
 }
 
 =back
