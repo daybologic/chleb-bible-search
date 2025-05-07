@@ -45,9 +45,19 @@ use Test::More 0.96;
 
 sub test {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
-	my $info = Chleb::Cache::Key::Value->new();
+	my $value = $self->uniqueStr();
+	my $info = Chleb::Cache::Key::Value->new({ value => $value });
+	cmp_deeply($info, all(
+		isa('Chleb::Cache::Key::Value'),
+		methods(
+			value => $value,
+		),
+	), 'Chleb::Cache::Key::Value');
+
+	my $v = "$info";
+	is($v, $value, "stringify renders value: '$v'");
 
 	return EXIT_SUCCESS;
 }
