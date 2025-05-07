@@ -811,7 +811,36 @@ sub __infoToHtml {
 	$text .= $printCell->("Testament", 0, 1);
 	$text .= $printCell->("Verses", 0, 1);
 	$text .= $printCell->("Short name", 0, 1);
+	$text .= $printCell->("Sample", 0, 1);
 	$text .= "</tr>\r\n";
+
+	my $linkToChapter = sub {
+		my ($linkText, $bookShortName, $chapterOrdinal) = @_;
+		return sprintf(
+			'<a href="/1/lookup/%s/%d/%d">%s</a>',
+			$bookShortName,
+			$chapterOrdinal,
+			1,  # FIXME: At time of writing, it isn't possible to link to a whole chapter, which will be a shorter link
+			$linkText,
+		);
+	};
+
+	my $linkToBook = sub {
+		my ($linkText, $bookShortName) = @_;
+		return $linkToChapter->($linkText, $bookShortName, 1);
+	};
+
+	my $linkToVerse = sub {
+		my ($linkText, $bookShortName, $chapterOrdinal, $verseOrdinal) = @_;
+		$linkText ||= sprintf('%d:%d', $chapterOrdinal, $verseOrdinal);
+		return sprintf(
+			'<a href="/1/lookup/%s/%d/%d">%s</a>',
+			$bookShortName,
+			$chapterOrdinal,
+			$verseOrdinal,
+			$linkText,
+		);
+	};
 
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
 		my $included = $json->{included}->[$includedI];
@@ -822,12 +851,25 @@ sub __infoToHtml {
 		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
 
 		$text .= "<tr>\r\n";
-		$text .= $printCell->($attributes->{long_name});
+		$text .= $printCell->($linkToBook->(
+			$attributes->{long_name},
+			$attributes->{short_name},
+		));
 		$text .= $printCell->($attributes->{ordinal}, 1);
 		$text .= $printCell->($attributes->{chapter_count}, 1);
 		$text .= $printCell->($attributes->{testament});
 		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= $printCell->($attributes->{short_name});
+		$text .= $printCell->(sprintf(
+			'%s [%s]',
+			Chleb::Utils::limitText($attributes->{sample_verse_text}),
+			$linkToVerse->(
+				undef,
+				$attributes->{short_name},
+				$attributes->{sample_verse_chapter_ordinal},
+				$attributes->{sample_verse_ordinal_in_chapter},
+			),
+		));
 		$text .= "</tr>\r\n";
 	}
 
@@ -849,8 +891,17 @@ sub __infoToHtml {
 
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($bookNameCache{ $attributes->{book} });
-		$text .= $printCell->($attributes->{ordinal}, 1);
-		$text .= $printCell->($attributes->{verse_count}, 1);
+		$text .= $printCell->($linkToChapter->(
+			$attributes->{ordinal},
+			$attributes->{book},
+			$attributes->{ordinal},
+		));
+		$text .= $printCell->($linkToVerse->(
+			$attributes->{verse_count},
+			$attributes->{book},
+			$attributes->{ordinal},
+			$attributes->{verse_count},
+		));
 		$text .= "</tr>\r\n";
 	}
 

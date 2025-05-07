@@ -271,6 +271,18 @@ sub search {
 	return \@verses;
 }
 
+=item C<randomVerse()>
+
+Returns a random verse as a L<Chleb::Bible::Verse> object, from this Book.
+Call this method as many times as desired.  No specific promises are made.
+
+=cut
+
+sub randomVerse {
+	my ($self) = @_;
+	return $self->getVerseByOrdinal(1 + int(rand($self->verseCount)));
+}
+
 =item C<toString()>
 
 Return an opaque, loggable version of this book's name.
@@ -294,10 +306,15 @@ Returns the JSON:API C<attributes> associated with this Book.
 sub TO_JSON {
 	my ($self) = @_;
 
+	my $sampleVerse = $self->randomVerse();
+
 	return {
 		chapter_count  => $self->chapterCount+0,
 		long_name      => $self->longName,
 		ordinal        => $self->ordinal+0,
+		sample_verse_text => $sampleVerse->text,
+		sample_verse_chapter_ordinal => $sampleVerse->chapter->ordinal,
+		sample_verse_ordinal_in_chapter => $sampleVerse->ordinal,
 		short_name     => $self->shortName,
 		short_name_raw => $self->shortNameRaw,
 		testament      => $self->testament,
