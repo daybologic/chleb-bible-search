@@ -35,18 +35,10 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
-use Readonly;
-
 has value => (is => 'ro', isa => 'Str', required => 1);
 
 use overload
 	'""' => \&__getValue;
-
-sub BUILD {
-        my ($self) = @_;
-
-        return;
-}
 
 sub __getValue {
 	my ($self) = @_;
