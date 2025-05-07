@@ -44,7 +44,7 @@ use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::Exception;
 use Test::More 0.96;
 
-sub testSuccess {
+sub __testSuccess {
 	my ($self) = @_;
 	plan tests => 2;
 
@@ -63,7 +63,7 @@ sub testSuccess {
 	return EXIT_SUCCESS;
 }
 
-sub testIllegal {
+sub __testIllegal {
 	my ($self) = @_;
 	plan tests => 2;
 

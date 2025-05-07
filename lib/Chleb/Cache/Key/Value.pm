@@ -35,14 +35,46 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
-has value => (is => 'ro', isa => 'Str', required => 1);
+has value => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeValue, init_arg => undef);
+
+has __url => (is => 'rw', isa => 'Str', init_arg => undef);
+
+has __finalized => (is => 'rw', isa => 'Bool', default => 0, init_arg => undef);
 
 use overload
 	'""' => \&__getValue;
 
+sub finalize {
+	my ($self) = @_;
+
+	die('cache key value has already been finalized') if ($self->__finalized);
+	die('cannot finalize before URL is set') unless ($self->__url);
+
+	$self->__finalized(1);
+
+	return $self;
+}
+
+sub setUrl {
+	my ($self, $url) = @_;
+
+	die('url already set in cache key value') if ($self->__url);
+	$self->__url($url);
+
+	return $self;
+}
+
 sub __getValue {
 	my ($self) = @_;
+
+	die('Access to unfinalized cache key value') unless ($self->__finalized);
+
 	return $self->value;
+}
+
+sub __makeValue {
+	my ($self) = @_;
+	return $self->__url;
 }
 
 1;
