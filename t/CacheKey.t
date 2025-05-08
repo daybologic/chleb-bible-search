@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,69 +29,69 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Cache::Key::Value;
+package CacheKeyValueTests;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Chleb::Bible::Base';
+use lib 'externals/libtest-module-runnable-perl/lib';
 
-has value => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeValue, init_arg => undef);
+extends 'Test::Module::Runnable';
 
-has __url => (is => 'rw', isa => 'Str', init_arg => undef);
+use POSIX qw(EXIT_SUCCESS);
+use Chleb::Cache::Key;
+use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::Exception;
+use Test::More 0.96;
 
-has __contentType => (is => 'rw', isa => 'Str', init_arg => undef);
-
-has __finalized => (is => 'rw', isa => 'Bool', default => 0, init_arg => undef);
-
-use overload
-	'""' => \&__getValue,
-	'cmp' => sub {
-		my ($a, $b) = @_;
-		return 0; # FIXME: How do I do this?  In any case, I don't need to compare keys right now
-	};
-
-sub finalize {
+sub testSuccess {
 	my ($self) = @_;
+	plan tests => 3;
 
-	die('cache key value has already been finalized') if ($self->__finalized);
-	die('cannot finalize before URL is set') unless ($self->__url);
-	die('cannot finalize before Content-Type is set') unless ($self->__contentType);
+	# TODO Technically, url should be uri, because we want to discard the scheme, somehow
+	my $url = 'http://' . $self->uniqueStr();
+	my $key = Chleb::Cache::Key->new();
+	isa_ok($key, 'Chleb::Cache::Key');
 
-	$self->__finalized(1);
+	$key->setUrl($url)->setContentType('text/html')->finalize();
 
-	return $self;
+	my $k = "$key";
+	is($k, $key, "stringify renders value: '$k'");
+
+	is($key->value, $k, "value is the same as stringified result: '$k'");
+
+	return EXIT_SUCCESS;
 }
 
-sub setUrl {
-	my ($self, $url) = @_;
-
-	die('url already set in cache key value') if ($self->__url);
-	$self->__url($url);
-
-	return $self;
-}
-
-sub setContentType {
-	my ($self, $contentType) = @_;
-
-	die('Content-Type already set in cache key value') if ($self->__contentType);
-	$self->__contentType($contentType);
-
-	return $self;
-}
-
-sub __getValue {
+sub __testIllegal {
 	my ($self) = @_;
+	plan tests => 2;
 
-	die('Access to unfinalized cache key value') unless ($self->__finalized);
+	throws_ok {
+		Chleb::Cache::Key->new({ value => undef })
+	} qr/Validation failed/;
 
-	return $self->value;
+	throws_ok {
+		Chleb::Cache::Key->new({ })
+	} qr/required/;
+
+	return EXIT_SUCCESS;
 }
 
-sub __makeValue {
+sub testReadOnly {
 	my ($self) = @_;
-	return $self->__url . '//' . $self->__contentType; # FIXME; better hashing
+	plan tests => 1;
+
+	my $key = Chleb::Cache::Key->new({ value => $self->uniqueStr() });
+	throws_ok {
+		$key->value($self->uniqueStr());
+	} qr/read-only/;
+
+	return EXIT_SUCCESS;
 }
 
-1;
+package main;
+use strict;
+use warnings;
+
+exit(CacheKeyValueTests->new->run());
