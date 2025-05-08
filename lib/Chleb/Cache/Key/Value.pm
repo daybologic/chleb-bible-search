@@ -44,7 +44,11 @@ has __contentType => (is => 'rw', isa => 'Str', init_arg => undef);
 has __finalized => (is => 'rw', isa => 'Bool', default => 0, init_arg => undef);
 
 use overload
-	'""' => \&__getValue;
+	'""' => \&__getValue,
+	'cmp' => sub {
+		my ($a, $b) = @_;
+		return 0; # FIXME: How do I do this?  In any case, I don't need to compare keys right now
+	};
 
 sub finalize {
 	my ($self) = @_;

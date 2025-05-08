@@ -44,21 +44,21 @@ use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::Exception;
 use Test::More 0.96;
 
-sub __testSuccess {
+sub testSuccess {
 	my ($self) = @_;
-	plan tests => 2;
+	plan tests => 3;
 
-	my $value = $self->uniqueStr();
-	my $info = Chleb::Cache::Key::Value->new({ value => $value });
-	cmp_deeply($info, all(
-		isa('Chleb::Cache::Key::Value'),
-		methods(
-			value => $value,
-		),
-	), 'Chleb::Cache::Key::Value');
+	# TODO Technically, url should be uri, because we want to discard the scheme, somehow
+	my $url = 'http://' . $self->uniqueStr();
+	my $key = Chleb::Cache::Key::Value->new();
+	isa_ok($key, 'Chleb::Cache::Key::Value');
 
-	my $v = "$info";
-	is($v, $value, "stringify renders value: '$v'");
+	$key->setUrl($url)->setContentType('text/html')->finalize();
+
+	my $k = "$key";
+	is($k, $key, "stringify renders value: '$k'");
+
+	is($key->value, $k, "value is the same as stringified result: '$k'");
 
 	return EXIT_SUCCESS;
 }
