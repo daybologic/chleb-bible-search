@@ -82,9 +82,9 @@ sub testReadOnly {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $info = Chleb::Cache::Key::Value->new({ value => $self->uniqueStr() });
+	my $key = Chleb::Cache::Key::Value->new({ value => $self->uniqueStr() });
 	throws_ok {
-		$info->value($self->uniqueStr());
+		$key->value($self->uniqueStr());
 	} qr/read-only/;
 
 	return EXIT_SUCCESS;
