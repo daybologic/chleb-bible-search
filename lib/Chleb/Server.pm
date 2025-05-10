@@ -966,7 +966,7 @@ get '/' => sub {
 </head>
 <body>
     <h1>Welcome to Chleb Bible Search</h1>
-    <p>This is a microservice for querying and searching the Bible. You can use the following endpoints directly, or explore the <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.1.0" target="_blank">Swagger API documentation</a>.</p>
+    <p>This is a microservice for querying and searching the Bible. You can use the following endpoints directly, or explore the <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.0.0" target="_blank">Swagger API documentation</a>.</p>
     <ul>
         <li><a href="/1/search?term=love">Search for verses</a> (e.g. <code>/1/search?term=love</code>)</li>
         <li><a href="/1/votd">Verse of the Day</a> (<code>/1/votd</code>)</li>
@@ -978,7 +978,7 @@ get '/' => sub {
         <li><a href="/1/uptime">Service Uptime</a> (<code>/1/uptime</code>)</li>
     </ul>
     <div class="swagger">
-        <strong>API Documentation:</strong> <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.1.0" target="_blank">SwaggerHub</a>
+        <strong>API Documentation:</strong> <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.0.0" target="_blank">SwaggerHub</a>
     </div>
 </body>
 </html>
