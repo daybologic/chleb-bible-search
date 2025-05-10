@@ -947,6 +947,15 @@ sub handleException {
 	return;
 }
 
+get '/' => sub {
+	send_as html => '<a href="'
+	    . '/1/info'
+	    . '">'
+	    . 'In the beginning, God created the heavens and the earth'
+	    . '</a>'
+	    . "\r\n";
+};
+
 get '/1/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
