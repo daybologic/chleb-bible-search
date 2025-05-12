@@ -55,6 +55,7 @@ use Time::HiRes ();
 use Chleb::Bible::Backend;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
+use Chleb::Constants;
 use Chleb::DI::Container;
 use Chleb::Exception;
 
@@ -163,7 +164,7 @@ sub getBookByShortName {
 	my ($self, $shortName, $args) = @_;
 
 	my $closestBook;
-	my $lowestDistance = 0xFFFFFFFF; # an impossibly high number, all mismatches will be lower
+	my $lowestDistance = $Chleb::Constants::UINT_MAX; # an impossibly high number, all mismatches will be lower
 	foreach my $book (@{ $self->books }) {
 		my $distance = distance($book->shortName, $shortName);
 		if ($distance < $lowestDistance) {
@@ -202,7 +203,7 @@ sub getBookByLongName {
 
 	$longName ||= '';
 	my $closestBook;
-	my $lowestDistance = 0xFFFFFFFF; # an impossibly high number, all mismatches will be lower
+	my $lowestDistance = $Chleb::Constants::UINT_MAX; # an impossibly high number, all mismatches will be lower
 	foreach my $book (@{ $self->books }) {
 		my $distance = distance($book->longName, $longName);
 		if ($distance < $lowestDistance) {
