@@ -49,6 +49,7 @@ use Digest::CRC qw(crc32);
 use HTTP::Status qw(:constants);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
+use Text::LevenshteinXS qw(distance);
 use Time::HiRes ();
 
 use Chleb::Bible::Backend;
@@ -161,12 +162,22 @@ in the key C<nonFatal> within the B<optional> C<$args> C<HASH>.
 sub getBookByShortName {
 	my ($self, $shortName, $args) = @_;
 
+	my $closestBook;
+	my $lowestDistance = 0xFFFFFFFF;
 	foreach my $book (@{ $self->books }) {
+		my $distance = distance($book->shortName, $shortName);
+		if ($distance < $lowestDistance) {
+			$lowestDistance = $distance;
+			$closestBook = $book;
+		}
+
 		next unless ($book->equals($shortName));
 		return $book;
 	}
 
-	my $errorMsg = "Short book name '$shortName' is not a book in the bible";
+	my $errorMsg = "Short book name '$shortName' is not a book in the bible, did you mean "
+	    . $closestBook->shortName . '?';
+
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
@@ -187,12 +198,21 @@ sub getBookByLongName {
 	my ($self, $longName) = @_;
 
 	$longName ||= '';
+	my $closestBook;
+	my $lowestDistance = 0xFFFFFFFF;
 	foreach my $book (@{ $self->books }) {
+		my $distance = distance($book->longName, $longName);
+		if ($distance < $lowestDistance) {
+			$lowestDistance = $distance;
+			$closestBook = $book;
+		}
+
 		next if ($book->longName ne $longName);
 		return $book;
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_FOUND, "Long book name '$longName' is not a book in the bible");
+	die Chleb::Exception->raise(HTTP_NOT_FOUND, "Long book name '$longName' is not a book in the bible, did you mean "
+	    . $closestBook->longName . "?");
 }
 
 =item C<getBookByOrdinal($ordinal, [$args])>
