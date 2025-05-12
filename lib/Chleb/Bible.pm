@@ -163,7 +163,7 @@ sub getBookByShortName {
 	my ($self, $shortName, $args) = @_;
 
 	my $closestBook;
-	my $lowestDistance = 0xFFFFFFFF;
+	my $lowestDistance = 0xFFFFFFFF; # an impossibly high number, all mismatches will be lower
 	foreach my $book (@{ $self->books }) {
 		my $distance = distance($book->shortName, $shortName);
 		if ($distance < $lowestDistance) {
@@ -202,7 +202,7 @@ sub getBookByLongName {
 
 	$longName ||= '';
 	my $closestBook;
-	my $lowestDistance = 0xFFFFFFFF;
+	my $lowestDistance = 0xFFFFFFFF; # an impossibly high number, all mismatches will be lower
 	foreach my $book (@{ $self->books }) {
 		my $distance = distance($book->longName, $longName);
 		if ($distance < $lowestDistance) {
