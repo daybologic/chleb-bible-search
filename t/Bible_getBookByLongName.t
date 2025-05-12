@@ -106,6 +106,16 @@ sub testNotFoundNonFatal {
 	return EXIT_SUCCESS;
 }
 
+sub testNotFoundNonFatalUndef {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @bible = $self->sut->__getBible();
+	is($bible[0]->getBookByLongName(undef, { nonFatal => 1 }), undef, '<undef> returned');
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;
