@@ -758,6 +758,11 @@ sub __verseToHtml {
 		$output .= sprintf("\r\n\r\n\t(%s)\r\n", $translation);
 	}
 
+	foreach my $type (keys(%{ $json->[0]->{data}->[0]->{links} })) {
+		my $link = $json->[0]->{data}->[0]->{links}->{$type};
+		$output .= sprintf("<a ref=\"%s\">%s</a><br />\r\n", $link, $type);
+	}
+
 	return $output;
 }
 
