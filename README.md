@@ -40,6 +40,27 @@ The latest release is available as a Debian package from the following locations
   * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v1.2.0/chleb-bible-search_1.2.0_all.deb)
   * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v1.2.0)
 
+## Self-hosted installation
+
+You are welcome to use our hosted version of the service, at [chleb-api.daybologic.co.uk](https://chleb-api.daybologic.co.uk/).
+This is the easiest way to fire up and get searching the bible via your application or website.  However, if you want to install
+the service on your own equipment.  Please install the deb file, where possible, an then run:
+
+sudo dpkg -i chleb-bible-search_1.1.0_all.deb
+sudo systemctl enable chleb-bible-search.service
+
+### Web front-end (proxy).
+
+#### Apache
+
+How to install with Apache.
+TODO
+
+#### Nginx
+
+How to install with Nginx (recommended).
+TODO
+
 ## Contributing
 
 ### Branch naming scheme
