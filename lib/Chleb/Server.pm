@@ -51,6 +51,7 @@ use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
+use IO::File;
 use JSON;
 use Readonly;
 use Time::Duration;
@@ -920,7 +921,7 @@ use warnings;
 
 use Dancer2 0.2;
 use English qw(-no_match_vars);
-use HTTP::Status qw(:is);
+use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
 use Scalar::Util qw(blessed);
 
@@ -948,31 +949,22 @@ sub handleException {
 }
 
 get '/' => sub {
-    # Serve a simple HTML landing page for users who don't want to read Swagger
-    my $html = <<'HTML';
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Chleb Bible Search Service</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; background: #f9f9f9; }
-        h1 { color: #2c3e50; }
-        ul { line-height: 1.7; }
-        a { color: #2980b9; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .swagger { margin-top: 2em; font-size: 0.95em; }
-    </style>
-</head>
-<body>
-    <h1>Welcome to Chleb Bible Search</h1>
-    MOVED!
-</body>
-</html>
-HTML
-    ;
+	# Serve a simple HTML landing page for users who don't want to read Swagger
+	my $html = '';
+	my $filePath = '/usr/share/chleb-bible-search/index.html';
 
-	send_as html => $html;
+	if (my $file = IO::File->new($filePath, 'r')) {
+		while (my $line = $file->getline()) {
+			$html .= $line;
+		}
+
+		$file->close();
+		send_as html => $html;
+	}
+
+	# TODO: nb. HTTP_INTERNAL_SERVER_ERROR is pretty basic here.  We might need a handling for any HTML file,
+	# and a file error code to HTTP error code mapper
+	send_error("Can't open file '$filePath': $!", HTTP_INTERNAL_SERVER_ERROR);
 };
 
 get '/1/random' => sub {
