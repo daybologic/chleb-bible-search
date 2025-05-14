@@ -758,11 +758,13 @@ sub __verseToHtml {
 		$output .= sprintf("\r\n\r\n\t(%s)\r\n", $translation);
 	}
 
-	foreach my $type (qw(next prev)) {
+	$output .= "<p>\r\n";
+	foreach my $type (qw(prev next)) {
 		my $link = $json->[0]->{data}->[0]->{links}->{$type};
 		next unless ($link);
-		$output .= sprintf("<a href=\"%s\">%s</a><br />\r\n", $link, $type);
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $type);
 	}
+	$output .= "</p>\r\n";
 
 	return $output;
 }
