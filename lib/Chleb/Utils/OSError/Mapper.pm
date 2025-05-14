@@ -1,134 +1,145 @@
-EOWNERDEAD	130	"Owner died"
-ENOTCONN	107	"Transport endpoint is not connected"
-EBADR	53	"Invalid request descriptor"
-EOVERFLOW	75	"Value too large for defined data type"
-ENOTNAM	118	"Not a XENIX named type file"
-EPFNOSUPPORT	96	"Protocol family not supported"
-ENXIO	6	"No such device or address"
-EDEADLOCK	35	"Resource deadlock avoided"
-EPROTO	71	"Protocol error"
-ENOANO	55	"No anode"
-EDOTDOT	73	"RFS specific error"
-ENOBUFS	105	"No buffer space available"
-EILSEQ	84	"Invalid or incomplete multibyte or wide character"
-EINTR	4	"Interrupted system call"
-ELIBEXEC	83	"Cannot exec a shared library directly"
-ECONNRESET	104	"Connection reset by peer"
-EIO	5	"Input/output error"
-ECONNREFUSED	111	"Connection refused"
-ENOTRECOVERABLE	131	"State not recoverable"
-EXFULL	54	"Exchange full"
-ECOMM	70	"Communication error on send"
-EISNAM	120	"Is a named type file"
-EL3RST	47	"Level 3 reset"
-ELIBBAD	80	"Accessing a corrupted shared library"
-ERFKILL	132	"Operation not possible due to RF-kill"
-EISDIR	21	"Is a directory"
-EWOULDBLOCK	11	"Resource temporarily unavailable"
-EHOSTUNREACH	113	"No route to host"
-ESHUTDOWN	108	"Cannot send after transport endpoint shutdown"
-ENOTUNIQ	76	"Name not unique on network"
-ELNRNG	48	"Link number out of range"
-EPROTONOSUPPORT	93	"Protocol not supported"
-ENETDOWN	100	"Network is down"
-EFAULT	14	"Bad address"
-ENOTDIR	20	"Not a directory"
-EINVAL	22	"Invalid argument"
-EEXIST	17	"File exists"
-EL2NSYNC	45	"Level 2 not synchronized"
-ENOTSUP	95	"Operation not supported"
-EADDRNOTAVAIL	99	"Cannot assign requested address"
-EPERM	1	"Operation not permitted"
-ELIBMAX	82	"Attempting to link in too many shared libraries"
-EMLINK	31	"Too many links"
-EMEDIUMTYPE	124	"Wrong medium type"
-ETIME	62	"Timer expired"
-EBADE	52	"Invalid exchange"
-ENOTEMPTY	39	"Directory not empty"
-EMFILE	24	"Too many open files"
-ENOTTY	25	"Inappropriate ioctl for device"
-EMULTIHOP	72	"Multihop attempted"
-ETXTBSY	26	"Text file busy"
-ESRMNT	69	"Srmount error"
-ENOPROTOOPT	92	"Protocol not available"
-EREMCHG	78	"Remote address changed"
-EHOSTDOWN	112	"Host is down"
-EPIPE	32	"Broken pipe"
-EUSERS	87	"Too many users"
-ERANGE	34	"Numerical result out of range"
-EKEYEXPIRED	127	"Key has expired"
-ESTRPIPE	86	"Streams pipe error"
-ENOSTR	60	"Device not a stream"
-ENETRESET	102	"Network dropped connection on reset"
-EADV	68	"Advertise error"
-EBADRQC	56	"Invalid request code"
-ESOCKTNOSUPPORT	94	"Socket type not supported"
-EKEYREJECTED	129	"Key was rejected by service"
-ENOMEM	12	"Cannot allocate memory"
-ENODATA	61	"No data available"
-ENOEXEC	8	"Exec format error"
-EKEYREVOKED	128	"Key has been revoked"
-EUCLEAN	117	"Structure needs cleaning"
-ENONET	64	"Machine is not on the network"
-EBFONT	59	"Bad font file format"
-EISCONN	106	"Transport endpoint is already connected"
-ENOMEDIUM	123	"No medium found"
-ECONNABORTED	103	"Software caused connection abort"
-ENOCSI	50	"No CSI structure available"
-EHWPOISON	133	"Memory page has hardware error"
-EREMOTE	66	"Object is remote"
-EINPROGRESS	115	"Operation now in progress"
-ETOOMANYREFS	109	"Too many references: cannot splice"
-EBADFD	77	"File descriptor in bad state"
-EBADF	9	"Bad file descriptor"
-EL3HLT	46	"Level 3 halted"
-E2BIG	7	"Argument list too long"
-ENOLINK	67	"Link has been severed"
-EALREADY	114	"Operation already in progress"
-EREMOTEIO	121	"Remote I/O error"
-ERESTART	85	"Interrupted system call should be restarted"
-EMSGSIZE	90	"Message too long"
-EXDEV	18	"Invalid cross-device link"
-EIDRM	43	"Identifier removed"
-ENAVAIL	119	"No XENIX semaphores available"
-ESPIPE	29	"Illegal seek"
-ENAMETOOLONG	36	"File name too long"
-ENOSYS	38	"Function not implemented"
-EOPNOTSUPP	95	"Operation not supported"
-ENOSR	63	"Out of streams resources"
-ENOENT	2	"No such file or directory"
-ENOPKG	65	"Package not installed"
-EACCES	13	"Permission denied"
-ENETUNREACH	101	"Network is unreachable"
-ECHRNG	44	"Channel number out of range"
-EPROTOTYPE	91	"Protocol wrong type for socket"
-ETIMEDOUT	110	"Connection timed out"
-EDESTADDRREQ	89	"Destination address required"
-EDOM	33	"Numerical argument out of domain"
-ESTALE	116	"Stale file handle"
-EL2HLT	51	"Level 2 halted"
-ESRCH	3	"No such process"
-ENOKEY	126	"Required key not available"
-EDEADLK	35	"Resource deadlock avoided"
-ENFILE	23	"Too many open files in system"
-ELOOP	40	"Too many levels of symbolic links"
-ECHILD	10	"No child processes"
-EBADMSG	74	"Bad message"
-EROFS	30	"Read-only file system"
-EUNATCH	49	"Protocol driver not attached"
-ELIBACC	79	"Can not access a needed shared library"
-ENOSPC	28	"No space left on device"
-EAGAIN	11	"Resource temporarily unavailable"
-ENOTBLK	15	"Block device required"
-EBADSLT	57	"Invalid slot"
-ECANCELED	125	"Operation canceled"
-EAFNOSUPPORT	97	"Address family not supported by protocol"
-EDQUOT	122	"Disk quota exceeded"
-EADDRINUSE	98	"Address already in use"
-EFBIG	27	"File too large"
-ENOMSG	42	"No message of desired type"
-ELIBSCN	81	".lib section in a.out corrupted"
-ENODEV	19	"No such device"
-ENOLCK	37	"No locks available"
-EBUSY	16	"Device or resource busy"
-ENOTSOCK	88	"Socket operation on non-socket"
+package Chleb::Utils::OSError::Mapper;
+use strict;
+use warnings;
+
+use HTTP::Status qw(:constants);
+use Readonly;
+
+Readonly my %MAPPINGS => (
+	EOWNERDEAD	=> HTTP_INTERNAL_SERVER_ERROR,			# Owner died
+	ENOTCONN	=> HTTP_INTERNAL_SERVER_ERROR,			# Transport endpoint is not connected
+	EBADR		=> HTTP_INTERNAL_SERVER_ERROR,			# Invalid request descriptor
+	EOVERFLOW	=> HTTP_INTERNAL_SERVER_ERROR,			# Value too large for defined data type
+	ENOTNAM		=> HTTP_INTERNAL_SERVER_ERROR,			# Not a XENIX named type file
+	EPFNOSUPPORT	=> HTTP_INTERNAL_SERVER_ERROR,			# Protocol family not supported
+	ENXIO		=> HTTP_INTERNAL_SERVER_ERROR,			# No such device or address
+	EDEADLOCK	=> HTTP_INTERNAL_SERVER_ERROR,			# Resource deadlock avoided
+	EPROTO		=> HTTP_INTERNAL_SERVER_ERROR,			# Protocol error
+	ENOANO		=> HTTP_INTERNAL_SERVER_ERROR,			# No anode
+	EDOTDOT		=> HTTP_INTERNAL_SERVER_ERROR,			# RFS specific error
+	ENOBUFS		=> HTTP_INTERNAL_SERVER_ERROR,			# No buffer space available
+	EILSEQ		=> HTTP_INTERNAL_SERVER_ERROR,			# Invalid or incomplete multibyte or wide character
+	EINTR		=> HTTP_INTERNAL_SERVER_ERROR,			# Interrupted system call
+	ELIBEXEC	=> HTTP_INTERNAL_SERVER_ERROR,			# Cannot exec a shared library directly
+	ECONNRESET	=> HTTP_INTERNAL_SERVER_ERROR,			# Connection reset by peer
+	EIO		=> HTTP_INTERNAL_SERVER_ERROR,			# Input/output error
+	ECONNREFUSED	=> HTTP_INTERNAL_SERVER_ERROR,			# Connection refused
+	ENOTRECOVERABLE	=> HTTP_INTERNAL_SERVER_ERROR,			# State not recoverable
+	EXFULL		=> HTTP_INTERNAL_SERVER_ERROR,			# Exchange full
+	ECOMM		=> HTTP_INTERNAL_SERVER_ERROR,			# Communication error on send
+	EISNAM		=> HTTP_INTERNAL_SERVER_ERROR,			# Is a named type file
+	EL3RST		=> HTTP_INTERNAL_SERVER_ERROR,			# Level 3 reset
+	ELIBBAD		=> HTTP_INTERNAL_SERVER_ERROR,			# Accessing a corrupted shared library
+	ERFKILL		=> HTTP_INTERNAL_SERVER_ERROR,			# Operation not possible due to RF-kill
+	EISDIR		=> HTTP_INTERNAL_SERVER_ERROR,			# Is a directory
+	EWOULDBLOCK	=> HTTP_INTERNAL_SERVER_ERROR,			# Resource temporarily unavailable
+	EHOSTUNREACH	=> HTTP_INTERNAL_SERVER_ERROR,			# No route to host
+	ESHUTDOWN	=> HTTP_INTERNAL_SERVER_ERROR,			# Cannot send after transport endpoint shutdown
+	ENOTUNIQ	=> HTTP_INTERNAL_SERVER_ERROR,			# Name not unique on network
+	ELNRNG		=> HTTP_INTERNAL_SERVER_ERROR,			# Link number out of range
+	EPROTONOSUPPORT	=> HTTP_INTERNAL_SERVER_ERROR,			# Protocol not supported
+	ENETDOWN	=> HTTP_INTERNAL_SERVER_ERROR,			# Network is down
+	EFAULT		=> HTTP_INTERNAL_SERVER_ERROR,			# Bad address
+	ENOTDIR		=> HTTP_INTERNAL_SERVER_ERROR,			# Not a directory
+	EINVAL		=> HTTP_INTERNAL_SERVER_ERROR,			# Invalid argument
+	EEXIST		=> HTTP_INTERNAL_SERVER_ERROR,			# File exists
+	EL2NSYNC	=> HTTP_INTERNAL_SERVER_ERROR,			# Level 2 not synchronized
+	ENOTSUP		=> HTTP_INTERNAL_SERVER_ERROR,			# Operation not supported
+	EADDRNOTAVAIL	=> HTTP_INTERNAL_SERVER_ERROR,			# Cannot assign requested address
+	EPERM		=> HTTP_INTERNAL_SERVER_ERROR,			# Operation not permitted
+	ELIBMAX		=> HTTP_INTERNAL_SERVER_ERROR,			# Attempting to link in too many shared libraries
+	EMLINK		=> HTTP_INTERNAL_SERVER_ERROR,			# Too many links
+	EMEDIUMTYPE	=> HTTP_INTERNAL_SERVER_ERROR,			# Wrong medium type
+	ETIME		=> HTTP_INTERNAL_SERVER_ERROR,			# Timer expired
+	EBADE		=> HTTP_INTERNAL_SERVER_ERROR,			# Invalid exchange
+	ENOTEMPTY	=> HTTP_INTERNAL_SERVER_ERROR,			# Directory not empty
+	EMFILE		=> HTTP_INTERNAL_SERVER_ERROR,			# Too many open files
+	ENOTTY		=> HTTP_INTERNAL_SERVER_ERROR,			# Inappropriate ioctl for device
+	EMULTIHOP	=> HTTP_INTERNAL_SERVER_ERROR,			# Multihop attempted
+	ETXTBSY		=> HTTP_INTERNAL_SERVER_ERROR,			# Text file busy
+	ESRMNT		=> HTTP_INTERNAL_SERVER_ERROR,			# Srmount error
+	ENOPROTOOPT	=> HTTP_INTERNAL_SERVER_ERROR,			# Protocol not available
+	EREMCHG		=> HTTP_INTERNAL_SERVER_ERROR,			# Remote address changed
+	EHOSTDOWN	=> HTTP_INTERNAL_SERVER_ERROR,			# Host is down
+	EPIPE		=> HTTP_INTERNAL_SERVER_ERROR,			# Broken pipe
+	EUSERS		=> HTTP_INTERNAL_SERVER_ERROR,			# Too many users
+	ERANGE		=> HTTP_INTERNAL_SERVER_ERROR,			# Numerical result out of range
+	EKEYEXPIRED	=> HTTP_INTERNAL_SERVER_ERROR,			# Key has expired
+	ESTRPIPE	=> HTTP_INTERNAL_SERVER_ERROR,			# Streams pipe error
+	ENOSTR		=> HTTP_INTERNAL_SERVER_ERROR,			# Device not a stream
+	ENETRESET	=> HTTP_INTERNAL_SERVER_ERROR,			# Network dropped connection on reset
+	EADV		=> HTTP_INTERNAL_SERVER_ERROR,			# Advertise error
+	EBADRQC		=> HTTP_INTERNAL_SERVER_ERROR,			# Invalid request code
+	ESOCKTNOSUPPORT	=> HTTP_INTERNAL_SERVER_ERROR,			# Socket type not supported
+	EKEYREJECTED	=> HTTP_INTERNAL_SERVER_ERROR,			# Key was rejected by service
+	ENOMEM		=> HTTP_INTERNAL_SERVER_ERROR,			# Cannot allocate memory
+	ENODATA		=> HTTP_INTERNAL_SERVER_ERROR,			# No data available
+	ENOEXEC		=> HTTP_INTERNAL_SERVER_ERROR,			# Exec format error
+	EKEYREVOKED	=> HTTP_INTERNAL_SERVER_ERROR,			# Key has been revoked
+	EUCLEAN		=> HTTP_INTERNAL_SERVER_ERROR,			# Structure needs cleaning
+	ENONET		=> HTTP_INTERNAL_SERVER_ERROR,			# Machine is not on the network
+	EBFONT		=> HTTP_INTERNAL_SERVER_ERROR,			# Bad font file format
+	EISCONN		=> HTTP_INTERNAL_SERVER_ERROR,			# Transport endpoint is already connected
+	ENOMEDIUM	=> HTTP_INTERNAL_SERVER_ERROR,			# No medium found
+	ECONNABORTED	=> HTTP_INTERNAL_SERVER_ERROR,			# Software caused connection abort
+	ENOCSI		=> HTTP_INTERNAL_SERVER_ERROR,			# No CSI structure available
+	EHWPOISON	=> HTTP_INTERNAL_SERVER_ERROR,			# Memory page has hardware error
+	EREMOTE		=> HTTP_INTERNAL_SERVER_ERROR,			# Object is remote
+	EINPROGRESS	=> HTTP_INTERNAL_SERVER_ERROR,			# Operation now in progress
+	ETOOMANYREFS	=> HTTP_INTERNAL_SERVER_ERROR,			# Too many references: cannot splice
+	EBADFD		=> HTTP_INTERNAL_SERVER_ERROR,			# File descriptor in bad state
+	EBADF		=> HTTP_INTERNAL_SERVER_ERROR,			# Bad file descriptor
+	EL3HLT		=> HTTP_INTERNAL_SERVER_ERROR,			# Level 3 halted
+	E2BIG		=> HTTP_INTERNAL_SERVER_ERROR,			# Argument list too long
+	ENOLINK		=> HTTP_INTERNAL_SERVER_ERROR,			# Link has been severed
+	EALREADY	=> HTTP_INTERNAL_SERVER_ERROR,			# Operation already in progress
+	EREMOTEIO	=> HTTP_INTERNAL_SERVER_ERROR,			# Remote I/O error
+	ERESTART	=> HTTP_INTERNAL_SERVER_ERROR,			# Interrupted system call should be restarted
+	EMSGSIZE	=> HTTP_INTERNAL_SERVER_ERROR,			# Message too long
+	EXDEV		=> HTTP_INTERNAL_SERVER_ERROR,			# Invalid cross-device link
+	EIDRM		=> HTTP_INTERNAL_SERVER_ERROR,			# Identifier removed
+	ENAVAIL		=> HTTP_INTERNAL_SERVER_ERROR,			# No XENIX semaphores available
+	ESPIPE		=> HTTP_INTERNAL_SERVER_ERROR,			# Illegal seek
+	ENAMETOOLONG	=> HTTP_INTERNAL_SERVER_ERROR,			# File name too long
+	ENOSYS		=> HTTP_INTERNAL_SERVER_ERROR,			# Function not implemented
+	EOPNOTSUPP	=> HTTP_INTERNAL_SERVER_ERROR,			# Operation not supported
+	ENOSR		=> HTTP_INTERNAL_SERVER_ERROR,			# Out of streams resources
+	ENOENT		=> HTTP_INTERNAL_SERVER_ERROR,			# No such file or directory
+	ENOPKG		=> HTTP_INTERNAL_SERVER_ERROR,			# Package not installed
+	EACCES		=> HTTP_INTERNAL_SERVER_ERROR,			# Permission denied
+	ENETUNREACH	=> HTTP_INTERNAL_SERVER_ERROR,			# Network is unreachable
+	ECHRNG		=> HTTP_INTERNAL_SERVER_ERROR,			# Channel number out of range
+	EPROTOTYPE	=> HTTP_INTERNAL_SERVER_ERROR,			# Protocol wrong type for socket
+	ETIMEDOUT	=> HTTP_INTERNAL_SERVER_ERROR,			# Connection timed out
+	EDESTADDRREQ	=> HTTP_INTERNAL_SERVER_ERROR,			# Destination address required
+	EDOM		=> HTTP_INTERNAL_SERVER_ERROR,			# Numerical argument out of domain
+	ESTALE		=> HTTP_INTERNAL_SERVER_ERROR,			# Stale file handle
+	EL2HLT		=> HTTP_INTERNAL_SERVER_ERROR,			# Level 2 halted
+	ESRCH		=> HTTP_INTERNAL_SERVER_ERROR,			# No such process
+	ENOKEY		=> HTTP_INTERNAL_SERVER_ERROR,			# Required key not available
+	EDEADLK		=> HTTP_INTERNAL_SERVER_ERROR,			# Resource deadlock avoided
+	ENFILE		=> HTTP_INTERNAL_SERVER_ERROR,			# Too many open files in system
+	ELOOP		=> HTTP_INTERNAL_SERVER_ERROR,			# Too many levels of symbolic links
+	ECHILD		=> HTTP_INTERNAL_SERVER_ERROR,			# No child processes
+	EBADMSG		=> HTTP_INTERNAL_SERVER_ERROR,			# Bad message
+	EROFS		=> HTTP_INTERNAL_SERVER_ERROR,			# Read-only file system
+	EUNATCH		=> HTTP_INTERNAL_SERVER_ERROR,			# Protocol driver not attached
+	ELIBACC		=> HTTP_INTERNAL_SERVER_ERROR,			# Can not access a needed shared library
+	ENOSPC		=> HTTP_INTERNAL_SERVER_ERROR,			# No space left on device
+	EAGAIN		=> HTTP_INTERNAL_SERVER_ERROR,			# Resource temporarily unavailable
+	ENOTBLK		=> HTTP_INTERNAL_SERVER_ERROR,			# Block device required
+	EBADSLT		=> HTTP_INTERNAL_SERVER_ERROR,			# Invalid slot
+	ECANCELED	=> HTTP_INTERNAL_SERVER_ERROR,			# Operation canceled
+	EAFNOSUPPORT	=> HTTP_INTERNAL_SERVER_ERROR,			# Address family not supported by protocol
+	EDQUOT		=> HTTP_INTERNAL_SERVER_ERROR,			# Disk quota exceeded
+	EADDRINUSE	=> HTTP_INTERNAL_SERVER_ERROR,			# Address already in use
+	EFBIG		=> HTTP_INTERNAL_SERVER_ERROR,			# File too large
+	ENOMSG		=> HTTP_INTERNAL_SERVER_ERROR,			# No message of desired type
+	ELIBSCN		=> HTTP_INTERNAL_SERVER_ERROR,			# .lib section in a.out corrupted
+	ENODEV		=> HTTP_INTERNAL_SERVER_ERROR,			# No such device
+	ENOLCK		=> HTTP_INTERNAL_SERVER_ERROR,			# No locks available
+	EBUSY		=> HTTP_INTERNAL_SERVER_ERROR,			# Device or resource busy
+	ENOTSOCK	=> HTTP_INTERNAL_SERVER_ERROR,			# Socket operation on non-socket
+};
+
+1;
