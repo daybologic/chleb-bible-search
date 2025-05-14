@@ -48,6 +48,7 @@ the service on your own equipment.  Please install the deb file, where possible,
 
 sudo dpkg -i chleb-bible-search_1.1.0_all.deb
 sudo systemctl enable chleb-bible-search.service
+sudo invoke-rc.d chleb-bible-search start
 
 ### Web front-end (proxy).
 
