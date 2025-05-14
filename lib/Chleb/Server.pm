@@ -735,6 +735,14 @@ sub __verseToHtml {
 		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
+	$output .= "<p>\r\n";
+	foreach my $type (qw(prev next)) {
+		my $link = $json->[0]->{data}->[0]->{links}->{$type};
+		next unless ($link);
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $type);
+	}
+	$output .= "</p>\r\n";
+
 	my $verseCount = scalar(@{ $json->[0]->{data} });
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
@@ -757,14 +765,6 @@ sub __verseToHtml {
 	} else {
 		$output .= sprintf("\r\n\r\n\t(%s)\r\n", $translation);
 	}
-
-	$output .= "<p>\r\n";
-	foreach my $type (qw(prev next)) {
-		my $link = $json->[0]->{data}->[0]->{links}->{$type};
-		next unless ($link);
-		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $type);
-	}
-	$output .= "</p>\r\n";
 
 	return $output;
 }
