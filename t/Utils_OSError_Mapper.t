@@ -32,17 +32,30 @@
 package Utils_OSError_Mapper_Tests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb::Utils::OSError::Mapper;
 use Errno;
 use HTTP::Status qw(:constants);
 use POSIX;
 use Test::More 0.96;
+
+sub setUp {
+	my ($self, %params) = @_;
+
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
+
+	$self->sut(Chleb::Utils::OSError::Mapper->new());
+
+	return EXIT_SUCCESS;
+}
 
 sub testKnownMappings {
 	my ($self) = @_;
@@ -52,9 +65,9 @@ sub testKnownMappings {
 	# nb. don't list everything here!  Maybe I shall but it might be long-winded,
 	# at least we could see what happens on GitHub/SourceHut/BitBucket.
 
-	is(Chleb::Utils::OSError::Mapper::map(int(ENOENT)), HTTP_NOT_FOUND, 'ENOENT -> 404 Not Found');
-	is(Chleb::Utils::OSError::Mapper::map(int(EHOSTDOWN)), HTTP_BAD_GATEWAY, 'EHOSTDOWN -> 502 Bad Gateway');
-	is(Chleb::Utils::OSError::Mapper::map(int(EPIPE)), HTTP_INTERNAL_SERVER_ERROR, 'EPIPE -> 500 Internal Server Error');
+	is($self->sut->map(int(ENOENT)), HTTP_NOT_FOUND, 'ENOENT -> 404 Not Found');
+	is($self->sut->map(int(EHOSTDOWN)), HTTP_BAD_GATEWAY, 'EHOSTDOWN -> 502 Bad Gateway');
+	is($self->sut->map(int(EPIPE)), HTTP_INTERNAL_SERVER_ERROR, 'EPIPE -> 500 Internal Server Error');
 
 	return EXIT_SUCCESS;
 }
@@ -63,9 +76,9 @@ sub testUnknownMappings {
 	my ($self) = @_;
 	plan tests => 3;
 
-	is(Chleb::Utils::OSError::Mapper::map(0), HTTP_INTERNAL_SERVER_ERROR, '0 -> 500 Internal Server Error');
-	is(Chleb::Utils::OSError::Mapper::map(-1), HTTP_INTERNAL_SERVER_ERROR, '-1 -> 500 Internal Server Error');
-	is(Chleb::Utils::OSError::Mapper::map(0xFFFFFFFF), HTTP_INTERNAL_SERVER_ERROR, '0xFFFFFFFF -> 500 Internal Server Error');
+	is($self->sut->map(0), HTTP_INTERNAL_SERVER_ERROR, '0 -> 500 Internal Server Error');
+	is($self->sut->map(-1), HTTP_INTERNAL_SERVER_ERROR, '-1 -> 500 Internal Server Error');
+	is($self->sut->map(0xFFFFFFFF), HTTP_INTERNAL_SERVER_ERROR, '0xFFFFFFFF -> 500 Internal Server Error');
 
 	return EXIT_SUCCESS;
 }

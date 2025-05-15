@@ -31,6 +31,9 @@
 package Chleb::Utils::OSError::Mapper;
 use strict;
 use warnings;
+use Moose;
+
+extends 'Chleb::Bible::Base';
 
 use Errno;
 use HTTP::Status qw(:constants);
@@ -173,11 +176,21 @@ Readonly my %MAPPINGS => (
 	Errno::ENOTSOCK		=> HTTP_INTERNAL_SERVER_ERROR,			# Socket operation on non-socket
 );
 
-sub map {
-	my ($error) = @_;
+Readonly my $DEFAULT => HTTP_INTERNAL_SERVER_ERROR;
 
-	return $MAPPINGS{$error} if (exists($MAPPINGS{$error}));
-	return HTTP_INTERNAL_SERVER_ERROR; # default
+sub map {
+	my ($self, $error) = @_;
+
+	my $mapped;
+	if (exists($MAPPINGS{$error})) {
+		$mapped = $MAPPINGS{$error};
+		$self->dic->logger->debug(sprintf('Mapped error %s to %d', $error, $mapped));
+	} else {
+		$mapped = $DEFAULT;
+		$self->dic->logger->warn(sprintf('No mapping for error %s, defaulting to %d', $error, $mapped));
+	}
+
+	return $mapped;
 }
 
 1;
