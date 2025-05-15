@@ -173,4 +173,11 @@ Readonly my %MAPPINGS => (
 	ENOTSOCK	=> HTTP_INTERNAL_SERVER_ERROR,			# Socket operation on non-socket
 };
 
+sub map {
+	my ($error) = @_;
+
+	return $MAPPINGS{$error} if (exists($MAPPINGS{$error}));
+	return HTTP_INTERNAL_SERVER_ERROR; # default
+}
+
 1;
