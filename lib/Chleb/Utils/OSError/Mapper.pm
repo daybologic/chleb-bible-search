@@ -36,7 +36,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Errno;
-use HTTP::Status qw(:constants);
+use HTTP::Status qw(:constants status_constant_name status_message);
 use Readonly;
 
 Readonly my %MAPPINGS => (
@@ -184,13 +184,18 @@ sub map {
 	my $mapped;
 	if (exists($MAPPINGS{$error})) {
 		$mapped = $MAPPINGS{$error};
-		$self->dic->logger->debug(sprintf('Mapped error %s to %d', $error, $mapped));
+		$self->dic->logger->debug(sprintf('Mapped error %s to %s', $error, __statusLine($mapped)));
 	} else {
 		$mapped = $DEFAULT;
-		$self->dic->logger->warn(sprintf('No mapping for error %s, defaulting to %d', $error, $mapped));
+		$self->dic->logger->warn(sprintf('No mapping for error %s, defaulting to %s', $error, __statusLine($mapped)));
 	}
 
 	return $mapped;
+}
+
+sub __statusLine {
+	my ($mapped) = @_;
+	return sprintf('%s %d %s', status_constant_name($mapped), $mapped, status_message($mapped));
 }
 
 1;
