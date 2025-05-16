@@ -18,6 +18,7 @@ Build-Depends-Indep:
  libtest-deep-perl,
  libtest-exception-perl,
  libtest-mockmodule-perl,
+ libtext-levenshteinxs-perl,
  libtime-duration-perl,
  libuuid-tiny-perl,
 Standards-Version: 4.6.2
@@ -36,6 +37,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
  libmoose-perl,
  libmoosex-singleton-perl,
  libreadonly-perl,
+ libtext-levenshteinxs-perl,
  libtime-duration-perl,
  libuuid-tiny-perl,
 Replaces: libreligion-bible-verses-perl
