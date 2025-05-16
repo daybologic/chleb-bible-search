@@ -2,7 +2,7 @@ name: Perl CI
 
 on:
   push:
-    branches: [ "develop", "master", "rel/1.0" ]
+    branches: [ "develop", "master", "rel/1.0", "feature/index/html-1/error-mapper" ]
   pull_request:
     branches: [ "develop" ]
 
