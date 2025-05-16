@@ -185,7 +185,7 @@ sub map {
 	$error //= 0;
 
 	my $mapped;
-	if (defined($error) && exists($MAPPINGS{$error})) {
+	if (exists($MAPPINGS{$error})) {
 		$mapped = $MAPPINGS{$error};
 		$self->dic->logger->debug(sprintf('Mapped error %s -> %s', __errorMsg($error), __statusLine($mapped)));
 	} else {
@@ -198,29 +198,23 @@ sub map {
 
 sub __statusLine {
 	my ($mapped) = @_;
-	return sprintf('%s %d: %s', status_constant_name($mapped) // '???', $mapped, status_message($mapped) // '???');
+	return sprintf('%s %d: %s', status_constant_name($mapped), $mapped, status_message($mapped));
 }
 
 sub __errorMsg {
 	my ($error) = @_;
-	my $strerror = strerror($error);
-	my $errorMsg = sprintf('%s (%d)', __getSymbolicName($error), $error // 0);
-	$errorMsg .= " $strerror" if (defined($strerror));
-	return $errorMsg;
+	return sprintf('%s (%d) %s', __getSymbolicName($error), $error, strerror($error));
 }
 
 sub __getSymbolicName {
 	my ($error) = @_;
 
 	my $symbolic = '???';
-	return $symbolic unless (defined($error));
 
 	foreach my $mnemonic (keys(%!)) {
 		no strict 'refs';
 		$mnemonic = "Errno::$mnemonic";
-		if (exists(&$mnemonic)) {
-			$! = &$mnemonic;
-		}
+		$! = &$mnemonic;
 		$mnemonic =~ s/^Errno:://;
 		my $value = $!{$mnemonic};
 		if ($value == $error) {
