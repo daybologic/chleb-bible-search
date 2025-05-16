@@ -57,6 +57,16 @@ sub setUp {
 	return EXIT_SUCCESS;
 }
 
+sub testSuccess {
+	my ($self) = @_;
+	plan tests => 2;
+
+	is($self->sut->map(undef), HTTP_OK, '<undef> -> 200 OK');
+	is($self->sut->map(0), HTTP_OK, '0 -> 200 OK');
+
+	return EXIT_SUCCESS;
+}
+
 sub testKnownMappings {
 	my ($self) = @_;
 	plan tests => 3;
@@ -74,9 +84,8 @@ sub testKnownMappings {
 
 sub testUnknownMappings {
 	my ($self) = @_;
-	plan tests => 3;
+	plan tests => 2;
 
-	is($self->sut->map(0), HTTP_INTERNAL_SERVER_ERROR, '0 -> 500 Internal Server Error');
 	is($self->sut->map(-1), HTTP_INTERNAL_SERVER_ERROR, '-1 -> 500 Internal Server Error');
 	is($self->sut->map(0xFFFFFFFF), HTTP_INTERNAL_SERVER_ERROR, '0xFFFFFFFF -> 500 Internal Server Error');
 

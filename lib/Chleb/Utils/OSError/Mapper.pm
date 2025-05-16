@@ -37,9 +37,11 @@ extends 'Chleb::Bible::Base';
 
 use Errno;
 use HTTP::Status qw(:constants status_constant_name status_message);
+use POSIX qw(strerror);
 use Readonly;
 
 Readonly my %MAPPINGS => (
+	0			=> HTTP_OK,					# SUCCESS
 	Errno::EOWNERDEAD	=> HTTP_INTERNAL_SERVER_ERROR,			# Owner died
 	Errno::ENOTCONN		=> HTTP_BAD_GATEWAY,				# Transport endpoint is not connected
 	Errno::EBADR		=> HTTP_INTERNAL_SERVER_ERROR,			# Invalid request descriptor
@@ -180,14 +182,15 @@ Readonly my $DEFAULT => HTTP_INTERNAL_SERVER_ERROR;
 
 sub map {
 	my ($self, $error) = @_;
+	$error //= 0;
 
 	my $mapped;
-	if (exists($MAPPINGS{$error})) {
+	if (defined($error) && exists($MAPPINGS{$error})) {
 		$mapped = $MAPPINGS{$error};
-		$self->dic->logger->debug(sprintf('Mapped error %s to %s', $error, __statusLine($mapped)));
+		$self->dic->logger->debug(sprintf('Mapped error %s -> %s', __errorMsg($error), __statusLine($mapped)));
 	} else {
 		$mapped = $DEFAULT;
-		$self->dic->logger->warn(sprintf('No mapping for error %s, defaulting to %s', $error, __statusLine($mapped)));
+		$self->dic->logger->warn(sprintf('No mapping for error %s, defaulting to %s', __errorMsg($error), __statusLine($mapped)));
 	}
 
 	return $mapped;
@@ -195,7 +198,38 @@ sub map {
 
 sub __statusLine {
 	my ($mapped) = @_;
-	return sprintf('%s %d %s', status_constant_name($mapped), $mapped, status_message($mapped));
+	return sprintf('%s %d: %s', status_constant_name($mapped) // '???', $mapped, status_message($mapped) // '???');
+}
+
+sub __errorMsg {
+	my ($error) = @_;
+	my $strerror = strerror($error);
+	my $errorMsg = sprintf('%s (%d)', __getSymbolicName($error), $error // 0);
+	$errorMsg .= " $strerror" if (defined($strerror));
+	return $errorMsg;
+}
+
+sub __getSymbolicName {
+	my ($error) = @_;
+
+	my $symbolic = '???';
+	return $symbolic unless (defined($error));
+
+	foreach my $mnemonic (keys(%!)) {
+		no strict 'refs';
+		$mnemonic = "Errno::$mnemonic";
+		if (exists(&$mnemonic)) {
+			$! = &$mnemonic;
+		}
+		$mnemonic =~ s/^Errno:://;
+		my $value = $!{$mnemonic};
+		if ($value == $error) {
+			$symbolic = $mnemonic;
+			last;
+		}
+	}
+
+	return $symbolic;
 }
 
 1;
