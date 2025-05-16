@@ -919,6 +919,7 @@ package main;
 use strict;
 use warnings;
 
+use Chleb::Utils::OSError::Mapper;
 use Dancer2 0.2;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
@@ -962,9 +963,8 @@ get '/' => sub {
 		send_as html => $html;
 	}
 
-	# TODO: nb. HTTP_INTERNAL_SERVER_ERROR is pretty basic here.  We might need a handling for any HTML file,
-	# and a file error code to HTTP error code mapper
-	send_error("Can't open file '$filePath': $!", HTTP_INTERNAL_SERVER_ERROR);
+	my $error = int($ERRNO);
+	send_error("Can't open file '$filePath': $error", $server->dic->errorMapper->map($error));
 };
 
 get '/1/random' => sub {
