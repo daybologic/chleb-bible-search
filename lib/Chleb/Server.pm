@@ -952,19 +952,23 @@ sub handleException {
 get '/' => sub {
 	# Serve a simple HTML landing page for users who don't want to read Swagger
 	my $html = '';
-	my $filePath = '/usr/share/chleb-bible-search/index.html';
 
-	if (my $file = IO::File->new($filePath, 'r')) {
-		while (my $line = $file->getline()) {
-			$html .= $line;
+	my $filePathFailed;
+	foreach my $filePath ('./data/static/index.html', '/usr/share/chleb-bible-search/index.html') {
+		if (my $file = IO::File->new($filePath, 'r')) {
+			while (my $line = $file->getline()) {
+				$html .= $line;
+			}
+
+			$file->close();
+			send_as html => $html;
 		}
 
-		$file->close();
-		send_as html => $html;
+		$filePathFailed = $filePath;
 	}
 
-	my $error = int($ERRNO);
-	send_error("Can't open file '$filePath': $error", $server->dic->errorMapper->map($error));
+	my $error = $ERRNO;
+	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
 };
 
 get '/1/random' => sub {
