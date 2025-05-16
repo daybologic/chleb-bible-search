@@ -36,7 +36,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Errno;
-use HTTP::Status qw(:constants status_constant_name status_message);
+use HTTP::Status 6.39 qw(:constants status_constant_name status_message);
 use POSIX qw(strerror);
 use Readonly;
 
