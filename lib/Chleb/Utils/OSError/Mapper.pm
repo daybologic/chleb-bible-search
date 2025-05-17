@@ -33,6 +33,16 @@ use strict;
 use warnings;
 use Moose;
 
+=head1 NAME
+
+Chleb::Utils::OSError::Mapper
+
+=head1 DESCRIPTION
+
+Map system errors to public HTTP errors
+
+=cut
+
 extends 'Chleb::Bible::Base';
 
 use Errno;
@@ -180,6 +190,28 @@ Readonly my %MAPPINGS => (
 
 Readonly my $DEFAULT => HTTP_INTERNAL_SERVER_ERROR;
 
+=head1 ATTRIBUTES
+
+None
+
+=head1 METHODS
+
+=over
+
+=item C<map($error)>
+
+Map a system error such as L<Errno::ENOENT> through to a HTTP error such as C<HTTP_NOT_FOUND>.
+All known errors are handled, and if we haven't covered one, on a POSIX derivative which hasn't been
+tested, we will return C<HTTP_INTERNAL_SERVER_ERROR>, which seems like a sensible default.
+
+Passing C<0> or C<undef> will always return C<HTTP_OK>.
+
+nb. pass C<int($ERRNO)> because otherwise, the message may be passed, which we can't easily
+map back to the integer.  In theory we could but it would be wasteful and might not work if your
+locale is not English.
+
+=cut
+
 sub map {
 	my ($self, $error) = @_;
 	$error //= 0;
@@ -196,15 +228,43 @@ sub map {
 	return $mapped;
 }
 
+=back
+
+=head1 PRIVATE STATIC FUNCTIONS
+
+=over
+
+=item C<__statusLine($mapped)>
+
+Given the mapped error, which must be an HTTP error code, we will return a loggable status message.
+This includes the HTTP constant such as C<HTTP_NOT_FOUND>, the numerical version (404) and the message
+"Not Found", for example.
+
+=cut
+
 sub __statusLine {
 	my ($mapped) = @_;
 	return sprintf('%s %d: %s', status_constant_name($mapped), $mapped, status_message($mapped));
 }
 
+=item C<__errorMsg($error)>
+
+Returns the loggable message associated with a system error.  For example, passing C<2> will return
+a message including C<2>, C<ENOENT> and C<"No such file or directory">, depending on your locale.
+
+=cut
+
 sub __errorMsg {
 	my ($error) = @_;
 	return sprintf('%s (%d) %s', __getSymbolicName($error), $error, strerror($error));
 }
+
+=item C<__getSymbolicName($error)>
+
+Given C<2>, for example, will return C<ENOENT>.
+We have to loop through all of the available errors on the system.
+
+=cut
 
 sub __getSymbolicName {
 	my ($error) = @_;
@@ -225,5 +285,9 @@ sub __getSymbolicName {
 
 	return $symbolic;
 }
+
+=back
+
+=cut
 
 1;
