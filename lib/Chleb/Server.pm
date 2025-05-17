@@ -51,6 +51,7 @@ use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
+use IO::File;
 use JSON;
 use Readonly;
 use Time::Duration;
@@ -910,17 +911,40 @@ sub __infoToHtml {
 	return $text;
 }
 
-=back
+=item C<explodeHtmlFilePath($name)>
+
+Given name C<$name> which is a string, and should be a simple name, such as 'index', we
+return all possible paths to that file, and we include the filename extension(s).  These
+are in order of preference, and you should process the first file which exists.
+
+The returned value is an C<ARRAY> ref.
 
 =cut
+
+sub explodeHtmlFilePath {
+	my ($self, $name) = @_;
+
+	my @returnedPaths = ( );
+	my @paths = ('./data/static', '/usr/share/chleb-bible-search');
+	foreach my $path (@paths) {
+		my @extensions = (qw(html htm));
+		foreach my $extension (@extensions) {
+			my $returnedPath = sprintf('%s/%s.%s', $path, $name, $extension);
+			push(@returnedPaths, $returnedPath);
+		}
+	}
+
+	return \@returnedPaths;
+}
 
 package main;
 use strict;
 use warnings;
 
+use Chleb::Utils::OSError::Mapper;
 use Dancer2 0.2;
 use English qw(-no_match_vars);
-use HTTP::Status qw(:is);
+use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
 use Scalar::Util qw(blessed);
 
@@ -946,6 +970,28 @@ sub handleException {
 
 	return;
 }
+
+get '/' => sub {
+	# Serve a simple HTML landing page for users who don't want to read Swagger
+	my $html = '';
+
+	my $filePathFailed;
+	foreach my $filePath (@{ $server->explodeHtmlFilePath('index') }) { # TODO: Could this whole stanza be moved out, to help read other files elsewhere?
+		if (my $file = IO::File->new($filePath, 'r')) {
+			while (my $line = $file->getline()) {
+				$html .= $line;
+			}
+
+			$file->close();
+			send_as html => $html;
+		}
+
+		$filePathFailed = $filePath;
+	}
+
+	my $error = $ERRNO;
+	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
+};
 
 get '/1/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));

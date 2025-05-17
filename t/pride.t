@@ -146,7 +146,7 @@ sub testBadBook {
 		cmp_deeply($evalError, all(
 			isa('Chleb::Exception'),
 			methods(
-				description => "Long book name 'Mormon' is not a book in the bible",
+				description => "Long book name 'Mormon' is not a book in the bible, did you mean Amos?",
 				location    => undef,
 				statusCode  => 404,
 			),

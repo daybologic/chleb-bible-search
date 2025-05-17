@@ -50,6 +50,7 @@ packages:
   - libtest-deep-perl
   - libtest-exception-perl
   - libtest-mockmodule-perl
+  - libtext-levenshteinxs-perl
   - libtime-duration-perl
   - libuniversal-require-perl
   - liburi-encode-perl
