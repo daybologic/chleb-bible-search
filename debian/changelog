@@ -1,8 +1,11 @@
 chleb-bible-search (1.2.0) stable; urgency=medium
 
-  * TODO
+  * 🚸 added random sample verses to summary overview
+  * 🚸 "Did you mean?" added to books requested but not found
+  * ⚓️ static index page at /
+  * ⚓️ prev/next navigation links added to verses
 
- -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Wed, 07 May 2025 17:44:32 +0100
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 17 May 2025 13:20:25 +0100
 
 chleb-bible-search (1.1.0) stable; urgency=medium
 
