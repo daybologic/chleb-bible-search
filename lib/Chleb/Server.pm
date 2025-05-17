@@ -976,7 +976,7 @@ get '/' => sub {
 	my $html = '';
 
 	my $filePathFailed;
-	foreach my $filePath (@{ $server->explodeHtmlFilePath('index') }) {
+	foreach my $filePath (@{ $server->explodeHtmlFilePath('index') }) { # TODO: Could this whole stanza be moved out, to help read other files elsewhere?
 		if (my $file = IO::File->new($filePath, 'r')) {
 			while (my $line = $file->getline()) {
 				$html .= $line;
