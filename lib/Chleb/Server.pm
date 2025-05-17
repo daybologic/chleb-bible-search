@@ -911,9 +911,31 @@ sub __infoToHtml {
 	return $text;
 }
 
-=back
+=item C<explodeHtmlFilePath($name)>
+
+Given name C<$name> which is a string, and should be a simple name, such as 'index', we
+return all possible paths to that file, and we include the filename extension(s).  These
+are in order of preference, and you should process the first file which exists.
+
+The returned value is an C<ARRAY> ref.
 
 =cut
+
+sub explodeHtmlFilePath {
+	my ($self, $name) = @_;
+
+	my @returnedPaths = ( );
+	my @paths = ('./data/static', '/usr/share/chleb-bible-search');
+	foreach my $path (@paths) {
+		my @extensions = (qw(html htm));
+		foreach my $extension (@extensions) {
+			my $returnedPath = sprintf('%s/%s.%s', $path, $name, $extension);
+			push(@returnedPaths, $returnedPath);
+		}
+	}
+
+	return \@returnedPaths;
+}
 
 package main;
 use strict;
@@ -954,7 +976,7 @@ get '/' => sub {
 	my $html = '';
 
 	my $filePathFailed;
-	foreach my $filePath ('./data/static/index.html', '/usr/share/chleb-bible-search/index.html') {
+	foreach my $filePath (@{ $server->explodeHtmlFilePath('index') }) {
 		if (my $file = IO::File->new($filePath, 'r')) {
 			while (my $line = $file->getline()) {
 				$html .= $line;
