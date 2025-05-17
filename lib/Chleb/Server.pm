@@ -51,6 +51,7 @@ use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
 use HTTP::Status qw(:constants);
+use IO::File;
 use JSON;
 use Readonly;
 use Time::Duration;
@@ -910,17 +911,40 @@ sub __infoToHtml {
 	return $text;
 }
 
-=back
+=item C<explodeHtmlFilePath($name)>
+
+Given name C<$name> which is a string, and should be a simple name, such as 'index', we
+return all possible paths to that file, and we include the filename extension(s).  These
+are in order of preference, and you should process the first file which exists.
+
+The returned value is an C<ARRAY> ref.
 
 =cut
+
+sub explodeHtmlFilePath {
+	my ($self, $name) = @_;
+
+	my @returnedPaths = ( );
+	my @paths = ('./data/static', '/usr/share/chleb-bible-search');
+	foreach my $path (@paths) {
+		my @extensions = (qw(html htm));
+		foreach my $extension (@extensions) {
+			my $returnedPath = sprintf('%s/%s.%s', $path, $name, $extension);
+			push(@returnedPaths, $returnedPath);
+		}
+	}
+
+	return \@returnedPaths;
+}
 
 package main;
 use strict;
 use warnings;
 
+use Chleb::Utils::OSError::Mapper;
 use Dancer2 0.2;
 use English qw(-no_match_vars);
-use HTTP::Status qw(:is);
+use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
 use Scalar::Util qw(blessed);
 
@@ -946,6 +970,28 @@ sub handleException {
 
 	return;
 }
+
+get '/' => sub {
+	# Serve a simple HTML landing page for users who don't want to read Swagger
+	my $html = '';
+
+	my $filePathFailed;
+	foreach my $filePath (@{ $server->explodeHtmlFilePath('index') }) { # TODO: Could this whole stanza be moved out, to help read other files elsewhere?
+		if (my $file = IO::File->new($filePath, 'r')) {
+			while (my $line = $file->getline()) {
+				$html .= $line;
+			}
+
+			$file->close();
+			send_as html => $html;
+		}
+
+		$filePathFailed = $filePath;
+	}
+
+	my $error = $ERRNO;
+	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
+};
 
 get '/1/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
@@ -1141,46 +1187,6 @@ get '/1/info' => sub {
 
 	$server->dic->logger->trace('1/info returned as JSON');
 	return $result;
-};
-
-get '/' => sub {
-    # Serve a simple HTML landing page for users who don't want to read Swagger
-    my $html = <<'HTML';
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Chleb Bible Search Service</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; background: #f9f9f9; }
-        h1 { color: #2c3e50; }
-        ul { line-height: 1.7; }
-        a { color: #2980b9; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .swagger { margin-top: 2em; font-size: 0.95em; }
-    </style>
-</head>
-<body>
-    <h1>Welcome to Chleb Bible Search</h1>
-    <p>This is a microservice for querying and searching the Bible. You can use the following endpoints directly, or explore the <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.1.0" target="_blank">Swagger API documentation</a>.</p>
-    <ul>
-        <li><a href="/1/search?term=love">Search for verses</a> (e.g. <code>/1/search?term=love</code>)</li>
-        <li><a href="/1/votd">Verse of the Day</a> (<code>/1/votd</code>)</li>
-        <li><a href="/1/random">Random Verse</a> (<code>/1/random</code>)</li>
-        <li><a href="/1/lookup/john/3/16">Lookup a Verse</a> (e.g. <code>/1/lookup/john/3/16</code>)</li>
-        <li><a href="/1/info">Bible Info</a> (<code>/1/info</code>)</li>
-        <li><a href="/1/ping">Ping</a> (<code>/1/ping</code>)</li>
-        <li><a href="/1/version">Service Version</a> (<code>/1/version</code>)</li>
-        <li><a href="/1/uptime">Service Uptime</a> (<code>/1/uptime</code>)</li>
-    </ul>
-    <div class="swagger">
-        <strong>API Documentation:</strong> <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.1.0" target="_blank">SwaggerHub</a>
-    </div>
-</body>
-</html>
-HTML
-    ;
-    return $html;
 };
 
 unless (caller()) {

@@ -48,6 +48,7 @@ via this "DIC" so that they may be reliably replaced during the test suites.
 use Log::Log4perl;
 use Chleb::Bible::Exclusions;
 use Chleb::DI::Config;
+use Chleb::Utils::OSError::Mapper;
 
 has bible => (is => 'rw'); # TODO: deprecated
 
@@ -82,6 +83,21 @@ TODO
 =cut
 
 has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
+
+=item C<errorMapper>
+
+A Link to the L<Chleb::Utils::OSError::Mapper>.
+
+There should only be one but for mocking purposes, it is not presently
+a singleton.  There may be errors you want to remap in the test suite,
+I am not sure at the moment.
+
+The object is automagically constructed, once, on-demand using a hook
+called L</_makeErrorMapper()>.
+
+=cut
+
+has errorMapper => (is => 'rw', lazy => 1, builder => '_makeErrorMapper');
 
 =back
 
@@ -141,6 +157,17 @@ TODO
 sub _makeExclusions {
 	my ($self) = @_;
 	return Chleb::Bible::Exclusions->new({ dic => $self });
+}
+
+=item C<_makeErrorMapper()>
+
+Constructs a L<Chleb::Utils::OSError::Mapper> for L</errorMapper>.
+
+=cut
+
+sub _makeErrorMapper {
+	my ($self) = @_;
+	return Chleb::Utils::OSError::Mapper->new({ dic => $self });
 }
 
 =back

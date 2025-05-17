@@ -29,7 +29,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-image: atlassian/default-image:4
+image: atlassian/default-image:5
 
 pipelines:
   default:
