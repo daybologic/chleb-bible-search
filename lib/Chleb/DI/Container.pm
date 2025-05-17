@@ -86,7 +86,14 @@ has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
 
 =item C<errorMapper>
 
-TODO
+A Link to the L<Chleb::Utils::OSError::Mapper>.
+
+There should only be one but for mocking purposes, it is not presently
+a singleton.  There may be errors you want to remap in the test suite,
+I am not sure at the moment.
+
+The object is automagically constructed, once, on-demand using a hook
+called L</_makeErrorMapper()>.
 
 =cut
 
@@ -154,7 +161,7 @@ sub _makeExclusions {
 
 =item C<_makeErrorMapper()>
 
-TODO
+Constructs a L<Chleb::Utils::OSError::Mapper> for L</errorMapper>.
 
 =cut
 
