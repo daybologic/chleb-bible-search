@@ -961,19 +961,77 @@ my $server;
 set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
 
+my %dampenTime = ( );
+sub dampen {
+	my $ipAddress = request()->address();
+	my $currentTime = time();
+
+	my $previousTime = $dampenTime{$ipAddress};
+	if ($previousTime && $previousTime == $currentTime) {
+		$server->dic->logger->warn(sprintf('Saw %s already this second, denying request', $ipAddress));
+		return 1;
+	}
+
+	$dampenTime{$ipAddress} = $currentTime;
+	return 0;
+}
+
 sub handleException {
 	my ($exception) = @_;
 
-	if (blessed($exception) && $exception->isa('Chleb::Exception')) {
-		$server->dic->logger->debug(sprintf('Returning HTTP status code %d', $exception->statusCode));
-		if (is_redirect($exception->statusCode)) {
-			return redirect $exception->location, $exception->statusCode;
-		} else {
-			send_error($exception->description, $exception->statusCode);
+	my $str;
+	if (blessed($exception)) {
+		if ($exception->isa('Chleb::Exception')) {
+			$server->dic->logger->debug('Returning ' . $exception->toString());
+			if (is_redirect($exception->statusCode)) {
+				return redirect $exception->location, $exception->statusCode;
+			} else {
+				send_error($exception->description, $exception->statusCode);
+			}
+		} elsif ($exception->can('toString')) {
+			$str = $exception->toString();
 		}
 	} else {
-		$server->dic->logger->error("Internal Server Error: $exception");
-		send_error($exception, 500);
+		$str = $exception;
+	}
+
+	$server->dic->logger->error("Internal Server Error: $exception");
+	send_error($exception, 500);
+
+	return;
+}
+
+sub handleSessionToken {
+	my $tokenRepo = $server->dic->tokenRepo;
+	my $sessionToken;
+
+	if ($sessionToken = cookie('sessionToken')) {
+		$server->dic->logger->trace("Got session token '$sessionToken' from client");
+
+		eval {
+			$sessionToken = $tokenRepo->load($sessionToken);
+		};
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
+
+		$server->dic->logger->trace('session token found!  ' . $sessionToken->toString());
+	} elsif (dampen()) {
+		handleException(Chleb::Exception->raise(
+			HTTP_TOO_MANY_REQUESTS,
+			'Slow down, or respect the sessionToken cookie',
+		));
+	} else {
+		$sessionToken = $tokenRepo->create();
+		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+		cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
+
+		eval {
+			$sessionToken->save();
+		};
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
 	}
 
 	return;
@@ -1006,6 +1064,8 @@ get '/1/random' => sub {
 
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+
+	handleSessionToken();
 
 	my $result;
 	eval {
@@ -1058,8 +1118,10 @@ get '/2/votd' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
 	my $testament = param('testament');
-	my $dancerRequest = request();
 
+	handleSessionToken();
+
+	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
 	my $result;
@@ -1094,6 +1156,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $verse = param('verse');
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
+	handleSessionToken();
+
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
@@ -1127,6 +1191,8 @@ get '/1/search' => sub {
 	my $term = param('term');
 	my $wholeword = param('wholeword');
 
+	handleSessionToken();
+
 	my $dancerRequest = request();
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
@@ -1154,6 +1220,7 @@ get '/1/search' => sub {
 };
 
 get '/1/ping' => sub {
+	handleSessionToken();
 	return $server->__ping();
 };
 
@@ -1169,6 +1236,7 @@ get '/1/version' => sub {
 };
 
 get '/1/uptime' => sub {
+	handleSessionToken();
 	return $server->__uptime();
 };
 

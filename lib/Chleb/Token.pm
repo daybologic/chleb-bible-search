@@ -28,42 +28,74 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Exception;
+package Chleb::Token;
 use strict;
 use warnings;
 use Moose;
 
-use HTTP::Status qw(:is);
+extends 'Chleb::Bible::Base';
 
-has description => (is => 'ro', isa => 'Str');
+use Digest::SHA;
+use English qw(-no_match_vars);
+use Readonly;
 
-has statusCode => (is => 'ro', isa => 'Int', default => 200);
+BEGIN {
+	our $VERSION = '0.12.0';
+}
 
-has location => (is => 'ro', isa => 'Str');
+Readonly my $DEFAULT_EXPIRES_SECONDS => 604_800; # one week
+Readonly our $DATA_VERSION => 1;
 
-sub raise {
-	my ($class, $statusCode, $thing, $additional) = @_;
+has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
+	my ($self) = @_;
+	return $self->created + $DEFAULT_EXPIRES_SECONDS;
+});
 
-	my %additionalDeref = ( );
-	%additionalDeref = %$additional if ($additional);
+has created => (is => 'rw', isa => 'Int', init_arg => 'now', default => sub {
+	return time();
+});
 
-	my %params = (
-		statusCode => $statusCode,
-		%additionalDeref,
-	);
+has version => (is => 'ro', isa => 'Int', init_arg => '_version', required => 1, default => sub {
+	return $DATA_VERSION;
+});
 
-	if (is_redirect($statusCode)) {
-		$params{location} = $thing;
-	} else {
-		$params{description} = $thing;
-	}
+has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, init_arg => '_repo');
 
-	return $class->new(\%params);
+has source => (is => 'ro', isa => 'Chleb::Token::Repository::Base', required => 1, init_arg => '_source');
+
+has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate');
+
+sub _generate {
+	my ($self) = @_;
+
+	my $sha = Digest::SHA->new(256);
+	return $sha->add($PID, time(), rand(time()))->hexdigest;
+}
+
+sub save {
+	my ($self) = @_;
+	return $self->source->save($self);
 }
 
 sub toString {
 	my ($self) = @_;
-	return sprintf('HTTP code %d: %s', $self->statusCode, $self->description);
+	return sprintf('Token %s', $self->value);
+}
+
+sub expired {
+	my ($self) = @_;
+	return time() >= $self->expires;
+}
+
+sub TO_JSON {
+	my ($self) = @_;
+
+	return {
+		created => $self->created,
+		expires => $self->expires,
+		value   => $self->value,
+		version => $self->version,
+	};
 }
 
 1;
