@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,14 +32,15 @@
 package LookupServerTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use English qw(-no_match_vars);
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server;
@@ -47,9 +48,12 @@ use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
 
-	$self->__mockLogger();
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
+
 	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
@@ -65,13 +69,13 @@ sub test_translation_all {
 		data => [
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					chapter => 110,
 					ordinal => 1,
 					text => 'Jehovah saith unto my Lord, Sit thou at my right hand, Until I make thine enemies thy footstool.',
 					translation => 'asv',
 				},
-				id => 'psa/110/1', # TODO shall we add translation here?
+				id => 'asv/psa/110/1',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/psa/109/31?translations=asv',
@@ -81,14 +85,14 @@ sub test_translation_all {
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'asv/psa',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'psa/110',
+							id => 'asv/psa/110',
 							type => 'chapter',
 						},
 						links => {},
@@ -97,13 +101,13 @@ sub test_translation_all {
 			},
 			{
 				attributes => {
-					book => 'Psa',
+					book => 'psa',
 					chapter => 110,
 					ordinal => 1,
 					text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
 					translation => 'kjv',
 				},
-				id => 'psa/110/1',
+				id => 'kjv/psa/110/1',
 				type => 'verse',
 				links => {
 					prev => '/1/lookup/psa/109/31?translations=kjv',
@@ -113,14 +117,14 @@ sub test_translation_all {
 				relationships => {
 					book => {
 						data => {
-							id => 'psa',
+							id => 'kjv/psa',
 							type => 'book',
 						},
 						links => {},
 					},
 					chapter => {
 						data => {
-							id => 'psa/110',
+							id => 'kjv/psa/110',
 							type => 'chapter',
 						},
 						links => {},
@@ -133,8 +137,10 @@ sub test_translation_all {
 				attributes => {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
+					translation => 'asv',
+					verse_count => 7,
 				},
-				id => re(qr@^\w+/\d{1,3}$@),
+				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
 				type => 'chapter',
 				relationships => {
 					book => {
@@ -147,8 +153,17 @@ sub test_translation_all {
 			},
 			{
 				attributes => {
+					chapter_count => 150,
+					long_name => 'Psalms',
 					ordinal => re(qr/^\d{1,2}$/),
+					sample_verse_text => ignore(),
+					sample_verse_chapter_ordinal => ignore(),
+					sample_verse_ordinal_in_chapter => ignore(),
+					short_name => 'psa',
+					short_name_raw => 'Psa',
 					testament => re(qr/^\w{3}$/),
+					translation => 'asv',
+					verse_count => 2_461,
 				},
 				id => ignore(),
 				relationships => {},
@@ -195,15 +210,6 @@ sub test_not_found {
 	}
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-
-	my $dic = Chleb::DI::Container->instance;
-	$dic->logger(Chleb::DI::MockLogger->new());
-
-	return;
 }
 
 package main;

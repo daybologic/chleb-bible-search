@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package TraverseEntireBibleReverseTests;
+package Test::Module::Runnable::Local;
 use strict;
 use warnings;
 use Moose;
@@ -38,74 +38,44 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
-use Test::Deep qw(all cmp_deeply isa methods);
-use POSIX qw(EXIT_SUCCESS);
-use Chleb;
+use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use English qw(-no_match_vars);
+use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
 
+has _dic => (isa => 'Chleb::DI::Container', is => 'ro', lazy => 1, default => sub {
+	return Chleb::DI::Container->new();
+});
+
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
 
-	$self->sut(Chleb->new());
-	$self->__mockLogger();
-
-	return EXIT_SUCCESS;
-}
-
-sub testTraversalReverse {
-	my ($self) = @_;
-	plan tests => 4;
-
-	my @bible = $self->sut->__getBible();
-	my $book = $bible[0]->getBookByOrdinal(-1);
-	cmp_deeply($book, all(
-		isa('Chleb::Bible::Book'),
-		methods(shortName => 'Rev'),
-	), 'Book lookup for Revelation');
-
-	my $verse = $book->getVerseByOrdinal(-1);
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => methods(ordinal => 66),
-			chapter => methods(ordinal => 22),
-			ordinal => 21,
-		),
-	), 'Last verse in bible correct: ' . $verse->toString());
-
-	my $previousVerse;
-	my $actualBibleVerseCount = 0;
-	do {
-		$actualBibleVerseCount++;
-		$previousVerse = $verse;
-		$verse = $verse->getPrev();
-	} while ($verse);
-
-	$verse = $previousVerse;
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book => methods(ordinal => 1),
-			chapter => methods(ordinal => 1),
-			ordinal => 1,
-		),
-	), 'first verse in bible correct: ' . $verse->toString());
-
-	my $expectBibleVerseCount = 31_102;
-	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
+	$self->___mockLogger();
 
 	return EXIT_SUCCESS;
 }
 
-sub __mockLogger {
+sub _isTestComprehensive {
+	my $testComprehensive = !$ENV{TEST_QUICK};
+
+	if ($testComprehensive) {
+		# Sourcehut: https://man.sr.ht/builds.sr.ht/#build-environment
+		$testComprehensive = 0 if ($ENV{CI} || $ENV{JOB_ID} || $ENV{PATCHSET_ID});
+	}
+
+	return $testComprehensive;
+}
+
+sub ___mockLogger {
 	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
+
+	$self->_dic->logger(Chleb::DI::MockLogger->new({ dic => $self->_dic }));
+	if ($self->sut && $self->sut->can('dic') && $self->sut->dic) {
+		$self->sut->dic->logger($self->_dic->logger) unless ($self->sut->dic->logger);
+	}
+
 	return;
 }
 
-package main;
-use strict;
-use warnings;
-
-exit(TraverseEntireBibleReverseTests->new->run());
+1;

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,16 +29,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-H=chleb-api.daybologic.co.uk
-#H=localhost:3000
-
-SCHEME=https
-#SCHEME=http
+H=localhost:3000
+SCHEME=http
 
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		curl -s "${SCHEME}://${H}/1/ping" | jq -r '.data[0].attributes | .message'
+		curl --header 'Accept: application/json' -s "${SCHEME}://${H}/1/ping" | jq -r '.data[0].attributes | .message'
 	else
-		curl -s "${SCHEME}://${H}/1/ping" | tr -d '\n' | grep -o '"message":[^"]*"[^"]*"'
+		curl --header 'Accept: text/html' -s "${SCHEME}://${H}/1/ping"
 	fi
 fi

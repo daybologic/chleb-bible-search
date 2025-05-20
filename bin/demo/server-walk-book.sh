@@ -1,6 +1,6 @@
 #!/bin/sh
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ port=3000
 base="${scheme}://${host}:${port}"
 
 while [ ! -z "$p" ]; do
-	json=$(curl -s "${base}${p}");
+	json=$(curl --header 'Accept: application/json' -s "${base}${p}");
 	p=$(echo "$json" | jq -r .links.next);
 	text=$(echo "$json" | jq -r .data[0].attributes.text);
 	echo "$text"

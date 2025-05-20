@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,33 +32,31 @@
 package PrideTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb;
 use Chleb::DI::MockLogger;
 use English qw(-no_match_vars);
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods);
 use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
+
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
 
 	$self->sut(Chleb->new());
-	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
 }
 
 sub testPride_default {
@@ -71,10 +69,11 @@ sub testPride_default {
 			isa('Chleb::Bible::Verse'),
 			methods(
 				book    => methods(
-					ordinal   => 20,
-					longName  => 'Proverbs',
-					shortName => 'Prov',
-					testament => 'old',
+					longName     => 'Proverbs',
+					ordinal      => 20,
+					shortName    => 'prov',
+					shortNameRaw => 'Prov',
+					testament    => 'old',
 				),
 				chapter => methods(
 					ordinal => 16,
@@ -98,11 +97,12 @@ sub testPride_allTranslations {
 			isa('Chleb::Bible::Verse'),
 			methods(
 				book    => methods(
-					bible     => methods(translation => 'asv'),
-					ordinal   => 20,
-					longName  => 'Proverbs',
-					shortName => 'Prov',
-					testament => 'old',
+					bible        => methods(translation => 'asv'),
+					longName     => 'Proverbs',
+					ordinal      => 20,
+					shortName    => 'prov',
+					shortNameRaw => 'Prov',
+					testament    => 'old',
 				),
 				chapter => methods(
 					ordinal => 16,
@@ -115,11 +115,12 @@ sub testPride_allTranslations {
 			isa('Chleb::Bible::Verse'),
 			methods(
 				book    => methods(
-					bible     => methods(translation => 'kjv'),
-					ordinal   => 20,
-					longName  => 'Proverbs',
-					shortName => 'Prov',
-					testament => 'old',
+					bible        => methods(translation => 'kjv'),
+					longName     => 'Proverbs',
+					ordinal      => 20,
+					shortName    => 'prov',
+					shortNameRaw => 'Prov',
+					testament    => 'old',
 				),
 				chapter => methods(
 					ordinal => 16,
@@ -145,7 +146,7 @@ sub testBadBook {
 		cmp_deeply($evalError, all(
 			isa('Chleb::Exception'),
 			methods(
-				description => "Long book name 'Mormon' is not a book in the bible",
+				description => "Long book name 'Mormon' is not a book in the bible, did you mean Amos?",
 				location    => undef,
 				statusCode  => 404,
 			),

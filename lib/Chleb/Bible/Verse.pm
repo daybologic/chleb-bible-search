@@ -1,5 +1,5 @@
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -99,11 +99,18 @@ sub TO_JSON {
 
 	return {
 		book        => $self->book->shortName,
-		chapter     => $self->chapter->ordinal,
-		ordinal     => $self->ordinal,
+		chapter     => $self->chapter->ordinal+0,
+		ordinal     => $self->ordinal+0,
 		text        => $self->text,
 		translation => $self->book->bible->translation,
 	};
+}
+
+sub getPath {
+	my ($self) = @_;
+	my @id = split(m@/@, $self->id);
+	shift(@id);
+	return join('/', @id);
 }
 
 sub __makeId {

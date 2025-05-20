@@ -1,5 +1,5 @@
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -131,13 +131,13 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	my $bookCount = scalar(@{ $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES] });
 
 	for (my $bookIndex = 0; $bookIndex < $bookCount; $bookIndex++) {
-		my $shortName = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES]->[$bookIndex];
-		my $bookInfo = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortName};
+		my $shortNameRaw = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES]->[$bookIndex];
+		my $bookInfo = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortNameRaw};
 		my $bookOrdinal = $bookIndex + 1;
 		$books[$bookIndex] = Chleb::Bible::Book->new({
 			bible      => $self->bible,
 			ordinal    => $bookOrdinal,
-			shortName  => $shortName,
+			shortNameRaw => $shortNameRaw,
 			longName   => $bookInfo->{n},
 			chapterCount => $bookInfo->{c},
 			verseCount => sum(values(%{ $bookInfo->{v} })),
@@ -164,8 +164,8 @@ sub getVerseKeyByBookVerseKey {
 }
 
 sub getBookInfoByShortName {
-	my ($self, $shortName) = @_;
-	return $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortName};
+	my ($self, $shortNameRaw) = @_;
+	return $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortNameRaw};
 }
 
 sub __fsck {

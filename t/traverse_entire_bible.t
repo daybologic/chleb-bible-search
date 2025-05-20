@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,15 +32,16 @@
 package TraverseEntireBibleTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb;
 use Chleb::DI::MockLogger;
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
 use Test::Deep qw(all cmp_deeply isa methods);
 use Test::More 0.96;
@@ -49,10 +50,13 @@ Readonly my $VERSE_FIRST => 0;
 Readonly my $VERSE_LAST  => 1;
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
+
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
 
 	$self->sut(Chleb->new());
-	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
@@ -81,9 +85,38 @@ sub testTraversal_asv {
 	return EXIT_SUCCESS;
 }
 
+sub testTraversalReverse {
+	my ($self, $translation) = @_;
+	Readonly my $TEST_COUNT => 4;
+	plan tests => $TEST_COUNT;
+
+	my $testComprehensive = !$ENV{TEST_QUICK};
+	SKIP: {
+		skip 'TEST_QUICK environment variable is set', $TEST_COUNT unless $self->_isTestComprehensive();
+
+		$self->__testTraversalReverseWork();
+	};
+
+	return EXIT_SUCCESS;
+}
+
 sub __checkTraversal {
 	my ($self, $translation) = @_;
-	plan tests => 4;
+	Readonly my $TEST_COUNT => 4;
+	plan tests => $TEST_COUNT;
+
+	my $testComprehensive = !$ENV{TEST_QUICK};
+	SKIP: {
+		skip 'TEST_QUICK environment variable is set', $TEST_COUNT unless $self->_isTestComprehensive();
+
+		$self->__checkTraversalWork($translation);
+	};
+
+	return;
+}
+
+sub __checkTraversalWork {
+	my ($self, $translation) = @_;
 
 	my %args = ( );
 	$args{translations} = [ $translation ] if ($translation);
@@ -92,7 +125,11 @@ sub __checkTraversal {
 	my $book = $bible[0]->getBookByOrdinal(1);
 	cmp_deeply($book, all(
 		isa('Chleb::Bible::Book'),
-		methods(shortName => 'Gen'),
+		methods(
+			longName => 'Genesis',
+			shortName => 'gen',
+			shortNameRaw => 'Gen',
+		),
 	), 'Book lookup for Genesis');
 
 	my $verse = $book->getVerseByOrdinal(1);
@@ -130,9 +167,48 @@ sub __checkTraversal {
 	return;
 }
 
-sub __mockLogger {
+sub __testTraversalReverseWork {
 	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
+
+	my @bible = $self->sut->__getBible();
+	my $book = $bible[0]->getBookByOrdinal(-1);
+	cmp_deeply($book, all(
+		isa('Chleb::Bible::Book'),
+		methods(shortName => 'rev'),
+		methods(shortNameRaw => 'Rev'),
+	), 'Book lookup for Revelation');
+
+	my $verse = $book->getVerseByOrdinal(-1);
+	cmp_deeply($verse, all(
+		isa('Chleb::Bible::Verse'),
+		methods(
+			book    => methods(ordinal => 66),
+			chapter => methods(ordinal => 22),
+			ordinal => 21,
+		),
+	), 'Last verse in bible correct: ' . $verse->toString());
+
+	my $previousVerse;
+	my $actualBibleVerseCount = 0;
+	do {
+		$actualBibleVerseCount++;
+		$previousVerse = $verse;
+		$verse = $verse->getPrev();
+	} while ($verse);
+
+	$verse = $previousVerse;
+	cmp_deeply($verse, all(
+		isa('Chleb::Bible::Verse'),
+		methods(
+			book => methods(ordinal => 1),
+			chapter => methods(ordinal => 1),
+			ordinal => 1,
+		),
+	), 'first verse in bible correct: ' . $verse->toString());
+
+	my $expectBibleVerseCount = 31_102;
+	is($actualBibleVerseCount, $expectBibleVerseCount, "Bible verse count: $expectBibleVerseCount");
+
 	return;
 }
 

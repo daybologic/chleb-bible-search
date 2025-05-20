@@ -1,3 +1,42 @@
+chleb-bible-search (1.2.0) stable; urgency=medium
+
+  * 🚸 added random sample verses to summary overview
+  * 🚸 "Did you mean?" added to books requested but not found
+  * ⚓️ static index page at /
+  * ⚓️ prev/next navigation links added to verses
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 17 May 2025 13:20:25 +0100
+
+chleb-bible-search (1.1.0) stable; urgency=medium
+
+  * ✨ support 1/info;
+    This new feature provides a summary of books in the bible for end-users,
+    and a processable list of how many chapters are in which books for JSON
+    users, including all available translations names.
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 04 May 2025 12:36:27 +0100
+
+chleb-bible-search (1.0.1) stable; urgency=medium
+
+  * 🐛 Fix values in JSON which should be integer but were string
+  * 🩹 pass translation to bible object
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 04 May 2025 10:18:06 +0100
+
+chleb-bible-search (1.0.0) stable; urgency=medium
+
+  * 💥 backwards incompatible change: you must pass Accept: application/json for
+     all requests which require JSON output!
+
+  * 🚸 better 404 and other HTTP error codes
+  * ✨ support 1/votd 307 redirect to 1/lookup
+
+  * 🐛 BUG fix 4e03075-wholeword-boolean-swagger
+    The problem here was merely using '?wholeword=true' in the URI,
+    and '?wholeword=1' had to be used before this fix.  Regression test introduced.
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Tue, 08 Apr 2025 21:15:37 +0100
+
 chleb-bible-search (0.11.0) stable; urgency=medium
 
   * ASV support (American Standard Version)

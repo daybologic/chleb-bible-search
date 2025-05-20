@@ -1,5 +1,5 @@
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -102,22 +102,24 @@ sub getPrev {
 
 sub toString {
 	my ($self) = @_;
-	return sprintf('%s %d', $self->book->shortName, $self->ordinal);
+	return sprintf('%s %d', $self->book->shortNameRaw, $self->ordinal);
 }
 
 sub TO_JSON {
 	my ($self) = @_;
 
 	return {
-		book    => $self->book->shortName,
-		ordinal => $self->ordinal,
+		book        => $self->book->shortName,
+		ordinal     => $self->ordinal+0,
+		translation => $self->book->bible->translation,
+		verse_count => $self->verseCount+0,
 	};
 }
 
 sub __makeVerseCount {
 	my ($self) = @_;
-	my $bookInfo = $self->bible->__backend->getBookInfoByShortName($self->book->shortName);
-	die 'FIXME: ' . $self->book->shortName unless ($bookInfo);
+	my $bookInfo = $self->bible->__backend->getBookInfoByShortName($self->book->shortNameRaw);
+	die 'FIXME: ' . $self->book->shortNameRaw unless ($bookInfo);
 	my $count = $bookInfo->{v}->{ $self->ordinal };
 	die("FIXME: ${count}, " . $self->ordinal) unless ($count);
 	return $count;

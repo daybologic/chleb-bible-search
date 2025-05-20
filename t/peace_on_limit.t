@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,23 +32,27 @@
 package PeaceOnEarthTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Test::Deep qw(all cmp_deeply isa methods);
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb;
 use Chleb::DI::MockLogger;
 use Test::More 0.96;
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
+
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
 
 	$self->sut(Chleb->new());
-	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
@@ -72,31 +76,37 @@ sub testPeaceSearch {
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
-				ordinal      => 11,
-				shortName    => '1Ki',
 				chapterCount => 22,
-				verseCount   => 816,
+				longName    => 'I Kings',
+				ordinal      => 11,
+				shortName    => '1ki',
+				shortNameRaw => '1Ki',
 				testament    => 'old',
+				verseCount   => 816,
 			),
 		),
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
-				ordinal      => 40,
-				shortName    => 'Mat',
 				chapterCount => 28,
-				verseCount   => 1071,
+				longName     => 'Matthew',
+				ordinal      => 40,
+				shortName    => 'mat',
+				shortNameRaw => 'Mat',
 				testament    => 'new',
+				verseCount   => 1_071,
 			),
 		),
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
-				ordinal      => 41,
-				shortName    => 'Mark',
 				chapterCount => 16,
-				verseCount   => 678,
+				longName     => 'Mark',
+				ordinal      => 41,
+				shortName    => 'mark',
+				shortNameRaw => 'Mark',
 				testament    => 'new',
+				verseCount   => 678,
 			),
 		),
 	);
@@ -160,12 +170,6 @@ sub testPeaceSearch {
 	), 'results inspection');
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
 }
 
 package main;

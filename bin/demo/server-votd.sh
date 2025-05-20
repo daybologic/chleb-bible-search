@@ -1,6 +1,6 @@
 #!/bin/sh
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,14 +29,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#now='2024-07-27T09:00:00%2B0100'
-H=chleb-api.daybologic.co.uk
+set -eu
+
+now=`date '+%Y-%m-%dT09:00:00%%2B0100'`
+H='localhost:3000'
 
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		curl -s "https://$H/1/votd?when=$now" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
+		json=$(curl -s --header 'Accept: application/json' "http://${H}/2/votd?when=$now&testament=new")
+		i=0
+		while true; do
+			line=$(echo "$json" | jq -r '.data['$i'].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text');
+			if [ "${line}" = " null:null " ]; then
+				break;
+			fi
+			echo "$line"
+			i=$i+1
+		done
 	else
-		curl -s "https://$H/1/votd?when=$now" | tr -d '\n' | grep -o '"text":[^"]*"[^"]*"'
+		curl --header 'Accept: text/plain' -s "http://$H/2/votd?when=$now?testament=new"
 	fi
-
 fi

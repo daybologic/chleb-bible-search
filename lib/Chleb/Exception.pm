@@ -1,5 +1,5 @@
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,14 @@ has statusCode => (is => 'ro', isa => 'Int', default => 200);
 has location => (is => 'ro', isa => 'Str');
 
 sub raise {
-	my ($class, $statusCode, $thing) = @_;
+	my ($class, $statusCode, $thing, $additional) = @_;
+
+	my %additionalDeref = ( );
+	%additionalDeref = %$additional if ($additional);
 
 	my %params = (
 		statusCode => $statusCode,
+		%additionalDeref,
 	);
 
 	if (is_redirect($statusCode)) {

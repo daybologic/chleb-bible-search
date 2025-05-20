@@ -1,5 +1,5 @@
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,17 +49,31 @@ use Digest::CRC qw(crc32);
 use HTTP::Status qw(:constants);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
+use Text::LevenshteinXS qw(distance);
 use Time::HiRes ();
 
 use Chleb::Bible::Backend;
 use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
+use Chleb::Constants;
 use Chleb::DI::Container;
 use Chleb::Exception;
 
 =head1 ATTRIBUTES
 
 =over
+
+=item C<id>
+
+=cut
+
+has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
+
+=item C<type>
+
+=cut
+
+has type => (is => 'ro', isa => 'Str', default => sub { 'bible' });
 
 =item C<bookCount>
 
@@ -149,19 +163,22 @@ in the key C<nonFatal> within the B<optional> C<$args> C<HASH>.
 sub getBookByShortName {
 	my ($self, $shortName, $args) = @_;
 
-	$shortName ||= '';
-	if ($shortName =~ m/^(\d)(\w+)$/) {
-		$shortName = "$1\u$2";
-	} else {
-		$shortName = "\u$shortName";
-	}
-
+	my $closestBook;
+	my $lowestDistance = $Chleb::Constants::UINT_MAX; # an impossibly high number, all mismatches will be lower
 	foreach my $book (@{ $self->books }) {
-		next if ($book->shortName ne $shortName);
+		my $distance = distance($book->shortName, $shortName);
+		if ($distance < $lowestDistance) {
+			$lowestDistance = $distance;
+			$closestBook = $book;
+		}
+
+		next unless ($book->equals($shortName));
 		return $book;
 	}
 
-	my $errorMsg = "Short book name '$shortName' is not a book in the bible";
+	my $errorMsg = "Short book name '$shortName' is not a book in the bible, did you mean "
+	    . $closestBook->shortName . '?';
+
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
@@ -171,23 +188,43 @@ sub getBookByShortName {
 	return undef;
 }
 
-=item C<getBookByLongName($longName)>
+=item C<getBookByLongName($longName, [$args])>
 
 Return a L<Chleb::Bible::Book> object from L</books> given its C<$shortName>.
 A fatal error occurs if the book does not exist or cannot be found.
 
+If you want to avoid a fatal error and merely want a warning, pass a true value
+in the key C<nonFatal> within the B<optional> C<$args> C<HASH>.
+
 =cut
 
 sub getBookByLongName {
-	my ($self, $longName) = @_;
+	my ($self, $longName, $args) = @_;
 
 	$longName ||= '';
+	my $closestBook;
+	my $lowestDistance = $Chleb::Constants::UINT_MAX; # an impossibly high number, all mismatches will be lower
 	foreach my $book (@{ $self->books }) {
+		my $distance = distance($book->longName, $longName);
+		if ($distance < $lowestDistance) {
+			$lowestDistance = $distance;
+			$closestBook = $book;
+		}
+
 		next if ($book->longName ne $longName);
 		return $book;
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_FOUND, "Long book name '$longName' is not a book in the bible");
+	my $errorMsg = "Long book name '$longName' is not a book in the bible, did you mean "
+	    . $closestBook->longName . "?";
+
+	if ($args->{nonFatal}) {
+		$self->dic->logger->warn($errorMsg);
+	} else {
+		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
+	}
+
+	return undef;
 }
 
 =item C<getBookByOrdinal($ordinal, [$args])>
@@ -355,6 +392,25 @@ sub fetch {
 	return $verse;
 }
 
+=item C<TO_JSON()>
+
+Returns the JSON:API C<attributes> associated with this Book.
+
+=cut
+
+sub TO_JSON {
+	my ($self) = @_;
+
+	return {
+		book_count           => $self->bookCount+0,
+		book_names_long      => [ map { $_->longName } @{ $self->books } ],
+		book_names_short     => [ map { $_->shortName } @{ $self->books } ],
+		book_names_short_raw => [ map { $_->shortNameRaw } @{ $self->books } ],
+		translation          => $self->translation,
+		verse_count          => $self->verseCount+0,
+	};
+}
+
 =back
 
 =head1 PRIVATE METHODS
@@ -396,6 +452,15 @@ Lazy-initializer for L</books>.
 sub __makeBooks {
 	my ($self) = @_;
 	return $self->__backend->getBooks();
+}
+
+=item C<__makeId>
+
+=cut
+
+sub __makeId {
+	my ($self) = @_;
+	return join('/', $self->type, $self->translation);
 }
 
 =back

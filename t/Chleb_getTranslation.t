@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,14 +43,6 @@ use Chleb;
 use Test::Deep qw(cmp_deeply);
 use Test::Exception;
 use Test::More 0.96;
-
-sub setUp {
-	my ($self) = @_;
-
-#	$self->sut(Chleb->new());
-
-	return EXIT_SUCCESS;
-}
 
 sub testSimple {
 	my ($self) = @_;

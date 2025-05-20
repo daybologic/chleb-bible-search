@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,12 @@
 package ServerMediaTypeTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb;
 use Chleb::DI::Container;
@@ -47,17 +48,6 @@ use POSIX qw(EXIT_SUCCESS);
 use Test::Deep qw(all cmp_deeply isa methods re ignore num);
 use Test::Exception;
 use Test::More 0.96;
-
-has dic => (isa => 'Chleb::DI::Container', is => 'rw');
-
-sub setUp {
-	my ($self) = @_;
-
-	$self->dic(Chleb::DI::Container->instance);
-	$self->__mockLogger();
-
-	return EXIT_SUCCESS;
-}
 
 sub testAny {
 	my ($self) = @_;
@@ -388,12 +378,6 @@ sub testMalformed {
 
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->dic->logger(Chleb::DI::MockLogger->new());
-	return;
 }
 
 package main;
