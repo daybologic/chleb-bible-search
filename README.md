@@ -19,6 +19,10 @@ For API documentation, please use the documentation published at [SwaggerHub](ht
 
 ## Availability
 
+A running version of the latest version of the microservice itself is hosted on behalf of the project at this location:
+
+  * [chleb-api.daybologic.co.uk](https://chleb-api.daybologic.co.uk/)
+
 Hosting for Chleb Bible Search source code is provided at the following sites:
 
   * [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/commits/branch/master)
