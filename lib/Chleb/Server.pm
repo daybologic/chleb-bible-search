@@ -1005,12 +1005,11 @@ get '/1/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
 	my $dancerRequest = request();
-	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
 	my $result;
 	eval {
 		$result = $server->__random({
-			accept => $mediaType,
+			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			translations => $translations,
 			testament => param('testament'),
 		});
@@ -1060,12 +1059,10 @@ get '/2/votd' => sub {
 	my $testament = param('testament');
 	my $dancerRequest = request();
 
-	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
-
 	my $result;
 	eval {
 		$result = $server->__votd({
-			accept       => $mediaType,
+			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			version      => 2,
 			when         => $when,
 			parental     => $parental,
@@ -1095,12 +1092,11 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
 	my $dancerRequest = request();
-	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
 	my $result;
 	eval {
 		$result = $server->__lookup({
-			accept       => $mediaType,
+			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			book         => $book,
 			chapter      => $chapter,
 			translations => $translations,
@@ -1128,12 +1124,11 @@ get '/1/search' => sub {
 	my $wholeword = param('wholeword');
 
 	my $dancerRequest = request();
-	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
 	my $result;
 	eval {
 		$result = $server->__search({
-			accept    => $mediaType,
+			accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			limit     => $limit,
 			term      => $term,
 			wholeword => $wholeword,
@@ -1176,11 +1171,10 @@ get '/1/info' => sub {
 	my $result;
 
 	my $dancerRequest = request();
-	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 
 	eval {
 		$result = $server->__info({
-			accept => $mediaType,
+			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 		});
 	};
 
