@@ -116,8 +116,10 @@ sub toString {
 
 =item C<__triggerWeight>
 
-Special handler for accesses to L</weight>.
-We check that the value does not have too much precison.
+Special trap handler for initial set of L</weight>.
+
+We check that the value does not have too much precison, and is a positive number,
+including zero, if not we die with a L<Chleb::Exception>.
 
 =cut
 
