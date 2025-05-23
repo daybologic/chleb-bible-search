@@ -76,6 +76,7 @@ sub __makeBook {
 		bible => $self->__bible,
 		longName => $name,
 		shortNameRaw => substr($name, 0, 3),
+		testamentFuture => Chleb::Type::Testament->new({ value => 'old' }),
 	});
 }
 
