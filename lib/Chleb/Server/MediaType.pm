@@ -134,6 +134,8 @@ sub parseAcceptHeader {
 			if (my $className = blessed($evalError)) {
 				if ($className eq 'Moose::Exception::ValidationFailedForTypeConstraint') {
 					die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, __extractMessageFromMooseException($evalError))
+				} elsif ($evalError->isa('Chleb::Exception')) {
+					die($evalError);
 				} else {
 					die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, $className);
 				}

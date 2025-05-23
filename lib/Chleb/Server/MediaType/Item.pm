@@ -33,6 +33,8 @@ use Moose;
 use strict;
 use warnings;
 
+use HTTP::Status qw(:constants);
+
 =head1 NAME
 
 Chleb::Server::MediaType::Item
@@ -122,13 +124,15 @@ We check that the value does not have too much precison.
 sub __triggerWeight {
 	my ($self) = @_;
 
-	die(sprintf("negative qValue, %.3f\n", $self->weight)) if ($self->weight < 0);
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, sprintf("Accept: negative qValue, %.3f", $self->weight))
+	    if ($self->weight < 0);
 
 	my $str4 = sprintf('%.4f', abs($self->weight));
 	my $str3 = sprintf('%.3f', abs($self->weight));
 
 	my $v = $str4 - $str3;
-	die("weight (qValue) precisions are limited to 3 digits\n") if ($v > 0);
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: weight (qValue) precisions are limited to 3 digits')
+	    if ($v > 0);
 
 	return;
 };
