@@ -383,7 +383,7 @@ sub testMalformed {
 sub testOverPrecision {
 	my ($self) = @_;
 
-	my $input = 'text/html;q=0.5001';
+	my $input = 'text/html;q=8.005001';
 
 	eval {
 		Chleb::Server::MediaType->parseAcceptHeader($input);

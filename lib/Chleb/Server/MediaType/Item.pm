@@ -129,12 +129,10 @@ sub __triggerWeight {
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, sprintf("Accept: negative qValue, %.3f", $self->weight))
 	    if ($self->weight < 0);
 
-	my $str4 = sprintf('%.4f', abs($self->weight));
-	my $str3 = sprintf('%.3f', abs($self->weight));
+	my (undef, $mantissa) = split(m/\./, $self->weight);
 
-	my $v = $str4 - $str3;
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: weight (qValue) precisions are limited to 3 digits')
-	    if ($v > 0);
+	    if (defined($mantissa) && length($mantissa) > 3);
 
 	return;
 };
