@@ -74,12 +74,11 @@ has [qw(major minor)] => (is => 'ro', required => 1, isa => 'Part');
 =item C<weight>
 
 The weight, whose default is always 1.0.  Lower values indicate a backup priority only.
-
-TODO: 1.1 and above is illegal, I think?  Check the standards.
+Valid values are between 0.000 and 1.000.  Greater precisions are not permitted.
 
 =cut
 
-has weight => (is => 'ro', required => 1, isa => 'Num', default => 1.0, required => 1);
+has weight => (is => 'ro', required => 1, isa => 'Num', default => 1.0, required => 1, trigger => \&__triggerWeight);
 
 =back
 
@@ -101,11 +100,36 @@ sub toString {
 
 	my $str = join('/', $self->major, $self->minor);
 
-	$str .= sprintf(';q=%.1f', $self->weight)
+	$str .= sprintf(';q=%.3f', $self->weight)
 	    if ($args->verbose);
 
 	return $str;
 }
+
+=back
+
+=head1 PRIVATE METHODS
+
+=over
+
+=item C<__triggerWeight>
+
+Special handler for accesses to L</weight>.
+We check that the value does not have too much precison.
+
+=cut
+
+sub __triggerWeight {
+	my ($self) = @_;
+
+	my $str4 = sprintf('%.4f', abs($self->weight));
+	my $str3 = sprintf('%.3f', abs($self->weight));
+
+	my $v = $str4 - $str3;
+	die("weight (qValue) precisions are limited to 3 digits\n") if ($v > 0);
+
+	return;
+};
 
 =back
 
