@@ -122,6 +122,8 @@ We check that the value does not have too much precison.
 sub __triggerWeight {
 	my ($self) = @_;
 
+	die(sprintf("negative qValue, %.3f\n", $self->weight)) if ($self->weight < 0);
+
 	my $str4 = sprintf('%.4f', abs($self->weight));
 	my $str3 = sprintf('%.3f', abs($self->weight));
 

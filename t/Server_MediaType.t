@@ -407,6 +407,32 @@ sub testOverPrecision {
 	return EXIT_SUCCESS;
 }
 
+sub testNegative {
+	my ($self) = @_;
+
+	my $input = 'text/html;q=-0.1';
+
+	eval {
+		Chleb::Server::MediaType->parseAcceptHeader($input);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		my $description = 'Accept: negative qValue, -0.100';
+		cmp_deeply($evalError, all(
+			isa('Chleb::Exception'),
+			methods(
+				description => re(qr/^$description/),
+				location    => undef,
+				statusCode  => 406,
+			),
+		), "'${input}': ${description}");
+	} else {
+		fail("'${input}': No exception raised, as was expected");
+	}
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;
