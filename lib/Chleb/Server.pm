@@ -793,12 +793,12 @@ sub __searchResultsToHtml {
 			undef,
 			$bookShortName,
 			$attributes->{chapter},
-			$attributes->{ordinal}
+			$attributes->{ordinal},
+			{ includeBookName => 1 },
 		);
 
-		$text .= sprintf("<p>[%s]<br />\r\n%s [%s] %s %s\r\n\r\n</p>",
+		$text .= sprintf("<p>[%s]<br />\r\n%s %s %s\r\n\r\n</p>",
 			$attributes->{title},
-			$bookShortName,
 			$linkToVerse,
 			$attributes->{text},
 		);
@@ -808,11 +808,19 @@ sub __searchResultsToHtml {
 }
 
 sub __linkToVerse {
-	my ($linkText, $bookShortName, $chapterOrdinal, $verseOrdinal) = @_;
-	$linkText ||= sprintf('%d:%d', $chapterOrdinal, $verseOrdinal);
+	my ($linkText, $bookShortName, $chapterOrdinal, $verseOrdinal, $options) = @_;
+
+	if (!defined($linkText)) {
+		if ($options->{includeBookName}) {
+			$linkText = sprintf('[%s %d:%d]', $bookShortName, $chapterOrdinal, $verseOrdinal);
+		} else {
+			$linkText = sprintf('[%d:%d]', $chapterOrdinal, $verseOrdinal);
+		}
+	}
+
 	return sprintf(
 		'<a href="/1/lookup/%s/%d/%d">%s</a>',
-		$bookShortName,
+		lc($bookShortName), # this is not ideal, we have a mixture of shortName and shortNameRaw callers
 		$chapterOrdinal,
 		$verseOrdinal,
 		$linkText,
@@ -878,7 +886,7 @@ sub __infoToHtml {
 		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= $printCell->($attributes->{short_name});
 		$text .= $printCell->(sprintf(
-			'%s [%s]',
+			'%s %s',
 			Chleb::Utils::limitText($attributes->{sample_verse_text}),
 			__linkToVerse(
 				undef,
