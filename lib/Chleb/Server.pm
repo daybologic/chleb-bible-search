@@ -787,11 +787,19 @@ sub __searchResultsToHtml {
 	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
 		my $verse = $json->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
-		$text .= sprintf("<p>[%s]<br />\r\n%s %d:%d %s\r\n\r\n</p>",
-			$attributes->{title},
-			$rawBookNameMap{ $attributes->{book} },
+		my $bookShortName = $rawBookNameMap{ $attributes->{book} };
+
+		my $linkToVerse = __linkToVerse(
+			undef,
+			$bookShortName,
 			$attributes->{chapter},
-			$attributes->{ordinal},
+			$attributes->{ordinal}
+		);
+
+		$text .= sprintf("<p>[%s]<br />\r\n%s [%s] %s %s\r\n\r\n</p>",
+			$attributes->{title},
+			$bookShortName,
+			$linkToVerse,
 			$attributes->{text},
 		);
 	}
