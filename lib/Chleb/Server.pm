@@ -810,6 +810,15 @@ sub __searchResultsToHtml {
 sub __linkToVerse {
 	my ($linkText, $bookShortName, $chapterOrdinal, $verseOrdinal, $options) = @_;
 
+	if ($options) {
+		my %knownOptions = map { $_ => 1 } (qw(includeBookName));
+
+		foreach my $option (keys(%$options)) {
+			next if ($knownOptions{$option});
+			die('unknown option -- ' . $option);
+		}
+	}
+
 	if (!defined($linkText)) {
 		if ($options->{includeBookName}) {
 			$linkText = sprintf('%s [%d:%d]', $bookShortName, $chapterOrdinal, $verseOrdinal);

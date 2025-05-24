@@ -44,6 +44,7 @@ use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
@@ -74,6 +75,17 @@ sub testSuccess {
 
 	$html = Chleb::Server::__linkToVerse(undef, 'Gen', 22, 4);
 	is($html, '<a href="/1/lookup/gen/22/4">' . '[22:4]' . '</a>', 'html without linkText and without options');
+
+	return EXIT_SUCCESS;
+}
+
+sub testFailure {
+	my ($self) = @_;
+	plan tests => 1;
+
+	throws_ok {
+		Chleb::Server::__linkToVerse(undef, 'Gen', 22, 4, { illegalOption => 'whatever' });
+	} qr/unknown option -- illegalOption/, 'trap unknown option';
 
 	return EXIT_SUCCESS;
 }
