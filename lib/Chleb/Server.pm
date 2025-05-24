@@ -787,16 +787,53 @@ sub __searchResultsToHtml {
 	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
 		my $verse = $json->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
-		$text .= sprintf("<p>[%s]<br />\r\n%s %d:%d %s\r\n\r\n</p>",
-			$attributes->{title},
-			$rawBookNameMap{ $attributes->{book} },
+		my $bookShortName = $rawBookNameMap{ $attributes->{book} };
+
+		my $linkToVerse = __linkToVerse(
+			undef,
+			$bookShortName,
 			$attributes->{chapter},
 			$attributes->{ordinal},
+			{ includeBookName => 1 },
+		);
+
+		$text .= sprintf("<p>[%s]<br />\r\n%s %s %s\r\n\r\n</p>",
+			$attributes->{title},
+			$linkToVerse,
 			$attributes->{text},
 		);
 	}
 
 	return $text;
+}
+
+sub __linkToVerse {
+	my ($linkText, $bookShortName, $chapterOrdinal, $verseOrdinal, $options) = @_;
+
+	if ($options) {
+		my %knownOptions = map { $_ => 1 } (qw(includeBookName));
+
+		foreach my $option (keys(%$options)) {
+			next if ($knownOptions{$option});
+			die('unknown option -- ' . $option);
+		}
+	}
+
+	if (!defined($linkText)) {
+		if ($options->{includeBookName}) {
+			$linkText = sprintf('%s [%d:%d]', $bookShortName, $chapterOrdinal, $verseOrdinal);
+		} else {
+			$linkText = sprintf('[%d:%d]', $chapterOrdinal, $verseOrdinal);
+		}
+	}
+
+	return sprintf(
+		'<a href="/1/lookup/%s/%d/%d">%s</a>',
+		lc($bookShortName), # this is not ideal, we have a mixture of shortName and shortNameRaw callers
+		$chapterOrdinal,
+		$verseOrdinal,
+		$linkText,
+	);
 }
 
 sub __infoToHtml {
@@ -839,18 +876,6 @@ sub __infoToHtml {
 		return $linkToChapter->($linkText, $bookShortName, 1);
 	};
 
-	my $linkToVerse = sub {
-		my ($linkText, $bookShortName, $chapterOrdinal, $verseOrdinal) = @_;
-		$linkText ||= sprintf('%d:%d', $chapterOrdinal, $verseOrdinal);
-		return sprintf(
-			'<a href="/1/lookup/%s/%d/%d">%s</a>',
-			$bookShortName,
-			$chapterOrdinal,
-			$verseOrdinal,
-			$linkText,
-		);
-	};
-
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
 		my $included = $json->{included}->[$includedI];
 		next if ($included->{type} ne 'book');
@@ -870,9 +895,9 @@ sub __infoToHtml {
 		$text .= $printCell->($attributes->{verse_count}, 1);
 		$text .= $printCell->($attributes->{short_name});
 		$text .= $printCell->(sprintf(
-			'%s [%s]',
+			'%s %s',
 			Chleb::Utils::limitText($attributes->{sample_verse_text}),
-			$linkToVerse->(
+			__linkToVerse(
 				undef,
 				$attributes->{short_name},
 				$attributes->{sample_verse_chapter_ordinal},
@@ -905,7 +930,7 @@ sub __infoToHtml {
 			$attributes->{book},
 			$attributes->{ordinal},
 		));
-		$text .= $printCell->($linkToVerse->(
+		$text .= $printCell->(__linkToVerse(
 			$attributes->{verse_count},
 			$attributes->{book},
 			$attributes->{ordinal},
