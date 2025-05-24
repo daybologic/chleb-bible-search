@@ -799,6 +799,18 @@ sub __searchResultsToHtml {
 	return $text;
 }
 
+sub __linkToVerse {
+	my ($linkText, $bookShortName, $chapterOrdinal, $verseOrdinal) = @_;
+	$linkText ||= sprintf('%d:%d', $chapterOrdinal, $verseOrdinal);
+	return sprintf(
+		'<a href="/1/lookup/%s/%d/%d">%s</a>',
+		$bookShortName,
+		$chapterOrdinal,
+		$verseOrdinal,
+		$linkText,
+	);
+}
+
 sub __infoToHtml {
 	my ($json) = @_;
 
@@ -839,18 +851,6 @@ sub __infoToHtml {
 		return $linkToChapter->($linkText, $bookShortName, 1);
 	};
 
-	my $linkToVerse = sub {
-		my ($linkText, $bookShortName, $chapterOrdinal, $verseOrdinal) = @_;
-		$linkText ||= sprintf('%d:%d', $chapterOrdinal, $verseOrdinal);
-		return sprintf(
-			'<a href="/1/lookup/%s/%d/%d">%s</a>',
-			$bookShortName,
-			$chapterOrdinal,
-			$verseOrdinal,
-			$linkText,
-		);
-	};
-
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
 		my $included = $json->{included}->[$includedI];
 		next if ($included->{type} ne 'book');
@@ -872,7 +872,7 @@ sub __infoToHtml {
 		$text .= $printCell->(sprintf(
 			'%s [%s]',
 			Chleb::Utils::limitText($attributes->{sample_verse_text}),
-			$linkToVerse->(
+			__linkToVerse(
 				undef,
 				$attributes->{short_name},
 				$attributes->{sample_verse_chapter_ordinal},
@@ -905,7 +905,7 @@ sub __infoToHtml {
 			$attributes->{book},
 			$attributes->{ordinal},
 		));
-		$text .= $printCell->($linkToVerse->(
+		$text .= $printCell->(__linkToVerse(
 			$attributes->{verse_count},
 			$attributes->{book},
 			$attributes->{ordinal},
