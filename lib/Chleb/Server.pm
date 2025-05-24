@@ -812,7 +812,7 @@ sub __linkToVerse {
 
 	if (!defined($linkText)) {
 		if ($options->{includeBookName}) {
-			$linkText = sprintf('[%s %d:%d]', $bookShortName, $chapterOrdinal, $verseOrdinal);
+			$linkText = sprintf('%s [%d:%d]', $bookShortName, $chapterOrdinal, $verseOrdinal);
 		} else {
 			$linkText = sprintf('[%d:%d]', $chapterOrdinal, $verseOrdinal);
 		}
