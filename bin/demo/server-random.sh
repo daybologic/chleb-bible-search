@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,13 +29,49 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-H=localhost:3000
+set -eu
+
+H='localhost:3000'
 
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		curl --header 'Accept: application/json' -s "http://$H/1/random?testament=new" | jq -r '.data[0].attributes | .book + " " + (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text'
-	else
-		curl --header 'Accept: text/html' -s "http://$H/1/random"
-	fi
+		json=$(curl -s --header 'Accept: application/json' "http://${H}/1/random?testament=new")
+		i=0
+		bookId=''
+		bookName=''
+		while true; do
+			includedType=$(echo "$json" | jq -r '.included['$i'].type');
 
+			if [ "${includedType}" = "null" ]; then
+				break;
+			fi
+
+			if [ "${includedType}" = "book" ]; then
+				bookId=$(echo "$json" | jq -r '.included['$i'].id');
+				bookName=$(echo "$json" | jq -r '.included['$i'].attributes.short_name_raw');
+				break;
+			fi
+
+			((++i))
+		done
+
+		i=0
+		while true; do
+			bookRelationship=$(echo "$json" | jq -r '.data['$i'].relationships.book.data.id');
+			if [ "$bookRelationship" = "$bookId" ]; then
+				line1=$(echo "$json" | jq -r '.data['$i'].attributes | (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text');
+				if [ "${line1}" = "null:null " ]; then
+					break;
+				fi
+				line="$bookName $line1"
+				echo "$line"
+			else
+				break;
+			fi
+
+			((++i))
+		done
+	else
+		curl --header 'Accept: text/html' -s "http://$H/1/random?testament=new"
+	fi
 fi
