@@ -63,7 +63,7 @@ sub testEmpty {
 	my ($self) = @_;
 	plan tests => 1;
 
-	$self->mock('main', 'serveStaticPage'); # TODO: Can't mock main
+	$self->mock('main', 'serveStaticPage');
 
 	my %json = ( data => [ ] );
 	Chleb::Server::__searchResultsToHtml(\%json);
