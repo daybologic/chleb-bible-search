@@ -73,6 +73,6 @@ if [ -x /usr/bin/curl ]; then
 			((++i))
 		done
 	else
-		curl --header 'Accept: text/plain' -s "http://$H/2/votd?when=$now?testament=new"
+		curl --header 'Accept: text/html' -s "http://$H/2/votd?when=$now?testament=new"
 	fi
 fi
