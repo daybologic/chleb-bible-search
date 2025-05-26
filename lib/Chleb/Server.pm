@@ -772,6 +772,10 @@ sub __verseToHtml {
 sub __searchResultsToHtml {
 	my ($json) = @_;
 
+	if (0 == scalar(@{ $json->{data} })) { # no results?
+		main::serveStaticPage('no_results');
+	}
+
 	my $includedCount = scalar(@{ $json->{included} });
 	my %rawBookNameMap = ( );
 	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
@@ -1004,12 +1008,12 @@ sub handleException {
 	return;
 }
 
-get '/' => sub {
-	# Serve a simple HTML landing page for users who don't want to read Swagger
+sub serveStaticPage {
+	my ($name) = @_;
 	my $html = '';
 
 	my $filePathFailed;
-	foreach my $filePath (@{ $server->explodeHtmlFilePath('index') }) { # TODO: Could this whole stanza be moved out, to help read other files elsewhere?
+	foreach my $filePath (@{ $server->explodeHtmlFilePath($name) }) {
 		if (my $file = IO::File->new($filePath, 'r')) {
 			while (my $line = $file->getline()) {
 				$html .= $line;
@@ -1024,6 +1028,11 @@ get '/' => sub {
 
 	my $error = $ERRNO;
 	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
+}
+
+get '/' => sub {
+	serveStaticPage('index');
+	return;
 };
 
 get '/1/random' => sub {
