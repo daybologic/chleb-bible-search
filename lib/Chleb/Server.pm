@@ -773,7 +773,8 @@ sub __searchResultsToHtml {
 	my ($json) = @_;
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
-		main::serveStaticPage('no_results');
+		main::serveStaticPage('no_results'); # doesn't return...
+		return; # ...but does in unit tests
 	}
 
 	my $includedCount = scalar(@{ $json->{included} });
@@ -1225,8 +1226,9 @@ get '/1/info' => sub {
 	return $result;
 };
 
+$server = Chleb::Server->new();
+
 unless (caller()) {
-	$server = Chleb::Server->new();
 	$0 = 'chleb-bible-search [server]';
 	dance;
 
