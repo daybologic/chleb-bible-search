@@ -28,6 +28,7 @@ Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 Package: chleb-bible-search
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
+ bash (>= 5.2.15-2),
  libconfig-ini-perl,
  libdatetime-perl,
  libdatetime-format-strptime-perl,
