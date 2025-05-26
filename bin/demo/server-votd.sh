@@ -34,6 +34,11 @@ set -eu
 now=`date '+%Y-%m-%dT09:00:00%%2B0100'`
 H='localhost:3000'
 
+if [ -x /usr/games/bible-votd ]; then
+	/usr/games/bible-votd
+	exit 0
+fi
+
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
 		json=$(curl -s --header 'Accept: application/json' "http://${H}/2/votd?when=$now&testament=new")
