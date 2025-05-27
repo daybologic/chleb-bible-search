@@ -29,50 +29,53 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Test::Module::Runnable::Local;
+package SearchResultsToHtmlServerTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
-use English qw(-no_match_vars);
-use POSIX qw(EXIT_SUCCESS);
+use Chleb::Server;
+use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::Exception;
 use Test::More 0.96;
-
-has dic => (isa => 'Chleb::DI::Container', is => 'ro', lazy => 1, default => sub {
-	return Chleb::DI::Container->instance;
-});
 
 sub setUp {
 	my ($self, %params) = @_;
 
-	$self->__mockLogger();
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
+
+	$self->sut(Chleb::Server->new());
 
 	return EXIT_SUCCESS;
 }
 
-sub _isTestComprehensive {
-	my $testComprehensive = !$ENV{TEST_QUICK};
-
-	if ($testComprehensive) {
-		# Sourcehut: https://man.sr.ht/builds.sr.ht/#build-environment
-		$testComprehensive = 0 if ($ENV{CI} || $ENV{JOB_ID} || $ENV{PATCHSET_ID});
-	}
-
-	return $testComprehensive;
-}
-
-sub __mockLogger {
+sub testEmpty {
 	my ($self) = @_;
+	plan tests => 1;
 
-	$self->dic->logger(Chleb::DI::MockLogger->new());
+	$self->mock('main', 'serveStaticPage');
 
-	return;
+	my %json = ( data => [ ] );
+	Chleb::Server::__searchResultsToHtml(\%json);
+
+	my $mockCalls = $self->mockCallsWithObject('main', 'serveStaticPage');
+	cmp_deeply($mockCalls, [['no_results']], "calls to serveStaticPage for 'no_results'") or diag(explain($mockCalls));
+
+	return EXIT_SUCCESS;
 }
 
-1;
+package main;
+use strict;
+use warnings;
+
+exit(SearchResultsToHtmlServerTests->new->run());
