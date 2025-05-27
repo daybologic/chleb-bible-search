@@ -33,17 +33,18 @@
 package Book_equalsTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb::Bible;
 use Chleb::Bible::Book;
 use Chleb::DI::MockLogger;
 use English qw(-no_match_vars);
-use POSIX qw(EXIT_SUCCESS);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
 use Test::More;
@@ -51,9 +52,11 @@ use Test::More;
 has __bible => (isa => 'Chleb::Bible', is => 'rw');
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
 
-	$self->__mockLogger();
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
 
 	$self->__bible(Chleb::Bible->new({
 		translation => 'asv',
@@ -128,15 +131,6 @@ sub testDifferentBook {
 	ok(!$self->sut->equals($self->__makeBook('Matthew')), 'different book');
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-
-	my $dic = Chleb::DI::Container->instance;
-	$dic->logger(Chleb::DI::MockLogger->new());
-
-	return;
 }
 
 package main;

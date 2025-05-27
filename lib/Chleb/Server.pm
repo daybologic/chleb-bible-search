@@ -32,6 +32,9 @@
 package Chleb::Server;
 use strict;
 use warnings;
+use Moose;
+
+extends 'Chleb::Bible::Base';
 
 =head1 NAME
 
@@ -64,45 +67,28 @@ Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HT
 
 =over
 
-=item C<new()>
+=item C<BUILD()>
 
-Construct and return a new C<Chleb::Server>.
-
-=cut
-
-sub new {
-	my ($class) = @_;
-	my $object = bless({}, $class);
-
-	$object->__title();
-
-	return $object;
-}
-
-=item C<dic()>
-
-Return the singleton L<Chleb::DI::Container>.
+Book called after construction, by Moose.
 
 =cut
 
-sub dic {
-	return Chleb::DI::Container->instance;
+sub BUILD {
+	my ($self) = @_;
+
+	# Nothing to do
+
+	return;
 }
 
-=back
-
-=head1 PRIVATE METHODS
-
-=over
-
-=item C<__title()>
+=item C<title()>
 
 This should only be called once, and at server startup time.
 There is no return value.
 
 =cut
 
-sub __title {
+sub title {
 	my ($self) = @_;
 
 	$self->dic->logger->info("Started Chleb Bible Server: \"Man shall not live by bread alone, but by every word that proceedeth out of the mouth of God.\" (Matthew 4:4)");
@@ -116,6 +102,12 @@ sub __title {
 
 	return;
 }
+
+=back
+
+=head1 PRIVATE METHODS
+
+=over
 
 =item C<__library()>
 
@@ -957,6 +949,8 @@ are in order of preference, and you should process the first file which exists.
 
 The returned value is an C<ARRAY> ref.
 
+=back
+
 =cut
 
 sub explodeHtmlFilePath {
@@ -1230,6 +1224,7 @@ $server = Chleb::Server->new();
 
 unless (caller()) {
 	$0 = 'chleb-bible-search [server]';
+	$server->title();
 	dance;
 
 	exit(EXIT_SUCCESS);

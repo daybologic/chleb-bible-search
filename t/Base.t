@@ -182,12 +182,6 @@ sub __checkCmpAddressMatch {
 	return;
 }
 
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
-}
-
 package main;
 use strict;
 use warnings;
