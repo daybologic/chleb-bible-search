@@ -238,7 +238,7 @@ sub __random {
 	my $json = __verseToJsonApi($verse, $params);
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
-		my $version = 1;
+		my $version = $params->{version};
 		$json->{links}->{self} = '/' . join('/', $version, 'random');
 		return $json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
@@ -1030,8 +1030,9 @@ get '/' => sub {
 	return;
 };
 
-get '/1/random' => sub {
+get '/:version/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
+	my $version = int(param('version') || 1);
 
 	my $dancerRequest = request();
 
@@ -1041,6 +1042,7 @@ get '/1/random' => sub {
 			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			translations => $translations,
 			testament => param('testament'),
+			version => $version,
 		});
 	};
 
@@ -1049,11 +1051,11 @@ get '/1/random' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('1/random returned as HTML');
+		$server->dic->logger->trace("${version}/random returned as HTML");
 		send_as html => $result;
 	}
 
-	$server->dic->logger->trace('1/random returned as JSON');
+	$server->dic->logger->trace("${version}/random returned as JSON");
 	return $result;
 };
 
