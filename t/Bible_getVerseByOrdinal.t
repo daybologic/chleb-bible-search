@@ -87,11 +87,15 @@ sub __checkFirstVerse {
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
-				longName     => 'Genesis',
-				ordinal      => 1,
-				shortName    => 'gen',
-				shortNameRaw => 'Gen',
-				testament    => 'old',
+				longName        => 'Genesis',
+				ordinal         => 1,
+				shortName       => 'gen',
+				shortNameRaw    => 'Gen',
+				testament       => 'old',
+				testamentFuture => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'old'),
+				),
 			),
 			chapter => methods(
 				ordinal => 1,
@@ -111,11 +115,15 @@ sub __checkLastVerse {
 		isa('Chleb::Bible::Verse'),
 		methods(
 			book    => methods(
-				longName     => 'Revelation of John',
-				ordinal      => 66,
-				shortName    => 'rev',
-				shortNameRaw => 'Rev',
-				testament    => 'new',
+				longName        => 'Revelation of John',
+				ordinal         => 66,
+				shortName       => 'rev',
+				shortNameRaw    => 'Rev',
+				testament       => 'new',
+				testamentFuture => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'new'),
+				),
 			),
 			chapter => methods(
 				ordinal => 22,
