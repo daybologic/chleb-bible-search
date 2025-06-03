@@ -233,12 +233,11 @@ sub __random {
 	my ($self, $params) = @_;
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
-
+	my $version = __versionFilter($params->{version}, 1, 2);
 	my $verse = $self->__library->random($params);
 	my $json = __verseToJsonApi($verse, $params);
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
-		my $version = $params->{version};
 		$json->{links}->{self} = '/' . join('/', $version, 'random');
 		return $json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
@@ -967,6 +966,16 @@ sub explodeHtmlFilePath {
 	}
 
 	return \@returnedPaths;
+}
+
+sub __versionFilter {
+	my ($version, $minimum, $maximum) = @_;
+
+	$version = int($version);
+	die Chleb::Exception->raise(HTTP_BAD_REQUEST, "endpoint version must be between $minimum and $maximum, you said $version")
+	    if ($version < $minimum || $version > $maximum);
+
+	return $version;
 }
 
 package main;
