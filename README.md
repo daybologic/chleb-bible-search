@@ -100,7 +100,7 @@ Please name your branch using this scheme:
 Please check if the bug you are reported is already recognized, but if you need to raise an issue
 or report a bug, please do so on [GitHub](https://github.com/daybologic/chleb-bible-search/issues).
 If there is a security problem, please consider reporting to me directly:
-<a href="mailto:palmer\@2e0eol.com">palmer\@2e0eol.com</a>
+<a href="mailto:2e0eol\@gmail.com">2e0eol\@gmail.com</a>
 
 ### Standards and Principles
 
