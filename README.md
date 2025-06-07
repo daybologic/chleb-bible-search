@@ -6,7 +6,7 @@ Welcome to the Chleb Bible Search by Rev. Duncan Ross Palmer
 
 ## What is Chleb Bible Search
 
-A self-hostable microservice for querying the bible and searching for content, using a small, compressed, binary file.
+A self-hostable microservice for querying the bible and searching for content.
 The backend Perl library is also designed to be easily integrated with applications.
 
 The service also provides a determinsitic verse of the day lookup.
