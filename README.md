@@ -46,7 +46,7 @@ You are welcome to use our hosted version of the service, at [chleb-api.daybolog
 This is the easiest way to fire up and get searching the bible via your application or website.  However, if you want to install
 the service on your own equipment.  Please install the deb file, where possible, an then run:
 
-sudo dpkg -i chleb-bible-search_1.1.0_all.deb
+sudo dpkg -i chleb-bible-search_1.2.0_all.deb
 sudo systemctl enable chleb-bible-search.service
 sudo invoke-rc.d chleb-bible-search start
 
