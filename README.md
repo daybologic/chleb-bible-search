@@ -61,10 +61,11 @@ TODO
 
 How to install with Nginx (recommended).
 
-With the Debian package, we automatically install the site file to /etc/nginx/sites-available/chleb-api,
+With the Debian package, we automatically install the site file to /etc/nginx/sites-available/chleb-bible-search,
 but in any case, you can copy and modify this file to the available sites location in the Nginx configuration
 directory.  Remember to modify the hostname to match your site!  Also, you may need a symbolic link to make
-the site live.  We will not do this for you!  Under Debian, this name will be /etc/nginx/sites-enabled/chleb-api
+the site live.  We will not do this for you!  Under Debian, this name will be
+/etc/nginx/sites-enabled/chleb-bible-search
 
 ## Contributing
 
