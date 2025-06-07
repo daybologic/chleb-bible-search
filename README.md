@@ -54,8 +54,9 @@ sudo invoke-rc.d chleb-bible-search start
 
 #### Apache
 
-How to install with Apache.
-TODO
+If you have made the microservice work using Apache as a proxy, please contribute and tell us how
+you did it.  Otherwise, we recomment Nginx; it's simple, lightweight, and provides everything you
+will need to install the project.
 
 #### Nginx
 
