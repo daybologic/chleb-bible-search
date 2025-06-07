@@ -1,7 +1,5 @@
 server {
-	#listen [::]:80;
-
-	server_name chleb-api.daybologic.co.uk;
+	server_name chleb-api.example.org;
 
 	root /var/www/tutorial;
 
@@ -20,22 +18,21 @@ server {
 	}
 
     listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/chleb-api.daybologic.co.uk/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/chleb-api.daybologic.co.uk/privkey.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/chleb-api.example.org/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/chleb-api.example.org/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
 }
 server {
-    if ($host = chleb-api.daybologic.co.uk) {
+    if ($host = chleb-api.example.org) {
         return 301 https://$host$request_uri;
     } # managed by Certbot
 
 
 	listen 80;
 
-	server_name chleb-api.daybologic.co.uk;
+	server_name chleb-api.example.org;
     return 404; # managed by Certbot
-
 
 }
