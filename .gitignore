@@ -18,3 +18,4 @@ data/*-verses.txt
 data/*.bin
 data/*.bin.gz
 externals
+*.build
