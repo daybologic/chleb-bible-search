@@ -92,3 +92,25 @@ Please name your branch using this scheme:
 | refactor/&lt;description&gt; | Not features, design changes | NO | NO |
 | tests/&lt;description&gt; | Unit tests, functional tests, sanity improvements | NO | NO |
 | &lt;user&gt;/&lt;hierarchy&gt; | Your GitHub username, followed by recognized hierarchies above | NO | YES |
+
+### Raising issues
+
+Please check if the bug you are reported is already recognized, but if you need to raise an issue
+or report a bug, please do so on [GitHub](https://github.com/daybologic/chleb-bible-search/issues).
+If there is a security problem, please consider reporting to me directly:
+<a href="mailto:palmer\@2e0eol.com">palmer\@2e0eol.com</a>
+
+### Standards and Principles
+
+All of the standards we use are documented elsewhere on the world-wide web:
+
+  * [Git](https://git-scm.com/)
+  * [GitFlow](https://nvie.com/posts/a-successful-git-branching-model/)
+  * [JSON:API](https://jsonapi.org/format/)
+  * [Perl 5](https://dev.perl.org/perl5/)
+  * [RESTful](https://restfulapi.net/)
+  * [Semantic Versioning](https://semver.org/)
+  * [Twelve-Factor App](https://12factor.net/)
+
+Very importantly, the master branch is always the latest release, and should be production ready at any time!
+Please do not submit and target pull requests to the master branch, but to the develop branch!
