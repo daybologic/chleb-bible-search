@@ -1008,7 +1008,7 @@ sub serveStaticPage {
 	my $html = '';
 
 	my $filePathFailed;
-	foreach my $filePath (@{ $server->explodeHtmlFilePath($name) }) {
+	foreach my $filePath (@{ Chleb::Utils::explodeHtmlFilePath($name) }) {
 		if (my $file = IO::File->new($filePath, 'r')) {
 			while (my $line = $file->getline()) {
 				$html .= $line;
