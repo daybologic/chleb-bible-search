@@ -312,6 +312,26 @@ sub limitText {
 	return $text; # simple
 }
 
+=item C<explodeHtmlFilePath($name)>
+
+=cut
+
+sub explodeHtmlFilePath {
+	my ($name) = @_;
+	my @returnedPaths = ( );
+
+	my @paths = ('./data/static', '/usr/share/chleb-bible-search');
+	foreach my $path (@paths) {
+		my @extensions = (qw(html htm));
+		foreach my $extension (@extensions) {
+			my $returnedPath = sprintf('%s/%s.%s', $path, $name, $extension);
+			push(@returnedPaths, $returnedPath);
+		}
+	}
+
+	return \@returnedPaths;
+}
+
 =back
 
 =cut
