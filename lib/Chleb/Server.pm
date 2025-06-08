@@ -968,6 +968,13 @@ sub explodeHtmlFilePath {
 	return \@returnedPaths;
 }
 
+=item C<__versionFilter($version, $minimum, $maximum)>
+
+Throw a 400 error if C<$version> is outwith C<$minimum> and C<$maximum> values,
+otherwise, C<$version> is returned.
+
+=cut
+
 sub __versionFilter {
 	my ($version, $minimum, $maximum) = @_;
 
