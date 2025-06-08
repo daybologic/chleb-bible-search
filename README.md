@@ -110,6 +110,7 @@ All of the standards we use are documented elsewhere on the world-wide web:
 
   * [Git](https://git-scm.com/)
   * [GitFlow](https://nvie.com/posts/a-successful-git-branching-model/)
+  * [Gitmoji](https://gitmoji.dev/)
   * [JSON:API](https://jsonapi.org/format/)
   * [Perl 5](https://dev.perl.org/perl5/)
   * [RESTful](https://restfulapi.net/)
