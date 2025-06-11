@@ -727,6 +727,8 @@ sub __verseToHtml {
 		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
+	$output .= __linkToHome();
+
 	$output .= "<p>\r\n";
 	foreach my $type (qw(prev next)) {
 		my $link = $json->[0]->{data}->[0]->{links}->{$type};
@@ -780,7 +782,9 @@ sub __searchResultsToHtml {
 		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
-	my $text = '';
+
+	my $text = __linkToHome();
+
 	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
 		my $verse = $json->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
@@ -802,6 +806,13 @@ sub __searchResultsToHtml {
 	}
 
 	return $text;
+}
+
+sub __linkToHome { # add a link to home (root)
+	my $output .= "<p>\r\n";
+	$output .= sprintf("\t<a href=\"%s\">%s</a>\r\n", '/', 'home');
+	$output .= "</p>\r\n";
+	return $output;
 }
 
 sub __linkToVerse {
