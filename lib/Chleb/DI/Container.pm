@@ -66,7 +66,7 @@ Otherwise, you should replace it with L<Chleb::DI::MockLogger> during a test.
 
 =cut
 
-has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
+has logger => (is => 'rw', lazy => 1, builder => '_makeLogger', clearer => 'resetLogger');
 
 =item C<config>
 

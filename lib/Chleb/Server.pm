@@ -1194,6 +1194,17 @@ get '/1/info' => sub {
 
 $server = Chleb::Server->new();
 
+# Trap SIGHUP
+local $SIG{HUP} = sub {
+	eval {
+		$server->dic->resetLogger();
+		$server->dic->logger->debug('Received SIGHUP, re-opening logs');
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$server->dic->logger->error($evalError);
+	}
+};
+
 unless (caller()) {
 	$0 = 'chleb-bible-search [server]';
 	$server->title();
