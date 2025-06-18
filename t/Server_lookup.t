@@ -212,6 +212,8 @@ sub test_not_found {
 	return EXIT_SUCCESS;
 }
 
+__PACKAGE__->meta->make_immutable;
+
 package main;
 use strict;
 use warnings;
