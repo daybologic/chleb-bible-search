@@ -61,4 +61,6 @@ sub raise {
 	return $class->new(\%params);
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

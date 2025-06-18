@@ -941,6 +941,8 @@ sub __infoToHtml {
 	return $text;
 }
 
+__PACKAGE__->meta->make_immutable;
+
 package main;
 use strict;
 use warnings;

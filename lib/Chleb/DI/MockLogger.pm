@@ -89,4 +89,6 @@ sub trace {
 	return $self->log($msg);
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

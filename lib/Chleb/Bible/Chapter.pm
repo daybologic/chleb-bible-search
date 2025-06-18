@@ -130,4 +130,6 @@ sub __makeId {
 	return join('/', $self->book->id, $self->ordinal);
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

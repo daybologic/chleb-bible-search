@@ -241,4 +241,6 @@ sub __bibleFileName {
 	return $fileName;
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

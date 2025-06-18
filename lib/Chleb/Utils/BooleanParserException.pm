@@ -51,4 +51,6 @@ sub raise {
 	die(__PACKAGE__ . ' is abstract');
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;
