@@ -324,6 +324,8 @@ sub testDefaultNone {
 	return EXIT_SUCCESS;
 }
 
+__PACKAGE__->meta->make_immutable;
+
 package main;
 use strict;
 use warnings;

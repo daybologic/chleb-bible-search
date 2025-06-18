@@ -30,4 +30,6 @@ sub __makeId {
 	return join('/', $self->type, create_uuid_as_string(UUID_MD5, $idStrInput));
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

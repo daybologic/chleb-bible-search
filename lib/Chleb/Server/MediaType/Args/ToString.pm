@@ -35,4 +35,6 @@ use Moose;
 
 extends 'Chleb::Args::Base';
 
+__PACKAGE__->meta->make_immutable;
+
 1;

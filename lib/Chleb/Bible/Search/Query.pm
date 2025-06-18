@@ -114,4 +114,6 @@ sub toString {
 	return sprintf("%s text '%s'", 'Query', $self->text);
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

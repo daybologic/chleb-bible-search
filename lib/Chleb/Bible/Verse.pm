@@ -136,4 +136,6 @@ sub __makeParental {
 	return $self->dic->exclusions->isExcluded($self);
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

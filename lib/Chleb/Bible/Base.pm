@@ -121,4 +121,6 @@ sub _cmpAddress {
 	return ($result[0] == $result[1]);
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;
