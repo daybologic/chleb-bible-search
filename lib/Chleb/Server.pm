@@ -233,12 +233,11 @@ sub __random {
 	my ($self, $params) = @_;
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
-
+	my $version = __versionFilter($params->{version}, 1, 2);
 	my $verse = $self->__library->random($params);
 	my $json = __verseToJsonApi($verse, $params);
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
-		my $version = 1;
 		$json->{links}->{self} = '/' . join('/', $version, 'random');
 		return $json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
@@ -943,6 +942,16 @@ sub __infoToHtml {
 
 __PACKAGE__->meta->make_immutable;
 
+sub __versionFilter {
+	my ($version, $minimum, $maximum) = @_;
+
+	$version = int($version);
+	die Chleb::Exception->raise(HTTP_BAD_REQUEST, "endpoint version must be between $minimum and $maximum, you said $version")
+	    if ($version < $minimum || $version > $maximum);
+
+	return $version;
+}
+
 package main;
 use strict;
 use warnings;
@@ -1004,8 +1013,9 @@ get '/' => sub {
 	return;
 };
 
-get '/1/random' => sub {
+get '/:version/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
+	my $version = int(param('version') || 1);
 
 	my $dancerRequest = request();
 
@@ -1015,6 +1025,7 @@ get '/1/random' => sub {
 			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			translations => $translations,
 			testament => param('testament'),
+			version => $version,
 		});
 	};
 
@@ -1023,11 +1034,11 @@ get '/1/random' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('1/random returned as HTML');
+		$server->dic->logger->trace("${version}/random returned as HTML");
 		send_as html => $result;
 	}
 
-	$server->dic->logger->trace('1/random returned as JSON');
+	$server->dic->logger->trace("${version}/random returned as JSON");
 	return $result;
 };
 
