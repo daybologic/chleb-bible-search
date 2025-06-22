@@ -68,15 +68,14 @@ sub test {
 
 	my @bible = $self->sut->__getBible();
 	my $book = Chleb::Bible::Book->new({
-		bible           => $bible[0],
-		chapterCount    => 1,
-		longName        => 'Book of Morman',
-		ordinal         => 21,
-		shortName       => 'susana',
-		shortNameRaw    => 'Susana',
-		testament       => 'old',
-		testamentFuture => Chleb::Type::Testament->new({ value => 'old' }),
-		verseCount      => 1,
+		bible        => $bible[0],
+		chapterCount => 1,
+		longName     => 'Book of Morman',
+		ordinal      => 21,
+		shortName    => 'susana',
+		shortNameRaw => 'Susana',
+		testament    => Chleb::Type::Testament->new({ value => 'old' }),
+		verseCount   => 1,
 	});
 
 	my $translation = 'kjv';
@@ -101,7 +100,7 @@ sub test {
 				ordinal      => 21,
 				shortName    => 'susana',
 				shortNameRaw => 'Susana',
-				testament    => 'old',
+				testament    => Chleb::Type::Testament->new({ value => 'old' }),
 			),
 			chapter => methods(
 				ordinal => 1_121,

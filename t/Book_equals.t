@@ -43,7 +43,9 @@ extends 'Test::Module::Runnable::Local';
 use Chleb::Bible;
 use Chleb::Bible::Book;
 use Chleb::DI::MockLogger;
+use Chleb::Type::Testament;
 use English qw(-no_match_vars);
+use Moose::Util::TypeConstraints;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
@@ -77,7 +79,7 @@ sub __makeBook {
 		bible => $self->__bible,
 		longName => $name,
 		shortNameRaw => substr($name, 0, 3),
-		testamentFuture => Chleb::Type::Testament->new({ value => 'old' }),
+		testament => Chleb::Type::Testament->new({ value => 'old' }),
 		verseCount => 1_533,
 	});
 }

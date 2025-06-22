@@ -73,7 +73,10 @@ sub testSuccess {
 				ordinal      => 32, # 32nd book is 'Jonah'
 				shortName    => 'jonah',
 				shortNameRaw => 'Jonah',
-				testament    => 'old',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'old'),
+				),
 			),
 			chapter => methods(
 				ordinal => 4,
@@ -93,7 +96,10 @@ sub testSuccess {
 				ordinal      => 20,
 				shortName    => 'prov',
 				shortNameRaw => 'Prov',
-				testament    => 'old',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'old'),
+				),
 			),
 			chapter => methods(
 				ordinal => 16,
@@ -113,7 +119,10 @@ sub testSuccess {
 				ordinal      => 1,
 				shortName    => 'gen',
 				shortNameRaw => 'Gen',
-				testament    => 'old',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'old'),
+				),
 			),
 			chapter => methods(
 				ordinal => 1,
@@ -132,7 +141,10 @@ sub testSuccess {
 				ordinal      => 1,
 				shortName    => 'gen',
 				shortNameRaw => 'Gen',
-				testament    => 'old',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'old'),
+				),
 			),
 			chapter => methods(
 				ordinal => 50,
@@ -152,7 +164,10 @@ sub testSuccess {
 				ordinal      => 66,
 				shortName    => 'rev',
 				shortNameRaw => 'Rev',
-				testament    => 'new',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'new'),
+				),
 			),
 			chapter => methods(
 				ordinal => 22,

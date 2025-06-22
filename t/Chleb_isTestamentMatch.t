@@ -81,7 +81,7 @@ sub testMatchOldFuture {
 		chapterCount => 50,
 		longName => 'Genesis',
 		shortNameRaw => 'Gen',
-		testamentFuture => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::OLD }),
+		testament => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::OLD }),
 		verseCount => 1_533,
 	});
 
@@ -91,7 +91,7 @@ sub testMatchOldFuture {
 		book => $book,
 		chapter => $chapter,
 		ordinal => 1,
-		testamentFuture => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::OLD }),
+		testament => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::OLD }),
 		text => $self->uniqueStr(),
 	});
 
@@ -112,7 +112,7 @@ sub testMatchNewFuture {
 		chapterCount => 4,
 		longName => 'Philippians',
 		shortNameRaw => 'Phil',
-		testamentFuture => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::NEW }),
+		testament => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::NEW }),
 		verseCount => 104,
 	});
 
@@ -122,7 +122,7 @@ sub testMatchNewFuture {
 		book => $book,
 		chapter => $chapter,
 		ordinal => 26,
-		testamentFuture => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::NEW }),
+		testament => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::NEW }),
 		text => $self->uniqueStr(),
 	});
 

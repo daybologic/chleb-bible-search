@@ -45,9 +45,15 @@ Object representing one testament name within The Holy Bible
 
 extends 'Chleb::Bible::Base';
 
-use Moose::Util::TypeConstraints qw(enum);
+use Moose::Util::TypeConstraints;
 use Readonly;
 use Scalar::Util qw(blessed refaddr);
+
+coerce 'Chleb::Type::Testament',
+	from 'Str',
+	via {
+		Chleb::Type::Testament->new({ value => $_ });
+	};
 
 =head1 CONSTANTS
 

@@ -73,7 +73,10 @@ sub testPride_default {
 					ordinal      => 20,
 					shortName    => 'prov',
 					shortNameRaw => 'Prov',
-					testament    => 'old',
+					testament    => all(
+						isa('Chleb::Type::Testament'),
+						methods(value => 'old'),
+					),
 				),
 				chapter => methods(
 					ordinal => 16,
@@ -102,7 +105,10 @@ sub testPride_allTranslations {
 					ordinal      => 20,
 					shortName    => 'prov',
 					shortNameRaw => 'Prov',
-					testament    => 'old',
+					testament    => all(
+						isa('Chleb::Type::Testament'),
+						methods(value => 'old'),
+					),
 				),
 				chapter => methods(
 					ordinal => 16,
@@ -120,7 +126,10 @@ sub testPride_allTranslations {
 					ordinal      => 20,
 					shortName    => 'prov',
 					shortNameRaw => 'Prov',
-					testament    => 'old',
+					testament    => all(
+						isa('Chleb::Type::Testament'),
+						methods(value => 'old'),
+					),
 				),
 				chapter => methods(
 					ordinal => 16,

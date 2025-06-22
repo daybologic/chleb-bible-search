@@ -142,8 +142,7 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 			longName   => $bookInfo->{n},
 			chapterCount => $bookInfo->{c},
 			verseCount => sum(values(%{ $bookInfo->{v} })),
-			testament  => ($bookInfo->{t} eq 'O') ? 'old' : 'new',
-			testamentFuture => Chleb::Type::Testament->createFromBackendValue($bookInfo->{t}),
+			testament => Chleb::Type::Testament->createFromBackendValue($bookInfo->{t}),
 		});
 	}
 
