@@ -110,7 +110,7 @@ Integer; The number of verses in the book (cannot be changed).
 
 =cut
 
-has [qw(chapterCount verseCount)] => (is => 'ro', isa => 'Int');
+has [qw(chapterCount verseCount)] => (is => 'ro', isa => 'Int', required => 1);
 
 =item C<testament>
 

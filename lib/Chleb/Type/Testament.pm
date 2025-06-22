@@ -47,6 +47,7 @@ extends 'Chleb::Bible::Base';
 
 use Moose::Util::TypeConstraints qw(enum);
 use Readonly;
+use Scalar::Util qw(blessed refaddr);
 
 =head1 CONSTANTS
 
@@ -127,6 +128,26 @@ Human-readable representation.
 sub toString {
 	my ($self) = @_;
 	return $self->value;
+}
+
+=item C<equals($other)>
+
+Returns true if this testament object represents the same testament as another.
+both strings and objects are supported.
+
+=cut
+
+sub equals {
+	my ($self, $other) = @_;
+
+	return 0 if (!$other);
+	if (my $blessing = blessed($other)) {
+		return 1 if (refaddr($self) == refaddr($other));
+		return ($self->value eq $other->value) if ($blessing eq ref($self));
+		return 0;
+	}
+
+	return ($self->value eq $other);
 }
 
 =back

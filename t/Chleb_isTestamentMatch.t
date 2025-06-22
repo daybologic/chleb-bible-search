@@ -29,8 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#!/usr/bin/perl
-package Book_equalsTests;
+package ChlebIsTestamentMatchTests;
 use strict;
 use warnings;
 use lib 't/lib';
@@ -40,16 +39,14 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable::Local';
 
-use Chleb::Bible;
+use Chleb;
+use Chleb::Bible::Verse;
 use Chleb::Bible::Book;
-use Chleb::DI::MockLogger;
-use English qw(-no_match_vars);
+use Chleb::Type::Testament;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Test::Deep qw(cmp_deeply all isa methods bool re);
+use Test::Deep qw(cmp_deeply);
 use Test::Exception;
-use Test::More;
-
-has __bible => (isa => 'Chleb::Bible', is => 'rw');
+use Test::More 0.96;
 
 sub setUp {
 	my ($self, %params) = @_;
@@ -58,80 +55,79 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->__bible(Chleb::Bible->new({
-		translation => 'asv',
-	}));
-
-	$self->sut($self->__makeBook());
+	$self->sut(Chleb->new());
 
 	return EXIT_SUCCESS;
 }
 
-sub __makeBook {
-	my ($self, $name) = @_;
+sub testAny {
+	my ($self) = @_;
+	plan tests => 1;
 
-	$name = 'Genesis' unless ($name);
+	my $testament = Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::ANY });
+	ok($self->sut->__isTestamentMatch(undef, $testament), 'any testament matches without even looking at verse');
 
-	return Chleb::Bible::Book->new({
+	return EXIT_SUCCESS;
+}
+
+sub testMatchOldFuture {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @bible = $self->sut->__getBible();
+
+	my $book = Chleb::Bible::Book->new({
+		bible => $bible[0],
 		chapterCount => 50,
-		bible => $self->__bible,
-		longName => $name,
-		shortNameRaw => substr($name, 0, 3),
-		testamentFuture => Chleb::Type::Testament->new({ value => 'old' }),
+		longName => 'Genesis',
+		shortNameRaw => 'Gen',
+		testamentFuture => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::OLD }),
 		verseCount => 1_533,
 	});
-}
 
-sub testWrongObject {
-	my ($self) = @_;
-	return $self->__checkWrongObject($self);
-}
+	my $chapter = $book->getChapterByOrdinal(1);
 
-sub testNullObject {
-	my ($self) = @_;
-	return $self->__checkWrongObject(undef);
-}
+	my $verse = Chleb::Bible::Verse->new({
+		book => $book,
+		chapter => $chapter,
+		ordinal => 1,
+		testamentFuture => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::OLD }),
+		text => $self->uniqueStr(),
+	});
 
-sub __checkWrongObject {
-	my ($self, $object) = @_;
-	plan tests => 1;
-
-	eval {
-		$self->sut->equals($object);
-	};
-
-	my $expectDescription = 'Not a book, in Book/equals()';
-	if (my $evalError = $EVAL_ERROR) {
-		cmp_deeply($evalError, all(
-			isa('Chleb::Exception'),
-			methods(
-				description => $expectDescription,
-				location    => undef,
-				statusCode  => 500,
-			),
-		), $expectDescription);
-	} else {
-		fail('No exception raised, as was expected');
-	}
+	my $testament = Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::OLD });
+	ok($self->sut->__isTestamentMatch($verse, $testament), 'old testament future match');
 
 	return EXIT_SUCCESS;
 }
 
-sub testSameBook {
-	my ($self) = @_;
-	plan tests => 2;
-
-	ok($self->sut->equals($self->sut), 'same object');
-	ok($self->sut->equals($self->__makeBook()), 'same book, different object');
-
-	return EXIT_SUCCESS;
-}
-
-sub testDifferentBook {
+sub testMatchNewFuture {
 	my ($self) = @_;
 	plan tests => 1;
 
-	ok(!$self->sut->equals($self->__makeBook('Matthew')), 'different book');
+	my @bible = $self->sut->__getBible();
+
+	my $book = Chleb::Bible::Book->new({
+		bible => $bible[0],
+		chapterCount => 4,
+		longName => 'Philippians',
+		shortNameRaw => 'Phil',
+		testamentFuture => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::NEW }),
+		verseCount => 104,
+	});
+
+	my $chapter = $book->getChapterByOrdinal(1);
+
+	my $verse = Chleb::Bible::Verse->new({
+		book => $book,
+		chapter => $chapter,
+		ordinal => 26,
+		testamentFuture => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::NEW }),
+		text => $self->uniqueStr(),
+	});
+
+	my $testament = Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::NEW });
+	ok($self->sut->__isTestamentMatch($verse, $testament), 'new testament future match');
 
 	return EXIT_SUCCESS;
 }
@@ -141,4 +137,5 @@ __PACKAGE__->meta->make_immutable;
 package main;
 use strict;
 use warnings;
-exit(Book_equalsTests->new->run);
+
+exit(ChlebIsTestamentMatchTests->new->run());
