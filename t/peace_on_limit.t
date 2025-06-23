@@ -77,11 +77,11 @@ sub testPeaceSearch {
 			isa('Chleb::Bible::Book'),
 			methods(
 				chapterCount => 22,
-				longName    => 'I Kings',
+				longName     => 'I Kings',
 				ordinal      => 11,
 				shortName    => '1ki',
 				shortNameRaw => '1Ki',
-				testament => all(
+				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'old'),
 				),
@@ -96,7 +96,7 @@ sub testPeaceSearch {
 				ordinal      => 40,
 				shortName    => 'mat',
 				shortNameRaw => 'Mat',
-				testament => all(
+				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'new'),
 				),
@@ -111,7 +111,7 @@ sub testPeaceSearch {
 				ordinal      => 41,
 				shortName    => 'mark',
 				shortNameRaw => 'Mark',
-				testament => all(
+				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'new'),
 				),

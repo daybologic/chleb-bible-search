@@ -82,7 +82,7 @@ sub testPeaceSearch_defaultTranslation {
 				ordinal      => 40,
 				shortName    => 'mat',
 				shortNameRaw => 'Mat',
-				testament => all(
+				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'new'),
 				),
@@ -97,7 +97,7 @@ sub testPeaceSearch_defaultTranslation {
 				ordinal      => 42,
 				shortName    => 'luke',
 				shortNameRaw => 'Luke',
-				testament => all(
+				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'new'),
 				),
@@ -200,7 +200,7 @@ sub testPeaceSearch_asvTranslation {
 				ordinal      => 40,
 				shortName    => 'mat',
 				shortNameRaw => 'Mat',
-				testament => all(
+				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'new'),
 				),
@@ -258,7 +258,7 @@ sub testPeaceSearch_asvTranslation {
 				ordinal      => 42,
 				shortName    => 'luke',
 				shortNameRaw => 'Luke',
-				testament => all(
+				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'new'),
 				),
@@ -324,7 +324,7 @@ sub testPeaceSearch_asvTranslationViaBible_textParam {
 				ordinal      => 42,
 				shortName    => 'luke',
 				shortNameRaw => 'Luke',
-				testament => all(
+				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'new'),
 				),
@@ -391,7 +391,7 @@ sub testPeaceSearch_asvTranslationViaBible_direct {
 				shortNameRaw => 'Luke',
 				chapterCount => 24,
 				verseCount   => 1151,
-				testament => all(
+				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'new'),
 				),
