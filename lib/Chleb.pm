@@ -344,13 +344,14 @@ sub __isTestamentMatch {
 	my ($self, $verse, $testament) = @_;
 
 	return 1 if ($testament->value eq $Chleb::Type::Testament::ANY);
-	return 1 if ($verse->book->testament eq $testament->value);
+	$self->dic->logger->info('testament attribute used');
+	return 1 if ($verse->book->testament->equals($testament));
 
 	$self->dic->logger->trace(sprintf(
 		'Verse %s testament mismatch, wanted %s, but this is %s',
 		$verse->toString(),
 		$testament->toString(),
-		$verse->book->testament, # TODO: use testamentFuture
+		$verse->book->testament->toString(),
 	));
 
 	return 0;

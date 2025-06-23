@@ -91,7 +91,10 @@ sub __checkFirstVerse {
 				ordinal      => 1,
 				shortName    => 'gen',
 				shortNameRaw => 'Gen',
-				testament    => 'old',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'old'),
+				),
 			),
 			chapter => methods(
 				ordinal => 1,
@@ -115,7 +118,10 @@ sub __checkLastVerse {
 				ordinal      => 66,
 				shortName    => 'rev',
 				shortNameRaw => 'Rev',
-				testament    => 'new',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'new'),
+				),
 			),
 			chapter => methods(
 				ordinal => 22,
