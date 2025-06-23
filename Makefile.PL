@@ -39,7 +39,7 @@ use warnings;
 system('bin/maint/synology.sh');
 
 my $exeFiles = [glob q('data/*.bin.gz')];
-push(@$exeFiles, 'bin/core/chleb-bible-search.psgi');
+push(@$exeFiles, 'bin/core/app.psgi');
 
 WriteMakefile(
 	NAME         => 'Chleb',
