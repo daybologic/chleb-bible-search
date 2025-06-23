@@ -735,8 +735,7 @@ sub __verseToHtml {
 	$output .= __linkToHome();
 
 	if ($function == $FUNCTION_RANDOM) {
-		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n",
-		    $json->[0]->{links}->{self}, 'another'); # TODO: Should only work on random page
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $json->[0]->{links}->{self}, 'another');
 	}
 
 	$output .= "<p>\r\n";
