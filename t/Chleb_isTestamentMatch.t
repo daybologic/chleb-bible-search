@@ -70,7 +70,7 @@ sub testAny {
 	return EXIT_SUCCESS;
 }
 
-sub testMatchOldFuture {
+sub testMatchOld {
 	my ($self) = @_;
 	plan tests => 1;
 
@@ -101,7 +101,7 @@ sub testMatchOldFuture {
 	return EXIT_SUCCESS;
 }
 
-sub testMatchNewFuture {
+sub testMatchNew {
 	my ($self) = @_;
 	plan tests => 1;
 
@@ -132,7 +132,7 @@ sub testMatchNewFuture {
 	return EXIT_SUCCESS;
 }
 
-sub testMismatchFuture {
+sub testMismatch {
 	my ($self) = @_;
 	plan tests => 1;
 
