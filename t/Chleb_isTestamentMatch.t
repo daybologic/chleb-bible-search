@@ -132,6 +132,37 @@ sub testMatchNewFuture {
 	return EXIT_SUCCESS;
 }
 
+sub testMismatchFuture {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @bible = $self->sut->__getBible();
+
+	my $book = Chleb::Bible::Book->new({
+		bible => $bible[0],
+		chapterCount => 4,
+		longName => 'Philippians',
+		shortNameRaw => 'Phil',
+		testament => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::NEW }),
+		verseCount => 104,
+	});
+
+	my $chapter = $book->getChapterByOrdinal(1);
+
+	my $verse = Chleb::Bible::Verse->new({
+		book => $book,
+		chapter => $chapter,
+		ordinal => 26,
+		testament => Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::NEW }),
+		text => $self->uniqueStr(),
+	});
+
+	my $testament = Chleb::Type::Testament->new({ value => $Chleb::Type::Testament::OLD });
+	ok(!$self->sut->__isTestamentMatch($verse, $testament), 'testament future mismatch');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
