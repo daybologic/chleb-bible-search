@@ -237,9 +237,10 @@ sub __random {
 	my $verse = $self->__library->random($params);
 	my $json = __verseToJsonApi($verse, $params);
 
+	my $version = 1;
+	$json->{links}->{self} = '/' . join('/', $version, 'random');
+
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
-		my $version = 1;
-		$json->{links}->{self} = '/' . join('/', $version, 'random');
 		return $json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		return __verseToHtml([$json]);
@@ -728,6 +729,7 @@ sub __verseToHtml {
 	}
 
 	$output .= __linkToHome();
+	$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", 'another', $json->[0]->{links}->{self}); # TODO: Should only work on random page
 
 	$output .= "<p>\r\n";
 	foreach my $type (qw(prev next)) {
