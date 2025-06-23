@@ -29,15 +29,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-my $app = sub {
-	my $env = shift;
+use strict;
+use warnings;
+use FindBin;
+use lib "$FindBin::Bin/lib";
+use Chleb::Server;
 
-	return [
-		200,
-		[ 'Content-Type' => 'text/plain' ],
-		[ "Welcome to Chleb Bible Search\n" ],
-	];
-};
-
-# Return the app for Plack to run
-$app;
+Chleb::Server->to_app;
