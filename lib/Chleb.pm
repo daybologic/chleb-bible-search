@@ -345,7 +345,7 @@ sub __isTestamentMatch {
 
 	return 1 if ($testament->value eq $Chleb::Type::Testament::ANY);
 	$self->dic->logger->info('testament attribute used');
-	return 1 if ($verse->book->testament->value eq $testament->value); # TODO: Can we have an equals() method within Chleb::Type::Testament
+	return 1 if ($verse->book->testament->equals($testament));
 
 	$self->dic->logger->trace(sprintf(
 		'Verse %s testament mismatch, wanted %s, but this is %s',
