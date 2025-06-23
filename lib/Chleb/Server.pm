@@ -63,6 +63,10 @@ use UUID::Tiny ':std';
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 
+Readonly my $FUNCTION_RANDOM => 1;
+Readonly my $FUNCTION_VOTD => 2;
+Readonly my $FUNCTION_LOOKUP => 3;
+
 =head1 METHODS
 
 =over
@@ -213,7 +217,7 @@ sub __lookup {
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		return $json[0];
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml(\@json);
+		return __verseToHtml(\@json, $FUNCTION_LOOKUP);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -243,7 +247,7 @@ sub __random {
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		return $json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml([$json]);
+		return __verseToHtml([$json], $FUNCTION_RANDOM);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -297,7 +301,7 @@ sub __votd {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml(\@json);
+			return __verseToHtml(\@json, $FUNCTION_VOTD);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -714,7 +718,7 @@ sub __verseToJsonApi {
 }
 
 sub __verseToHtml {
-	my ($json) = @_;
+	my ($json, $function) = @_;
 
 	my $output = '';
 	my $includedCount = scalar(@{ $json->[0]->{included} });
@@ -729,7 +733,11 @@ sub __verseToHtml {
 	}
 
 	$output .= __linkToHome();
-	$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", 'another', $json->[0]->{links}->{self}); # TODO: Should only work on random page
+
+	if ($function == $FUNCTION_RANDOM) {
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n",
+		    $json->[0]->{links}->{self}, 'another'); # TODO: Should only work on random page
+	}
 
 	$output .= "<p>\r\n";
 	foreach my $type (qw(prev next)) {
