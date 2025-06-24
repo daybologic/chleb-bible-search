@@ -33,6 +33,6 @@ use strict;
 use warnings;
 use FindBin;
 use lib "$FindBin::Bin/lib";
-use Chleb::Server;
+use Chleb::Server::Routes;
 
-Chleb::Server->to_app;
+Chleb::Server::Routes->to_app;

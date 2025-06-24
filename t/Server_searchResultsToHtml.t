@@ -43,6 +43,7 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server;
+use Chleb::Server::Routes;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::Exception;
 use Test::More 0.96;
@@ -63,12 +64,12 @@ sub testEmpty {
 	my ($self) = @_;
 	plan tests => 1;
 
-	$self->mock('main', 'serveStaticPage');
+	$self->mock('Chleb::Server::Routes', 'serveStaticPage');
 
 	my %json = ( data => [ ] );
 	Chleb::Server::__searchResultsToHtml(\%json);
 
-	my $mockCalls = $self->mockCallsWithObject('main', 'serveStaticPage');
+	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Routes', 'serveStaticPage');
 	cmp_deeply($mockCalls, [['no_results']], "calls to serveStaticPage for 'no_results'") or diag(explain($mockCalls));
 
 	return EXIT_SUCCESS;
