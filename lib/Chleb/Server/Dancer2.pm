@@ -29,22 +29,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Server::Routes;
+package Chleb::Server::Dancer2;
 use strict;
 use warnings;
 use Dancer2 0.2;
 
 =head1 NAME
 
-Chleb::Server::Routes - Dancer2 routing
+Chleb::Server::Dancer2
 
 =head1 DESCRIPTION
 
-Pass this object to Plack
+Pass this object to Plack to launch the server!
 
 =cut
 
 use Chleb::Utils::OSError::Mapper;
+use Chleb::Server::Moose;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
@@ -302,7 +303,7 @@ get '/1/info' => sub {
 #};
 
 # TODO: Need to do all this stuff in a better way, triggered by class methods
-$server = Chleb::Server->new();
+$server = Chleb::Server::Moose->new();
 unless (caller()) {
 	$0 = 'chleb-bible-search [server]';
 	dance;

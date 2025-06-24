@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Server;
+package Chleb::Server::Moose;
 use strict;
 use warnings;
 use Moose;
@@ -38,11 +38,11 @@ extends 'Chleb::Bible::Base';
 
 =head1 NAME
 
-Chleb::Server
+Chleb::Server::Moose
 
 =head1 DESCRIPTION
 
-Moose portion of HTTP server facility used by L<Chleb::Bible::Routes>
+Moose portion of HTTP server facility used by L<Chleb::Server::Dancer2>
 
 =cut
 
@@ -765,7 +765,7 @@ sub __searchResultsToHtml {
 	my ($json) = @_;
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
-		Chleb::Server::Routes::serveStaticPage('no_results'); # doesn't return...
+		Chleb::Server::Dancer2::serveStaticPage('no_results'); # doesn't return...
 		return; # ...but does in unit tests
 	}
 

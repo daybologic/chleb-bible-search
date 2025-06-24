@@ -42,8 +42,8 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
-use Chleb::Server;
-use Chleb::Server::Routes;
+use Chleb::Server::Dancer2;
+use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::Exception;
 use Test::More 0.96;
@@ -55,7 +55,7 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb::Server->new());
+	$self->sut(Chleb::Server::Moose->new());
 
 	return EXIT_SUCCESS;
 }
@@ -64,12 +64,12 @@ sub testEmpty {
 	my ($self) = @_;
 	plan tests => 1;
 
-	$self->mock('Chleb::Server::Routes', 'serveStaticPage');
+	$self->mock('Chleb::Server::Dancer2', 'serveStaticPage');
 
 	my %json = ( data => [ ] );
-	Chleb::Server::__searchResultsToHtml(\%json);
+	Chleb::Server::Moose::__searchResultsToHtml(\%json);
 
-	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Routes', 'serveStaticPage');
+	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'serveStaticPage');
 	cmp_deeply($mockCalls, [['no_results']], "calls to serveStaticPage for 'no_results'") or diag(explain($mockCalls));
 
 	return EXIT_SUCCESS;
