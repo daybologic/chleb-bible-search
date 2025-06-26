@@ -1,2 +1,3 @@
 /var/log/chleb-bible-search/
 /var/cache/chleb-bible-search/
+/var/run/chleb-bible-search/
