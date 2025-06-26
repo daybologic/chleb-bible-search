@@ -35,4 +35,4 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 use Chleb::Server::Dancer2;
 
-Chleb::Server::Dancer2->to_app;
+Chleb::Server::Dancer2->run();
