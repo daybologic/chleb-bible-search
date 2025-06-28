@@ -29,13 +29,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-H=localhost:3000
-SCHEME=http
+export QUERY_STRING=''
+export SERVER_PROTOCOL='HTTP/1.1'
+export PATH_INFO='/1/ping'
+export REQUEST_METHOD='GET'
+export REQUEST_URI="$PATH_INFO"
+export HTTP_USER_AGENT='Chleb demo script'
+export HTTP_ACCEPT='application/json'
+export SOCKET='/var/run/chleb-bible-search/sock'
 
-if [ -x /usr/bin/curl ]; then
+if [ -x /usr/bin/cgi-fcgi ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		curl --header 'Accept: application/json' -s "${SCHEME}://${H}/1/ping" | jq -r '.data[0].attributes | .message'
+		cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d' | jq -r '.data[0].attributes | .message'
 	else
-		curl --header 'Accept: text/html' -s "${SCHEME}://${H}/1/ping"
+		export HTTP_ACCEPT='text/html'
+		cgi-fcgi -connect "$SOCKET"
 	fi
 fi
