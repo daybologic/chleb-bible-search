@@ -18,6 +18,7 @@ fi
 
 usermod -c "$SERVER_NAME" $SERVER_USER
 chown $SERVER_USER /var/log/chleb-bible-search /var/cache/chleb-bible-search /var/run/chleb-bible-search
+chmod 0755 /var/run/chleb-bible-search
 
 if [ -f /var/log/chleb-bible-search/default.log ]; then
 	chown $SERVER_USER /var/log/chleb-bible-search/default.log

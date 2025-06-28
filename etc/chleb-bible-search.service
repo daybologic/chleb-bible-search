@@ -15,6 +15,7 @@ Type=exec
 Nice=15
 Restart=always
 User=chleb
+UMask=000
 
 [Install]
 WantedBy=multi-user.target
