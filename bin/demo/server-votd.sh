@@ -32,16 +32,24 @@
 set -eu
 
 now=`date '+%Y-%m-%dT09:00:00%%2B0100'`
-H='localhost:3000'
+
+export QUERY_STRING="?when=$now&testament=new"
+export SERVER_PROTOCOL='HTTP/1.1'
+export PATH_INFO='/2/votd'
+export REQUEST_METHOD='GET'
+export REQUEST_URI="$PATH_INFO"
+export HTTP_USER_AGENT='Chleb demo script'
+export HTTP_ACCEPT='application/json'
+export SOCKET='/var/run/chleb-bible-search/sock'
 
 if [ -x /usr/games/bible-votd ]; then
 	/usr/games/bible-votd
 	exit 0
 fi
 
-if [ -x /usr/bin/curl ]; then
+if [ -x /usr/bin/cgi-fcgi ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		json=$(curl -s --header 'Accept: application/json' "http://${H}/2/votd?when=$now&testament=new")
+		json=$(cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d')
 		i=0
 		bookId=''
 		bookName=''
@@ -78,6 +86,7 @@ if [ -x /usr/bin/curl ]; then
 			((++i))
 		done
 	else
-		curl --header 'Accept: text/html' -s "http://$H/2/votd?when=$now?testament=new"
+		export HTTP_ACCEPT='text/html'
+		cgi-fcgi -connect "$SOCKET" /
 	fi
 fi
