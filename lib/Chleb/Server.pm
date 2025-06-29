@@ -1061,6 +1061,7 @@ get '/' => sub {
 get '/:version/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $version = int(param('version') || 1);
+	my $parental = int(param('parental'));
 
 	my $dancerRequest = request();
 
@@ -1071,6 +1072,7 @@ get '/:version/random' => sub {
 			translations => $translations,
 			testament => param('testament'),
 			version => $version,
+			parental => $parental,
 		});
 	};
 
