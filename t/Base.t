@@ -182,6 +182,8 @@ sub __checkCmpAddressMatch {
 	return;
 }
 
+__PACKAGE__->meta->make_immutable;
+
 package main;
 use strict;
 use warnings;

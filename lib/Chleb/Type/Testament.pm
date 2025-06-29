@@ -45,8 +45,15 @@ Object representing one testament name within The Holy Bible
 
 extends 'Chleb::Bible::Base';
 
-use Moose::Util::TypeConstraints qw(enum);
+use Moose::Util::TypeConstraints;
 use Readonly;
+use Scalar::Util qw(blessed refaddr);
+
+coerce 'Chleb::Type::Testament',
+	from 'Str',
+	via {
+		Chleb::Type::Testament->new({ value => $_ });
+	};
 
 =head1 CONSTANTS
 
@@ -106,6 +113,18 @@ has value => (
 
 =over
 
+=item C<createFromBackendValue($value)>
+
+=cut
+
+sub createFromBackendValue {
+	my ($class, $backendValue) = @_;
+
+	my $value = $NEW;
+	$value = $OLD if ($backendValue eq 'O');
+	return $class->new({ value => $value });
+}
+
 =item C<toString()>
 
 Human-readable representation.
@@ -117,8 +136,30 @@ sub toString {
 	return $self->value;
 }
 
+=item C<equals($other)>
+
+Returns true if this testament object represents the same testament as another.
+both strings and objects are supported.
+
+=cut
+
+sub equals {
+	my ($self, $other) = @_;
+
+	return 0 if (!$other);
+	if (my $blessing = blessed($other)) {
+		return 1 if (refaddr($self) == refaddr($other));
+		return ($self->value eq $other->value) if ($blessing eq ref($self));
+		return 0;
+	}
+
+	return ($self->value eq $other);
+}
+
 =back
 
 =cut
+
+__PACKAGE__->meta->make_immutable;
 
 1;

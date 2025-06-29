@@ -236,21 +236,57 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 sub __random {
 	my ($self, $params) = @_;
 
+	my $version = __versionFilter($params->{version}, 1, 2);
+	my $redirect = $params->{redirect} // 0;
+
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
+	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'random redirect is only supported on version 1')
+	    if ($redirect && $version > 1);
+
 	my $verse = $self->__library->random($params);
-	my $json = __verseToJsonApi($verse, $params);
+	if (ref($verse) eq 'ARRAY') {
+		my @json;
 
-	my $version = 1;
-	$json->{links}->{self} = '/' . join('/', $version, 'random');
+		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
+			push(@json, __verseToJsonApi($verse->[$verseI], $params));
+		}
 
-	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
-		return $json;
-	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml([$json], $FUNCTION_RANDOM);
+		my $secondary_total_msec = 0;
+		for (my $verseI = 1; $verseI < scalar(@$verse); $verseI++) {
+			push(@{ $json[0]->{data} },  $json[$verseI]->{data}->[0]);
+			for (my $includedI = 0; $includedI < scalar(@{ $json[$verseI]->{included} }); $includedI++) {
+				my $inclusion = $json[$verseI]->{included}->[$includedI];
+				next if ($inclusion->{type} ne 'stats');
+				$secondary_total_msec += $inclusion->{attributes}->{msec};
+			}
+		}
+
+		for (my $includedI = 0; $includedI < scalar(@{ $json[0]->{included} }); $includedI++) {
+			next if ($json[0]->{included}->[$includedI]->{type} ne 'stats');
+			$json[0]->{included}->[$includedI]->{attributes}->{msec} += $secondary_total_msec;
+		}
+
+		$json[0]->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
+		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
+
+		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+			return __verseToHtml(\@json, $FUNCTION_RANDOM);
+		} else {
+			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+		}
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+	die Chleb::Exception->raise(
+		HTTP_TEMPORARY_REDIRECT,
+		'/1/lookup/' . join('/', lc($verse->book->shortName), $verse->chapter->ordinal, $verse->ordinal),
+	) if ($redirect);
+
+	my $json = __verseToJsonApi($verse, $params);
+	$json->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
+
+	return $json;
+
 }
 
 =item C<__votd($params)>
@@ -739,10 +775,11 @@ sub __verseToHtml {
 	}
 
 	$output .= "<p>\r\n";
-	foreach my $type (qw(prev next)) {
+	foreach my $type (qw(prev self next)) {
 		my $link = $json->[0]->{data}->[0]->{links}->{$type};
 		next unless ($link);
-		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $type);
+		my $linkText = ($type eq 'self') ? 'permalink' : $type;
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $linkText);
 	}
 	$output .= "</p>\r\n";
 
@@ -961,6 +998,25 @@ sub __infoToHtml {
 	return $text;
 }
 
+__PACKAGE__->meta->make_immutable;
+
+=item C<__versionFilter($version, $minimum, $maximum)>
+
+Throw a 400 error if C<$version> is outwith C<$minimum> and C<$maximum> values,
+otherwise, C<$version> is returned.
+
+=cut
+
+sub __versionFilter {
+	my ($version, $minimum, $maximum) = @_;
+
+	$version = int($version);
+	die Chleb::Exception->raise(HTTP_BAD_REQUEST, "endpoint version must be between $minimum and $maximum, you said $version")
+	    if ($version < $minimum || $version > $maximum);
+
+	return $version;
+}
+
 package main;
 use strict;
 use warnings;
@@ -1022,8 +1078,11 @@ get '/' => sub {
 	return;
 };
 
-get '/1/random' => sub {
+get '/:version/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
+	my $version = int(param('version') || 1);
+	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 
 	my $dancerRequest = request();
 
@@ -1033,6 +1092,9 @@ get '/1/random' => sub {
 			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			translations => $translations,
 			testament => param('testament'),
+			version => $version,
+			parental => $parental,
+			redirect => $redirect,
 		});
 	};
 
@@ -1041,17 +1103,17 @@ get '/1/random' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('1/random returned as HTML');
+		$server->dic->logger->trace("${version}/random returned as HTML");
 		send_as html => $result;
 	}
 
-	$server->dic->logger->trace('1/random returned as JSON');
+	$server->dic->logger->trace("${version}/random returned as JSON");
 	return $result;
 };
 
 get '/1/votd' => sub {
-	my $parental = int(param('parental'));
-	my $redirect = param('redirect');
+	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $when = param('when');
 	my $testament = param('testament');
 
@@ -1073,8 +1135,8 @@ get '/1/votd' => sub {
 };
 
 get '/2/votd' => sub {
-	my $parental = int(param('parental'));
-	my $redirect = param('redirect');
+	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
 	my $testament = param('testament');
@@ -1213,6 +1275,17 @@ get '/1/info' => sub {
 };
 
 $server = Chleb::Server->new();
+
+# Trap SIGHUP
+local $SIG{HUP} = sub {
+	eval {
+		$server->dic->resetLogger();
+		$server->dic->logger->debug('Received SIGHUP, re-opening logs');
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$server->dic->logger->error($evalError);
+	}
+};
 
 unless (caller()) {
 	$0 = 'chleb-bible-search [server]';

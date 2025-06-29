@@ -63,7 +63,7 @@ sub test_translation_kjv {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType });
+	my $json = $self->sut->__random({ accept => $mediaType, version => 1 });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -158,7 +158,7 @@ sub test_translation_asv {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'] });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'], version => 1 });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -241,7 +241,7 @@ sub test_translation_asv {
 			},
 		],
 		links => {
-			self => '/1/random',
+			self => '/1/random?translations=asv',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
@@ -253,7 +253,7 @@ sub test_translation_all {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => ['all'] });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['all'], version => 1 });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -336,12 +336,14 @@ sub test_translation_all {
 			},
 		],
 		links => {
-			self => '/1/random',
+			self => '/1/random?translations=all',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
 	return EXIT_SUCCESS;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;
