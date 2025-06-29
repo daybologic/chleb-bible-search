@@ -1062,6 +1062,7 @@ get '/:version/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $version = int(param('version') || 1);
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 
 	my $dancerRequest = request();
 
@@ -1073,6 +1074,7 @@ get '/:version/random' => sub {
 			testament => param('testament'),
 			version => $version,
 			parental => $parental,
+			redirect => $redirect,
 		});
 	};
 
@@ -1091,7 +1093,7 @@ get '/:version/random' => sub {
 
 get '/1/votd' => sub {
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
-	my $redirect = param('redirect');
+	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $when = param('when');
 	my $testament = param('testament');
 
@@ -1114,7 +1116,7 @@ get '/1/votd' => sub {
 
 get '/2/votd' => sub {
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
-	my $redirect = param('redirect');
+	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
 	my $testament = param('testament');
