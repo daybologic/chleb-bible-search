@@ -44,4 +44,6 @@ sub raise {
 	return $class->SUPER::raise($statusCode, $thing, $key);
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

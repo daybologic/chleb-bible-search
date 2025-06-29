@@ -46,4 +46,6 @@ sub makeDummy {
 	return $class->new();
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;
