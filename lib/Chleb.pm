@@ -202,7 +202,12 @@ sub random {
 		$verse->msec($msecAll);
 	}
 
-	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(1), $msecAll));
+	$self->dic->logger->debug(sprintf(
+		'Random verse %s sought in %dms',
+		(ref($verse) eq 'ARRAY') ? $verse->[0]->toString(1) : $verse->toString(1),
+		$msecAll,
+	));
+
 	return $verse;
 }
 

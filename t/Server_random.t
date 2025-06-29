@@ -241,7 +241,7 @@ sub test_translation_asv {
 			},
 		],
 		links => {
-			self => '/1/random',
+			self => '/1/random?translations=asv',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
@@ -336,7 +336,7 @@ sub test_translation_all {
 			},
 		],
 		links => {
-			self => '/1/random',
+			self => '/1/random?translations=all',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
