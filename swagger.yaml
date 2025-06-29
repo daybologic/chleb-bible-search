@@ -123,10 +123,88 @@ paths:
             default: any
           required: false
           description: Only retrieve a verse from the given testament
+        - in: query
+          name: parental
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+        - in: query
+          name: redirect
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Provide a 307 redirect to the appropriate verse lookup
       security: [] # No security
       responses:
         '200':
           description: Successfully retrieved verse
+          content:
+            text/html:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stats'
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
+  /2/random:
+    get:
+      summary: Random Verse
+      operationId: getRandom2
+      description: Retrieve one or more verses from The Bible, at random.
+      parameters:
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
+        - in: query
+          name: testament
+          schema:
+            type: string
+            enum:
+              - any
+              - old
+              - new
+            default: any
+          required: false
+          description: Only retrieve a verse from the given testament
+        - in: query
+          name: parental
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+      security: [] # No security
+      responses:
+        '200':
+          description: Successfully retrieved verses
           content:
             text/html:
               schema:
