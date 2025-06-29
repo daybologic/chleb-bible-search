@@ -112,6 +112,26 @@ sub fetch {
 	return @verse;
 }
 
+sub info {
+	my ($self) = @_;
+
+	my $startTiming = Time::HiRes::time();
+
+	my (@bible) = $self->__getBible({ translations => ['all'] });
+
+	my $info = Chleb::Info->new({
+		bibles => \@bible,
+	});
+
+	my $endTiming = Time::HiRes::time();
+	my $msec = int(1000 * ($endTiming - $startTiming));
+
+	$info->msec($msec);
+	$self->dic->logger->debug(sprintf('Info %s sought in %dms', $info->toString(), $msec));
+
+	return $info;
+}
+
 sub random { # TODO: parental?
 	my ($self, $args) = @_;
 
@@ -142,26 +162,6 @@ sub random { # TODO: parental?
 	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(1), $msecAll));
 
 	return $verse;
-}
-
-sub info {
-	my ($self) = @_;
-
-	my $startTiming = Time::HiRes::time();
-
-	my (@bible) = $self->__getBible({ translations => ['all'] });
-
-	my $info = Chleb::Info->new({
-		bibles => \@bible,
-	});
-
-	my $endTiming = Time::HiRes::time();
-	my $msec = int(1000 * ($endTiming - $startTiming));
-
-	$info->msec($msec);
-	$self->dic->logger->debug(sprintf('Info %s sought in %dms', $info->toString(), $msec));
-
-	return $info;
 }
 
 sub votd {
