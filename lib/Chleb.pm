@@ -39,6 +39,7 @@ use Chleb::Info;
 use Chleb::Type::Testament;
 use Data::Dumper;
 use Digest::CRC qw(crc32);
+use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 use List::Util qw(shuffle);
 use Readonly;
@@ -132,41 +133,84 @@ sub info {
 	return $info;
 }
 
-sub random { # TODO: parental?
+sub random {
 	my ($self, $args) = @_;
 
 	my $startTiming = Time::HiRes::time();
 
-	my $testament = Chleb::Utils::parseIntoType(
+	__fixTranslationsParam($args);
+	my ($version, $parental, $testament) = @{$args}{qw(version parental testament)};
+
+	$testament = Chleb::Utils::parseIntoType(
 		'Chleb::Type::Testament',
 		'testament',
-		$args->{testament},
+		$testament,
 		$Chleb::Type::Testament::ANY,
 	);
 	$self->dic->logger->trace('Looking for testament: ' . $testament->toString());
 
-	__fixTranslationsParam($args);
 	my (@bible) = $self->__getBible($args);
 	@bible = shuffle(@bible);
 
-	my $verse;
-	do {
-		my $verseOrdinal = 1 + rand($bible[0]->verseCount);
-		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal);
-	} until ($self->__isTestamentMatch($verse, $testament));
+	my ($verse, $verseOrdinal);
+	my $seed = rand($PID + $bible[0]->verseCount);
+	for (my $offset = 0; $offset > -1; $offset++) {
+		$seed = crc32($seed + $offset);
+		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-	my $endTiming = Time::HiRes::time();
-	my $msecAll = int(1000 * ($endTiming - $startTiming));
+		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
+		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
+		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
 
-	$verse->msec($msecAll);
+		next unless ($self->__isTestamentMatch($verse, $testament));
+
+		last if (!$parental || !$verse->parental);
+		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
+	}
+
+	$self->dic->logger->debug($verse->toString());
+
+	my $msecAll = 0;
+	# handle ARRAY verses where more than one compound Verse may be returned
+	if ($version && looks_like_number($version) && $version == 2) {
+		$verse = [ $verse ]; # make it an ARRAY
+		for (my $bibleTranslationOrdinal = 0; $bibleTranslationOrdinal < scalar(@bible); $bibleTranslationOrdinal++) {
+			if ($bibleTranslationOrdinal > 0) {
+				push(@$verse, $bible[$bibleTranslationOrdinal]->getVerseByOrdinal($verseOrdinal, $args));
+			}
+
+			my $endTiming = Time::HiRes::time();
+			my $msec = int(1000 * ($endTiming - $startTiming));
+			$verse->[0]->msec($msec);
+			$msecAll += $msec;
+
+			while ($verse->[-1]->continues) {
+				push(@$verse, $verse->[-1]->getNext());
+				$endTiming = Time::HiRes::time();
+				$msec = int(1000 * ($endTiming - $startTiming));
+				$verse->[-1]->msec($msec);
+				$msecAll += $msec;
+				$startTiming = Time::HiRes::time();
+			}
+
+			$startTiming = Time::HiRes::time();
+		}
+	} else {
+		my $endTiming = Time::HiRes::time();
+		$msecAll = int(1000 * ($endTiming - $startTiming));
+
+		$verse->msec($msecAll);
+	}
+
 	$self->dic->logger->debug(sprintf('Random verse %s sought in %dms', $verse->toString(1), $msecAll));
-
 	return $verse;
 }
 
 sub votd {
 	my ($self, $args) = @_;
+
 	my $startTiming = Time::HiRes::time();
+
 	__fixTranslationsParam($args);
 	my ($when, $version, $parental, $testament) = @{$args}{qw(when version parental testament)};
 
