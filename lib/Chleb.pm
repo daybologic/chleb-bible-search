@@ -393,7 +393,6 @@ sub __isTestamentMatch {
 	my ($self, $verse, $testament) = @_;
 
 	return 1 if ($testament->value eq $Chleb::Type::Testament::ANY);
-	$self->dic->logger->info('testament attribute used');
 	return 1 if ($verse->book->testament->equals($testament));
 
 	$self->dic->logger->trace(sprintf(
