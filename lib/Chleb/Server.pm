@@ -63,6 +63,10 @@ use UUID::Tiny ':std';
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 
+Readonly my $FUNCTION_RANDOM => 1;
+Readonly my $FUNCTION_VOTD => 2;
+Readonly my $FUNCTION_LOOKUP => 3;
+
 =head1 METHODS
 
 =over
@@ -213,7 +217,7 @@ sub __lookup {
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		return $json[0];
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml(\@json);
+		return __verseToHtml(\@json, $FUNCTION_LOOKUP);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -267,7 +271,7 @@ sub __random {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml(\@json);
+			return __verseToHtml(\@json, $FUNCTION_RANDOM);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -333,7 +337,7 @@ sub __votd {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml(\@json);
+			return __verseToHtml(\@json, $FUNCTION_VOTD);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -750,7 +754,7 @@ sub __verseToJsonApi {
 }
 
 sub __verseToHtml {
-	my ($json) = @_;
+	my ($json, $function) = @_;
 
 	my $output = '';
 	my $includedCount = scalar(@{ $json->[0]->{included} });
@@ -762,6 +766,12 @@ sub __verseToHtml {
 
 		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
 		    = $includedItem->{attributes}->{short_name_raw};
+	}
+
+	$output .= __linkToHome();
+
+	if ($function == $FUNCTION_RANDOM) {
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $json->[0]->{links}->{self}, 'another');
 	}
 
 	$output .= "<p>\r\n";
@@ -818,7 +828,9 @@ sub __searchResultsToHtml {
 		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
-	my $text = '';
+
+	my $text = __linkToHome();
+
 	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
 		my $verse = $json->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
@@ -840,6 +852,13 @@ sub __searchResultsToHtml {
 	}
 
 	return $text;
+}
+
+sub __linkToHome { # add a link to home (root)
+	my $output .= "<p>\r\n";
+	$output .= sprintf("\t<a href=\"%s\">%s</a>\r\n", '/', 'home');
+	$output .= "</p>\r\n";
+	return $output;
 }
 
 sub __linkToVerse {
