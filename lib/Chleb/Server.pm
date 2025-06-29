@@ -765,10 +765,11 @@ sub __verseToHtml {
 	}
 
 	$output .= "<p>\r\n";
-	foreach my $type (qw(prev next)) {
+	foreach my $type (qw(prev self next)) {
 		my $link = $json->[0]->{data}->[0]->{links}->{$type};
 		next unless ($link);
-		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $type);
+		my $linkText = ($type eq 'self') ? 'permalink' : $type;
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $linkText);
 	}
 	$output .= "</p>\r\n";
 
