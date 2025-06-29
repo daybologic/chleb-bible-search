@@ -376,11 +376,7 @@ sub equals {
 
 	my $shortName = $otherBook; # otherBook is *NOT* an object, rename for simplicity, so we're not confused
 
-	my $cmpResult = ($self->shortNameRaw eq $shortName);
-	$self->dic->logger->trace($self->toString() . ': Book comparison ' . ($cmpResult ? 'success' : 'failure')
-	    . " (shortNameRaw): $shortName");
-
-	return $cmpResult if ($cmpResult);
+	return 1 if ($self->shortNameRaw eq $shortName);
 
 	if ($shortName =~ m/^(\d)(\w+)$/) {
 		$shortName = "$1\u$2";
