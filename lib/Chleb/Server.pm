@@ -63,6 +63,10 @@ use UUID::Tiny ':std';
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 
+Readonly my $FUNCTION_RANDOM => 1;
+Readonly my $FUNCTION_VOTD => 2;
+Readonly my $FUNCTION_LOOKUP => 3;
+
 =head1 METHODS
 
 =over
@@ -180,14 +184,15 @@ sub __lookup {
 	my @json;
 	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
 		push(@json, __verseToJsonApi($verse[$verseI], $params));
-		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath()) . Chleb::Utils::queryParamsHelper($params);
+		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath())
+		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
 		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
 	}
 
-	foreach my $type (qw(next prev)) {
+	foreach my $type (qw(next prev first last)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
 
 		my $pickVerse;
@@ -203,17 +208,23 @@ sub __lookup {
 			} else {
 				next;
 			}
+		} elsif ($type eq 'first') {
+			$pickVerse = $verse[0]->chapter->getVerseByOrdinal(1);
+		} elsif ($type eq 'last') {
+			my $chapterVerseCount = $verse[0]->chapter->verseCount;
+			$pickVerse = $verse[0]->chapter->getVerseByOrdinal($chapterVerseCount);
 		} else {
 			$pickVerse = $verse[0]->id;
 		}
 
-		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath()) . Chleb::Utils::queryParamsHelper($params);
+		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath())
+		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		return $json[0];
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml(\@json);
+		return __verseToHtml(\@json, $FUNCTION_LOOKUP);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -267,7 +278,7 @@ sub __random {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml(\@json);
+			return __verseToHtml(\@json, $FUNCTION_RANDOM);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -333,7 +344,7 @@ sub __votd {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml(\@json);
+			return __verseToHtml(\@json, $FUNCTION_VOTD);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -717,6 +728,11 @@ sub __verseToJsonApi {
 		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->getPath()) . $queryParams;
 	}
 
+	$links{first} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal(1)->getPath())
+	    . Chleb::Utils::queryParamsHelper($params);
+	$links{last} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal($verse->chapter->verseCount)->getPath())
+	    . Chleb::Utils::queryParamsHelper($params);
+
 	push(@{ $hash{data} }, {
 		type => $verse->type,
 		id => $verse->id,
@@ -750,7 +766,7 @@ sub __verseToJsonApi {
 }
 
 sub __verseToHtml {
-	my ($json) = @_;
+	my ($json, $function) = @_;
 
 	my $output = '';
 	my $includedCount = scalar(@{ $json->[0]->{included} });
@@ -764,8 +780,14 @@ sub __verseToHtml {
 		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
+	$output .= __linkToHome();
+
+	if ($function == $FUNCTION_RANDOM) {
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $json->[0]->{links}->{self}, 'another');
+	}
+
 	$output .= "<p>\r\n";
-	foreach my $type (qw(prev self next)) {
+	foreach my $type (qw(first prev self next last)) {
 		my $link = $json->[0]->{data}->[0]->{links}->{$type};
 		next unless ($link);
 		my $linkText = ($type eq 'self') ? 'permalink' : $type;
@@ -818,7 +840,9 @@ sub __searchResultsToHtml {
 		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
-	my $text = '';
+
+	my $text = __linkToHome();
+
 	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
 		my $verse = $json->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
@@ -840,6 +864,13 @@ sub __searchResultsToHtml {
 	}
 
 	return $text;
+}
+
+sub __linkToHome { # add a link to home (root)
+	my $output .= "<p>\r\n";
+	$output .= sprintf("\t<a href=\"%s\">%s</a>\r\n", '/', 'home');
+	$output .= "</p>\r\n";
+	return $output;
 }
 
 sub __linkToVerse {
@@ -883,7 +914,9 @@ sub __infoToHtml {
 
 	my %bookNameCache = ( );
 
-	my $text = "<table>\r\n";
+	my $text = '<a href="/">home</a><br />' . "\r\n";
+
+	$text .= "<table>\r\n";
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book", 0, 1);
