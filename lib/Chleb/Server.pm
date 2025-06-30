@@ -914,7 +914,9 @@ sub __infoToHtml {
 
 	my %bookNameCache = ( );
 
-	my $text = "<table>\r\n";
+	my $text = '<a href="/">home</a><br />' . "\r\n";
+
+	$text .= "<table>\r\n";
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book", 0, 1);
