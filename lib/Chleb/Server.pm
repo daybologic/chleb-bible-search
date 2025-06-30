@@ -184,14 +184,15 @@ sub __lookup {
 	my @json;
 	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
 		push(@json, __verseToJsonApi($verse[$verseI], $params));
-		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath()) . Chleb::Utils::queryParamsHelper($params);
+		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath())
+		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
 		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
 	}
 
-	foreach my $type (qw(next prev)) {
+	foreach my $type (qw(next prev first last)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
 
 		my $pickVerse;
@@ -207,11 +208,17 @@ sub __lookup {
 			} else {
 				next;
 			}
+		} elsif ($type eq 'first') {
+			$pickVerse = $verse[0]->chapter->getVerseByOrdinal(1);
+		} elsif ($type eq 'last') {
+			my $chapterVerseCount = $verse[0]->chapter->verseCount;
+			$pickVerse = $verse[0]->chapter->getVerseByOrdinal($chapterVerseCount);
 		} else {
 			$pickVerse = $verse[0]->id;
 		}
 
-		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath()) . Chleb::Utils::queryParamsHelper($params);
+		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath())
+		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
@@ -720,6 +727,11 @@ sub __verseToJsonApi {
 	if (my $prevVerse = $verse->getPrev()) {
 		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->getPath()) . $queryParams;
 	}
+
+	$links{first} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal(1)->getPath())
+	    . Chleb::Utils::queryParamsHelper($params);
+	$links{last} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal($verse->chapter->verseCount)->getPath())
+	    . Chleb::Utils::queryParamsHelper($params);
 
 	push(@{ $hash{data} }, {
 		type => $verse->type,

@@ -77,9 +77,11 @@ sub test_translation_kjv {
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
 				},
 				relationships => {
 					book => {
@@ -172,9 +174,11 @@ sub test_translation_asv {
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
 				},
 				relationships => {
 					book => {
@@ -267,9 +271,11 @@ sub test_translation_all {
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
 				},
 				relationships => {
 					book => {

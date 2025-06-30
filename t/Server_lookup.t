@@ -78,9 +78,11 @@ sub test_translation_all {
 				id => 'asv/psa/110/1',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/109/31?translations=asv',
-					self => '/1/lookup/psa/110/1?translations=asv',
-					next => '/1/lookup/psa/110/2?translations=asv',
+					first => '/1/lookup/psa/110/1?translations=all',
+					prev  => '/1/lookup/psa/109/31?translations=asv',
+					self  => '/1/lookup/psa/110/1?translations=asv',
+					next  => '/1/lookup/psa/110/2?translations=asv',
+					last  => '/1/lookup/psa/110/7?translations=all',
 				},
 				relationships => {
 					book => {
@@ -110,9 +112,11 @@ sub test_translation_all {
 				id => 'kjv/psa/110/1',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/109/31?translations=kjv',
-					self => '/1/lookup/psa/110/1?translations=kjv',
-					next => '/1/lookup/psa/110/2?translations=kjv',
+					first => '/1/lookup/psa/110/1?translations=all',
+					prev  => '/1/lookup/psa/109/31?translations=kjv',
+					self  => '/1/lookup/psa/110/1?translations=kjv',
+					next  => '/1/lookup/psa/110/2?translations=kjv',
+					last  => '/1/lookup/psa/110/7?translations=all',
 				},
 				relationships => {
 					book => {
@@ -179,11 +183,13 @@ sub test_translation_all {
 			},
 		],
 		links => {
-			prev => '/1/lookup/psa/109/31?translations=all',
-			self => '/1/lookup/psa/110/1?translations=all',
-			next => '/1/lookup/psa/110/2?translations=all',
+			first => '/1/lookup/psa/110/1?translations=all',
+			prev  => '/1/lookup/psa/109/31?translations=all',
+			self  => '/1/lookup/psa/110/1?translations=all',
+			next  => '/1/lookup/psa/110/2?translations=all',
+			last  => '/1/lookup/psa/110/7?translations=all',
 		},
-	}, "single random verse JSON") or diag(explain($json));
+	}, 'single random verse JSON');
 
 	return EXIT_SUCCESS;
 }
