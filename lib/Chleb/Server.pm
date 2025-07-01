@@ -292,6 +292,10 @@ sub __random {
 	my $json = __verseToJsonApi($verse, $params);
 	$json->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
 
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __verseToHtml([$json], $FUNCTION_RANDOM);
+	}
+
 	return $json;
 
 }
