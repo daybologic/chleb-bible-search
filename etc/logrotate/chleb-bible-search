@@ -3,4 +3,9 @@
 	rotate 12
 	compress
 	delaycompress
+	missingok
+	notifempty
+	postrotate
+		/usr/bin/systemctl kill -s HUP --kill-who=all chleb-bible-search.service
+	endscript
 }

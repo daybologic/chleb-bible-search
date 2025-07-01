@@ -32,6 +32,9 @@
 package Chleb::Server;
 use strict;
 use warnings;
+use Moose;
+
+extends 'Chleb::Bible::Base';
 
 =head1 NAME
 
@@ -60,49 +63,36 @@ use UUID::Tiny ':std';
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 
+Readonly my $FUNCTION_RANDOM => 1;
+Readonly my $FUNCTION_VOTD => 2;
+Readonly my $FUNCTION_LOOKUP => 3;
+
 =head1 METHODS
 
 =over
 
-=item C<new()>
+=item C<BUILD()>
 
-Construct and return a new C<Chleb::Server>.
-
-=cut
-
-sub new {
-	my ($class) = @_;
-	my $object = bless({}, $class);
-
-	$object->__title();
-
-	return $object;
-}
-
-=item C<dic()>
-
-Return the singleton L<Chleb::DI::Container>.
+Book called after construction, by Moose.
 
 =cut
 
-sub dic {
-	return Chleb::DI::Container->instance;
+sub BUILD {
+	my ($self) = @_;
+
+	# Nothing to do
+
+	return;
 }
 
-=back
-
-=head1 PRIVATE METHODS
-
-=over
-
-=item C<__title()>
+=item C<title()>
 
 This should only be called once, and at server startup time.
 There is no return value.
 
 =cut
 
-sub __title {
+sub title {
 	my ($self) = @_;
 
 	$self->dic->logger->info("Started Chleb Bible Server: \"Man shall not live by bread alone, but by every word that proceedeth out of the mouth of God.\" (Matthew 4:4)");
@@ -116,6 +106,12 @@ sub __title {
 
 	return;
 }
+
+=back
+
+=head1 PRIVATE METHODS
+
+=over
 
 =item C<__library()>
 
@@ -188,14 +184,15 @@ sub __lookup {
 	my @json;
 	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
 		push(@json, __verseToJsonApi($verse[$verseI], $params));
-		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath()) . Chleb::Utils::queryParamsHelper($params);
+		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath())
+		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
 		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
 	}
 
-	foreach my $type (qw(next prev)) {
+	foreach my $type (qw(next prev first last)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
 
 		my $pickVerse;
@@ -211,17 +208,23 @@ sub __lookup {
 			} else {
 				next;
 			}
+		} elsif ($type eq 'first') {
+			$pickVerse = $verse[0]->chapter->getVerseByOrdinal(1);
+		} elsif ($type eq 'last') {
+			my $chapterVerseCount = $verse[0]->chapter->verseCount;
+			$pickVerse = $verse[0]->chapter->getVerseByOrdinal($chapterVerseCount);
 		} else {
 			$pickVerse = $verse[0]->id;
 		}
 
-		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath()) . Chleb::Utils::queryParamsHelper($params);
+		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath())
+		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		return $json[0];
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml(\@json);
+		return __verseToHtml(\@json, $FUNCTION_LOOKUP);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -240,20 +243,61 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 sub __random {
 	my ($self, $params) = @_;
 
+	my $version = __versionFilter($params->{version}, 1, 2);
+	my $redirect = $params->{redirect} // 0;
+
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
-	my $verse = $self->__library->random($params);
-	my $json = __verseToJsonApi($verse, $params);
+	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'random redirect is only supported on version 1')
+	    if ($redirect && $version > 1);
 
-	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
-		my $version = 1;
-		$json->{links}->{self} = '/' . join('/', $version, 'random');
-		return $json;
-	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml([$json]);
+	my $verse = $self->__library->random($params);
+	if (ref($verse) eq 'ARRAY') {
+		my @json;
+
+		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
+			push(@json, __verseToJsonApi($verse->[$verseI], $params));
+		}
+
+		my $secondary_total_msec = 0;
+		for (my $verseI = 1; $verseI < scalar(@$verse); $verseI++) {
+			push(@{ $json[0]->{data} },  $json[$verseI]->{data}->[0]);
+			for (my $includedI = 0; $includedI < scalar(@{ $json[$verseI]->{included} }); $includedI++) {
+				my $inclusion = $json[$verseI]->{included}->[$includedI];
+				next if ($inclusion->{type} ne 'stats');
+				$secondary_total_msec += $inclusion->{attributes}->{msec};
+			}
+		}
+
+		for (my $includedI = 0; $includedI < scalar(@{ $json[0]->{included} }); $includedI++) {
+			next if ($json[0]->{included}->[$includedI]->{type} ne 'stats');
+			$json[0]->{included}->[$includedI]->{attributes}->{msec} += $secondary_total_msec;
+		}
+
+		$json[0]->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
+		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
+
+		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+			return __verseToHtml(\@json, $FUNCTION_RANDOM);
+		} else {
+			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+		}
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+	die Chleb::Exception->raise(
+		HTTP_TEMPORARY_REDIRECT,
+		'/1/lookup/' . join('/', lc($verse->book->shortName), $verse->chapter->ordinal, $verse->ordinal),
+	) if ($redirect);
+
+	my $json = __verseToJsonApi($verse, $params);
+	$json->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
+
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __verseToHtml([$json], $FUNCTION_RANDOM);
+	}
+
+	return $json;
+
 }
 
 =item C<__votd($params)>
@@ -304,7 +348,7 @@ sub __votd {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml(\@json);
+			return __verseToHtml(\@json, $FUNCTION_VOTD);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -688,6 +732,11 @@ sub __verseToJsonApi {
 		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->getPath()) . $queryParams;
 	}
 
+	$links{first} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal(1)->getPath())
+	    . Chleb::Utils::queryParamsHelper($params);
+	$links{last} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal($verse->chapter->verseCount)->getPath())
+	    . Chleb::Utils::queryParamsHelper($params);
+
 	push(@{ $hash{data} }, {
 		type => $verse->type,
 		id => $verse->id,
@@ -721,7 +770,7 @@ sub __verseToJsonApi {
 }
 
 sub __verseToHtml {
-	my ($json) = @_;
+	my ($json, $function) = @_;
 
 	my $output = '';
 	my $includedCount = scalar(@{ $json->[0]->{included} });
@@ -735,11 +784,18 @@ sub __verseToHtml {
 		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
+	$output .= __linkToHome();
+
+	if ($function == $FUNCTION_RANDOM) {
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $json->[0]->{links}->{self}, 'another');
+	}
+
 	$output .= "<p>\r\n";
-	foreach my $type (qw(prev next)) {
+	foreach my $type (qw(first prev self next last)) {
 		my $link = $json->[0]->{data}->[0]->{links}->{$type};
 		next unless ($link);
-		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $type);
+		my $linkText = ($type eq 'self') ? 'permalink' : $type;
+		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $linkText);
 	}
 	$output .= "</p>\r\n";
 
@@ -772,6 +828,11 @@ sub __verseToHtml {
 sub __searchResultsToHtml {
 	my ($json) = @_;
 
+	if (0 == scalar(@{ $json->{data} })) { # no results?
+		main::serveStaticPage('no_results'); # doesn't return...
+		return; # ...but does in unit tests
+	}
+
 	my $includedCount = scalar(@{ $json->{included} });
 	my %rawBookNameMap = ( );
 	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
@@ -783,7 +844,9 @@ sub __searchResultsToHtml {
 		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
-	my $text = '';
+
+	my $text = __linkToHome();
+
 	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
 		my $verse = $json->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
@@ -805,6 +868,13 @@ sub __searchResultsToHtml {
 	}
 
 	return $text;
+}
+
+sub __linkToHome { # add a link to home (root)
+	my $output .= "<p>\r\n";
+	$output .= sprintf("\t<a href=\"%s\">%s</a>\r\n", '/', 'home');
+	$output .= "</p>\r\n";
+	return $output;
 }
 
 sub __linkToVerse {
@@ -848,7 +918,9 @@ sub __infoToHtml {
 
 	my %bookNameCache = ( );
 
-	my $text = "<table>\r\n";
+	my $text = '<a href="/">home</a><br />' . "\r\n";
+
+	$text .= "<table>\r\n";
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book", 0, 1);
@@ -944,30 +1016,23 @@ sub __infoToHtml {
 	return $text;
 }
 
-=item C<explodeHtmlFilePath($name)>
+__PACKAGE__->meta->make_immutable;
 
-Given name C<$name> which is a string, and should be a simple name, such as 'index', we
-return all possible paths to that file, and we include the filename extension(s).  These
-are in order of preference, and you should process the first file which exists.
+=item C<__versionFilter($version, $minimum, $maximum)>
 
-The returned value is an C<ARRAY> ref.
+Throw a 400 error if C<$version> is outwith C<$minimum> and C<$maximum> values,
+otherwise, C<$version> is returned.
 
 =cut
 
-sub explodeHtmlFilePath {
-	my ($self, $name) = @_;
+sub __versionFilter {
+	my ($version, $minimum, $maximum) = @_;
 
-	my @returnedPaths = ( );
-	my @paths = ('./data/static', '/usr/share/chleb-bible-search');
-	foreach my $path (@paths) {
-		my @extensions = (qw(html htm));
-		foreach my $extension (@extensions) {
-			my $returnedPath = sprintf('%s/%s.%s', $path, $name, $extension);
-			push(@returnedPaths, $returnedPath);
-		}
-	}
+	$version = int($version);
+	die Chleb::Exception->raise(HTTP_BAD_REQUEST, "endpoint version must be between $minimum and $maximum, you said $version")
+	    if ($version < $minimum || $version > $maximum);
 
-	return \@returnedPaths;
+	return $version;
 }
 
 package main;
@@ -1004,12 +1069,12 @@ sub handleException {
 	return;
 }
 
-get '/' => sub {
-	# Serve a simple HTML landing page for users who don't want to read Swagger
+sub serveStaticPage {
+	my ($name) = @_;
 	my $html = '';
 
 	my $filePathFailed;
-	foreach my $filePath (@{ $server->explodeHtmlFilePath('index') }) { # TODO: Could this whole stanza be moved out, to help read other files elsewhere?
+	foreach my $filePath (@{ Chleb::Utils::explodeHtmlFilePath($name) }) {
 		if (my $file = IO::File->new($filePath, 'r')) {
 			while (my $line = $file->getline()) {
 				$html .= $line;
@@ -1024,10 +1089,18 @@ get '/' => sub {
 
 	my $error = $ERRNO;
 	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
+}
+
+get '/' => sub {
+	serveStaticPage('index');
+	return;
 };
 
-get '/1/random' => sub {
+get '/:version/random' => sub {
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
+	my $version = int(param('version') || 1);
+	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 
 	my $dancerRequest = request();
 
@@ -1037,6 +1110,9 @@ get '/1/random' => sub {
 			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			translations => $translations,
 			testament => param('testament'),
+			version => $version,
+			parental => $parental,
+			redirect => $redirect,
 		});
 	};
 
@@ -1045,17 +1121,17 @@ get '/1/random' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('1/random returned as HTML');
+		$server->dic->logger->trace("${version}/random returned as HTML");
 		send_as html => $result;
 	}
 
-	$server->dic->logger->trace('1/random returned as JSON');
+	$server->dic->logger->trace("${version}/random returned as JSON");
 	return $result;
 };
 
 get '/1/votd' => sub {
-	my $parental = int(param('parental'));
-	my $redirect = param('redirect');
+	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $when = param('when');
 	my $testament = param('testament');
 
@@ -1077,8 +1153,8 @@ get '/1/votd' => sub {
 };
 
 get '/2/votd' => sub {
-	my $parental = int(param('parental'));
-	my $redirect = param('redirect');
+	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $when = param('when');
 	my $testament = param('testament');
@@ -1216,9 +1292,22 @@ get '/1/info' => sub {
 	return $result;
 };
 
+$server = Chleb::Server->new();
+
+# Trap SIGHUP
+local $SIG{HUP} = sub {
+	eval {
+		$server->dic->resetLogger();
+		$server->dic->logger->debug('Received SIGHUP, re-opening logs');
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$server->dic->logger->error($evalError);
+	}
+};
+
 unless (caller()) {
-	$server = Chleb::Server->new();
 	$0 = 'chleb-bible-search [server]';
+	$server->title();
 	dance;
 
 	exit(EXIT_SUCCESS);

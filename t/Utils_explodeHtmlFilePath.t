@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,29 +29,43 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Utils::BooleanParserException; # nb. this is abstract, don't use it directly
+package UtilsExplodeHtmlFilePathTests;
 use strict;
 use warnings;
 use Moose;
 
-extends 'Chleb::Exception';
+use lib 'externals/libtest-module-runnable-perl/lib';
 
-use HTTP::Status qw(:constants);
+extends 'Test::Module::Runnable';
 
-has key => (is => 'ro', isa => 'Str', required => 1);
+use Chleb::Utils;
+use English qw(-no_match_vars);
+use POSIX qw(EXIT_SUCCESS);
+use Readonly;
+use Test::Deep qw(all cmp_deeply isa methods);
+use Test::Exception;
+use Test::More 0.96;
 
-sub raise {
-	my ($class, $statusCode, $thing, $key) = @_;
+sub testExplodeHtmlFilePath {
+	my ($self) = @_;
+	plan tests => 1;
 
-	my @caller = caller();
-	my $usingClass = $caller[0];
-	if ($usingClass =~ m/^Chleb::Utils::BooleanParser\w+Exception$/) {
-		return $class->SUPER::raise($statusCode, $thing, { key => $key });
-	}
+	my $name = $self->uniqueStr();
+	my $exploded = Chleb::Utils::explodeHtmlFilePath($name);
+	cmp_deeply($exploded, [
+		"./data/static/${name}.html",
+		"./data/static/${name}.htm",
+		"/usr/share/chleb-bible-search/${name}.html",
+		"/usr/share/chleb-bible-search/${name}.htm",
+	], 'explodeHtmlFilePath') or diag(explain($exploded));
 
-	die(__PACKAGE__ . ' is abstract');
+	return EXIT_SUCCESS;
 }
 
 __PACKAGE__->meta->make_immutable;
 
-1;
+package main;
+use strict;
+use warnings;
+
+exit(UtilsExplodeHtmlFilePathTests->new->run());

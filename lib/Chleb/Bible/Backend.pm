@@ -43,6 +43,7 @@ use Moose;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
 use Chleb::Bible::Book;
+use Chleb::Type::Testament;
 use Storable;
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
@@ -141,7 +142,7 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 			longName   => $bookInfo->{n},
 			chapterCount => $bookInfo->{c},
 			verseCount => sum(values(%{ $bookInfo->{v} })),
-			testament  => ($bookInfo->{t} eq 'O') ? 'old' : 'new',
+			testament => Chleb::Type::Testament->createFromBackendValue($bookInfo->{t}),
 		});
 	}
 
@@ -240,5 +241,7 @@ sub __bibleFileName {
 	$fileName .= '.gz' if ($flags{compressed});
 	return $fileName;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;

@@ -54,4 +54,6 @@ sub toString {
 	return sprintf("%s count %d for term '%s'", 'Results', $self->count, $self->query->text);
 }
 
+__PACKAGE__->meta->make_immutable;
+
 1;

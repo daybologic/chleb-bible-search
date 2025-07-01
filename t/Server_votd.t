@@ -78,9 +78,11 @@ sub test {
 				id => 'kjv/psa/55/22',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/55/21',
-					self => '/1/lookup/psa/55/22',
-					next => '/1/lookup/psa/55/23',
+					first => '/1/lookup/psa/55/1',
+					prev  => '/1/lookup/psa/55/21',
+					self  => '/1/lookup/psa/55/22',
+					next  => '/1/lookup/psa/55/23',
+					last  => '/1/lookup/psa/55/23',
 				},
 				relationships => {
 					book => {
@@ -174,9 +176,11 @@ sub testV2 {
 				id => 'kjv/num/33/51',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/33/50',
-					self => '/1/lookup/num/33/51',
-					next => '/1/lookup/num/33/52',
+					first => '/1/lookup/num/33/1',
+					prev  => '/1/lookup/num/33/50',
+					self  => '/1/lookup/num/33/51',
+					next  => '/1/lookup/num/33/52',
+					last  => '/1/lookup/num/33/56',
 				},
 				relationships => {
 					book => {
@@ -206,9 +210,11 @@ sub testV2 {
 				id => 'kjv/num/33/52',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/33/51',
-					self => '/1/lookup/num/33/52',
-					next => '/1/lookup/num/33/53',
+					first => '/1/lookup/num/33/1',
+					prev  => '/1/lookup/num/33/51',
+					self  => '/1/lookup/num/33/52',
+					next  => '/1/lookup/num/33/53',
+					last  => '/1/lookup/num/33/56',
 				},
 				relationships => {
 					book => {
@@ -238,9 +244,11 @@ sub testV2 {
 				id => 'kjv/num/33/53',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/33/52',
-					self => '/1/lookup/num/33/53',
-					next => '/1/lookup/num/33/54',
+					first => '/1/lookup/num/33/1',
+					prev  => '/1/lookup/num/33/52',
+					self  => '/1/lookup/num/33/53',
+					next  => '/1/lookup/num/33/54',
+					last  => '/1/lookup/num/33/56',
 				},
 				relationships => {
 					book => {
@@ -334,9 +342,11 @@ sub testV2_translations_asv_asv {
 				id => 'asv/psa/122/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/122/7?translations=asv',
-					self => '/1/lookup/psa/122/8?translations=asv',
-					next => '/1/lookup/psa/122/9?translations=asv',
+					first => '/1/lookup/psa/122/1?translations=asv',
+					prev  => '/1/lookup/psa/122/7?translations=asv',
+					self  => '/1/lookup/psa/122/8?translations=asv',
+					next  => '/1/lookup/psa/122/9?translations=asv',
+					last  => '/1/lookup/psa/122/9?translations=asv',
 				},
 				relationships => {
 					book => {
@@ -430,9 +440,11 @@ sub testV2_translations_kjv_asv {
 				id => 'asv/psa/122/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/122/7?translations=asv',
-					self => '/1/lookup/psa/122/8?translations=asv',
-					next => '/1/lookup/psa/122/9?translations=asv',
+					first => '/1/lookup/psa/122/1?translations=all',
+					prev  => '/1/lookup/psa/122/7?translations=asv',
+					self  => '/1/lookup/psa/122/8?translations=asv',
+					next  => '/1/lookup/psa/122/9?translations=asv',
+					last  => '/1/lookup/psa/122/9?translations=all',
 				},
 				relationships => {
 					book => {
@@ -462,9 +474,11 @@ sub testV2_translations_kjv_asv {
 				id => 'kjv/psa/122/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/psa/122/7?translations=kjv',
-					self => '/1/lookup/psa/122/8?translations=kjv',
-					next => '/1/lookup/psa/122/9?translations=kjv',
+					first => '/1/lookup/psa/122/1?translations=all',
+					prev  => '/1/lookup/psa/122/7?translations=kjv',
+					self  => '/1/lookup/psa/122/8?translations=kjv',
+					next  => '/1/lookup/psa/122/9?translations=kjv',
+					last  => '/1/lookup/psa/122/9?translations=all',
 				},
 				relationships => {
 					book => {
@@ -558,9 +572,11 @@ sub testV2_translations_all {
 				id => 'asv/num/16/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/7?translations=asv',
-					self => '/1/lookup/num/16/8?translations=asv',
-					next => '/1/lookup/num/16/9?translations=asv',
+					first => '/1/lookup/num/16/1?translations=all',
+					prev  => '/1/lookup/num/16/7?translations=asv',
+					self  => '/1/lookup/num/16/8?translations=asv',
+					next  => '/1/lookup/num/16/9?translations=asv',
+					last  => '/1/lookup/num/16/50?translations=all',
 				},
 				relationships => {
 					book => {
@@ -590,9 +606,11 @@ sub testV2_translations_all {
 				id => 'asv/num/16/9',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/8?translations=asv',
-					self => '/1/lookup/num/16/9?translations=asv',
-					next => '/1/lookup/num/16/10?translations=asv',
+					first => '/1/lookup/num/16/1?translations=all',
+					prev  => '/1/lookup/num/16/8?translations=asv',
+					self  => '/1/lookup/num/16/9?translations=asv',
+					next  => '/1/lookup/num/16/10?translations=asv',
+					last  => '/1/lookup/num/16/50?translations=all',
 				},
 				relationships => {
 					book => {
@@ -622,9 +640,11 @@ sub testV2_translations_all {
 				id => 'asv/num/16/10',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/9?translations=asv',
-					self => '/1/lookup/num/16/10?translations=asv',
-					next => '/1/lookup/num/16/11?translations=asv',
+					first => '/1/lookup/num/16/1?translations=all',
+					prev  => '/1/lookup/num/16/9?translations=asv',
+					self  => '/1/lookup/num/16/10?translations=asv',
+					next  => '/1/lookup/num/16/11?translations=asv',
+					last  => '/1/lookup/num/16/50?translations=all',
 				},
 				relationships => {
 					book => {
@@ -654,9 +674,11 @@ sub testV2_translations_all {
 				id => 'kjv/num/16/8',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/7?translations=kjv',
-					self => '/1/lookup/num/16/8?translations=kjv',
-					next => '/1/lookup/num/16/9?translations=kjv',
+					first => '/1/lookup/num/16/1?translations=all',
+					prev  => '/1/lookup/num/16/7?translations=kjv',
+					self  => '/1/lookup/num/16/8?translations=kjv',
+					next  => '/1/lookup/num/16/9?translations=kjv',
+					last  => '/1/lookup/num/16/50?translations=all',
 				},
 				relationships => {
 					book => {
@@ -686,9 +708,11 @@ sub testV2_translations_all {
 				id => 'kjv/num/16/9',
 				type => 'verse',
 				links => {
-					prev => '/1/lookup/num/16/8?translations=kjv',
-					self => '/1/lookup/num/16/9?translations=kjv',
-					next => '/1/lookup/num/16/10?translations=kjv',
+					first => '/1/lookup/num/16/1?translations=all',
+					prev  => '/1/lookup/num/16/8?translations=kjv',
+					self  => '/1/lookup/num/16/9?translations=kjv',
+					next  => '/1/lookup/num/16/10?translations=kjv',
+					last  => '/1/lookup/num/16/50?translations=all',
 				},
 				relationships => {
 					book => {
@@ -807,6 +831,8 @@ sub testRedirectV1 {
 
 	return EXIT_SUCCESS;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;

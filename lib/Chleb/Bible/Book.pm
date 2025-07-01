@@ -49,7 +49,7 @@ use Chleb::Bible::Chapter;
 use Chleb::Bible::Verse;
 use Chleb::Exception;
 use HTTP::Status qw(:constants);
-use Moose::Util::TypeConstraints qw(enum);
+use Chleb::Type::Testament;
 use Readonly;
 use Scalar::Util qw(blessed);
 
@@ -110,11 +110,11 @@ Integer; The number of verses in the book (cannot be changed).
 
 =cut
 
-has [qw(chapterCount verseCount)] => (is => 'ro', isa => 'Int');
+has [qw(chapterCount verseCount)] => (is => 'ro', isa => 'Int', required => 1);
 
 =item C<testament>
 
-A fixed enumerated string identifying which testament the  book belongs to.
+L<Chleb::Type::Testament>; which testament the Book belongs to.
 
 May be either of:
 
@@ -134,8 +134,7 @@ This cannot be changed.
 
 =cut
 
-has testament => (is => 'ro', isa => enum(['old', 'new'])); # FIXME _testament will replace this
-has testamentFuture => (is => 'ro', isa => 'Chleb::Type::Testament');
+has testament => (is => 'ro', isa => 'Chleb::Type::Testament', required => 1, coerce => 1);
 
 =item C<type>
 
@@ -317,7 +316,7 @@ sub TO_JSON {
 		sample_verse_ordinal_in_chapter => $sampleVerse->ordinal,
 		short_name     => $self->shortName,
 		short_name_raw => $self->shortNameRaw,
-		testament      => $self->testament,
+		testament      => $self->testament->value,
 		translation    => $self->bible->translation,
 		verse_count    => $self->verseCount+0,
 	};
@@ -377,11 +376,7 @@ sub equals {
 
 	my $shortName = $otherBook; # otherBook is *NOT* an object, rename for simplicity, so we're not confused
 
-	my $cmpResult = ($self->shortNameRaw eq $shortName);
-	$self->dic->logger->trace($self->toString() . ': Book comparison ' . ($cmpResult ? 'success' : 'failure')
-	    . " (shortNameRaw): $shortName");
-
-	return $cmpResult if ($cmpResult);
+	return 1 if ($self->shortNameRaw eq $shortName);
 
 	if ($shortName =~ m/^(\d)(\w+)$/) {
 		$shortName = "$1\u$2";
@@ -437,4 +432,7 @@ sub __makeShortName {
 =back
 
 =cut
+
+__PACKAGE__->meta->make_immutable;
+
 1;

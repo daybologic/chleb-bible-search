@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,29 +29,55 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Utils::BooleanParserException; # nb. this is abstract, don't use it directly
+package SearchResultsToHtmlServerTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
-extends 'Chleb::Exception';
+use lib 'externals/libtest-module-runnable-perl/lib';
 
-use HTTP::Status qw(:constants);
+extends 'Test::Module::Runnable::Local';
 
-has key => (is => 'ro', isa => 'Str', required => 1);
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
+use Chleb::DI::Container;
+use Chleb::DI::MockLogger;
+use Chleb::Server;
+use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::Exception;
+use Test::More 0.96;
 
-sub raise {
-	my ($class, $statusCode, $thing, $key) = @_;
+sub setUp {
+	my ($self, %params) = @_;
 
-	my @caller = caller();
-	my $usingClass = $caller[0];
-	if ($usingClass =~ m/^Chleb::Utils::BooleanParser\w+Exception$/) {
-		return $class->SUPER::raise($statusCode, $thing, { key => $key });
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
 	}
 
-	die(__PACKAGE__ . ' is abstract');
+	$self->sut(Chleb::Server->new());
+
+	return EXIT_SUCCESS;
+}
+
+sub testEmpty {
+	my ($self) = @_;
+	plan tests => 1;
+
+	$self->mock('main', 'serveStaticPage');
+
+	my %json = ( data => [ ] );
+	Chleb::Server::__searchResultsToHtml(\%json);
+
+	my $mockCalls = $self->mockCallsWithObject('main', 'serveStaticPage');
+	cmp_deeply($mockCalls, [['no_results']], "calls to serveStaticPage for 'no_results'") or diag(explain($mockCalls));
+
+	return EXIT_SUCCESS;
 }
 
 __PACKAGE__->meta->make_immutable;
 
-1;
+package main;
+use strict;
+use warnings;
+
+exit(SearchResultsToHtmlServerTests->new->run());

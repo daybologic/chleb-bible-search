@@ -123,6 +123,50 @@ sub testReadOnly {
 	return EXIT_SUCCESS;
 }
 
+sub testNotEquals {
+	my ($self) = @_;
+	plan tests => 11;
+
+	$self->sut(Chleb::Type::Testament->new({ value => 'old' }));
+	ok(!$self->sut->equals(undef), 'undef returns false');
+	ok(!$self->sut->equals(0), '0 returns false');
+	ok(!$self->sut->equals(''), "'' returns false");
+	ok(!$self->sut->equals(' '), "' ' returns false");
+
+	my $other = Chleb::Type::Testament->new({ value => 'new' });
+	ok(!$self->sut->equals($other), 'object representing the other testament');
+
+	ok(!$self->sut->equals($self), 'wrong blessing');
+
+	ok(!$self->sut->equals({ }), 'HASH');
+	ok(!$self->sut->equals({ }), 'ARRAY');
+	ok(!$self->sut->equals(sub { die("Won't be called") }), 'CODE');
+
+	my $string = 'Noah';
+	ok(!$self->sut->equals(\$string), 'SCALAR');
+
+	ok(!$self->sut->equals('new'), 'wrong testament via string');
+
+	return EXIT_SUCCESS;
+}
+
+sub testEquals {
+	my ($self) = @_;
+	plan tests => 3;
+
+	$self->sut(Chleb::Type::Testament->new({ value => 'old' }));
+	ok($self->sut->equals($self->sut), 'same object');
+
+	my $other = Chleb::Type::Testament->new({ value => 'old' });
+	ok($self->sut->equals($other), 'similar object, representing the same testament');
+
+	ok($self->sut->equals('old'), 'same testament via string');
+
+	return EXIT_SUCCESS;
+}
+
+__PACKAGE__->meta->make_immutable;
+
 package main;
 use strict;
 use warnings;
