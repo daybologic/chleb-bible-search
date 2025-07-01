@@ -52,7 +52,7 @@ use Scalar::Util qw(blessed refaddr);
 coerce 'Chleb::Type::Testament',
 	from 'Str',
 	via {
-		Chleb::Type::Testament->new({ value => $_ });
+		Chleb::Type::Testament->new({ value => ($_ ? $_ : 'any') });
 	};
 
 =head1 CONSTANTS
