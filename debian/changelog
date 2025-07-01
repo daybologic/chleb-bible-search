@@ -1,6 +1,116 @@
 chleb-bible-search (1.3.0) stable; urgency=medium
 
-  * TODO
+  * 🧑‍💻 link to developer website
+  * 📝 added link to daybologic's chleb-api instance
+  * 🐛 construct the mediaType within the eval { } block
+  * 🐛 Malformed accept (#36)
+  * 🔖 bump changelog to 1.3.0
+  * 🥅 trap excess precision on Accept qValues
+  * 🥅 trap negative qValues in Accept headers
+  * 🧑‍💻 use/handle Chleb::Exception from Item
+  * 📝 change PoD for weight trigger
+  * 🐛 move to a string-length rather than math-based q= trap
+  * 🥅 trap more invalid q= values in Accept header (#37)
+  * 🔀 Merge branch 'develop' into rel/1.3
+  * 🚚 move linkToVerse to a separate function
+  * ✨ link to verse in search results
+  * 🚸 include book name in verse link, optionally
+  * 📱 slightly reformat the verse link
+  * ✅ test __linkToVerse
+  * 🥅 trap bad options
+  * 📱 search results link to verse (#40)
+  * 🔀 Merge branch 'develop' into rel/1.3
+  * 👽️ rewrite server-votd to find the properly-cased book name
+  * 🩹 use text/html, not text/plain, which is not supported
+  * 👽️ rewrite server-random to find the properly-cased book name
+  * ➕ add dependency on bash
+  * 🚸 if chleb-go is installed, prefer it
+  * 👽️ bible VoTD produces a lower case book name (#42)
+  * 💬 support "no results" page for HTML-based search
+  * ✅ test no results page
+  * 💡 remove TODO; it actually works
+  * ♻️ refactor logger setup
+  * 💬 support "no results" page for HTML-based search (#43)
+  * 🚧 make a new route: /:version/random
+  * 🥅 capture invalid versions
+  * ✅ test version filtering function
+  * 📝 Start working on user-guide within README
+  * 📝 don't forget: start the service after enabling
+  * 📝 remove implementation detail
+  * 🔖 bump dpkg instructions to 1.2.0
+  * 🔥 remove merge artifact
+  * 📝 How to install Nginx config
+  * 🔧 added working ngnix config
+  * 🚀 install Ngnix config
+  * 🔧 change domain to example.org
+  * 🔧 for consistency, use 'chleb-bible-search', not chleb-api
+  * 📝 chleb-api -> chleb-bible-search
+  * 📝 better placeholder for Apache
+  * 📝 document all standards the project adheres to
+  * 📝 mark code block
+  * ✏️ fix email address
+  * 📝 say where the Nginx file is locally
+  * 🔧 Nginx configuration (#48)
+  * 📝 user guide (#49)
+  * 🙈 Added externals/ to Git ignore list
+  * 🙈 Added *.build to Git ignore list
+  * 📝 Write PoD for __versionFilter
+  * 📝 We use Gitmoji!
+  * 🚚 new utils version of explodeHtmlFilePath
+  * 🚚 use the utility version of explodehtmlfilepath
+  * 🔥 remove old explodeHtmlFilePath
+  * 📝 restore PoD for explodeHtmlFilePath
+  * ✅ testExplodeHtmlFilePath
+  * ✅ explodeHtmlFilePath (#50)
+  * ✏️ recomment -> recommend
+  * ⛓️ link to home from verse / search results / no results
+  * 🐛 re-open logs using SIGHUP from logrotate
+  * ⚡️ added Moose make_immutable calls
+  * ⚡️ added Moose make_immutable calls to test suites
+  * ⏪ make_immutable doesn't work for MediaType::Item
+  * ⚡️ Merge branch 'feature/moose-immutable' into develop
+  * 💬 link does not match string literal for GitHub
+  * 📄 fix copyright year -> 2025
+  * ♻️ start migrating to testamentFuture
+  * ♻️ testamentFuture working everywhere? required
+  * ✏️ accidental merge artifact
+  * ✅ fix test suite missing testamentFuture
+  * ✅ unit (match) tests for __isTestamentMatch
+  * 🔥 testamentFuture has been removed
+  * ✅ testament mismatch test
+  * ♻️ use testament matcher method (equals)
+  * 🔥 remove last remnants of "Future" testament
+  * 🎨 whitespace; arrow alignment
+  * 📱 link to another random verse
+  * 👔 only display self link on random verse
+  * 🔀 The testament object is no longer a simple string (#55)
+  * 💡 remote TODO
+  * 🔇 don't log book name (mis)match; too verbose
+  * ⚡️ don't bias against books @ the end of the bible
+  * 🎨 move info method up
+  * ✨ random parental mode + respect version 2 ARRAY
+  * 🔀 Merge branch 'develop' into feature/22-2random
+  * 🏗️ replace most random logic with code from votd
+  * 🔇 remove debug about testament attribute
+  * 🩹 pass parental mode through to random
+  * 🐛 parental mode is boolean; handle standard keywords
+  * 🩹 redirect is also boolean and should be passed through
+  * 📝 added parental and redirect to 1/random
+  * 📝 added /2/random endpoint (no redirect)
+  * 🚸 /2/random (#45)
+  * ✨ added permalink to random verse ala issue #20
+  * 🔀 Merge branch 'develop' into feature/nav/html-2
+  * ✨ support first/last links, if present
+  * ✨ added first and last elements to JSON
+  * 🚸 add home link to /1/info
+  * ☸️ some improved navigation (#51)
+  * 🐛 fix 1/random default to HTML
+  * 🚚 switch index 1/random to 2/random
+  * 🐛 testament default to any
+  * 🩹 always pass translation to random;
+  * 🔀 Merge branch 'develop' into rel/1.3
+  * ✏️ fix dpkg -i documentation link for 1.3.0
+  * ✏️ fix main Swagger link in index for 1.3.0
 
  -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Fri, 23 May 2025 00:03:04 +0100
 
