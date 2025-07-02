@@ -35,6 +35,7 @@ data/static/asv.txt
 data/static/index.html
 data/static/kjv.cvs
 data/static/kjv.txt
+data/static/no_results.html
 debian/changelog
 debian/compat
 debian/control
@@ -50,6 +51,7 @@ etc/chleb-bible-search.service
 etc/log4perl.conf
 etc/logrotate/chleb-bible-search
 etc/main.conf
+etc/nginx/chleb-bible-search
 externals/httpie-tools/bin/httpie-export-to-shell
 externals/httpie-tools/bin/palmer.sh
 externals/httpie-tools/COPYING
@@ -159,6 +161,7 @@ t/Book_equals.t
 t/Book_getVerseByOrdinal.t
 t/Chleb_getBible.t
 t/Chleb_getTranslation.t
+t/Chleb_isTestamentMatch.t
 t/Exception.t
 t/info.t
 t/lib/Test/Chleb/DummyType.pm
@@ -167,19 +170,23 @@ t/peace_on_earth.t
 t/peace_on_limit.t
 t/pride.t
 t/random.t
+t/Server_linkToVerse.t
 t/Server_lookup.t
 t/Server_MediaType.t
 t/Server_MediaType_acceptToContentType.t
 t/Server_ping.t
 t/Server_random.t
 t/Server_search.t
+t/Server_searchResultsToHtml.t
 t/Server_uptime.t
 t/Server_version.t
+t/Server_versionFilter.t
 t/Server_votd.t
 t/traverse_entire_bible.t
 t/traverse_entire_bible_reverse.t
 t/Type_Testament.t
 t/Utils_boolean.t
+t/Utils_explodeHtmlFilePath.t
 t/Utils_forceArray.t
 t/Utils_limitText.t
 t/Utils_OSError_Mapper.t
