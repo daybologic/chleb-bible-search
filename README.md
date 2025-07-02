@@ -36,7 +36,6 @@ The latest release is version 1.3.0, which is available for download at the foll
 
 The latest release is available as a Debian package from the following locations:
 
-  * [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/downloads/chleb-bible-search_1.3.0_all.deb)
   * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v1.3.0/chleb-bible-search_1.3.0_all.deb)
   * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v1.3.0)
 
