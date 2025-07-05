@@ -67,6 +67,8 @@ Readonly my $FUNCTION_RANDOM => 1;
 Readonly my $FUNCTION_VOTD => 2;
 Readonly my $FUNCTION_LOOKUP => 3;
 
+Readonly my $UPTIME_FILE_PATH => '/var/run/chleb-bible-search/startup.txt';
+
 =head1 METHODS
 
 =over
@@ -80,6 +82,7 @@ Book called after construction, by Moose.
 sub BUILD {
 	my ($self) = @_;
 
+	$self->__removeUptime();
 	$self->__getUptime(); # set startup time as soon as possible
 
 	return;
@@ -662,13 +665,12 @@ Return the number of seconds the server has been running.
 
 sub __getUptime {
 	my ($self) = @_;
-	my $filePath = '/var/run/chleb-bible-search/startup.txt';
 	my $startTime = time();
-	if (my $fh = IO::File->new($filePath, 'r')) {
+	if (my $fh = IO::File->new($UPTIME_FILE_PATH, 'r')) {
 		$startTime = <$fh>;
 		chomp($startTime);
 		$startTime = int($startTime); # don't trust the file too much
-	} elsif ($fh = IO::File->new($filePath, 'w')) {
+	} elsif ($fh = IO::File->new($UPTIME_FILE_PATH, 'w')) {
 		print($fh "$startTime\n");
 	}
 
@@ -1041,6 +1043,18 @@ sub __versionFilter {
 	    if ($version < $minimum || $version > $maximum);
 
 	return $version;
+}
+
+sub __removeUptime {
+	my ($self) = @_;
+
+	my $logMessage = "Removing '$UPTIME_FILE_PATH' -- ";
+	my $result = unlink($UPTIME_FILE_PATH);
+	$logMessage .= sprintf('%d file(s) removed', int($result));
+
+	$self->dic->logger->debug($logMessage);
+
+	return;
 }
 
 __PACKAGE__->meta->make_immutable;
