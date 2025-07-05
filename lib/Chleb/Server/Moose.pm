@@ -80,7 +80,7 @@ Book called after construction, by Moose.
 sub BUILD {
 	my ($self) = @_;
 
-	# Nothing to do
+	$self->__getUptime(); # set startup time as soon as possible
 
 	return;
 }
@@ -662,7 +662,17 @@ Return the number of seconds the server has been running.
 
 sub __getUptime {
 	my ($self) = @_;
-	return time() - $self->__library->constructionTime;
+	my $filePath = '/var/run/chleb-bible-search/startup.txt';
+	my $startTime = time();
+	if (my $fh = IO::File->new($filePath, 'r')) {
+		$startTime = <$fh>;
+		chomp($startTime);
+		$startTime = int($startTime); # don't trust the file too much
+	} elsif ($fh = IO::File->new($filePath, 'w')) {
+		print($fh "$startTime\n");
+	}
+
+	return time() - $startTime;
 }
 
 =back
