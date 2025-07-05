@@ -33,7 +33,7 @@ set -eu
 
 export QUERY_STRING="?testament=new"
 export SERVER_PROTOCOL='HTTP/1.1'
-export PATH_INFO='/1/random'
+export PATH_INFO='/2/random'
 export REQUEST_METHOD='GET'
 export REQUEST_URI="$PATH_INFO"
 export HTTP_USER_AGENT='Chleb demo script'
