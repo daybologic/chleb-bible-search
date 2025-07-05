@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/perl
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,64 +29,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -eu
+use strict;
+use warnings;
+use FindBin;
+use lib "$FindBin::Bin/lib";
+use Chleb::Server::Dancer2;
 
-now=`date '+%Y-%m-%dT09:00:00%%2B0100'`
-
-export QUERY_STRING="?when=$now&testament=new"
-export SERVER_PROTOCOL='HTTP/1.1'
-export PATH_INFO='/2/votd'
-export REQUEST_METHOD='GET'
-export REQUEST_URI="$PATH_INFO"
-export HTTP_USER_AGENT='Chleb demo script'
-export HTTP_ACCEPT='application/json'
-export SOCKET='/var/run/chleb-bible-search/sock'
-
-if [ -x /usr/games/bible-votd ]; then
-	/usr/games/bible-votd
-	exit 0
-fi
-
-if [ -x /usr/bin/cgi-fcgi ]; then
-	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		json=$(cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d')
-		i=0
-		bookId=''
-		bookName=''
-		while true; do
-			includedType=$(echo "$json" | jq -r '.included['$i'].type');
-
-			if [ "${includedType}" = "null" ]; then
-				break;
-			fi
-
-			if [ "${includedType}" = "book" ]; then
-				bookId=$(echo "$json" | jq -r '.included['$i'].id');
-				bookName=$(echo "$json" | jq -r '.included['$i'].attributes.short_name_raw');
-				break;
-			fi
-
-			((++i))
-		done
-
-		i=0
-		while true; do
-			bookRelationship=$(echo "$json" | jq -r '.data['$i'].relationships.book.data.id');
-			if [ "$bookRelationship" = "$bookId" ]; then
-				line1=$(echo "$json" | jq -r '.data['$i'].attributes | (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text');
-				if [ "${line1}" = "null:null " ]; then
-					break;
-				fi
-				line="$bookName $line1"
-				echo "$line"
-			else
-				break;
-			fi
-
-			((++i))
-		done
-	else
-		export HTTP_ACCEPT='text/html'
-		cgi-fcgi -connect "$SOCKET" /
-	fi
-fi
+Chleb::Server::Dancer2->run();

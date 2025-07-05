@@ -5,7 +5,7 @@ Documentation=https://github.com/daybologic/chleb-bible-search/blob/master/READM
 
 [Service]
 EnvironmentFile=-/etc/default/chleb-bible-search
-ExecStart=/usr/bin/perl /usr/share/perl5/Chleb/Server.pm
+ExecStart=/usr/bin/plackup --no-default-middleware -s FCGI --listen /var/run/chleb-bible-search/sock --nproc 20 -a /usr/share/chleb-bible-search/app.psgi
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 RestartPreventExitStatus=255
@@ -15,6 +15,7 @@ Type=exec
 Nice=15
 Restart=always
 User=chleb
+UMask=000
 
 [Install]
 WantedBy=multi-user.target

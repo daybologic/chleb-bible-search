@@ -29,8 +29,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-H=localhost:3000
+export QUERY_STRING=''
+export SERVER_PROTOCOL='HTTP/1.1'
+export PATH_INFO='/1/info'
+export REQUEST_METHOD='GET'
+export REQUEST_URI="$PATH_INFO"
+export HTTP_USER_AGENT='Chleb demo script'
+export HTTP_ACCEPT='application/json'
+export SOCKET='/var/run/chleb-bible-search/sock'
+cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d' | jq .
 
-curl --header 'Accept: application/json' http://$H/1/info | jq .
+exit 0
+
 sleep 5
-curl --header 'Accept: text/html' http://$H/1/info
+export HTTP_ACCEPT='text/html'
+cgi-fcgi -connect "$SOCKET" /

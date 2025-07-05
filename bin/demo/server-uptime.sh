@@ -29,17 +29,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-H=localhost:3000
+export QUERY_STRING=''
+export SERVER_PROTOCOL='HTTP/1.1'
+export PATH_INFO='/1/uptime'
+export REQUEST_METHOD='GET'
+export REQUEST_URI="$PATH_INFO"
+export HTTP_USER_AGENT='Chleb demo script'
+export HTTP_ACCEPT='application/json'
+export SOCKET='/var/run/chleb-bible-search/sock'
 
-SCHEME=https
-SCHEME=http
-
-if [ -x /usr/bin/curl ]; then
-	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		uptime=$(curl -s "${SCHEME}://${H}/1/uptime")
+if [ -x /usr/bin/cgi-fcgi ]; then
+        if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
+                uptime=$(cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d')
 		echo "$uptime" | jq -r '.data[0].attributes | .uptime'
 		echo "$uptime" | jq -r '.data[0].attributes | .text'
-	else
-		curl -s "${SCHEME}://${H}/1/uptime" | tr -d '\n' | grep -o '"uptime":[^"]*"[^"]*"'
-	fi
+        else
+                export HTTP_ACCEPT='text/html'
+                cgi-fcgi -connect "$SOCKET" / | tr -d '\n' | grep -o '"uptime":[^"]*"[^"]*"'
+        fi
 fi
+
+exit 0

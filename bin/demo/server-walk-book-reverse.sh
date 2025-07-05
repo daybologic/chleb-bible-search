@@ -29,18 +29,25 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#set -x
+export QUERY_STRING=''
+export SERVER_PROTOCOL='HTTP/1.1'
+export REQUEST_METHOD='GET'
+export HTTP_USER_AGENT='Chleb demo script'
+export HTTP_ACCEPT='application/json'
+export SOCKET='/var/run/chleb-bible-search/sock'
 
-p="/1/lookup/rev/22/21"
-scheme=http
-host=localhost
-port=3000
-base="${scheme}://${host}:${port}"
+# starting verse
+PATH_INFO='/1/lookup/rev/22/21'
+REQUEST_URI="$PATH_INFO"
 
-while [ ! -z "$p" ]; do
-	json=$(curl --header 'Accept: application/json' -s "${base}${p}");
-	p=$(echo "$json" | jq -r .links.prev);
-	text=$(echo "$json" | jq -r .data[0].attributes.text);
+while [ "$PATH_INFO" != 'null' ]; do
+	export PATH_INFO
+	export REQUEST_URI
+	json=$(cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d')
+
+	PATH_INFO=$(echo "$json" | jq -r .links.prev)
+	REQUEST_URI="$PATH_INFO"
+	text=$(echo "$json" | jq -r '.data[0].attributes.text')
 	echo "$text"
 done
 

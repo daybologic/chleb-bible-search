@@ -42,7 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
-use Chleb::Server;
+use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::Exception;
 use Test::More 0.96;
@@ -54,7 +54,7 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb::Server->new());
+	$self->sut(Chleb::Server::Moose->new());
 
 	return EXIT_SUCCESS;
 }
@@ -64,16 +64,16 @@ sub testSuccess {
 	plan tests => 4;
 
 	my $linkText = $self->uniqueStr();
-	my $html = Chleb::Server::__linkToVerse($linkText, 'Gen', 22, 4, { includeBookName => 1 });
+	my $html = Chleb::Server::Moose::__linkToVerse($linkText, 'Gen', 22, 4, { includeBookName => 1 });
 	is($html, '<a href="/1/lookup/gen/22/4">' . $linkText . '</a>', 'html with linkText');
 
-	$html = Chleb::Server::__linkToVerse(undef, 'Gen', 22, 4, { includeBookName => 1 });
+	$html = Chleb::Server::Moose::__linkToVerse(undef, 'Gen', 22, 4, { includeBookName => 1 });
 	is($html, '<a href="/1/lookup/gen/22/4">' . 'Gen [22:4]' . '</a>', 'html without linkText');
 
-	$html = Chleb::Server::__linkToVerse(undef, 'Gen', 22, 4, { includeBookName => 0 });
+	$html = Chleb::Server::Moose::__linkToVerse(undef, 'Gen', 22, 4, { includeBookName => 0 });
 	is($html, '<a href="/1/lookup/gen/22/4">' . '[22:4]' . '</a>', 'html without linkText and with includeBookName not set');
 
-	$html = Chleb::Server::__linkToVerse(undef, 'Gen', 22, 4);
+	$html = Chleb::Server::Moose::__linkToVerse(undef, 'Gen', 22, 4);
 	is($html, '<a href="/1/lookup/gen/22/4">' . '[22:4]' . '</a>', 'html without linkText and without options');
 
 	return EXIT_SUCCESS;
@@ -84,7 +84,7 @@ sub testFailure {
 	plan tests => 1;
 
 	throws_ok {
-		Chleb::Server::__linkToVerse(undef, 'Gen', 22, 4, { illegalOption => 'whatever' });
+		Chleb::Server::Moose::__linkToVerse(undef, 'Gen', 22, 4, { illegalOption => 'whatever' });
 	} qr/unknown option -- illegalOption/, 'trap unknown option';
 
 	return EXIT_SUCCESS;

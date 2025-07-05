@@ -56,8 +56,6 @@ use Chleb::Utils;
 
 Readonly my $TRANSLATION_DEFAULT => 'kjv';
 
-has constructionTime => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeConstructionTime);
-
 has __bibles => (is => 'ro', isa => 'HashRef[Str]', lazy => 1, default => \&__makeBibles); # use 'bibles' to access
 
 BEGIN {
@@ -67,7 +65,7 @@ BEGIN {
 sub BUILD {
 	my ($self) = @_;
 
-	$self->constructionTime();
+	# Nothing to do
 
 	return;
 }
@@ -347,10 +345,6 @@ sub __loadBible {
 		library     => $self,
 		translation => $translation,
 	});
-}
-
-sub __makeConstructionTime {
-	return time();
 }
 
 sub __makeBibles {
