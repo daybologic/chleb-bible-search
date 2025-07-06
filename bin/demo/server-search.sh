@@ -29,12 +29,29 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-H=localhost:3000
-
 term="$1"
 if [ -z "$term" ]; then
 	>&2 echo "ERROR: Usage $0 <term>"
 	exit 2
 fi
 
-curl --header 'Accept: application/json' -s "http://$H/1/search?term=${term}&limit=10" | jq .
+export QUERY_STRING="term=${term}&limit=10"
+export SERVER_PROTOCOL='HTTP/1.1'
+export PATH_INFO='/1/search'
+export REQUEST_METHOD='GET'
+export REQUEST_URI="$PATH_INFO"
+export HTTP_USER_AGENT='Chleb demo script'
+export HTTP_ACCEPT='application/json'
+export SOCKET='/var/run/chleb-bible-search/sock'
+
+if [ -x /usr/bin/cgi-fcgi ]; then
+        if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
+		json=$(cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d')
+		echo "$json" | jq .
+        else
+                export HTTP_ACCEPT='text/html'
+                cgi-fcgi -connect "$SOCKET" /
+        fi
+fi
+
+exit 0
