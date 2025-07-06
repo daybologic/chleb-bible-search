@@ -308,11 +308,9 @@ get '/1/info' => sub {
 #	}
 #};
 
-# TODO: Need to do all this stuff in a better way, triggered by class methods
 sub run {
 	my ($self) = @_;
 	$server = Chleb::Server::Moose->new();
-	$0 = 'chleb-bible-search [server]';
 	return $self->dance;
 }
 

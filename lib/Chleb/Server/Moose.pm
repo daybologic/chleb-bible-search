@@ -84,6 +84,10 @@ sub BUILD {
 
 	$self->__removeUptime();
 	$self->__getUptime(); # set startup time as soon as possible
+	$self->title();
+
+	# nb. this doesn't work, but perhaps it will be fixed in Plack in the future.
+	$0 = 'chleb-bible-search [server]';
 
 	return;
 }
