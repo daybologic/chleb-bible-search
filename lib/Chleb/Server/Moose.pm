@@ -1066,9 +1066,12 @@ sub __removeUptime {
 sub __installSignalHandlers {
 	my ($self) = @_;
 
-	$SIG{HUP} = sub {
+	my $wrapper_HUP = sub {
 		__signalHandle_HUP($self);
 	};
+
+	$self->dic->logger->trace("Installing signal handler for SIGHUP: $wrapper_HUP");
+	$SIG{HUP} = $wrapper_HUP;
 
 	return;
 }
