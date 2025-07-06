@@ -53,6 +53,7 @@ use Chleb::Exception;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
+use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 use IO::File;
 use JSON;
@@ -85,9 +86,7 @@ sub BUILD {
 	$self->__removeUptime();
 	$self->__getUptime(); # set startup time as soon as possible
 	$self->title();
-
-	# nb. this doesn't work, but perhaps it will be fixed in Plack in the future.
-	$0 = 'chleb-bible-search [server]';
+	$self->__installSignalHandlers();
 
 	return;
 }
@@ -110,6 +109,9 @@ sub title {
 		$self->dic->config->get('server', 'admin_name', 'Unknown'),
 		$self->dic->config->get('server', 'admin_email', 'example@example.org'),
 	));
+
+	# nb. this doesn't work, but perhaps it will be fixed in Plack in the future.
+	$0 = 'chleb-bible-search [server]';
 
 	return;
 }
@@ -1059,6 +1061,29 @@ sub __removeUptime {
 	$self->dic->logger->debug($logMessage);
 
 	return;
+}
+
+sub __installSignalHandlers {
+	my ($self) = @_;
+
+	$SIG{HUP} = sub {
+		__signalHandle_HUP($self);
+	};
+
+	return;
+}
+
+sub __signalHandle_HUP { # Trap SIGHUP
+	my ($self) = @_;
+
+	eval {
+		$self->dic->resetLogger();
+		$self->dic->logger->debug('Received SIGHUP, re-opening logs');
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->error($evalError);
+	}
 }
 
 __PACKAGE__->meta->make_immutable;

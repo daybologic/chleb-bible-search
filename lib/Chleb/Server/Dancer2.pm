@@ -297,17 +297,6 @@ get '/1/info' => sub {
 	return $result;
 };
 
-# Trap SIGHUP
-#local $SIG{HUP} = sub {
-#	eval {
-#		$server->dic->resetLogger();
-#		$server->dic->logger->debug('Received SIGHUP, re-opening logs');
-#	};
-#	if (my $evalError = $EVAL_ERROR) {
-#		$server->dic->logger->error($evalError);
-#	}
-#};
-
 sub run {
 	my ($self) = @_;
 	$server = Chleb::Server::Moose->new();
