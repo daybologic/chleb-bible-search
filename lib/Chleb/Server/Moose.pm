@@ -86,7 +86,6 @@ sub BUILD {
 	$self->__removeUptime();
 	$self->__getUptime(); # set startup time as soon as possible
 	$self->title();
-	$self->__installSignalHandlers();
 
 	return;
 }
@@ -1061,32 +1060,6 @@ sub __removeUptime {
 	$self->dic->logger->debug($logMessage);
 
 	return;
-}
-
-sub __installSignalHandlers {
-	my ($self) = @_;
-
-	my $wrapper_HUP = sub {
-		__signalHandle_HUP($self);
-	};
-
-	$self->dic->logger->trace("Installing signal handler for SIGHUP: $wrapper_HUP");
-	$SIG{HUP} = $wrapper_HUP;
-
-	return;
-}
-
-sub __signalHandle_HUP { # Trap SIGHUP
-	my ($self) = @_;
-
-	eval {
-		$self->dic->resetLogger();
-		$self->dic->logger->debug('Received SIGHUP, re-opening logs');
-	};
-
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->error($evalError);
-	}
 }
 
 __PACKAGE__->meta->make_immutable;
