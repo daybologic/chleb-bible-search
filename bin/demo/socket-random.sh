@@ -31,7 +31,7 @@
 
 set -eu
 
-export QUERY_STRING="?testament=new"
+export QUERY_STRING="testament=new"
 export SERVER_PROTOCOL='HTTP/1.1'
 export PATH_INFO='/2/random'
 export REQUEST_METHOD='GET'

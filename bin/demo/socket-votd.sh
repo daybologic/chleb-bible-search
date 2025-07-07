@@ -33,7 +33,7 @@ set -eu
 
 now=`date '+%Y-%m-%dT09:00:00%%2B0100'`
 
-export QUERY_STRING="?when=$now&testament=new"
+export QUERY_STRING="when=$now&testament=new"
 export SERVER_PROTOCOL='HTTP/1.1'
 export PATH_INFO='/2/votd'
 export REQUEST_METHOD='GET'
