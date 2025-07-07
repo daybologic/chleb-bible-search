@@ -1,19 +1,17 @@
 server {
-	server_name chleb-api.example.org;
+	server_name chleb-api.example.org; # Replace with your domain
 
 	root /var/www/tutorial;
 
 	location / {
-		add_header 'Access-Control-Allow-Origin' '*' always;
-		add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-		add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type' always;
-		add_header 'Access-Control-Max-Age' '3600' always;
+		include fastcgi_params;
 
 		if ($request_method = OPTIONS) {
 			return 204;
 		}
 
-		proxy_pass http://0.0.0.0:3000;
+		fastcgi_pass unix:/var/run/chleb-bible-search/sock;
+		fastcgi_param SCRIPT_NAME "";
 		proxy_ssl_server_name off;
 	}
 
