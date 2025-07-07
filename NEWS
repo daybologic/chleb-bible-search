@@ -42,3 +42,9 @@ log4perl
 --------
 We have also changed our log4perl configuration to log the PID.  Please see:
 https://github.com/daybologic/chleb-bible-search/blob/master/etc/log4perl.conf
+
+logrotate
+---------
+We now only rotate files named *.log and rotate weekly, not monthly, it is
+recommended that you copy the project config from
+https://github.com/daybologic/chleb-bible-search/blob/master/etc/logrotate/chleb-bible-search
