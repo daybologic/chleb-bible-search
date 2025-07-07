@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,82 +29,64 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package ServerVersionFilterTests;
-use strict;
-use warnings;
-use lib 't/lib';
-use Moose;
+set -eu
 
-use lib 'externals/libtest-module-runnable-perl/lib';
+now=`date '+%Y-%m-%dT09:00:00%%2B0100'`
 
-extends 'Test::Module::Runnable::Local';
+export QUERY_STRING="when=$now&testament=new"
+export SERVER_PROTOCOL='HTTP/1.1'
+export PATH_INFO='/2/votd'
+export REQUEST_METHOD='GET'
+export REQUEST_URI="$PATH_INFO"
+export HTTP_USER_AGENT='Chleb demo script'
+export HTTP_ACCEPT='application/json'
+export SOCKET='/var/run/chleb-bible-search/sock'
 
-use English qw(-no_match_vars);
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb::DI::Container;
-use Chleb::DI::MockLogger;
-use Chleb::Server::Moose;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
-use Test::More 0.96;
+if [ -x /usr/games/bible-votd ]; then
+	/usr/games/bible-votd
+	exit 0
+fi
 
-sub setUp {
-	my ($self, %params) = @_;
+if [ -x /usr/bin/cgi-fcgi ]; then
+	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
+		json=$(cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d')
+		i=0
+		bookId=''
+		bookName=''
+		while true; do
+			includedType=$(echo "$json" | jq -r '.included['$i'].type');
 
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
+			if [ "${includedType}" = "null" ]; then
+				break;
+			fi
 
-	$self->sut(\&Chleb::Server::Moose::__versionFilter);
+			if [ "${includedType}" = "book" ]; then
+				bookId=$(echo "$json" | jq -r '.included['$i'].id');
+				bookName=$(echo "$json" | jq -r '.included['$i'].attributes.short_name_raw');
+				break;
+			fi
 
-	return EXIT_SUCCESS;
-}
+			((++i))
+		done
 
-sub testPass {
-	my ($self) = @_;
-	plan tests => 2;
+		i=0
+		while true; do
+			bookRelationship=$(echo "$json" | jq -r '.data['$i'].relationships.book.data.id');
+			if [ "$bookRelationship" = "$bookId" ]; then
+				line1=$(echo "$json" | jq -r '.data['$i'].attributes | (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text');
+				if [ "${line1}" = "null:null " ]; then
+					break;
+				fi
+				line="$bookName $line1"
+				echo "$line"
+			else
+				break;
+			fi
 
-	is($self->sut->(5, 4, 6), 5, 'filter passed (0)');
-	is($self->sut->(0, -1, 1), 0, 'filter passed (5)');
-
-	return EXIT_SUCCESS;
-}
-
-sub testTrap {
-	my ($self) = @_;
-	plan tests => 2;
-
-	$self->__checkTrap(1);
-	$self->__checkTrap(6);
-
-	return EXIT_SUCCESS;
-}
-
-sub __checkTrap {
-	my ($self, $version) = @_;
-
-	eval {
-		$self->sut->($version, 2, 5);
-	};
-
-	if (my $evalError = $EVAL_ERROR) {
-		my $description = "endpoint version must be between 2 and 5, you said ${version}";
-		cmp_deeply($evalError, all(
-			isa('Chleb::Exception'),
-			methods(
-				description => $description,
-				location    => undef,
-				statusCode  => 400,
-			),
-		), "'${version}': ${description}");
-	} else {
-		fail("'${version}': No exception raised, as was expected");
-	}
-
-	return;
-}
-
-package main;
-use strict;
-use warnings;
-
-exit(ServerVersionFilterTests->new->run());
+			((++i))
+		done
+	else
+		export HTTP_ACCEPT='text/html'
+		cgi-fcgi -connect "$SOCKET" /
+	fi
+fi

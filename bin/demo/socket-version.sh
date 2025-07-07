@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,82 +29,20 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package ServerVersionFilterTests;
-use strict;
-use warnings;
-use lib 't/lib';
-use Moose;
+export QUERY_STRING=''
+export SERVER_PROTOCOL='HTTP/1.1'
+export PATH_INFO='/1/version'
+export REQUEST_METHOD='GET'
+export REQUEST_URI="$PATH_INFO"
+export HTTP_USER_AGENT='Chleb demo script'
+export HTTP_ACCEPT='application/json'
+export SOCKET='/var/run/chleb-bible-search/sock'
 
-use lib 'externals/libtest-module-runnable-perl/lib';
-
-extends 'Test::Module::Runnable::Local';
-
-use English qw(-no_match_vars);
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb::DI::Container;
-use Chleb::DI::MockLogger;
-use Chleb::Server::Moose;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
-use Test::More 0.96;
-
-sub setUp {
-	my ($self, %params) = @_;
-
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
-
-	$self->sut(\&Chleb::Server::Moose::__versionFilter);
-
-	return EXIT_SUCCESS;
-}
-
-sub testPass {
-	my ($self) = @_;
-	plan tests => 2;
-
-	is($self->sut->(5, 4, 6), 5, 'filter passed (0)');
-	is($self->sut->(0, -1, 1), 0, 'filter passed (5)');
-
-	return EXIT_SUCCESS;
-}
-
-sub testTrap {
-	my ($self) = @_;
-	plan tests => 2;
-
-	$self->__checkTrap(1);
-	$self->__checkTrap(6);
-
-	return EXIT_SUCCESS;
-}
-
-sub __checkTrap {
-	my ($self, $version) = @_;
-
-	eval {
-		$self->sut->($version, 2, 5);
-	};
-
-	if (my $evalError = $EVAL_ERROR) {
-		my $description = "endpoint version must be between 2 and 5, you said ${version}";
-		cmp_deeply($evalError, all(
-			isa('Chleb::Exception'),
-			methods(
-				description => $description,
-				location    => undef,
-				statusCode  => 400,
-			),
-		), "'${version}': ${description}");
-	} else {
-		fail("'${version}': No exception raised, as was expected");
-	}
-
-	return;
-}
-
-package main;
-use strict;
-use warnings;
-
-exit(ServerVersionFilterTests->new->run());
+if [ -x /usr/bin/cgi-fcgi ]; then
+	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
+		cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d' | jq -r '.data[0].attributes'
+	else
+		export HTTP_ACCEPT='text/html'
+		cgi-fcgi -connect "$SOCKET" /
+	fi
+fi

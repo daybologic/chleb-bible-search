@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Server;
+package Chleb::Server::Moose;
 use strict;
 use warnings;
 use Moose;
@@ -38,11 +38,11 @@ extends 'Chleb::Bible::Base';
 
 =head1 NAME
 
-Chleb::Server - Dancer2 server facility
+Chleb::Server::Moose
 
 =head1 DESCRIPTION
 
-Dancer2 server for stand-alone HTTP server for Chleb Bible Search
+Moose portion of HTTP server facility used by L<Chleb::Server::Dancer2>
 
 =cut
 
@@ -53,6 +53,7 @@ use Chleb::Exception;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
+use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 use IO::File;
 use JSON;
@@ -67,6 +68,8 @@ Readonly my $FUNCTION_RANDOM => 1;
 Readonly my $FUNCTION_VOTD => 2;
 Readonly my $FUNCTION_LOOKUP => 3;
 
+Readonly my $UPTIME_FILE_PATH => '/var/run/chleb-bible-search/startup.txt';
+
 =head1 METHODS
 
 =over
@@ -80,7 +83,9 @@ Book called after construction, by Moose.
 sub BUILD {
 	my ($self) = @_;
 
-	# Nothing to do
+	$self->__removeUptime();
+	$self->__getUptime(); # set startup time as soon as possible
+	$self->title();
 
 	return;
 }
@@ -103,6 +108,9 @@ sub title {
 		$self->dic->config->get('server', 'admin_name', 'Unknown'),
 		$self->dic->config->get('server', 'admin_email', 'example@example.org'),
 	));
+
+	# nb. this doesn't work, but perhaps it will be fixed in Plack in the future.
+	$0 = 'chleb-bible-search [server]';
 
 	return;
 }
@@ -662,7 +670,16 @@ Return the number of seconds the server has been running.
 
 sub __getUptime {
 	my ($self) = @_;
-	return time() - $self->__library->constructionTime;
+	my $startTime = time();
+	if (my $fh = IO::File->new($UPTIME_FILE_PATH, 'r')) {
+		$startTime = <$fh>;
+		chomp($startTime);
+		$startTime = int($startTime); # don't trust the file too much
+	} elsif ($fh = IO::File->new($UPTIME_FILE_PATH, 'w')) {
+		print($fh "$startTime\n");
+	}
+
+	return time() - $startTime;
 }
 
 =back
@@ -829,7 +846,7 @@ sub __searchResultsToHtml {
 	my ($json) = @_;
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
-		main::serveStaticPage('no_results'); # doesn't return...
+		Chleb::Server::Dancer2::serveStaticPage('no_results'); # doesn't return...
 		return; # ...but does in unit tests
 	}
 
@@ -1016,8 +1033,6 @@ sub __infoToHtml {
 	return $text;
 }
 
-__PACKAGE__->meta->make_immutable;
-
 =item C<__versionFilter($version, $minimum, $maximum)>
 
 Throw a 400 error if C<$version> is outwith C<$minimum> and C<$maximum> values,
@@ -1035,282 +1050,18 @@ sub __versionFilter {
 	return $version;
 }
 
-package main;
-use strict;
-use warnings;
+sub __removeUptime {
+	my ($self) = @_;
 
-use Chleb::Utils::OSError::Mapper;
-use Dancer2 0.2;
-use English qw(-no_match_vars);
-use HTTP::Status qw(:constants :is);
-use POSIX qw(EXIT_SUCCESS);
-use Scalar::Util qw(blessed);
+	my $logMessage = "Removing '$UPTIME_FILE_PATH' -- ";
+	my $result = unlink($UPTIME_FILE_PATH);
+	$logMessage .= sprintf('%d file(s) removed', int($result));
 
-my $server;
-
-set serializer => 'JSON'; # or any other serializer
-set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
-
-sub handleException {
-	my ($exception) = @_;
-
-	if (blessed($exception) && $exception->isa('Chleb::Exception')) {
-		$server->dic->logger->debug(sprintf('Returning HTTP status code %d', $exception->statusCode));
-		if (is_redirect($exception->statusCode)) {
-			return redirect $exception->location, $exception->statusCode;
-		} else {
-			send_error($exception->description, $exception->statusCode);
-		}
-	} else {
-		$server->dic->logger->error("Internal Server Error: $exception");
-		send_error($exception, 500);
-	}
+	$self->dic->logger->debug($logMessage);
 
 	return;
 }
 
-sub serveStaticPage {
-	my ($name) = @_;
-	my $html = '';
-
-	my $filePathFailed;
-	foreach my $filePath (@{ Chleb::Utils::explodeHtmlFilePath($name) }) {
-		if (my $file = IO::File->new($filePath, 'r')) {
-			while (my $line = $file->getline()) {
-				$html .= $line;
-			}
-
-			$file->close();
-			send_as html => $html;
-		}
-
-		$filePathFailed = $filePath;
-	}
-
-	my $error = $ERRNO;
-	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
-}
-
-get '/' => sub {
-	serveStaticPage('index');
-	return;
-};
-
-get '/:version/random' => sub {
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-	my $version = int(param('version') || 1);
-	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
-
-	my $dancerRequest = request();
-
-	my $result;
-	eval {
-		$result = $server->__random({
-			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
-			translations => $translations,
-			testament => param('testament'),
-			version => $version,
-			parental => $parental,
-			redirect => $redirect,
-		});
-	};
-
-	if (my $exception = $EVAL_ERROR) {
-		handleException($exception);
-	}
-
-	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace("${version}/random returned as HTML");
-		send_as html => $result;
-	}
-
-	$server->dic->logger->trace("${version}/random returned as JSON");
-	return $result;
-};
-
-get '/1/votd' => sub {
-	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
-	my $when = param('when');
-	my $testament = param('testament');
-
-	my $result;
-	eval {
-		$result = $server->__votd({
-			parental    => $parental,
-			redirect    => $redirect,
-			when        => $when,
-			testament   => $testament,
-		});
-	};
-
-	if (my $exception = $EVAL_ERROR) {
-		handleException($exception);
-	}
-
-	return $result;
-};
-
-get '/2/votd' => sub {
-	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-	my $when = param('when');
-	my $testament = param('testament');
-	my $dancerRequest = request();
-
-	my $result;
-	eval {
-		$result = $server->__votd({
-			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
-			version      => 2,
-			when         => $when,
-			parental     => $parental,
-			translations => $translations,
-			redirect     => $redirect,
-			testament    => $testament,
-		});
-	};
-
-	if (my $exception = $EVAL_ERROR) {
-		handleException($exception);
-	}
-
-	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('2/votd returned as HTML');
-		send_as html => $result;
-	}
-
-	$server->dic->logger->trace('2/votd returned as JSON');
-	return $result;
-};
-
-get '/1/lookup/:book/:chapter/:verse' => sub {
-	my $book = param('book');
-	my $chapter = param('chapter');
-	my $verse = param('verse');
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-
-	my $dancerRequest = request();
-
-	my $result;
-	eval {
-		$result = $server->__lookup({
-			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
-			book         => $book,
-			chapter      => $chapter,
-			translations => $translations,
-			verse        => $verse,
-		});
-	};
-
-	if (my $exception = $EVAL_ERROR) {
-		handleException($exception);
-	}
-
-	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('1/lookup returned as HTML');
-		send_as html => $result;
-	}
-
-	$server->dic->logger->trace('1/lookup returned as JSON');
-	return $result;
-
-};
-
-get '/1/search' => sub {
-	my $limit = param('limit');
-	my $term = param('term');
-	my $wholeword = param('wholeword');
-
-	my $dancerRequest = request();
-
-	my $result;
-	eval {
-		$result = $server->__search({
-			accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
-			limit     => $limit,
-			term      => $term,
-			wholeword => $wholeword,
-		});
-	};
-
-	if (my $exception = $EVAL_ERROR) {
-		handleException($exception);
-	}
-
-	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('1/search returned as HTML');
-		send_as html => $result;
-	}
-
-	$server->dic->logger->trace('1/search returned as JSON');
-	return $result;
-};
-
-get '/1/ping' => sub {
-	return $server->__ping();
-};
-
-get '/1/version' => sub {
-	my $version = $server->__version();
-	if (ref($version) eq 'HASH') {
-		return $version;
-	} elsif ($version == 403) {
-		send_error('Disabled by server administrator', $version);
-	} else {
-		send_error('Unknown error', 500);
-	}
-};
-
-get '/1/uptime' => sub {
-	return $server->__uptime();
-};
-
-get '/1/info' => sub {
-	my $result;
-
-	my $dancerRequest = request();
-
-	eval {
-		$result = $server->__info({
-			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
-		});
-	};
-
-	if (my $exception = $EVAL_ERROR) {
-		handleException($exception);
-	}
-
-	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('1/info returned as HTML');
-		send_as html => $result;
-	}
-
-	$server->dic->logger->trace('1/info returned as JSON');
-	return $result;
-};
-
-$server = Chleb::Server->new();
-
-# Trap SIGHUP
-local $SIG{HUP} = sub {
-	eval {
-		$server->dic->resetLogger();
-		$server->dic->logger->debug('Received SIGHUP, re-opening logs');
-	};
-	if (my $evalError = $EVAL_ERROR) {
-		$server->dic->logger->error($evalError);
-	}
-};
-
-unless (caller()) {
-	$0 = 'chleb-bible-search [server]';
-	$server->title();
-	dance;
-
-	exit(EXIT_SUCCESS);
-}
+__PACKAGE__->meta->make_immutable;
 
 1;
