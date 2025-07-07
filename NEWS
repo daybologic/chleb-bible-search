@@ -36,6 +36,9 @@ Memory usage
 ------------
 The default installation now runs 20 processes, rather than a single process.  This
 is a vast improvement, especially in terms of performance and avoiding a denial of
-service scenario, but it will mean that more resources are used.  We have also changed
-our log4perl configuration to log the PID.  Please see:
+service scenario, but it will mean that more resources are used.
+
+log4perl
+--------
+We have also changed our log4perl configuration to log the PID.  Please see:
 https://github.com/daybologic/chleb-bible-search/blob/master/etc/log4perl.conf
