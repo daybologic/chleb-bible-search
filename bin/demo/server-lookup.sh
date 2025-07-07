@@ -29,6 +29,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-H=localhost:3000
+if [ -z "$CHLEB_SCHEME" ]; then
+	CHLEB_SCHEME=https
+fi
+if [ -z "$CHLEB_HOSTNAME" ]; then
+	CHLEB_HOSTNAME=chleb-api.daybologic.co.uk
+fi
 
-curl -s --header 'Accept: application/json' http://$H/1/lookup/prov/16/18 | jq .
+if [ -z "$CHLEB_PORT" ]; then
+	CHLEB_PORT=443
+fi
+
+H="$CHLEB_HOSTNAME:$CHLEB_PORT"
+
+curl -s --header 'Accept: application/json' $CHLEB_SCHEME://$H/1/lookup/prov/16/18 | jq .
