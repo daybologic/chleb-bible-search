@@ -48,3 +48,8 @@ logrotate
 We now only rotate files named *.log and rotate weekly, not monthly, it is
 recommended that you copy the project config from
 https://github.com/daybologic/chleb-bible-search/blob/master/etc/logrotate/chleb-bible-search
+
+Perl developers
+---------------
+Library constructionTime has been removed as not required for anything useful
+translation within Book is now an object, not a scalar string!
