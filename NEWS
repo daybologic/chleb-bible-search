@@ -11,7 +11,7 @@ please refer to the example configuration under etc/nginx/chleb-bible-search in 
 source distribution.
 
 You can also view this file at the following address:
-https://github.com/daybologic/chleb-bible-search/blob/master/etc/nginx/chleb-bible-search
+https://github.com/daybologic/chleb-bible-search/blob/master/etc/nginx/chleb-bible-search.example
 
 systemd
 -------
