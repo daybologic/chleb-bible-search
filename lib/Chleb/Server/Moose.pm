@@ -1062,76 +1062,56 @@ sub __removeUptime {
 	return;
 }
 
-my %dampenTime = ( );
+# FIXME: Will leak memory over time, switch to a disk-based cache, or memcached
+# additionally, this is a per-process store right now, which is probably not effective enough.
+has __dampenTime => (isa => 'HashRef[Str]', is => 'rw', lazy => 1, default => sub {{}});
+
 sub dampen {
+	my ($self) = @_;
 	my $ipAddress = request()->address();
 	my $currentTime = time();
 
-	my $previousTime = $dampenTime{$ipAddress};
+	my $previousTime = $self->__dampenTime->{$ipAddress};
 	if ($previousTime && $previousTime == $currentTime) {
-		$server->dic->logger->warn(sprintf('Saw %s already this second, denying request', $ipAddress));
+		$self->dic->logger->warn(sprintf('Saw %s already this second, denying request', $ipAddress));
 		return 1;
 	}
 
-	$dampenTime{$ipAddress} = $currentTime;
+	$self->__dampenTime->{$ipAddress} = $currentTime;
 	return 0;
 }
 
-sub handleException {
-	my ($exception) = @_;
-
-	my $str;
-	if (blessed($exception)) {
-		if ($exception->isa('Chleb::Exception')) {
-			$server->dic->logger->debug('Returning ' . $exception->toString());
-			if (is_redirect($exception->statusCode)) {
-				return redirect $exception->location, $exception->statusCode;
-			} else {
-				send_error($exception->description, $exception->statusCode);
-			}
-		} elsif ($exception->can('toString')) {
-			$str = $exception->toString();
-		}
-	} else {
-		$str = $exception;
-	}
-
-	$server->dic->logger->error("Internal Server Error: $exception");
-	send_error($exception, 500);
-
-	return;
-}
-
 sub handleSessionToken {
-	my $tokenRepo = $server->dic->tokenRepo;
+	my ($self) = @_;
+	my $tokenRepo = $self->dic->tokenRepo;
 	my $sessionToken;
 
-	if ($sessionToken = cookie('sessionToken')) {
-		$server->dic->logger->trace("Got session token '$sessionToken' from client");
+	if ($sessionToken = Chleb::Server::Dancer2::_cookie('sessionToken')) {
+		$self->dic->logger->trace("Got session token '$sessionToken' from client");
 
 		eval {
 			$sessionToken = $tokenRepo->load($sessionToken);
 		};
 		if (my $exception = $EVAL_ERROR) {
-			handleException($exception);
+			Chleb::Server::Dancer2::handleException($exception);
 		}
 
-		$server->dic->logger->trace('session token found!  ' . $sessionToken->toString());
-	} elsif (dampen()) {
-		handleException(Chleb::Exception->raise(
+		$self->dic->logger->trace('session token found!  ' . $sessionToken->toString());
+	} elsif ($self->dampen()) {
+		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 			HTTP_TOO_MANY_REQUESTS,
 			'Slow down, or respect the sessionToken cookie',
 		));
 	} else {
 		$sessionToken = $tokenRepo->create();
-		$server->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
-		cookie sessionToken => $sessionToken->value, expires => $sessionToken->expires;
+		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 
 		eval {
 			$sessionToken->save();
 		};
 		if (my $exception = $EVAL_ERROR) {
-			handleException($exception);
+			Chleb::Server::Dancer2::handleException($exception);
 		}
 	}
 

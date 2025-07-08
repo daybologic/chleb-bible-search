@@ -56,20 +56,32 @@ my $server;
 set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
 
+sub _cookie {
+	my (@args) = @_;
+	return cookie(@args);
+}
+
 sub handleException {
 	my ($exception) = @_;
 
-	if (blessed($exception) && $exception->isa('Chleb::Exception')) {
-		$server->dic->logger->debug(sprintf('Returning HTTP status code %d', $exception->statusCode));
-		if (is_redirect($exception->statusCode)) {
-			return redirect $exception->location, $exception->statusCode;
-		} else {
-			send_error($exception->description, $exception->statusCode);
+	my $str;
+	if (blessed($exception)) {
+		if ($exception->isa('Chleb::Exception')) {
+			$server->dic->logger->debug('Returning ' . $exception->toString());
+			if (is_redirect($exception->statusCode)) {
+				return redirect $exception->location, $exception->statusCode;
+			} else {
+				send_error($exception->description, $exception->statusCode);
+			}
+		} elsif ($exception->can('toString')) {
+			$str = $exception->toString();
 		}
 	} else {
-		$server->dic->logger->error("Internal Server Error: $exception");
-		send_error($exception, 500);
+		$str = $exception;
 	}
+
+	$server->dic->logger->error("Internal Server Error: $exception");
+	send_error($exception, 500);
 
 	return;
 }
