@@ -42,7 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
-use Chleb::Server;
+use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -53,7 +53,7 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb::Server->new());
+	$self->sut(Chleb::Server::Moose->new());
 
 	return EXIT_SUCCESS;
 }
@@ -68,7 +68,7 @@ sub testDefaults {
 				admin_email => 'example@example.org',
 				admin_name => 'Unknown',
 				server_host => 'localhost',
-				version => '1.2.0',
+				version => '1.3.0',
 			},
 			id => ignore(),
 			type => 'version',
@@ -79,6 +79,8 @@ sub testDefaults {
 
 	return EXIT_SUCCESS;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;

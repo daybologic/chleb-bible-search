@@ -38,13 +38,16 @@ use warnings;
 
 system('bin/maint/synology.sh');
 
+my $exeFiles = [glob q('data/*.bin.gz')];
+push(@$exeFiles, 'bin/core/app.psgi');
+
 WriteMakefile(
 	NAME         => 'Chleb',
 	VERSION_FROM => 'lib/Chleb.pm', # finds $VERSION
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
 	ABSTRACT     => 'Chleb Bible Search',
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => [glob q('data/*.bin.gz')],
+	EXE_FILES    => $exeFiles,
 
 	clean => {
 		FILES => [glob q('data/*.bin.gz')],

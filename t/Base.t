@@ -182,11 +182,7 @@ sub __checkCmpAddressMatch {
 	return;
 }
 
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
-}
+__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;

@@ -33,17 +33,20 @@
 package Book_equalsTests;
 use strict;
 use warnings;
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb::Bible;
 use Chleb::Bible::Book;
 use Chleb::DI::MockLogger;
+use Chleb::Type::Testament;
 use English qw(-no_match_vars);
-use POSIX qw(EXIT_SUCCESS);
+use Moose::Util::TypeConstraints;
+use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
 use Test::More;
@@ -51,9 +54,11 @@ use Test::More;
 has __bible => (isa => 'Chleb::Bible', is => 'rw');
 
 sub setUp {
-	my ($self) = @_;
+	my ($self, %params) = @_;
 
-	$self->__mockLogger();
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
 
 	$self->__bible(Chleb::Bible->new({
 		translation => 'asv',
@@ -70,9 +75,12 @@ sub __makeBook {
 	$name = 'Genesis' unless ($name);
 
 	return Chleb::Bible::Book->new({
+		chapterCount => 50,
 		bible => $self->__bible,
 		longName => $name,
 		shortNameRaw => substr($name, 0, 3),
+		testament => Chleb::Type::Testament->new({ value => 'old' }),
+		verseCount => 1_533,
 	});
 }
 
@@ -130,14 +138,7 @@ sub testDifferentBook {
 	return EXIT_SUCCESS;
 }
 
-sub __mockLogger {
-	my ($self) = @_;
-
-	my $dic = Chleb::DI::Container->instance;
-	$dic->logger(Chleb::DI::MockLogger->new());
-
-	return;
-}
+__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;

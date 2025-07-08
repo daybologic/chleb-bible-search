@@ -45,7 +45,7 @@ has _library => (isa => 'Chleb', is => 'rw', required => 0, init_arg => 'library
 
 sub __makeDIContainer {
 	my ($self) = @_;
-	return Chleb::DI::Container->new();
+	return Chleb::DI::Container->instance;
 }
 
 sub _resolveISO8601 {
@@ -120,5 +120,7 @@ sub _cmpAddress {
 
 	return ($result[0] == $result[1]);
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;

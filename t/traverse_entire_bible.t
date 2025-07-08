@@ -231,6 +231,8 @@ sub __getVerseText {
 	return $TEXT{$translation}->[$which];
 }
 
+__PACKAGE__->meta->make_immutable;
+
 package main;
 use strict;
 use warnings;

@@ -47,6 +47,7 @@ extends 'Chleb::Bible::Base';
 
 use Digest::CRC qw(crc32);
 use HTTP::Status qw(:constants);
+use List::Util qw(shuffle);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Text::LevenshteinXS qw(distance);
@@ -165,7 +166,8 @@ sub getBookByShortName {
 
 	my $closestBook;
 	my $lowestDistance = $Chleb::Constants::UINT_MAX; # an impossibly high number, all mismatches will be lower
-	foreach my $book (@{ $self->books }) {
+	my @books = shuffle(@{ $self->books }); # be fair; don't bias against books near the end of the bible
+	foreach my $book (@books) {
 		my $distance = distance($book->shortName, $shortName);
 		if ($distance < $lowestDistance) {
 			$lowestDistance = $distance;
@@ -466,5 +468,7 @@ sub __makeId {
 =back
 
 =cut
+
+__PACKAGE__->meta->make_immutable;
 
 1;

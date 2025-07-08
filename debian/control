@@ -3,6 +3,7 @@ Section: contrib/perl
 Priority: optional
 Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
+ libplack-perl,
 Build-Depends-Indep:
  libconfig-ini-perl,
  libdatetime-perl,
@@ -29,6 +30,7 @@ Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 Package: chleb-bible-search
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
+ bash (>= 5.2.15-2),
  libconfig-ini-perl,
  libdatetime-perl,
  libdatetime-format-strptime-perl,

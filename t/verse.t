@@ -45,6 +45,7 @@ use Chleb;
 use Chleb::Bible::Book;
 use Chleb::Bible::Verse;
 use Chleb::DI::MockLogger;
+use Chleb::Type::Testament;
 use Test::Deep qw(cmp_deeply);
 use Test::Exception;
 use Test::More 0.96;
@@ -68,10 +69,13 @@ sub test {
 	my @bible = $self->sut->__getBible();
 	my $book = Chleb::Bible::Book->new({
 		bible        => $bible[0],
+		chapterCount => 1,
 		longName     => 'Book of Morman',
 		ordinal      => 21,
+		shortName    => 'susana',
 		shortNameRaw => 'Susana',
-		testament    => 'old',
+		testament    => Chleb::Type::Testament->new({ value => 'old' }),
+		verseCount   => 1,
 	});
 
 	my $translation = 'kjv';
@@ -96,7 +100,7 @@ sub test {
 				ordinal      => 21,
 				shortName    => 'susana',
 				shortNameRaw => 'Susana',
-				testament    => 'old',
+				testament    => Chleb::Type::Testament->new({ value => 'old' }),
 			),
 			chapter => methods(
 				ordinal => 1_121,
@@ -121,6 +125,8 @@ sub test {
 
 	return EXIT_SUCCESS;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;

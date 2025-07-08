@@ -42,7 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
-use Chleb::Server;
+use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -53,7 +53,7 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb::Server->new());
+	$self->sut(Chleb::Server::Moose->new());
 
 	return EXIT_SUCCESS;
 }
@@ -63,7 +63,7 @@ sub test_translation_kjv {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType });
+	my $json = $self->sut->__random({ accept => $mediaType, version => 1 });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -77,9 +77,11 @@ sub test_translation_kjv {
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
 				},
 				relationships => {
 					book => {
@@ -158,7 +160,7 @@ sub test_translation_asv {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'] });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'], version => 1 });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -172,9 +174,11 @@ sub test_translation_asv {
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
 				},
 				relationships => {
 					book => {
@@ -241,7 +245,7 @@ sub test_translation_asv {
 			},
 		],
 		links => {
-			self => '/1/random',
+			self => '/1/random?translations=asv',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
@@ -253,7 +257,7 @@ sub test_translation_all {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => ['all'] });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['all'], version => 1 });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -267,9 +271,11 @@ sub test_translation_all {
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					prev => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					self => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					next => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
 				},
 				relationships => {
 					book => {
@@ -336,12 +342,14 @@ sub test_translation_all {
 			},
 		],
 		links => {
-			self => '/1/random',
+			self => '/1/random?translations=all',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
 	return EXIT_SUCCESS;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;
