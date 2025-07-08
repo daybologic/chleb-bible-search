@@ -51,7 +51,7 @@ etc/chleb-bible-search.service
 etc/log4perl.conf
 etc/logrotate/chleb-bible-search
 etc/main.conf
-etc/nginx/chleb-bible-search
+etc/nginx/chleb-bible-search.example
 externals/httpie-tools/bin/httpie-export-to-shell
 externals/httpie-tools/bin/palmer.sh
 externals/httpie-tools/COPYING
