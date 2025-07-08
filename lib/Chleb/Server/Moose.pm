@@ -1068,7 +1068,7 @@ has __dampenTime => (isa => 'HashRef[Str]', is => 'rw', lazy => 1, default => su
 
 sub dampen {
 	my ($self) = @_;
-	my $ipAddress = request()->address();
+	my $ipAddress = Chleb::Server::Dancer2::_request()->address();
 	my $currentTime = time();
 
 	my $previousTime = $self->__dampenTime->{$ipAddress};

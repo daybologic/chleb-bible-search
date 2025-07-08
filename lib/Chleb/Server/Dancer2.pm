@@ -61,6 +61,11 @@ sub _cookie {
 	return cookie(@args);
 }
 
+sub _request {
+	my (@args) = @_;
+	return request(@args);
+}
+
 sub handleException {
 	my ($exception) = @_;
 
@@ -109,11 +114,14 @@ sub serveStaticPage {
 }
 
 get '/' => sub {
+	$server->handleSessionToken();
 	serveStaticPage('index');
 	return;
 };
 
 get '/:version/random' => sub {
+	$server->handleSessionToken();
+
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $version = int(param('version') || 1);
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
@@ -147,6 +155,8 @@ get '/:version/random' => sub {
 };
 
 get '/1/votd' => sub {
+	$server->handleSessionToken();
+
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $when = param('when');
@@ -170,6 +180,8 @@ get '/1/votd' => sub {
 };
 
 get '/2/votd' => sub {
+	$server->handleSessionToken();
+
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
@@ -204,6 +216,8 @@ get '/2/votd' => sub {
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {
+	$server->handleSessionToken();
+
 	my $book = param('book');
 	my $chapter = param('chapter');
 	my $verse = param('verse');
@@ -237,6 +251,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 };
 
 get '/1/search' => sub {
+	$server->handleSessionToken();
+
 	my $limit = param('limit');
 	my $term = param('term');
 	my $wholeword = param('wholeword');
@@ -267,10 +283,13 @@ get '/1/search' => sub {
 };
 
 get '/1/ping' => sub {
+	$server->handleSessionToken();
 	return $server->__ping();
 };
 
 get '/1/version' => sub {
+	$server->handleSessionToken();
+
 	my $version = $server->__version();
 	if (ref($version) eq 'HASH') {
 		return $version;
@@ -282,14 +301,16 @@ get '/1/version' => sub {
 };
 
 get '/1/uptime' => sub {
+	$server->handleSessionToken();
 	return $server->__uptime();
 };
 
 get '/1/info' => sub {
-	my $result;
+	$server->handleSessionToken();
 
 	my $dancerRequest = request();
 
+	my $result;
 	eval {
 		$result = $server->__info({
 			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
