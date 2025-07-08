@@ -59,7 +59,7 @@ Readonly my $TRANSLATION_DEFAULT => 'kjv';
 has __bibles => (is => 'ro', isa => 'HashRef[Str]', lazy => 1, default => \&__makeBibles); # use 'bibles' to access
 
 BEGIN {
-	our $VERSION = '1.3.0';
+	our $VERSION = '2.0.0';
 }
 
 sub BUILD {
