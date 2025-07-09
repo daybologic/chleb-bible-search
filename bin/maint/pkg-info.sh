@@ -35,8 +35,7 @@ buildUser=$(whoami)
 buildHost=$(hostname -f)
 buildOS=$(uname -o)
 buildArch=$(uname -m)
-# TODO: This time needs improvement
-buildTime=$(date '+%Y-%m-%dT09:00:00%%2B0100')
+buildTime=$(date '+%Y-%m-%dT%H:%M:%S%z')
 
 echo '# this file is auto-generated, do not check in' > "$outFile"
 echo 'package Chleb::Generated::Info;' >> "$outFile"
