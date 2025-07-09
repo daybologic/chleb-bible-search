@@ -80,7 +80,8 @@ cover :: pure_all
 
 clean :: pure_all
 	rm -rf cover_db
-	rm -f lib/Chleb/Generated/*
+	cd data/ && make clean
+	cd info/ && make clean
 
     ~;
 }

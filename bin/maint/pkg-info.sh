@@ -40,11 +40,14 @@ buildTime=$(date '+%Y-%m-%dT09:00:00%%2B0100')
 
 echo '# this file is auto-generated, do not check in' > "$outFile"
 echo 'package Chleb::Generated::Info;' >> "$outFile"
-echo "buildUser=\"$buildUser\"" >> "$outFile"
-echo "buildHost=\"$buildHost\"" >> "$outFile"
-echo "buildOS=\"$buildOS\"" >> "$outFile"
-echo "buildArch=\"$buildArch\"" >> "$outFile"
-echo "buildTime=\"$buildTime\"" >> "$outFile"
+echo 'use strict;' >> "$outFile"
+echo 'use warnings;' >> "$outFile"
+echo 'use Readonly;' >> "$outFile"
+echo "\$BUILD_USER = \"$buildUser\";" >> "$outFile"
+echo "\$BUILD_HOST = \"$buildHost\";" >> "$outFile"
+echo "\$BUILD_OS = \"$buildOS\";" >> "$outFile"
+echo "\$BUILD_ARCH = \"$buildArch\";" >> "$outFile"
+echo "\$BUILD_TIME = \"$buildTime\";" >> "$outFile"
 echo '1;' >> "$outFile"
 
 exit 0
