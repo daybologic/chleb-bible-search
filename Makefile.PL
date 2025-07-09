@@ -78,7 +78,7 @@ deb :: pure_all
 cover :: pure_all
 	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
 
-clean :: pure_all
+clean :: 
 	rm -rf cover_db
 	cd data/ && make clean
 	cd info/ && make clean
