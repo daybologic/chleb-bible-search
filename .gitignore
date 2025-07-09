@@ -19,3 +19,4 @@ data/*.bin
 data/*.bin.gz
 externals
 *.build
+lib/Chleb/Generated/*

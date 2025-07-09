@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,60 +29,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
+outFile='lib/Chleb/Generated/Info.pm'
 
-use ExtUtils::MakeMaker;
-#use ExtUtils::MakeMaker::Coverage;
-use strict;
-use warnings;
+buildUser=$(whoami)
+buildHost=$(hostname -f)
+buildOS=$(uname -o)
+buildArch=$(uname -m)
+# TODO: This time needs improvement
+buildTime=$(date '+%Y-%m-%dT09:00:00%%2B0100')
 
-system('bin/maint/synology.sh');
+echo '# this file is auto-generated, do not check in' > "$outFile"
+echo 'package Chleb::Generated::Info;' >> "$outFile"
+echo "buildUser=\"$buildUser\"" >> "$outFile"
+echo "buildHost=\"$buildHost\"" >> "$outFile"
+echo "buildOS=\"$buildOS\"" >> "$outFile"
+echo "buildArch=\"$buildArch\"" >> "$outFile"
+echo "buildTime=\"$buildTime\"" >> "$outFile"
+echo '1;' >> "$outFile"
 
-my $exeFiles = [glob q('data/*.bin.gz')];
-push(@$exeFiles, 'bin/core/app.psgi');
-
-WriteMakefile(
-	NAME         => 'Chleb',
-	VERSION_FROM => 'lib/Chleb.pm', # finds $VERSION
-	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Chleb Bible Search',
-	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => $exeFiles,
-
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
-	PREREQ_PM => {
-		'Moose'            => 0,
-		'Test::MockModule' => 0,
-		'Test::More'       => 0,
-		'UUID::Tiny'       => 0,
-	}, BUILD_REQUIRES => {
-		'DateTime::Format::Strptime' => 0,
-		'Devel::Cover'    => 0,
-		'Moose'           => 0,
-		'Test::More'      => 0,
-		'Readonly'        => 0,
-		'Test::Deep'      => 0,
-		'Test::Exception' => 0,
-	},
-);
-
-package MY;
-
-sub MY::postamble {
-    return q~
-deb :: pure_all
-	sbuild -A
-
-cover :: pure_all
-	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
-
-clean :: pure_all
-	rm -rf cover_db
-	rm -f lib/Chleb/Generated/*
-
-    ~;
-}
-
-1;
+exit 0
