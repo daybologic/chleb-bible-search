@@ -30,9 +30,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-all: lib/Chleb/Generated/Info.pm
+all: ../lib/Chleb/Generated/Info.pm
 
-lib/Chleb/Generated/Info.pm:
+../lib/Chleb/Generated/Info.pm:
 	cd ../ && bin/maint/pkg-info.sh
 
 clean:

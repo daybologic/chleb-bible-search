@@ -50,6 +50,7 @@ use Chleb;
 use Chleb::Bible::Search::Query;
 use Chleb::DI::Container;
 use Chleb::Exception;
+use Chleb::Generated::Info;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
