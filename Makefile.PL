@@ -36,6 +36,7 @@ use ExtUtils::MakeMaker;
 use strict;
 use warnings;
 
+system('bin/maint/pkg-info.sh'); # needs to run really early doors
 system('bin/maint/synology.sh');
 
 my $exeFiles = [glob q('data/*.bin.gz')];
