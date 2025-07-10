@@ -36,6 +36,7 @@ buildHost=$(hostname -f)
 buildOS=$(uname -o)
 buildArch=$(uname -m)
 buildTime=$(date '+%Y-%m-%dT%H:%M:%S%z')
+buildPerlVersion=$(perl -e 'print "$^V ($])"')
 
 echo '# this file is auto-generated, do not check in' > "$outFile"
 echo 'package Chleb::Generated::Info;' >> "$outFile"
@@ -47,6 +48,7 @@ echo "Readonly our \$BUILD_HOST => '$buildHost';" >> "$outFile"
 echo "Readonly our \$BUILD_OS => '$buildOS';" >> "$outFile"
 echo "Readonly our \$BUILD_ARCH => '$buildArch';" >> "$outFile"
 echo "Readonly our \$BUILD_TIME => '$buildTime';" >> "$outFile"
+echo "Readonly our \$BUILD_PERL_VERSION => '$buildPerlVersion';" >> "$outFile"
 echo '1;' >> "$outFile"
 
 exit 0
