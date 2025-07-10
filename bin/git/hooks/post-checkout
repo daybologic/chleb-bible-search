@@ -41,5 +41,16 @@ set -u
 # If the Makefile is present, clean up, dynamically created files from the
 # wrong branch are likely to cause confusion.
 if [ -f Makefile ]; then
+	# if Makefile.PL is present, always run it, because Makefile might
+	# complain that it is out of date.
+	# Don't rely on Makefile.PL being marked executable
+	if [ -f Makefile.PL ]; then
+		if [ -x Makefile.PL ]; then
+			./Makefile.PL
+		else
+			/usr/bin/env perl Makefile.PL
+		fi
+	fi
+
 	make clean
 fi
