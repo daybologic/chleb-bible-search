@@ -98,6 +98,7 @@ Please name your branch using this scheme:
 | feature/&lt;description&gt; | New functionality | NO | NO |
 | f/YYYYMM-&lt;description&gt; | Legacy features, please don't create new ones | NO | NO |
 | hotfix/&lt;description&gt; | Emergency fixes only | NO | YES |
+| maint | Maintainer branches (features for developers) | NO | NO |
 | master | Pointer to latest stable release | YES | NO |
 | platform/&lt;uname&gt;/base | Specific changes which can't be merged to master | NO | NO |
 | private/&lt;user-defined&gt; | Undocumented hierarchy, maintainer-use only | YES | YES |
