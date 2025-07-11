@@ -55,7 +55,7 @@ my $server;
 
 set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
-set public_dir => '/usr/share/chleb-bible-search/public';
+set public_dir => __configGetPublicDir();
 set static_handler => 1;
 
 sub handleException {
@@ -96,6 +96,10 @@ sub serveStaticPage {
 
 	my $error = $ERRNO;
 	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
+}
+
+sub __configGetPublicDir {
+	return $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public'),
 }
 
 get '/' => sub {
