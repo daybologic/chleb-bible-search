@@ -55,6 +55,8 @@ my $server;
 
 set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
+set public_dir => '/usr/share/chleb-bible-search/public';
+set static_handler => 1;
 
 sub handleException {
 	my ($exception) = @_;
