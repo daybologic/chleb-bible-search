@@ -55,7 +55,6 @@ my $server;
 
 set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
-set public_dir => __configGetPublicDir();
 set static_handler => 1;
 
 sub handleException {
@@ -99,8 +98,8 @@ sub serveStaticPage {
 }
 
 sub __configGetPublicDir {
-	return 'FIXME' unless ($server);
-	return $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public'),
+	die('Moose server must be initialized') unless ($server);
+	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public'),
 }
 
 get '/' => sub {
@@ -307,6 +306,7 @@ get '/1/info' => sub {
 sub run {
 	my ($self) = @_;
 	$server = Chleb::Server::Moose->new();
+	__configGetPublicDir();
 	return $self->dance;
 }
 
