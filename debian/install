@@ -5,4 +5,4 @@ etc/main.conf /etc/chleb-bible-search/
 data/*.bin.gz /usr/share/chleb-bible-search/
 etc/logrotate/chleb-bible-search /etc/logrotate.d/
 data/static/*.html /usr/share/chleb-bible-search/
-data/static/images/* /usr/share/chleb-bible-search/images/
+data/static/images/* /usr/share/chleb-bible-search/public/images/
