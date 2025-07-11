@@ -99,6 +99,7 @@ sub serveStaticPage {
 }
 
 sub __configGetPublicDir {
+	return 'FIXME' unless ($server);
 	return $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public'),
 }
 
