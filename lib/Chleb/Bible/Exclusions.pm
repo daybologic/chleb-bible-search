@@ -55,15 +55,14 @@ sub __makeTerms {
 
 	my @terms;
 	my $i = 0;
-	my $term = '';
-	my $length = 0;
+	my $term;
+	my $terms = $self->dic->config->get($SECTION_NAME, 'terms', [ ]);
+
 	do {
-		my $key = sprintf('term%d', ++$i);
-		$term = $self->dic->config->get($SECTION_NAME, $key, '');
-		if ($length = length($term)) {
+		if ($term = $terms->[$i++]) {
 			push(@terms, $term);
 		}
-	} while ($length > 0);
+	} while ($term);
 
 	$self->dic->logger->debug(sprintf('Loaded %d excluded VoTD terms', scalar(@terms)));
 	return \@terms;
