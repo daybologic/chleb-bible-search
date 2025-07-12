@@ -73,16 +73,16 @@ sub __makeRefs {
 
 	my @refs;
 	my $i = 0;
-	my $string = '';
-	my $length = 0;
+	my $ref;
+	my $key = 'refs';
+	my $refs = $self->dic->config->get($SECTION_NAME, $key, [ ]);
+
 	do {
-		my $key = sprintf('ref%d', ++$i);
-		$string = $self->dic->config->get($SECTION_NAME, $key, '');
-		if ($length = length($string)) {
+		if ($ref = $refs->[$i++]) {
 			my ($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd);
-			if ($string =~ m/^(\w+)\s+(\d+):(\d+)-(\d+)$/) {
+			if ($ref =~ m/^(\w+)\s+(\d+):(\d+)-(\d+)$/) {
 				($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd) = ($1, $2, $3, $4);
-			} elsif ($string =~ m/^(\w+)\s+(\d+):(\d+)$/) {
+			} elsif ($ref =~ m/^(\w+)\s+(\d+):(\d+)$/) {
 				($bookName, $chapterOrdinal, $verseOrdinalStart) = ($1, $2, $3);
 			} else {
 				$self->dic->logger->error(sprintf('%s has been ignored because the format was not recognized', $key));
@@ -105,7 +105,7 @@ sub __makeRefs {
 				}
 			}
 		}
-	} while ($length > 0);
+	} while ($ref);
 
 	$self->dic->logger->debug(sprintf('Loaded %d excluded VoTD references', scalar(@refs)));
 	return \@refs;
