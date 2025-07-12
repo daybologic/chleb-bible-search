@@ -35,10 +35,10 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
-use Config::INI::Reader;
 use English qw(-no_match_vars);
 use IO::File;
 use Readonly;
+use YAML::XS 'LoadFile';
 
 has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
 
@@ -51,7 +51,7 @@ sub BUILD {
 
 sub __makeData {
 	my ($self) = @_;
-	return Config::INI::Reader->read_file($self->path);
+	return LoadFile($self->path);
 }
 
 sub get {
