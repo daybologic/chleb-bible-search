@@ -40,8 +40,8 @@ PLACK='/usr/bin/plackup'
 
 nProc=$DEFAULT_NPROC
 if [ -f "$CONFIG_PATH" ]; then
-	yaml=$($YAML_SCRIPT < $CONFIG_PATH)
-	__nProc=$(echo $yaml | jq -r .server.children)
+	json=$($YAML_SCRIPT < $CONFIG_PATH)
+	__nProc=$(echo $json | jq -r .server.children)
 	if [ "$__nProc" != 'null' ]; then
 		nProc=$__nProc
 	fi
