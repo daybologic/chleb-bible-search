@@ -3,6 +3,7 @@ Section: contrib/perl
 Priority: optional
 Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
+ git,
  libplack-perl,
 Build-Depends-Indep:
  libdatetime-perl,
