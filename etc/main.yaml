@@ -1,7 +1,8 @@
 #server:
-#  domain: chleb-api.example.org
-#  admin_name: Unknown
 #  admin_email: example@example.org
+#  admin_name: Unknown
+#  children: 30
+#  domain: chleb-api.example.org
 votd_exclude:
   terms:
     - fornication

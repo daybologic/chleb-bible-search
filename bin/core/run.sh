@@ -30,4 +30,21 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 set -eu
-exec /usr/bin/plackup --no-default-middleware -s FCGI --listen /var/run/chleb-bible-search/sock --nproc 15 -a /usr/share/chleb-bible-search/app.psgi
+
+DEFAULT_NPROC=10
+YAML_SCRIPT='/usr/share/chleb-bible-search/yaml2json.pl'
+CONFIG_PATH='/etc/chleb-bible-search/main.yaml'
+APP='/usr/share/chleb-bible-search/app.psgi'
+SOCKET='/var/run/chleb-bible-search/sock'
+PLACK='/usr/bin/plackup'
+
+nProc=$DEFAULT_NPROC
+if [ -f "$CONFIG_PATH" ]; then
+	yaml=$($YAML_SCRIPT < $CONFIG_PATH)
+	__nProc=$(echo $yaml | jq -r .server.children)
+	if [ "$__nProc" != 'null' ]; then
+		nProc=$__nProc
+	fi
+fi
+
+exec $PLACK --no-default-middleware -s FCGI --listen $SOCKET --nproc $nProc -a $APP
