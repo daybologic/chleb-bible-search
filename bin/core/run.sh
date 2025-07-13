@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,63 +29,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
+set -eu
 
-use ExtUtils::MakeMaker;
-#use ExtUtils::MakeMaker::Coverage;
-use strict;
-use warnings;
+DEFAULT_NPROC=10
+YAML_SCRIPT='/usr/share/chleb-bible-search/yaml2json.pl'
+CONFIG_PATH='/etc/chleb-bible-search/main.yaml'
+APP='/usr/share/chleb-bible-search/app.psgi'
+SOCKET='/var/run/chleb-bible-search/sock'
+PLACK='/usr/bin/plackup'
 
-system('bin/maint/pkg-info.sh'); # needs to run really early doors
-system('bin/maint/synology.sh');
-system('bin/maint/git-install-local-hooks.sh');
+nProc=$DEFAULT_NPROC
+if [ -f "$CONFIG_PATH" ]; then
+	json=$($YAML_SCRIPT < $CONFIG_PATH)
+	__nProc=$(echo $json | jq -r .server.children)
+	if [ "$__nProc" != 'null' ]; then
+		nProc=$__nProc
+	fi
+fi
 
-my $exeFiles = [glob q('data/*.bin.gz')];
-push(@$exeFiles, 'bin/core/app.psgi', 'bin/core/run.sh', 'bin/core/yaml2json.pl');
-
-WriteMakefile(
-	NAME         => 'Chleb',
-	VERSION_FROM => 'lib/Chleb.pm', # finds $VERSION
-	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Chleb Bible Search',
-	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => $exeFiles,
-
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
-	PREREQ_PM => {
-		'Moose'            => 0,
-		'Test::MockModule' => 0,
-		'Test::More'       => 0,
-		'UUID::Tiny'       => 0,
-	}, BUILD_REQUIRES => {
-		'DateTime::Format::Strptime' => 0,
-		'Devel::Cover'    => 0,
-		'Moose'           => 0,
-		'Test::More'      => 0,
-		'Readonly'        => 0,
-		'Test::Deep'      => 0,
-		'Test::Exception' => 0,
-	},
-);
-
-package MY;
-
-sub MY::postamble {
-    return q~
-deb :: pure_all
-	sbuild -A
-
-cover :: pure_all
-	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
-
-clean :: 
-	rm -rf cover_db
-	cd data/ && make clean
-	cd info/ && make clean
-
-    ~;
-}
-
-1;
+exec $PLACK --no-default-middleware -s FCGI --listen $SOCKET --nproc $nProc -a $APP
