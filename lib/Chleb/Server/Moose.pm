@@ -101,7 +101,7 @@ There is no return value.
 sub title {
 	my ($self) = @_;
 
-	my $message = sprintf(
+	$self->dic->logger->info(sprintf(
 		'Started Chleb Bible Server %s (%s) built by %s@%s (%s/%s) with Perl %s at %s',
 		$Chleb::VERSION,
 		$Chleb::Generated::Info::BUILD_CHANGESET,
@@ -111,9 +111,7 @@ sub title {
 		$Chleb::Generated::Info::BUILD_ARCH,
 		$Chleb::Generated::Info::BUILD_PERL_VERSION,
 		$Chleb::Generated::Info::BUILD_TIME,
-	);
-
-$self->dic->logger->info($message);
+	));
 
 	$self->dic->logger->info(sprintf(
 		"Server %s administrator: %s <%s>",
