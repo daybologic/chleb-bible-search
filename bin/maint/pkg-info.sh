@@ -40,8 +40,11 @@ buildPerlVersion=$(perl -e 'print "$^V ($])"')
 
 gitCommand=$(which git)
 buildChangeset=''
-if [ -x "$gitCommand" ]; then
-	buildChangeset=$($gitCommand rev-parse --short=12 HEAD)
+if [ -z "$gitCommand" ]; then
+	echo "WARN: git not found" >&2
+else
+	buildChangeset=$(git rev-parse --short=12 HEAD)
+	echo "INFO: git revision is $buildChangeset"
 fi
 
 echo '# this file is auto-generated, do not check in' > "$outFile"
