@@ -42,9 +42,9 @@ buildPerlVersion=$(perl -e 'print "$^V ($])"')
 
 buildChangeset=''
 if [ -f '.git-changeset' ]; then
-	echo "WARN: .git-changeset not found" >&2
-else
 	buildChangeset=$(cat .git-changeset)
+else
+	echo "WARN: .git-changeset not found" >&2
 fi
 
 echo '# this file is auto-generated, do not check in' > "$outFile"
