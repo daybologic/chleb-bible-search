@@ -38,3 +38,5 @@ set -eu
 
 # ensure the tip bookmark points to the new HEAD marker
 git tag --force --create-reflog tip HEAD
+
+git rev-parse --short=12 HEAD > .git-changeset

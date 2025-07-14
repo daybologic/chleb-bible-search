@@ -54,3 +54,5 @@ if [ -f Makefile ]; then
 
 	make clean
 fi
+
+git rev-parse --short=12 HEAD > .git-changeset

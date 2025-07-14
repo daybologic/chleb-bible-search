@@ -40,13 +40,11 @@ buildArch=$(uname -m)
 buildTime=$(date '+%Y-%m-%dT%H:%M:%S%z')
 buildPerlVersion=$(perl -e 'print "$^V ($])"')
 
-gitCommand=$(which git)
 buildChangeset=''
-if [ -z "$gitCommand" ]; then
-	echo "WARN: git not found" >&2
+if [ -f '.git-changeset' ]; then
+	echo "WARN: .git-changeset not found" >&2
 else
-	buildChangeset=$(git rev-parse --short=12 HEAD)
-	echo "INFO: git revision is $buildChangeset"
+	buildChangeset=$(cat .git-changeset)
 fi
 
 echo '# this file is auto-generated, do not check in' > "$outFile"
