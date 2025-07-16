@@ -56,6 +56,7 @@ packages:
   - liburi-encode-perl
   - libuuid-tiny-perl
   - libwww-perl
+  - libyaml-libyaml-perl
   - perl
 
 sources:
