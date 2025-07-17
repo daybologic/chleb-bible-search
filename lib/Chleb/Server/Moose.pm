@@ -1096,7 +1096,7 @@ sub dampen {
 sub handleSessionToken {
 	my ($self) = @_;
 
-	my $supportSessions = $self->dic->config->get('features', 'sessions', 'false', 1));
+	my $supportSessions = $self->dic->config->get('features', 'sessions', 'false', 1);
 	return unless ($supportSessions);
 
 	unless ($self->__warnedSessionToken) {
