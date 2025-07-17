@@ -1076,6 +1076,7 @@ sub __removeUptime {
 # FIXME: Will leak memory over time, switch to a disk-based cache, or memcached
 # additionally, this is a per-process store right now, which is probably not effective enough.
 has __dampenTime => (isa => 'HashRef[Str]', is => 'rw', lazy => 1, default => sub {{}});
+has __warnedSessionToken => (is => 'rw', isa => 'Bool', default => 0);
 
 sub dampen {
 	my ($self) = @_;
@@ -1095,8 +1096,13 @@ sub dampen {
 sub handleSessionToken {
 	my ($self) = @_;
 
-	my $supportSessions = $self->dic->config->get('features', 'sessions', 'true', 1));
+	my $supportSessions = $self->dic->config->get('features', 'sessions', 'false', 1));
 	return unless ($supportSessions);
+
+	unless ($self->__warnedSessionToken) {
+		$self->dic->logger->warn('Using experimental session cookie support, alpha quality, there are known bugs and limitations');
+		$self->__warnedSessionToken(1);
+	}
 
 	my $tokenRepo = $self->dic->tokenRepo;
 	my $sessionToken;
