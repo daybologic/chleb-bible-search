@@ -1094,6 +1094,10 @@ sub dampen {
 
 sub handleSessionToken {
 	my ($self) = @_;
+
+	my $supportSessions = $self->dic->config->get('features', 'sessions', 'true', 1));
+	return unless ($supportSessions);
+
 	my $tokenRepo = $self->dic->tokenRepo;
 	my $sessionToken;
 
