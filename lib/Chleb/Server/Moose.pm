@@ -50,6 +50,7 @@ use Chleb;
 use Chleb::Bible::Search::Query;
 use Chleb::DI::Container;
 use Chleb::Exception;
+use Chleb::Generated::Info;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
@@ -100,7 +101,17 @@ There is no return value.
 sub title {
 	my ($self) = @_;
 
-	$self->dic->logger->info("Started Chleb Bible Server: \"Man shall not live by bread alone, but by every word that proceedeth out of the mouth of God.\" (Matthew 4:4)");
+	$self->dic->logger->info(sprintf(
+		'Started Chleb Bible Server %s (%s) built by %s@%s (%s/%s) with Perl %s at %s',
+		$Chleb::VERSION,
+		$Chleb::Generated::Info::BUILD_CHANGESET,
+		$Chleb::Generated::Info::BUILD_USER,
+		$Chleb::Generated::Info::BUILD_HOST,
+		$Chleb::Generated::Info::BUILD_OS,
+		$Chleb::Generated::Info::BUILD_ARCH,
+		$Chleb::Generated::Info::BUILD_PERL_VERSION,
+		$Chleb::Generated::Info::BUILD_TIME,
+	));
 
 	$self->dic->logger->info(sprintf(
 		"Server %s administrator: %s <%s>",

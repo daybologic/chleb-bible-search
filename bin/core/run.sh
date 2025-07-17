@@ -1,3 +1,4 @@
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,60 +29,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::DI::Config;
-use strict;
-use warnings;
-use Moose;
+set -eu
 
-extends 'Chleb::Bible::Base';
+DEFAULT_NPROC=10
+YAML_SCRIPT='/usr/share/chleb-bible-search/yaml2json.pl'
+CONFIG_PATH='/etc/chleb-bible-search/main.yaml'
+APP='/usr/share/chleb-bible-search/app.psgi'
+SOCKET='/var/run/chleb-bible-search/sock'
+PLACK='/usr/bin/plackup'
 
-use English qw(-no_match_vars);
-use IO::File;
-use Readonly;
-use YAML::XS 'LoadFile';
+nProc=$DEFAULT_NPROC
+if [ -f "$CONFIG_PATH" ]; then
+	json=$($YAML_SCRIPT < $CONFIG_PATH)
+	__nProc=$(echo $json | jq -r .server.children)
+	if [ "$__nProc" != 'null' ]; then
+		nProc=$__nProc
+	fi
+fi
 
-has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
-
-has path => (is => 'ro', isa => 'Str', required => 1);
-
-sub BUILD {
-	my ($self) = @_;
-	return;
-}
-
-sub __makeData {
-	my ($self) = @_;
-	return LoadFile($self->path);
-}
-
-sub get {
-	my ($self, $section, $key, $default, $isBoolean) = @_;
-
-	if (defined($self->__data->{$section}->{$key})) {
-		my $value = $self->__data->{$section}->{$key};
-		return __boolean($value) if ($isBoolean);
-		return $value;
-	}
-
-	return __boolean($default) if ($isBoolean);
-	return $default;
-}
-
-sub __boolean {
-	my ($value) = @_;
-
-	if (defined($value)) {
-		$value = lc($value);
-
-		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
-		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
-
-		die("Invalid boolean value in config: $value");
-	}
-
-	return 0;
-}
-
-__PACKAGE__->meta->make_immutable;
-
-1;
+exec $PLACK --no-default-middleware -s FCGI --listen $SOCKET --nproc $nProc -a $APP

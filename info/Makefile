@@ -1,5 +1,6 @@
+#!/usr/bin/make -f
 # Chleb Bible Search
-# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -29,47 +30,12 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-image: debian/stable
-packages:
-  - libcache-cache-perl
-  - libconfig-ini-perl
-  - libconfig-ini-perl
-  - libdancer2-perl
-  - libdatetime-format-strptime-perl
-  - libdatetime-perl
-  - libdevel-cover-perl
-  - libdbd-mysql-perl
-  - libdbi-perl
-  - libdigest-crc-perl
-  - libjson-maybexs-perl
-  - libjson-perl
-  - liblog-log4perl-perl
-  - libmoose-perl
-  - libmoosex-singleton-perl
-  - libreadonly-perl
-  - libtest-deep-perl
-  - libtest-exception-perl
-  - libtest-mockmodule-perl
-  - libtext-levenshteinxs-perl
-  - libtime-duration-perl
-  - libuniversal-require-perl
-  - liburi-encode-perl
-  - libuuid-tiny-perl
-  - libwww-perl
-  - libyaml-libyaml-perl
-  - perl
+all: ../lib/Chleb/Generated/Info.pm
 
-sources:
-  - https://git.sr.ht/~m6kvm/chleb-bible-search
-environment:
-  deploy: palmer@overchat.org
-tasks:
-  - setup: |
-      cd chleb-bible-search/
-  - build: |
-      cd chleb-bible-search/
-      perl Makefile.PL
-      make
-  - test: |
-      cd chleb-bible-search/
-      make test
+../lib/Chleb/Generated/Info.pm:
+	cd ../ && bin/maint/pkg-info.sh
+
+clean:
+	cd ../ && rm -vf lib/Chleb/Generated/Info.pm
+
+.PHONY: clean all

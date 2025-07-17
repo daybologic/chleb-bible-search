@@ -55,15 +55,11 @@ sub __makeTerms {
 
 	my @terms;
 	my $i = 0;
-	my $term = '';
-	my $length = 0;
-	do {
-		my $key = sprintf('term%d', ++$i);
-		$term = $self->dic->config->get($SECTION_NAME, $key, '');
-		if ($length = length($term)) {
-			push(@terms, $term);
-		}
-	} while ($length > 0);
+	my $terms = $self->dic->config->get($SECTION_NAME, 'terms', [ ]);
+
+	while (my $term = $terms->[$i++]) {
+		push(@terms, $term);
+	}
 
 	$self->dic->logger->debug(sprintf('Loaded %d excluded VoTD terms', scalar(@terms)));
 	return \@terms;
@@ -74,39 +70,36 @@ sub __makeRefs {
 
 	my @refs;
 	my $i = 0;
-	my $string = '';
-	my $length = 0;
-	do {
-		my $key = sprintf('ref%d', ++$i);
-		$string = $self->dic->config->get($SECTION_NAME, $key, '');
-		if ($length = length($string)) {
-			my ($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd);
-			if ($string =~ m/^(\w+)\s+(\d+):(\d+)-(\d+)$/) {
-				($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd) = ($1, $2, $3, $4);
-			} elsif ($string =~ m/^(\w+)\s+(\d+):(\d+)$/) {
-				($bookName, $chapterOrdinal, $verseOrdinalStart) = ($1, $2, $3);
-			} else {
-				$self->dic->logger->error(sprintf('%s has been ignored because the format was not recognized', $key));
-			}
+	my $key = 'refs';
+	my $refs = $self->dic->config->get($SECTION_NAME, $key, [ ]);
 
-			if ($bookName) {
-				my $verse;
-				$verseOrdinalEnd = $verseOrdinalStart if (!$verseOrdinalEnd || $verseOrdinalEnd < $verseOrdinalStart);
-				for (my $verseOrdinal = $verseOrdinalStart; $verseOrdinal <= $verseOrdinalEnd; $verseOrdinal++) {
-					eval {
-						# FIXME: Deprecated!  This is highly unreliable and you need to find a new
-						# way to access the library afore it goes away!
-						$verse = $self->dic->bible->fetch($bookName, $chapterOrdinal, $verseOrdinal);
-					};
-					if (my $evalError = $EVAL_ERROR) {
-						$self->dic->logger->error(sprintf('%s load failed: %s', $key, $evalError));
-					} else {
-						push(@refs, $verse);
-					}
+	while (my $ref = $refs->[$i++]) {
+		my ($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd);
+		if ($ref =~ m/^(\w+)\s+(\d+):(\d+)-(\d+)$/) {
+			($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd) = ($1, $2, $3, $4);
+		} elsif ($ref =~ m/^(\w+)\s+(\d+):(\d+)$/) {
+			($bookName, $chapterOrdinal, $verseOrdinalStart) = ($1, $2, $3);
+		} else {
+			$self->dic->logger->error(sprintf('%s has been ignored because the format was not recognized', $key));
+		}
+
+		if ($bookName) {
+			my $verse;
+			$verseOrdinalEnd = $verseOrdinalStart if (!$verseOrdinalEnd || $verseOrdinalEnd < $verseOrdinalStart);
+			for (my $verseOrdinal = $verseOrdinalStart; $verseOrdinal <= $verseOrdinalEnd; $verseOrdinal++) {
+				eval {
+					# FIXME: Deprecated!  This is highly unreliable and you need to find a new
+					# way to access the library afore it goes away!
+					$verse = $self->dic->bible->fetch($bookName, $chapterOrdinal, $verseOrdinal);
+				};
+				if (my $evalError = $EVAL_ERROR) {
+					$self->dic->logger->error(sprintf('%s load failed: %s', $key, $evalError));
+				} else {
+					push(@refs, $verse);
 				}
 			}
 		}
-	} while ($length > 0);
+	}
 
 	$self->dic->logger->debug(sprintf('Loaded %d excluded VoTD references', scalar(@refs)));
 	return \@refs;

@@ -149,7 +149,7 @@ This is the recommended approach.
 sub _makeConfig {
 	my ($self) = @_;
 
-	foreach my $path ('etc/main.conf', '/etc/chleb-bible-search/main.conf') {
+	foreach my $path ('etc/main.yaml', '/etc/chleb-bible-search/main.yaml') {
 		next unless (-e $path);
 		return Chleb::DI::Config->new({ dic => $self, path => $path });
 	}

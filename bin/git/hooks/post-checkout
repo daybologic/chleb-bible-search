@@ -1,3 +1,4 @@
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,60 +29,30 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::DI::Config;
-use strict;
-use warnings;
-use Moose;
+# Git SCM post-checkout hook.
+# Must be written to .git/hooks/post-checkout
+# and marked executable
 
-extends 'Chleb::Bible::Base';
+# turn on unbound variable trap
+# we'll allow general errors because make cleam is best-efforts,
+# and the developer might have modified the build-system (and broken it).
+set -u
 
-use English qw(-no_match_vars);
-use IO::File;
-use Readonly;
-use YAML::XS 'LoadFile';
+# If the Makefile is present, clean up, dynamically created files from the
+# wrong branch are likely to cause confusion.
+if [ -f Makefile ]; then
+	# if Makefile.PL is present, always run it, because Makefile might
+	# complain that it is out of date.
+	# Don't rely on Makefile.PL being marked executable
+	if [ -f Makefile.PL ]; then
+		if [ -x Makefile.PL ]; then
+			./Makefile.PL
+		else
+			/usr/bin/env perl Makefile.PL
+		fi
+	fi
 
-has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
+	make clean
+fi
 
-has path => (is => 'ro', isa => 'Str', required => 1);
-
-sub BUILD {
-	my ($self) = @_;
-	return;
-}
-
-sub __makeData {
-	my ($self) = @_;
-	return LoadFile($self->path);
-}
-
-sub get {
-	my ($self, $section, $key, $default, $isBoolean) = @_;
-
-	if (defined($self->__data->{$section}->{$key})) {
-		my $value = $self->__data->{$section}->{$key};
-		return __boolean($value) if ($isBoolean);
-		return $value;
-	}
-
-	return __boolean($default) if ($isBoolean);
-	return $default;
-}
-
-sub __boolean {
-	my ($value) = @_;
-
-	if (defined($value)) {
-		$value = lc($value);
-
-		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
-		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
-
-		die("Invalid boolean value in config: $value");
-	}
-
-	return 0;
-}
-
-__PACKAGE__->meta->make_immutable;
-
-1;
+git rev-parse --short=12 HEAD > .git-changeset

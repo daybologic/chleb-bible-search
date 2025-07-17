@@ -36,10 +36,12 @@ use ExtUtils::MakeMaker;
 use strict;
 use warnings;
 
+system('bin/maint/pkg-info.sh'); # needs to run really early doors
 system('bin/maint/synology.sh');
+system('bin/maint/git-install-local-hooks.sh');
 
 my $exeFiles = [glob q('data/*.bin.gz')];
-push(@$exeFiles, 'bin/core/app.psgi');
+push(@$exeFiles, 'bin/core/app.psgi', 'bin/core/run.sh', 'bin/core/yaml2json.pl');
 
 WriteMakefile(
 	NAME         => 'Chleb',
@@ -78,8 +80,10 @@ deb :: pure_all
 cover :: pure_all
 	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
 
-clean :: pure_all
+clean :: 
 	rm -rf cover_db
+	cd data/ && make clean
+	cd info/ && make clean
 
     ~;
 }
