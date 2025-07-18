@@ -44,7 +44,7 @@ BEGIN {
 }
 
 Readonly my $DEFAULT_EXPIRES_SECONDS => 604_800; # one week
-Readonly our $DATA_VERSION => 1;
+Readonly our $DATA_VERSION => 2;
 
 has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
 	my ($self) = @_;
@@ -64,6 +64,24 @@ has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, init_
 has source => (is => 'ro', isa => 'Chleb::Token::Repository::Base', required => 1, init_arg => '_source');
 
 has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate');
+
+has loggedIn => (is => 'ro', isa => 'Bool', default => 0);
+
+has ipAddress => (is => 'ro', isa => 'Str', default => '');
+
+has userAgent => (is => 'ro', isa => 'Str', default => '');
+
+has username => (is => 'ro', isa => 'Str', default => '');
+
+has forms => (is => 'ro', isa => 'HashRef[HashRef]', default => sub { {} });
+
+has searchResults => (is => 'ro', isa => 'ArrayRef', default => sub { [] });
+
+has lastTranslationRequested => (is => 'ro', isa => 'ArrayRef[Str]', default => sub { ['kjv'] });
+
+has stats => (is => 'ro', isa => 'HashRef', default => sub { {
+	queryCount => 0,
+} });
 
 sub _generate {
 	my ($self) = @_;
@@ -91,10 +109,18 @@ sub TO_JSON {
 	my ($self) = @_;
 
 	return {
-		created => $self->created,
-		expires => $self->expires,
-		value   => $self->value,
-		version => $self->version,
+		created                   => $self->created,
+		expires                   => $self->expires,
+		forms                     => $self->forms,
+		ipAddress                 => $self->ipAddress,
+		lastTranslationRequested  => $self->lastTranslationRequested,
+		loggedIn                  => $self->loggedIn,
+		searchResults             => $self->searchResults,
+		stats                     => $self->stats,
+		userAgent                 => $self->userAgent,
+		username                  => $self->username,
+		value                     => $self->value,
+		version                   => $self->version,
 	};
 }
 
