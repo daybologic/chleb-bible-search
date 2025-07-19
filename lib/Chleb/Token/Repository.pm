@@ -37,10 +37,6 @@ extends 'Chleb::Bible::Base';
 
 use Chleb::Token::Repository::TempDir;
 
-BEGIN {
-	our $VERSION = '0.12.0';
-}
-
 sub repo {
 	my ($self, $name) = @_;
 

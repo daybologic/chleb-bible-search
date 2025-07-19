@@ -35,8 +35,4 @@ use Moose;
 
 extends 'Chleb::Token::Repository::Base';
 
-BEGIN {
-	our $VERSION = '0.12.0';
-}
-
 1;

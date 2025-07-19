@@ -50,10 +50,6 @@ has __repo => (is => 'ro', isa => 'Chleb::Token::Repository', lazy => 1, default
 	return Chleb::Token::Repository->new();
 });
 
-BEGIN {
-	our $VERSION = '0.12.0';
-}
-
 sub create {
 	my ($self) = @_;
 

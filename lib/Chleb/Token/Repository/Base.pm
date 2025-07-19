@@ -35,10 +35,6 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
-BEGIN {
-	our $VERSION = '0.12.0';
-}
-
 sub save {
 	die('save must be overridden');
 }
