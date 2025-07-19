@@ -37,6 +37,7 @@ buildOS=$(uname -o)
 buildArch=$(uname -m)
 buildTime=$(date '+%Y-%m-%dT%H:%M:%S%z')
 buildPerlVersion=$(perl -e 'print "$^V ($])"')
+version=$(dpkg-parsechangelog --show-field Version)
 
 buildChangeset=''
 if [ -f '.git-changeset' ]; then
@@ -50,6 +51,11 @@ echo 'package Chleb::Generated::Info;' >> "$outFile"
 echo 'use strict;' >> "$outFile"
 echo 'use warnings;' >> "$outFile"
 echo 'use Readonly;' >> "$outFile"
+echo '' >> "$outFile"
+echo 'BEGIN {' >> "$outFile"
+echo "	our \$VERSION = '$version';" >> "$outFile"
+echo '};' >> "$outFile"
+echo '' >> "$outFile"
 echo "Readonly our \$BUILD_USER => '$buildUser';" >> "$outFile"
 echo "Readonly our \$BUILD_HOST => '$buildHost';" >> "$outFile"
 echo "Readonly our \$BUILD_OS => '$buildOS';" >> "$outFile"

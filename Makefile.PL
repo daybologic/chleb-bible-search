@@ -45,7 +45,7 @@ push(@$exeFiles, 'bin/core/app.psgi', 'bin/core/run.sh', 'bin/core/yaml2json.pl'
 
 WriteMakefile(
 	NAME         => 'Chleb',
-	VERSION_FROM => 'lib/Chleb.pm', # finds $VERSION
+	VERSION_FROM => 'lib/Chleb/Generated/Info.pm', # finds $VERSION
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
 	ABSTRACT     => 'Chleb Bible Search',
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',

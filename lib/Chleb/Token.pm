@@ -35,29 +35,37 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Generated::Info;
 use Digest::SHA;
 use English qw(-no_match_vars);
 use Readonly;
 
-BEGIN {
-	our $VERSION = '0.12.0';
-}
-
 Readonly my $DEFAULT_EXPIRES_SECONDS => 604_800; # one week
-Readonly our $DATA_VERSION => 2;
+Readonly our $DATA_VERSION_MAJOR => 2;
 
 has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
 	my ($self) = @_;
 	return $self->created + $DEFAULT_EXPIRES_SECONDS;
 });
 
-has created => (is => 'rw', isa => 'Int', init_arg => 'now', default => sub {
+has created => (is => 'rw', isa => 'Int', init_arg => 'now', lazy => 1, default => sub {
 	return time();
 });
 
-has version => (is => 'ro', isa => 'Int', init_arg => '_version', required => 1, default => sub {
-	return $DATA_VERSION;
+has modified => (is => 'rw', isa => 'Int', init_arg => 'now', lazy => 1, default => sub {
+	my ($self) = @_;
+	return $self->created;
 });
+
+has version => (is => 'ro', isa => 'Str', init_arg => '_version', required => 1, default => sub {
+	return $Chleb::Generated::Info::VERSION;
+});
+
+has major => (is => 'ro', isa => 'Int', init_arg => '_major', required => 1, default => sub {
+	return $DATA_VERSION_MAJOR;
+});
+
+has minor => (is => 'ro', isa => 'Int', init_arg => '_minor', required => 1, default => 0);
 
 has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, init_arg => '_repo');
 
@@ -115,6 +123,9 @@ sub TO_JSON {
 		ipAddress                 => $self->ipAddress,
 		lastTranslationRequested  => $self->lastTranslationRequested,
 		loggedIn                  => $self->loggedIn,
+		major                     => $self->major,
+		minor                     => $self->minor,
+		modified                  => $self->modified,
 		searchResults             => $self->searchResults,
 		stats                     => $self->stats,
 		userAgent                 => $self->userAgent,
