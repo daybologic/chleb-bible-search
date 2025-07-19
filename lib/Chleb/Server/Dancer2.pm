@@ -57,20 +57,37 @@ set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
 set static_handler => 1;
 
+sub _cookie {
+	my (@args) = @_;
+	return cookie(@args);
+}
+
+sub _request {
+	my (@args) = @_;
+	return request(@args);
+}
+
 sub handleException {
 	my ($exception) = @_;
 
-	if (blessed($exception) && $exception->isa('Chleb::Exception')) {
-		$server->dic->logger->debug(sprintf('Returning HTTP status code %d', $exception->statusCode));
-		if (is_redirect($exception->statusCode)) {
-			return redirect $exception->location, $exception->statusCode;
-		} else {
-			send_error($exception->description, $exception->statusCode);
+	my $str;
+	if (blessed($exception)) {
+		if ($exception->isa('Chleb::Exception')) {
+			$server->dic->logger->debug('Returning ' . $exception->toString());
+			if (is_redirect($exception->statusCode)) {
+				return redirect $exception->location, $exception->statusCode;
+			} else {
+				send_error($exception->description, $exception->statusCode);
+			}
+		} elsif ($exception->can('toString')) {
+			$str = $exception->toString();
 		}
 	} else {
-		$server->dic->logger->error("Internal Server Error: $exception");
-		send_error($exception, 500);
+		$str = $exception;
 	}
+
+	$server->dic->logger->error("Internal Server Error: $exception");
+	send_error($exception, 500);
 
 	return;
 }
@@ -103,11 +120,14 @@ sub __configGetPublicDir {
 }
 
 get '/' => sub {
+	$server->handleSessionToken();
 	serveStaticPage('index');
 	return;
 };
 
 get '/:version/random' => sub {
+	$server->handleSessionToken();
+
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $version = int(param('version') || 1);
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
@@ -141,6 +161,8 @@ get '/:version/random' => sub {
 };
 
 get '/1/votd' => sub {
+	$server->handleSessionToken();
+
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $when = param('when');
@@ -164,6 +186,8 @@ get '/1/votd' => sub {
 };
 
 get '/2/votd' => sub {
+	$server->handleSessionToken();
+
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
@@ -198,6 +222,8 @@ get '/2/votd' => sub {
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {
+	$server->handleSessionToken();
+
 	my $book = param('book');
 	my $chapter = param('chapter');
 	my $verse = param('verse');
@@ -231,6 +257,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 };
 
 get '/1/search' => sub {
+	$server->handleSessionToken();
+
 	my $limit = param('limit');
 	my $term = param('term');
 	my $wholeword = param('wholeword');
@@ -261,10 +289,13 @@ get '/1/search' => sub {
 };
 
 get '/1/ping' => sub {
+	$server->handleSessionToken();
 	return $server->__ping();
 };
 
 get '/1/version' => sub {
+	$server->handleSessionToken();
+
 	my $version = $server->__version();
 	if (ref($version) eq 'HASH') {
 		return $version;
@@ -276,14 +307,16 @@ get '/1/version' => sub {
 };
 
 get '/1/uptime' => sub {
+	$server->handleSessionToken();
 	return $server->__uptime();
 };
 
 get '/1/info' => sub {
-	my $result;
+	$server->handleSessionToken();
 
 	my $dancerRequest = request();
 
+	my $result;
 	eval {
 		$result = $server->__info({
 			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),

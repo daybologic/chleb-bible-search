@@ -1073,6 +1073,72 @@ sub __removeUptime {
 	return;
 }
 
+# FIXME: Will leak memory over time, switch to a disk-based cache, or memcached
+# additionally, this is a per-process store right now, which is probably not effective enough.
+has __dampenTime => (isa => 'HashRef[Str]', is => 'rw', lazy => 1, default => sub {{}});
+has __warnedSessionToken => (is => 'rw', isa => 'Bool', default => 0);
+
+sub dampen {
+	my ($self) = @_;
+	my $ipAddress = Chleb::Server::Dancer2::_request()->address();
+	my $currentTime = time();
+
+	my $previousTime = $self->__dampenTime->{$ipAddress};
+	if ($previousTime && $previousTime == $currentTime) {
+		$self->dic->logger->warn(sprintf('Saw %s already this second, denying request', $ipAddress));
+		return 1;
+	}
+
+	$self->__dampenTime->{$ipAddress} = $currentTime;
+	return 0;
+}
+
+sub handleSessionToken {
+	my ($self) = @_;
+
+	my $supportSessions = $self->dic->config->get('features', 'sessions', 'false', 1);
+	return unless ($supportSessions);
+
+	unless ($self->__warnedSessionToken) {
+		$self->dic->logger->warn('Using experimental session cookie support, alpha quality, there are known bugs and limitations');
+		$self->__warnedSessionToken(1);
+	}
+
+	my $tokenRepo = $self->dic->tokenRepo;
+	my $sessionToken;
+
+	if ($sessionToken = Chleb::Server::Dancer2::_cookie('sessionToken')) {
+		$self->dic->logger->trace("Got session token '$sessionToken' from client");
+
+		eval {
+			$sessionToken = $tokenRepo->load($sessionToken);
+		};
+		if (my $exception = $EVAL_ERROR) {
+			Chleb::Server::Dancer2::handleException($exception);
+		}
+
+		$self->dic->logger->trace('session token found!  ' . $sessionToken->toString());
+	} elsif ($self->dampen()) {
+		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
+			HTTP_TOO_MANY_REQUESTS,
+			'Slow down, or respect the sessionToken cookie',
+		));
+	} else {
+		$sessionToken = $tokenRepo->create();
+		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
+
+		eval {
+			$sessionToken->save();
+		};
+		if (my $exception = $EVAL_ERROR) {
+			Chleb::Server::Dancer2::handleException($exception);
+		}
+	}
+
+	return;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 1;
