@@ -436,7 +436,7 @@ sub __version {
 
 	push(@{ $hash{data} }, {
 		type => 'version',
-		id => uuid_to_string(create_uuid(UUID_SHA1, $NS_VERSION, join('/', values(%attributes)))),
+		id => uuid_to_string(create_uuid(UUID_SHA1, $NS_VERSION, join('/', sort(values(%attributes))))),
 		attributes => \%attributes,
 	});
 
