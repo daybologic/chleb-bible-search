@@ -1,4 +1,3 @@
-#!/usr/bin/perl
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,63 +28,68 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
-
-use ExtUtils::MakeMaker;
-#use ExtUtils::MakeMaker::Coverage;
+package Chleb::Token::Repository::DB::Dynamo;
 use strict;
 use warnings;
+use Moose;
 
-system('bin/maint/pkg-info.sh'); # needs to run really early doors
-system('bin/maint/synology.sh');
-system('bin/maint/git-install-local-hooks.sh');
+extends 'Chleb::Token::Repository::Base';
 
-my $exeFiles = [glob q('data/*.bin.gz')];
-push(@$exeFiles, 'bin/core/app.psgi', 'bin/core/run.sh', 'bin/core/yaml2json.pl');
+use Chleb::Exception;
+use Chleb::Token;
+use Chleb::Token::Repository;
+#use IO::File;
+use English qw(-no_match_vars);
+use HTTP::Status qw(:constants);
+use Storable qw(retrieve store);
 
-WriteMakefile(
-	NAME         => 'Chleb',
-	VERSION_FROM => 'lib/Chleb/Generated/Info.pm', # finds $VERSION
-	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Chleb Bible Search',
-	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => $exeFiles,
+has __repo => (is => 'ro', isa => 'Chleb::Token::Repository', lazy => 1, default => sub {
+	return Chleb::Token::Repository->new();
+});
 
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
-	PREREQ_PM => {
-		'Moose'            => 0,
-		'Test::MockModule' => 0,
-		'Test::More'       => 0,
-		'UUID::Tiny'       => 0,
-	}, BUILD_REQUIRES => {
-		'DateTime::Format::Strptime' => 0,
-		'Devel::Cover'    => 0,
-		'Moose'           => 0,
-		'Test::More'      => 0,
-		'Readonly'        => 0,
-		'Test::Deep'      => 0,
-		'Test::Exception' => 0,
-	},
-);
+sub create {
+	my ($self) = @_;
 
-package MY;
+	return Chleb::Token->new({
+		_repo => $self->__repo,
+		_source => $self,
+	});
+}
 
-sub MY::postamble {
-    return q~
-deb :: pure_all
-	sbuild -A
+sub load {
+	my ($self, $value) = @_;
 
-cover :: pure_all
-	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
+	my $data;
 
-clean :: 
-	rm -rf cover_db
-	cd data/ && make clean
-	cd info/ && make clean
+	if (my $evalError = $EVAL_ERROR || !$data) {
+		die Chleb::Exception->raise(HTTP_FORBIDDEN, 'Token not recognized via ' . __PACKAGE__);
+		# TODO logger?
+	}
 
-    ~;
+	return Chleb::Token->new({
+		_repo => $self->__repo,
+		_source => $self,
+		_value => $value,
+		# FIXME: Need a way to associate actual data with the key?  Perhaps not though, perhaps keep in memory with shared memcached?  This would keep session cooks simple
+	});
+}
+
+sub save {
+	my ($self, $token) = @_;
+
+	my $filePath = $self->__getFilePath($token->value);
+	eval {
+		# TODO: We're not storing anything useful aside the token
+		store($token->TO_JSON(), $filePath);
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->error(sprintf("Failed to store %s in %s to '%s': %s",
+		    $token->toString(), __PACKAGE__, $filePath, $evalError));
+
+		die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token');
+	}
+
+	return;
 }
 
 1;
