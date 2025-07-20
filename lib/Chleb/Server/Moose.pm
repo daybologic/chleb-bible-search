@@ -429,7 +429,7 @@ sub __version {
 
 	push(@{ $hash{data} }, {
 		type => 'version',
-		id => uuid_to_string(create_uuid(SHA1, $NS_VERSION, $version)),
+		id => uuid_to_string(create_uuid(UUID_SHA1, $NS_VERSION, $version)),
 		attributes => {
 			version => $version,
 			admin_email => $self->dic->config->get('server', 'admin_email', 'example@example.org'),
