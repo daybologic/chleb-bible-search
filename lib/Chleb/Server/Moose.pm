@@ -70,7 +70,7 @@ Readonly my $FUNCTION_VOTD => 2;
 Readonly my $FUNCTION_LOOKUP => 3;
 
 Readonly my $UPTIME_FILE_PATH => '/var/run/chleb-bible-search/startup.txt';
-Readonly my $CHLEB_PROJECT_UUID => 'c0207fa6-6560-11f0-acec-43cf13408627';
+Readonly my $NS_VERSION => 'c0207fa6-6560-11f0-acec-43cf13408627';
 
 =head1 METHODS
 
@@ -429,7 +429,7 @@ sub __version {
 
 	push(@{ $hash{data} }, {
 		type => 'version',
-		id => uuid_to_string(create_uuid(UUID_SHA1, $CHLEB_PROJECT_UUID, $version)),
+		id => uuid_to_string(create_uuid(SHA1, $NS_VERSION, $version)),
 		attributes => {
 			version => $version,
 			admin_email => $self->dic->config->get('server', 'admin_email', 'example@example.org'),
