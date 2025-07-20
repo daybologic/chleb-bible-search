@@ -40,7 +40,7 @@ export SOCKET='/var/run/chleb-bible-search/sock'
 
 if [ -x /usr/bin/cgi-fcgi ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d' | jq -r '.data[0].attributes'
+		cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d' | jq -r .
 	else
 		export HTTP_ACCEPT='text/html'
 		cgi-fcgi -connect "$SOCKET" /
