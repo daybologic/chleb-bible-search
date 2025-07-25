@@ -44,9 +44,9 @@ Pass this object to Plack to launch the server!
 
 =cut
 
-use Chleb::Generated::Info;
-use Chleb::Utils::OSError::Mapper;
 use Chleb::Server::Moose;
+use Chleb::TemplateProcessor;
+use Chleb::Utils::OSError::Mapper;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
@@ -101,16 +101,7 @@ sub serveStaticPage {
 	foreach my $filePath (@{ Chleb::Utils::explodeHtmlFilePath($name) }) {
 		if (my $file = IO::File->new($filePath, 'r')) {
 			while (my $line = $file->getline()) {
-				$line =~ s/__VERSION__/$Chleb::Generated::Info::VERSION/;
-				$line =~ s/__BUILD_CHANGESET__/$Chleb::Generated::Info::BUILD_CHANGESET/;
-				$line =~ s/__BUILD_USER__/$Chleb::Generated::Info::BUILD_USER/;
-				$line =~ s/__BUILD_HOST__/$Chleb::Generated::Info::BUILD_HOST/;
-				$line =~ s/__BUILD_OS__/$Chleb::Generated::Info::BUILD_OS/;
-				$line =~ s/__BUILD_ARCH__/$Chleb::Generated::Info::BUILD_ARCH/;
-				$line =~ s/__BUILD_PERL_VERSION__/$Chleb::Generated::Info::BUILD_PERL_VERSION/;
-				$line =~ s/__BUILD_TIME__/$Chleb::Generated::Info::BUILD_TIME/;
-
-				$html .= $line;
+				$html .= Chleb::TemplateProcessor::byLine($line);
 			}
 
 			$file->close();
