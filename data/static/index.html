@@ -12,11 +12,12 @@
         a { color: #2980b9; text-decoration: none; }
         a:hover { text-decoration: underline; }
         .swagger { margin-top: 2em; font-size: 0.95em; }
+        .buildinfo { margin-top: 2em; font-size: 0.95em; }
     </style>
 </head>
 <body>
     <img src="/images/bible.png" alt="Chleb Bible Search: The Holy Bible (royalty free image)" width="273" height="214">
-    <h1>Welcome to Chleb Bible Search</h1>
+    <h1>Welcome to Chleb Bible Search __VERSION__</h1>
     <p>This is a microservice for querying and searching the Bible. You can use the following endpoints directly, or explore the <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.3.0" target="_blank">Swagger API documentation</a>.</p>
     <ul>
         <li><a href="/1/search?term=love">Search for verses</a> (e.g. <code>/1/search?term=love</code>)</li>
@@ -30,6 +31,9 @@
     </ul>
     <div class="swagger">
         <strong>developers:</strong> <a href="https://github.com/daybologic/chleb-bible-search" target="_blank">GitHub</a>
+    </div>
+    <div class="buildinfo">
+        Chleb Bible Server __VERSION__ (__BUILD_CHANGESET__) built by __BUILD_USER__@__BUILD_HOST__ (__BUILD_OS__/__BUILD_ARCH__) with Perl __BUILD_PERL_VERSION__ at __BUILD_TIME__
     </div>
 </body>
 </html>
