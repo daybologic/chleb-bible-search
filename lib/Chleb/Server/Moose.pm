@@ -103,7 +103,7 @@ sub title {
 	my ($self) = @_;
 
 	$self->dic->logger->info(sprintf(
-		'Started Chleb Bible Server %s (%s) built by %s@%s (%s/%s) with Perl %s at %s',
+		'Started Chleb Bible Search %s (%s) built by %s@%s (%s/%s) with Perl %s at %s',
 		$Chleb::VERSION,
 		$Chleb::Generated::Info::BUILD_CHANGESET,
 		$Chleb::Generated::Info::BUILD_USER,
