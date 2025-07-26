@@ -44,8 +44,9 @@ Pass this object to Plack to launch the server!
 
 =cut
 
-use Chleb::Utils::OSError::Mapper;
 use Chleb::Server::Moose;
+use Chleb::TemplateProcessor;
+use Chleb::Utils::OSError::Mapper;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
@@ -99,8 +100,24 @@ sub serveStaticPage {
 	my $filePathFailed;
 	foreach my $filePath (@{ Chleb::Utils::explodeHtmlFilePath($name) }) {
 		if (my $file = IO::File->new($filePath, 'r')) {
+			my $templateMode = 0; # off
+			my $lineCounter = 0;
 			while (my $line = $file->getline()) {
-				$html .= $line;
+				$lineCounter++;
+
+				if ($templateMode) {
+					$html .= Chleb::TemplateProcessor::byLine($line);
+				} else {
+					$html .= $line;
+
+					if ($lineCounter <= 10) {
+						chomp($line);
+						$line =~ s/\s*//g;
+						if (lc($line) eq '<!--chlebtemplate-->') {
+							$templateMode = 1; # on
+						}
+					}
+				}
 			}
 
 			$file->close();
