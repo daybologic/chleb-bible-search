@@ -94,9 +94,10 @@ sub handleException {
 }
 
 sub serveStaticPage {
-	my ($name) = @_;
+	my ($name, $templateParams) = @_;
 	my $html = '';
 
+	my $templateProcessor;
 	my $filePathFailed;
 	foreach my $filePath (@{ Chleb::Utils::explodeHtmlFilePath($name) }) {
 		if (my $file = IO::File->new($filePath, 'r')) {
@@ -106,7 +107,10 @@ sub serveStaticPage {
 				$lineCounter++;
 
 				if ($templateMode) {
-					$html .= Chleb::TemplateProcessor::byLine($line);
+					$templateProcessor = Chleb::TemplateProcessor->new({ params => $templateParams })
+					    unless ($templateProcessor);
+
+					$html .= $templateProcessor->byLine($line);
 				} else {
 					$html .= $line;
 
@@ -303,6 +307,20 @@ get '/1/search' => sub {
 
 	$server->dic->logger->trace('1/search returned as JSON');
 	return $result;
+};
+
+get '/2/search' => sub {
+	$server->handleSessionToken();
+
+	my $term = param('term');
+
+	my %templateParams = (
+		SEARCH_TERM => $term,
+	);
+
+	serveStaticPage('search', \%templateParams);
+
+	return;
 };
 
 get '/1/ping' => sub {
