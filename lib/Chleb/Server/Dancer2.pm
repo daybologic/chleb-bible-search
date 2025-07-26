@@ -313,9 +313,11 @@ get '/2/search' => sub {
 	$server->handleSessionToken();
 
 	my $term = param('term');
+	my $wholeword = param('wholeword');
 
 	my %templateParams = (
 		SEARCH_TERM => $term,
+		SEARCH_WHOLEWORD => Chleb::Utils::boolean('wholeword', $wholeword, 0) ? 'checked' : '',
 	);
 
 	serveStaticPage('search', \%templateParams);
