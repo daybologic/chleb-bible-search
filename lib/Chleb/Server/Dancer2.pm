@@ -44,6 +44,7 @@ Pass this object to Plack to launch the server!
 
 =cut
 
+use Chleb::Bible::Search::Query;
 use Chleb::Server::Moose;
 use Chleb::TemplateProcessor;
 use Chleb::Utils::OSError::Mapper;
@@ -94,9 +95,10 @@ sub handleException {
 }
 
 sub serveStaticPage {
-	my ($name) = @_;
+	my ($name, $templateParams) = @_;
 	my $html = '';
 
+	my $templateProcessor;
 	my $filePathFailed;
 	foreach my $filePath (@{ Chleb::Utils::explodeHtmlFilePath($name) }) {
 		if (my $file = IO::File->new($filePath, 'r')) {
@@ -106,7 +108,10 @@ sub serveStaticPage {
 				$lineCounter++;
 
 				if ($templateMode) {
-					$html .= Chleb::TemplateProcessor::byLine($line);
+					$templateProcessor = Chleb::TemplateProcessor->new({ params => $templateParams })
+					    unless ($templateProcessor);
+
+					$html .= $templateProcessor->byLine($line);
 				} else {
 					$html .= $line;
 
@@ -276,11 +281,26 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 get '/1/search' => sub {
 	$server->handleSessionToken();
 
-	my $limit = param('limit');
+	my $limit = param('limit') ? int(param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 	my $term = param('term');
 	my $wholeword = param('wholeword');
+	my $form = Chleb::Utils::boolean('form', param('form'), 0);
 
 	my $dancerRequest = request();
+
+	if (!$term || $form) {
+		my %templateParams = (
+			SEARCH_LIMIT_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
+			SEARCH_LIMIT_MAX => 2_000, # What's reasonable?  It isn't enforced by the backend anyway
+			SEARCH_LIMIT_VALUE => $limit,
+			SEARCH_TERM => $term,
+			SEARCH_WHOLEWORD => Chleb::Utils::boolean('wholeword', $wholeword, 0) ? 'checked' : '',
+		);
+
+		serveStaticPage('search', \%templateParams);
+
+		return;
+	}
 
 	my $result;
 	eval {
