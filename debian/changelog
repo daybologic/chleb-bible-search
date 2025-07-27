@@ -1,8 +1,35 @@
 chleb-bible-search (2.0.0) stable; urgency=medium
 
-  * v2.0.0rc1
+  * 🚸 search form (#91)
+  * 💄 last updated feature with basic templating engine (#87)
+  * 🔀 deterministic version 'id'
+  * ⚗️ experimental session-token core
+    This experimental feature allows us to dampen requests by non-conforming
+    clients who don't use the session ID, and theoretically, in the future,
+    support pagination and form-refilling.
+  * 🔀 session token dumper tool
+  * 🔀 time and version of build on main page and programmatically available
+  * 🤖 robots: disallow crawling verses (#80)
+  * 🔀 allow server admin to config no. of processes (#79)
+  * 💥 convert config to YAML (#78)
+    The INI file format we use (conf) is not suitable for even what we are
+    already using it for... we need to read it from bash in the future
+    (using **yq**) -- **breaking change**
+  * 🔀 favicon
+  * 🔀 project logo
+  * 🔀 SCM client hooks (Git)
+    We install default hooks into the Git client setup, so that
+    tip is always advanced on commit, and make clean is run when
+    switching between branches.
+  * experimental session-token
+  * 🔀 Plack
+    This new feature means a lot of changes and we switch to FastCGI.
+    This means that we bump the major version number at this point.
+    Systems administrators will need to intervene -- not a clean up upgrade.
+    All notes have been added to NEWS
+  * 🔀 bitbucket download links broken: remove (we're not too happy!)
 
- -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Tue, 08 Jul 2025 07:44:35 +0100
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 27 Jul 2025 13:23:22 +0100
 
 chleb-bible-search (1.3.0) stable; urgency=medium
 
