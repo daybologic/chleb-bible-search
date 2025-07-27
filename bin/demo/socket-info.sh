@@ -39,8 +39,6 @@ export HTTP_ACCEPT='application/json'
 export SOCKET='/var/run/chleb-bible-search/sock'
 cgi-fcgi -connect "$SOCKET" / | sed '1,/^\r*$/d' | jq .
 
-exit 0
-
 sleep 5
 export HTTP_ACCEPT='text/html'
 cgi-fcgi -connect "$SOCKET" /

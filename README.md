@@ -17,6 +17,11 @@ For up to date documentation, please ensure you are viewing the latest copy at [
 
 For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/2.0.0)
 
+## Configuration
+
+The configuration YAML file can be found in etc/main.yaml or when installed,
+/etc/chleb-bible-search/main.yaml
+
 ## Availability
 
 A running version of the latest version of the microservice itself is hosted on behalf of the project at this location:
@@ -98,6 +103,7 @@ Please name your branch using this scheme:
 | feature/&lt;description&gt; | New functionality | NO | NO |
 | f/YYYYMM-&lt;description&gt; | Legacy features, please don't create new ones | NO | NO |
 | hotfix/&lt;description&gt; | Emergency fixes only | NO | YES |
+| maint | Maintainer branches (features for developers) | NO | NO |
 | master | Pointer to latest stable release | YES | NO |
 | platform/&lt;uname&gt;/base | Specific changes which can't be merged to master | NO | NO |
 | private/&lt;user-defined&gt; | Undocumented hierarchy, maintainer-use only | YES | YES |

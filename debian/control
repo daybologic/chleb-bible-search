@@ -5,11 +5,11 @@ Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
  libplack-perl,
 Build-Depends-Indep:
- libconfig-ini-perl,
  libdatetime-perl,
  libdatetime-format-strptime-perl,
  libdevel-cover-perl,
  libdigest-crc-perl,
+ libdigest-sha-perl,
  libhttp-message-perl (>= 6.44-1),
  libjson-perl,
  libdancer2-perl,
@@ -23,6 +23,7 @@ Build-Depends-Indep:
  libtext-levenshteinxs-perl,
  libtime-duration-perl,
  libuuid-tiny-perl,
+ libyaml-libyaml-perl,
 Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
@@ -30,10 +31,11 @@ Package: chleb-bible-search
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
  bash (>= 5.2.15-2),
- libconfig-ini-perl,
+ jq,
  libdatetime-perl,
  libdatetime-format-strptime-perl,
  libdigest-crc-perl,
+ libdigest-sha-perl,
  libhttp-message-perl (>= 6.44-1),
  libjson-perl,
  libdancer2-perl,
@@ -44,6 +46,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
  libtext-levenshteinxs-perl,
  libtime-duration-perl,
  libuuid-tiny-perl,
+ libyaml-libyaml-perl,
 Replaces: libreligion-bible-verses-perl
 Description: Chleb Bible Search - Bible Query Service
  For further information see:

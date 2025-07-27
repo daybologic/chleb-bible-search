@@ -50,6 +50,7 @@ use Chleb;
 use Chleb::Bible::Search::Query;
 use Chleb::DI::Container;
 use Chleb::Exception;
+use Chleb::Generated::Info;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
@@ -69,6 +70,7 @@ Readonly my $FUNCTION_VOTD => 2;
 Readonly my $FUNCTION_LOOKUP => 3;
 
 Readonly my $UPTIME_FILE_PATH => '/var/run/chleb-bible-search/startup.txt';
+Readonly my $NS_VERSION => 'c0207fa6-6560-11f0-acec-43cf13408627';
 
 =head1 METHODS
 
@@ -100,7 +102,17 @@ There is no return value.
 sub title {
 	my ($self) = @_;
 
-	$self->dic->logger->info("Started Chleb Bible Server: \"Man shall not live by bread alone, but by every word that proceedeth out of the mouth of God.\" (Matthew 4:4)");
+	$self->dic->logger->info(sprintf(
+		'Started Chleb Bible Search %s (%s) built by %s@%s (%s/%s) with Perl %s at %s',
+		$Chleb::VERSION,
+		$Chleb::Generated::Info::BUILD_CHANGESET,
+		$Chleb::Generated::Info::BUILD_USER,
+		$Chleb::Generated::Info::BUILD_HOST,
+		$Chleb::Generated::Info::BUILD_OS,
+		$Chleb::Generated::Info::BUILD_ARCH,
+		$Chleb::Generated::Info::BUILD_PERL_VERSION,
+		$Chleb::Generated::Info::BUILD_TIME,
+	));
 
 	$self->dic->logger->info(sprintf(
 		"Server %s administrator: %s <%s>",
@@ -415,15 +427,17 @@ sub __version {
 
 	return 403 unless ($self->dic->config->get('features', 'version', 'true', 1));
 
+	my %attributes = (
+		version => $version,
+		admin_email => $self->dic->config->get('server', 'admin_email', 'example@example.org'),
+		admin_name => $self->dic->config->get('server', 'admin_name', 'Unknown'),
+		server_host => $self->dic->config->get('server', 'domain', 'localhost'),
+	);
+
 	push(@{ $hash{data} }, {
 		type => 'version',
-		id => uuid_to_string(create_uuid()),
-		attributes => {
-			version => $version,
-			admin_email => $self->dic->config->get('server', 'admin_email', 'example@example.org'),
-			admin_name => $self->dic->config->get('server', 'admin_name', 'Unknown'),
-			server_host => $self->dic->config->get('server', 'domain', 'localhost'),
-		},
+		id => uuid_to_string(create_uuid(UUID_SHA1, $NS_VERSION, join('/', sort(values(%attributes))))),
+		attributes => \%attributes,
 	});
 
 	return \%hash;
@@ -1058,6 +1072,72 @@ sub __removeUptime {
 	$logMessage .= sprintf('%d file(s) removed', int($result));
 
 	$self->dic->logger->debug($logMessage);
+
+	return;
+}
+
+# FIXME: Will leak memory over time, switch to a disk-based cache, or memcached
+# additionally, this is a per-process store right now, which is probably not effective enough.
+has __dampenTime => (isa => 'HashRef[Str]', is => 'rw', lazy => 1, default => sub {{}});
+has __warnedSessionToken => (is => 'rw', isa => 'Bool', default => 0);
+
+sub dampen {
+	my ($self) = @_;
+	my $ipAddress = Chleb::Server::Dancer2::_request()->address();
+	my $currentTime = time();
+
+	my $previousTime = $self->__dampenTime->{$ipAddress};
+	if ($previousTime && $previousTime == $currentTime) {
+		$self->dic->logger->warn(sprintf('Saw %s already this second, denying request', $ipAddress));
+		return 1;
+	}
+
+	$self->__dampenTime->{$ipAddress} = $currentTime;
+	return 0;
+}
+
+sub handleSessionToken {
+	my ($self) = @_;
+
+	my $supportSessions = $self->dic->config->get('features', 'sessions', 'false', 1);
+	return unless ($supportSessions);
+
+	unless ($self->__warnedSessionToken) {
+		$self->dic->logger->warn('Using experimental session cookie support, alpha quality, there are known bugs and limitations');
+		$self->__warnedSessionToken(1);
+	}
+
+	my $tokenRepo = $self->dic->tokenRepo;
+	my $sessionToken;
+
+	if ($sessionToken = Chleb::Server::Dancer2::_cookie('sessionToken')) {
+		$self->dic->logger->trace("Got session token '$sessionToken' from client");
+
+		eval {
+			$sessionToken = $tokenRepo->load($sessionToken);
+		};
+		if (my $exception = $EVAL_ERROR) {
+			Chleb::Server::Dancer2::handleException($exception);
+		}
+
+		$self->dic->logger->trace('session token found!  ' . $sessionToken->toString());
+	} elsif ($self->dampen()) {
+		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
+			HTTP_TOO_MANY_REQUESTS,
+			'Slow down, or respect the sessionToken cookie',
+		));
+	} else {
+		$sessionToken = $tokenRepo->create();
+		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
+
+		eval {
+			$sessionToken->save();
+		};
+		if (my $exception = $EVAL_ERROR) {
+			Chleb::Server::Dancer2::handleException($exception);
+		}
+	}
 
 	return;
 }

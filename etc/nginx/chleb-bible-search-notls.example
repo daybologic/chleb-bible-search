@@ -1,0 +1,19 @@
+server {
+	server_name chleb-api.example.org; # Replace with your domain
+
+	root /var/www/tutorial;
+
+	location / {
+		include fastcgi_params;
+
+		if ($request_method = OPTIONS) {
+			return 204;
+		}
+
+		fastcgi_pass unix:/var/run/chleb-bible-search/sock;
+		fastcgi_param SCRIPT_NAME "";
+		proxy_ssl_server_name off;
+	}
+
+	listen 80;
+}

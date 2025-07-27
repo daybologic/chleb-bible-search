@@ -378,11 +378,17 @@ paths:
       description: Search for criteria in the whole bible
       parameters:
         - in: query
+          name: form
+          schema:
+            type: boolean
+          required: false
+          description: In text/html mode, display a form, and pre-fill values from your query
+        - in: query
           name: term
           schema:
             type: string
-          required: true
-          description: Critereon for search
+          required: false
+          description: Critereon for search, not required if you want the form mode, which is only valid in text/html mode
         - in: query
           name: limit
           schema:

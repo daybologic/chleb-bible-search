@@ -53,3 +53,14 @@ Perl developers
 ---------------
 Library constructionTime has been removed as not required for anything useful
 translation within Book is now an object, not a scalar string!
+
+Config
+------
+The config file has changed!  The old config file was:
+/etc/chleb-bible-search/main.conf
+and the new file is
+/etc/chleb-bible-search/main.yaml
+
+This is not simply a rename.  The older config is no longer supported, and the format
+has changed to YAML.  This allows us to have a more complex format, and to read the
+config from bash scripts.

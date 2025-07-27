@@ -1,4 +1,3 @@
-#!/usr/bin/perl
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,63 +28,60 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
-
-use ExtUtils::MakeMaker;
-#use ExtUtils::MakeMaker::Coverage;
+package Chleb::TemplateProcessor;
 use strict;
 use warnings;
+use Moose;
 
-system('bin/maint/pkg-info.sh'); # needs to run really early doors
-system('bin/maint/synology.sh');
-system('bin/maint/git-install-local-hooks.sh');
+extends 'Chleb::Bible::Base';
 
-my $exeFiles = [glob q('data/*.bin.gz')];
-push(@$exeFiles, 'bin/core/app.psgi', 'bin/core/run.sh', 'bin/core/yaml2json.pl');
+use Chleb::Generated::Info;
+use English qw(-no_match_vars);
 
-WriteMakefile(
-	NAME         => 'Chleb',
-	VERSION_FROM => 'lib/Chleb/Generated/Info.pm', # finds $VERSION
-	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Chleb Bible Search',
-	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => $exeFiles,
+has params => (isa => 'Maybe[HashRef]', is => 'rw', required => 0);
 
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
-	PREREQ_PM => {
-		'Moose'            => 0,
-		'Test::MockModule' => 0,
-		'Test::More'       => 0,
-		'UUID::Tiny'       => 0,
-	}, BUILD_REQUIRES => {
-		'DateTime::Format::Strptime' => 0,
-		'Devel::Cover'    => 0,
-		'Moose'           => 0,
-		'Test::More'      => 0,
-		'Readonly'        => 0,
-		'Test::Deep'      => 0,
-		'Test::Exception' => 0,
-	},
-);
+sub BUILD {
+	my ($self) = @_;
 
-package MY;
+	$self->params($self->__preProcess($self->params));
 
-sub MY::postamble {
-    return q~
-deb :: pure_all
-	sbuild -A
-
-cover :: pure_all
-	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
-
-clean :: 
-	rm -rf cover_db
-	cd data/ && make clean
-	cd info/ && make clean
-
-    ~;
+	return;
 }
+
+sub byLine {
+	my ($self, $line) = @_;
+
+	$line =~ s/__VERSION__/$Chleb::Generated::Info::VERSION/;
+	$line =~ s/__BUILD_CHANGESET__/$Chleb::Generated::Info::BUILD_CHANGESET/;
+	$line =~ s/__BUILD_USER__/$Chleb::Generated::Info::BUILD_USER/;
+	$line =~ s/__BUILD_HOST__/$Chleb::Generated::Info::BUILD_HOST/;
+	$line =~ s/__BUILD_OS__/$Chleb::Generated::Info::BUILD_OS/;
+	$line =~ s/__BUILD_ARCH__/$Chleb::Generated::Info::BUILD_ARCH/;
+	$line =~ s/__BUILD_PERL_VERSION__/$Chleb::Generated::Info::BUILD_PERL_VERSION/;
+	$line =~ s/__BUILD_TIME__/$Chleb::Generated::Info::BUILD_TIME/;
+
+	if ($self->params) {
+		foreach my $k (keys(%{ $self->params })) {
+			my $v = $self->params->{$k};
+			$line =~ s/\Q$k\E/$v/;
+		}
+	}
+
+	return $line;
+}
+
+sub __preProcess {
+	my ($self, $params) = @_;
+
+	my %newParams = ( );
+	foreach my $oldK (keys(%$params)) {
+		my $newK = "__${oldK}__";
+		$newParams{$newK} = $params->{$oldK};
+	}
+
+	return \%newParams;
+}
+
+__PACKAGE__->meta->make_immutable;
 
 1;

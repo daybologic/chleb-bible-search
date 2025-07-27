@@ -44,8 +44,10 @@ Pass this object to Plack to launch the server!
 
 =cut
 
-use Chleb::Utils::OSError::Mapper;
+use Chleb::Bible::Search::Query;
 use Chleb::Server::Moose;
+use Chleb::TemplateProcessor;
+use Chleb::Utils::OSError::Mapper;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
@@ -55,34 +57,72 @@ my $server;
 
 set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
+set static_handler => 1;
+
+sub _cookie {
+	my (@args) = @_;
+	return cookie(@args);
+}
+
+sub _request {
+	my (@args) = @_;
+	return request(@args);
+}
 
 sub handleException {
 	my ($exception) = @_;
 
-	if (blessed($exception) && $exception->isa('Chleb::Exception')) {
-		$server->dic->logger->debug(sprintf('Returning HTTP status code %d', $exception->statusCode));
-		if (is_redirect($exception->statusCode)) {
-			return redirect $exception->location, $exception->statusCode;
-		} else {
-			send_error($exception->description, $exception->statusCode);
+	my $str;
+	if (blessed($exception)) {
+		if ($exception->isa('Chleb::Exception')) {
+			$server->dic->logger->debug('Returning ' . $exception->toString());
+			if (is_redirect($exception->statusCode)) {
+				return redirect $exception->location, $exception->statusCode;
+			} else {
+				send_error($exception->description, $exception->statusCode);
+			}
+		} elsif ($exception->can('toString')) {
+			$str = $exception->toString();
 		}
 	} else {
-		$server->dic->logger->error("Internal Server Error: $exception");
-		send_error($exception, 500);
+		$str = $exception;
 	}
+
+	$server->dic->logger->error("Internal Server Error: $exception");
+	send_error($exception, 500);
 
 	return;
 }
 
 sub serveStaticPage {
-	my ($name) = @_;
+	my ($name, $templateParams) = @_;
 	my $html = '';
 
+	my $templateProcessor;
 	my $filePathFailed;
 	foreach my $filePath (@{ Chleb::Utils::explodeHtmlFilePath($name) }) {
 		if (my $file = IO::File->new($filePath, 'r')) {
+			my $templateMode = 0; # off
+			my $lineCounter = 0;
 			while (my $line = $file->getline()) {
-				$html .= $line;
+				$lineCounter++;
+
+				if ($templateMode) {
+					$templateProcessor = Chleb::TemplateProcessor->new({ params => $templateParams })
+					    unless ($templateProcessor);
+
+					$html .= $templateProcessor->byLine($line);
+				} else {
+					$html .= $line;
+
+					if ($lineCounter <= 10) {
+						chomp($line);
+						$line =~ s/\s*//g;
+						if (lc($line) eq '<!--chlebtemplate-->') {
+							$templateMode = 1; # on
+						}
+					}
+				}
 			}
 
 			$file->close();
@@ -96,12 +136,20 @@ sub serveStaticPage {
 	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
 }
 
+sub __configGetPublicDir {
+	die('Moose server must be initialized') unless ($server);
+	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public'),
+}
+
 get '/' => sub {
+	$server->handleSessionToken();
 	serveStaticPage('index');
 	return;
 };
 
 get '/:version/random' => sub {
+	$server->handleSessionToken();
+
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 	my $version = int(param('version') || 1);
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
@@ -135,6 +183,8 @@ get '/:version/random' => sub {
 };
 
 get '/1/votd' => sub {
+	$server->handleSessionToken();
+
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $when = param('when');
@@ -158,6 +208,8 @@ get '/1/votd' => sub {
 };
 
 get '/2/votd' => sub {
+	$server->handleSessionToken();
+
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
@@ -192,6 +244,8 @@ get '/2/votd' => sub {
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {
+	$server->handleSessionToken();
+
 	my $book = param('book');
 	my $chapter = param('chapter');
 	my $verse = param('verse');
@@ -225,11 +279,28 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 };
 
 get '/1/search' => sub {
-	my $limit = param('limit');
+	$server->handleSessionToken();
+
+	my $limit = param('limit') ? int(param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 	my $term = param('term');
 	my $wholeword = param('wholeword');
+	my $form = Chleb::Utils::boolean('form', param('form'), 0);
 
 	my $dancerRequest = request();
+
+	if (!$term || $form) {
+		my %templateParams = (
+			SEARCH_LIMIT_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
+			SEARCH_LIMIT_MAX => 2_000, # What's reasonable?  It isn't enforced by the backend anyway
+			SEARCH_LIMIT_VALUE => $limit,
+			SEARCH_TERM => $term,
+			SEARCH_WHOLEWORD => Chleb::Utils::boolean('wholeword', $wholeword, 0) ? 'checked' : '',
+		);
+
+		serveStaticPage('search', \%templateParams);
+
+		return;
+	}
 
 	my $result;
 	eval {
@@ -255,10 +326,13 @@ get '/1/search' => sub {
 };
 
 get '/1/ping' => sub {
+	$server->handleSessionToken();
 	return $server->__ping();
 };
 
 get '/1/version' => sub {
+	$server->handleSessionToken();
+
 	my $version = $server->__version();
 	if (ref($version) eq 'HASH') {
 		return $version;
@@ -270,14 +344,16 @@ get '/1/version' => sub {
 };
 
 get '/1/uptime' => sub {
+	$server->handleSessionToken();
 	return $server->__uptime();
 };
 
 get '/1/info' => sub {
-	my $result;
+	$server->handleSessionToken();
 
 	my $dancerRequest = request();
 
+	my $result;
 	eval {
 		$result = $server->__info({
 			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
@@ -300,6 +376,7 @@ get '/1/info' => sub {
 sub run {
 	my ($self) = @_;
 	$server = Chleb::Server::Moose->new();
+	__configGetPublicDir();
 	return $self->dance;
 }
 
