@@ -94,7 +94,7 @@ sub handleException {
 	return;
 }
 
-sub serveStaticPage {
+sub fetchStaticPage {
 	my ($name, $templateParams) = @_;
 	my $html = '';
 
@@ -126,7 +126,7 @@ sub serveStaticPage {
 			}
 
 			$file->close();
-			send_as html => $html;
+			return $html;
 		}
 
 		$filePathFailed = $filePath;
@@ -134,6 +134,11 @@ sub serveStaticPage {
 
 	my $error = $ERRNO;
 	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
+}
+
+sub serveStaticPage {
+	my ($name, $templateParams) = @_;
+	send_as html => fetchStaticPage($name, $templateParams);
 }
 
 sub __configGetPublicDir {
