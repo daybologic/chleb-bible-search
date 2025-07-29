@@ -860,8 +860,7 @@ sub __searchResultsToHtml {
 	my ($json) = @_;
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
-		Chleb::Server::Dancer2::serveStaticPage('no_results'); # doesn't return...
-		return; # ...but does in unit tests
+		return Chleb::Server::Dancer2::fetchStaticPage('no_results');
 	}
 
 	my $includedCount = scalar(@{ $json->{included} });

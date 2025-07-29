@@ -64,13 +64,13 @@ sub testEmpty {
 	my ($self) = @_;
 	plan tests => 1;
 
-	$self->mock('Chleb::Server::Dancer2', 'serveStaticPage');
+	$self->mock('Chleb::Server::Dancer2', 'fetchStaticPage');
 
 	my %json = ( data => [ ] );
 	Chleb::Server::Moose::__searchResultsToHtml(\%json);
 
-	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'serveStaticPage');
-	cmp_deeply($mockCalls, [['no_results']], "calls to serveStaticPage for 'no_results'") or diag(explain($mockCalls));
+	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'fetchStaticPage');
+	cmp_deeply($mockCalls, [['no_results']], "calls to fetchStaticPage for 'no_results'") or diag(explain($mockCalls));
 
 	return EXIT_SUCCESS;
 }
