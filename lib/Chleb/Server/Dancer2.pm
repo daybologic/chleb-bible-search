@@ -293,32 +293,36 @@ get '/1/search' => sub {
 
 	my $dancerRequest = request();
 
+	my $result = '';
+	if ($term) {
+		eval {
+			$result = $server->__search({
+				accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+				limit     => $limit,
+				term      => $term,
+				wholeword => $wholeword,
+			});
+		};
+
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
+	}
+
 	if (!$term || $form) {
 		my %templateParams = (
 			SEARCH_LIMIT_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
 			SEARCH_LIMIT_MAX => 2_000, # What's reasonable?  It isn't enforced by the backend anyway
 			SEARCH_LIMIT_VALUE => $limit,
+			SEARCH_RESULTS => $result,
 			SEARCH_TERM => $term,
 			SEARCH_WHOLEWORD => Chleb::Utils::boolean('wholeword', $wholeword, 0) ? 'checked' : '',
 		);
 
-		serveStaticPage('search', \%templateParams);
+		my $searchPage = fetchStaticPage('search', \%templateParams);
+		send_as html => $searchPage;
 
 		return;
-	}
-
-	my $result;
-	eval {
-		$result = $server->__search({
-			accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
-			limit     => $limit,
-			term      => $term,
-			wholeword => $wholeword,
-		});
-	};
-
-	if (my $exception = $EVAL_ERROR) {
-		handleException($exception);
 	}
 
 	if (ref($result) ne 'HASH') {
