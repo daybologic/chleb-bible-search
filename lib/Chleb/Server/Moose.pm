@@ -58,6 +58,7 @@ use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 use IO::File;
 use JSON;
+use Log::Log4perl::MDC;
 use Readonly;
 use Time::Duration;
 use UUID::Tiny ':std';
@@ -1094,6 +1095,19 @@ sub dampen {
 
 	$self->__dampenTime->{$ipAddress} = $currentTime;
 	return 0;
+}
+
+sub logRequest {
+	my ($self) = @_;
+
+	my $request = Chleb::Server::Dancer2::_request();
+	my $ipAddress = $request->address();
+	Log::Log4perl::MDC->put(address => $ipAddress);
+	my $path = $request->path();
+
+	$self->dic->logger->debug("Received request $path from $ipAddress");
+
+	return;
 }
 
 sub handleSessionToken {
