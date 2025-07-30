@@ -1134,6 +1134,7 @@ sub handleSessionToken {
 			Chleb::Server::Dancer2::handleException($exception);
 		}
 
+		Log::Log4perl::MDC->put(session => $sessionToken->shortValue());
 		$self->dic->logger->trace('session token found!  ' . $sessionToken->toString());
 	} elsif ($self->dampen()) {
 		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
@@ -1142,6 +1143,7 @@ sub handleSessionToken {
 		));
 	} else {
 		$sessionToken = $tokenRepo->create();
+		Log::Log4perl::MDC->put(session => $sessionToken->shortValue());
 		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
 		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 

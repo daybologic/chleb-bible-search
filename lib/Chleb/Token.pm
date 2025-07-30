@@ -73,6 +73,8 @@ has source => (is => 'ro', isa => 'Chleb::Token::Repository::Base', required => 
 
 has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate');
 
+has shortValue => (is => 'ro', isa => 'Str', init_arg => undef, lazy => 1, builder => '_makeShortValue');
+
 has loggedIn => (is => 'ro', isa => 'Bool', default => 0);
 
 has ipAddress => (is => 'ro', isa => 'Str', default => '');
@@ -96,6 +98,11 @@ sub _generate {
 
 	my $sha = Digest::SHA->new(256);
 	return $sha->add($PID, time(), rand(time()))->hexdigest;
+}
+
+sub _makeShortValue {
+	my ($self) = @_;
+	return substr($self->value, 0, 12);
 }
 
 sub save {
