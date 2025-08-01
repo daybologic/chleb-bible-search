@@ -77,9 +77,9 @@ has shortValue => (is => 'ro', isa => 'Str', init_arg => undef, lazy => 1, build
 
 has loggedIn => (is => 'ro', isa => 'Bool', default => 0);
 
-has ipAddress => (is => 'rw', isa => 'Str', default => '');
+has ipAddress => (is => 'rw', isa => 'Str', default => '', trigger => \&__markDirty);
 
-has userAgent => (is => 'ro', isa => 'Str', default => '');
+has userAgent => (is => 'rw', isa => 'Str', default => '', trigger => \&__markDirty);
 
 has username => (is => 'ro', isa => 'Str', default => '');
 
@@ -92,6 +92,14 @@ has lastTranslationRequested => (is => 'ro', isa => 'ArrayRef[Str]', default => 
 has stats => (is => 'ro', isa => 'HashRef', default => sub { {
 	queryCount => 0,
 } });
+
+has dirty => (is => 'rw', isa => 'Bool', default => 0);
+
+sub __markDirty {
+	my ($self) = @_;
+	$self->dirty(1);
+	return;
+}
 
 sub _generate {
 	my ($self) = @_;
@@ -107,7 +115,9 @@ sub _makeShortValue {
 
 sub save {
 	my ($self) = @_;
-	return $self->source->save($self);
+	$self->source->save($self);
+	$self->dirty(0);
+	return;
 }
 
 sub toString {

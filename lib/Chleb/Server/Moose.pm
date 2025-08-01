@@ -1122,6 +1122,8 @@ sub handleSessionToken {
 	}
 
 	my $request = Chleb::Server::Dancer2::_request();
+	my $ipAddress = $request->address();
+	my $userAgent = $request->agent();
 
 	my $tokenRepo = $self->dic->tokenRepo;
 	my $sessionToken;
@@ -1139,13 +1141,21 @@ sub handleSessionToken {
 		Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
 		$self->dic->logger->trace('session token found!  ' . $sessionToken->toString());
 
-		my $ipAddress = $request->address();
 		if ($sessionToken->ipAddress ne $ipAddress) {
 			$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',
 			    $sessionToken->toString(), $sessionToken->ipAddress, $ipAddress));
 
 			$sessionToken->ipAddress($ipAddress);
+		}
 
+		if ($sessionToken->userAgent ne $userAgent) {
+			$self->dic->logger->info(sprintf('%s the client changed user agent from %s to %s',
+			    $sessionToken->toString(), $sessionToken->userAgent, $userAgent));
+
+			$sessionToken->userAgent($userAgent);
+		}
+
+		if ($sessionToken->dirty) {
 			eval {
 				$sessionToken->save();
 			};
@@ -1161,7 +1171,10 @@ sub handleSessionToken {
 	} else {
 		$sessionToken = $tokenRepo->create();
 		Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
-		$sessionToken->ipAddress($request->address());
+
+		$sessionToken->ipAddress($ipAddress);
+		$sessionToken->userAgent($userAgent);
+
 		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
 		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 

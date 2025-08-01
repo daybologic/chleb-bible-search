@@ -93,6 +93,7 @@ sub load {
 			expires   => $data->{expires},
 			ipAddress => $data->{ipAddress},
 			now       => $data->{created},
+			userAgent => $data->{userAgent},
 		});
 	};
 
