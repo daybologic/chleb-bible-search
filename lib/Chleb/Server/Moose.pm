@@ -1121,6 +1121,8 @@ sub handleSessionToken {
 		$self->__warnedSessionToken(1);
 	}
 
+	my $request = Chleb::Server::Dancer2::_request();
+
 	my $tokenRepo = $self->dic->tokenRepo;
 	my $sessionToken;
 
@@ -1136,6 +1138,21 @@ sub handleSessionToken {
 
 		Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
 		$self->dic->logger->trace('session token found!  ' . $sessionToken->toString());
+
+		my $ipAddress = $request->address();
+		if ($sessionToken->ipAddress ne $ipAddress) {
+			$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',
+			    $sessionToken->toString(), $sessionToken->ipAddress, $ipAddress));
+
+			$sessionToken->ipAddress($ipAddress);
+
+			eval {
+				$sessionToken->save();
+			};
+			if (my $exception = $EVAL_ERROR) {
+				Chleb::Server::Dancer2::handleException($exception);
+			}
+		}
 	} elsif ($self->dampen()) {
 		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 			HTTP_TOO_MANY_REQUESTS,
@@ -1144,6 +1161,7 @@ sub handleSessionToken {
 	} else {
 		$sessionToken = $tokenRepo->create();
 		Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
+		$sessionToken->ipAddress($request->address());
 		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
 		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 

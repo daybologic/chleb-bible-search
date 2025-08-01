@@ -77,7 +77,7 @@ has shortValue => (is => 'ro', isa => 'Str', init_arg => undef, lazy => 1, build
 
 has loggedIn => (is => 'ro', isa => 'Bool', default => 0);
 
-has ipAddress => (is => 'ro', isa => 'Str', default => '');
+has ipAddress => (is => 'rw', isa => 'Str', default => '');
 
 has userAgent => (is => 'ro', isa => 'Str', default => '');
 
