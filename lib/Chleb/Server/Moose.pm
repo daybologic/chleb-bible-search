@@ -580,9 +580,10 @@ sub __search {
 	$hash{links}->{self} = '/1/search?term=' . $search->{term} . '&wholeword=' . $wholeword .'&limit=' . $limit;
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
-		return \%hash;
+		return (\%hash, \%hash);
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __searchResultsToHtml(\%hash);
+		my $html = __searchResultsToHtml(\%hash);
+		return ($html, \%hash);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -861,8 +862,7 @@ sub __searchResultsToHtml {
 	my ($json) = @_;
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
-		Chleb::Server::Dancer2::serveStaticPage('no_results'); # doesn't return...
-		return; # ...but does in unit tests
+		return Chleb::Server::Dancer2::fetchStaticPage('no_results');
 	}
 
 	my $includedCount = scalar(@{ $json->{included} });

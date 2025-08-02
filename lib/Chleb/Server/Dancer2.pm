@@ -94,7 +94,7 @@ sub handleException {
 	return;
 }
 
-sub serveStaticPage {
+sub fetchStaticPage {
 	my ($name, $templateParams) = @_;
 	my $html = '';
 
@@ -126,7 +126,7 @@ sub serveStaticPage {
 			}
 
 			$file->close();
-			send_as html => $html;
+			return $html;
 		}
 
 		$filePathFailed = $filePath;
@@ -134,6 +134,11 @@ sub serveStaticPage {
 
 	my $error = $ERRNO;
 	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
+}
+
+sub serveStaticPage {
+	my ($name, $templateParams) = @_;
+	send_as html => fetchStaticPage($name, $templateParams);
 }
 
 sub __configGetPublicDir {
@@ -288,41 +293,52 @@ get '/1/search' => sub {
 	$server->handleSessionToken();
 
 	my $limit = param('limit') ? int(param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
-	my $term = param('term');
+	my $term = param('term') // '';
 	my $wholeword = param('wholeword');
 	my $form = Chleb::Utils::boolean('form', param('form'), 0);
 
 	my $dancerRequest = request();
+
+	my $result = '';
+	my $resultHash;
+	if ($term) {
+		eval {
+			($result, $resultHash) = $server->__search({
+				accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+				limit     => $limit,
+				term      => $term,
+				wholeword => $wholeword,
+			});
+		};
+
+		if (my $exception = $EVAL_ERROR) {
+			handleException($exception);
+		}
+	}
 
 	if (!$term || $form) {
 		my %templateParams = (
 			SEARCH_LIMIT_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
 			SEARCH_LIMIT_MAX => 2_000, # What's reasonable?  It isn't enforced by the backend anyway
 			SEARCH_LIMIT_VALUE => $limit,
+			SEARCH_RESULTS => $result,
 			SEARCH_TERM => $term,
 			SEARCH_WHOLEWORD => Chleb::Utils::boolean('wholeword', $wholeword, 0) ? 'checked' : '',
 		);
 
-		serveStaticPage('search', \%templateParams);
+		my $searchPage = fetchStaticPage('search', \%templateParams);
+		send_as html => $searchPage;
 
 		return;
 	}
 
-	my $result;
-	eval {
-		$result = $server->__search({
-			accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
-			limit     => $limit,
-			term      => $term,
-			wholeword => $wholeword,
-		});
-	};
-
-	if (my $exception = $EVAL_ERROR) {
-		handleException($exception);
-	}
-
 	if (ref($result) ne 'HASH') {
+		if (scalar(@{ $resultHash->{data} }) == 0) {
+			$result = fetchStaticPage('generic_head', { TITLE => "Chleb Bible Search: No results for '$term'" });
+			$result .= fetchStaticPage('no_results');
+			$result .= fetchStaticPage('generic_tail');
+		}
+
 		$server->dic->logger->trace('1/search returned as HTML');
 		send_as html => $result;
 	}
