@@ -58,6 +58,7 @@ use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 use IO::File;
 use JSON;
+use Log::Log4perl::MDC;
 use Readonly;
 use Time::Duration;
 use UUID::Tiny ':std';
@@ -1096,6 +1097,19 @@ sub dampen {
 	return 0;
 }
 
+sub logRequest {
+	my ($self) = @_;
+
+	my $request = Chleb::Server::Dancer2::_request();
+	my $ipAddress = $request->address();
+	Log::Log4perl::MDC->put(address => $ipAddress);
+	my $path = $request->path();
+
+	$self->dic->logger->debug("Received request $path from $ipAddress");
+
+	return;
+}
+
 sub handleSessionToken {
 	my ($self) = @_;
 
@@ -1106,6 +1120,10 @@ sub handleSessionToken {
 		$self->dic->logger->warn('Using experimental session cookie support, alpha quality, there are known bugs and limitations');
 		$self->__warnedSessionToken(1);
 	}
+
+	my $request = Chleb::Server::Dancer2::_request();
+	my $ipAddress = $request->address();
+	my $userAgent = $request->agent();
 
 	my $tokenRepo = $self->dic->tokenRepo;
 	my $sessionToken;
@@ -1120,7 +1138,31 @@ sub handleSessionToken {
 			Chleb::Server::Dancer2::handleException($exception);
 		}
 
+		Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
 		$self->dic->logger->trace('session token found!  ' . $sessionToken->toString());
+
+		if ($sessionToken->ipAddress ne $ipAddress) {
+			$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',
+			    $sessionToken->toString(), $sessionToken->ipAddress, $ipAddress));
+
+			$sessionToken->ipAddress($ipAddress);
+		}
+
+		if ($sessionToken->userAgent ne $userAgent) {
+			$self->dic->logger->info(sprintf('%s the client changed user agent from %s to %s',
+			    $sessionToken->toString(), $sessionToken->userAgent, $userAgent));
+
+			$sessionToken->userAgent($userAgent);
+		}
+
+		if ($sessionToken->dirty) {
+			eval {
+				$sessionToken->save();
+			};
+			if (my $exception = $EVAL_ERROR) {
+				Chleb::Server::Dancer2::handleException($exception);
+			}
+		}
 	} elsif ($self->dampen()) {
 		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 			HTTP_TOO_MANY_REQUESTS,
@@ -1128,6 +1170,11 @@ sub handleSessionToken {
 		));
 	} else {
 		$sessionToken = $tokenRepo->create();
+		Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
+
+		$sessionToken->ipAddress($ipAddress);
+		$sessionToken->userAgent($userAgent);
+
 		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
 		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 
