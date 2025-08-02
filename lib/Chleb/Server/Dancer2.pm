@@ -147,12 +147,14 @@ sub __configGetPublicDir {
 }
 
 get '/' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 	serveStaticPage('index');
 	return;
 };
 
 get '/:version/random' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
@@ -188,6 +190,7 @@ get '/:version/random' => sub {
 };
 
 get '/1/votd' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
@@ -213,6 +216,7 @@ get '/1/votd' => sub {
 };
 
 get '/2/votd' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 
 	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
@@ -249,6 +253,7 @@ get '/2/votd' => sub {
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 
 	my $book = param('book');
@@ -284,6 +289,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 };
 
 get '/1/search' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 
 	my $limit = param('limit') ? int(param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
@@ -342,11 +348,13 @@ get '/1/search' => sub {
 };
 
 get '/1/ping' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 	return $server->__ping();
 };
 
 get '/1/version' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 
 	my $version = $server->__version();
@@ -360,11 +368,13 @@ get '/1/version' => sub {
 };
 
 get '/1/uptime' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 	return $server->__uptime();
 };
 
 get '/1/info' => sub {
+	$server->logRequest();
 	$server->handleSessionToken();
 
 	my $dancerRequest = request();

@@ -83,15 +83,17 @@ sub load {
 	my $token;
 	eval {
 		$token = Chleb::Token->new({
-			dic      => $self->dic,
-			_repo    => $self->__repo,
-			_source  => $self,
-			_value   => $value,
-			_major   => $data->{major},
-			_minor   => $data->{minor},
-			_version => $data->{version},
-			expires  => $data->{expires},
-			now      => $data->{created},
+			dic       => $self->dic,
+			_repo     => $self->__repo,
+			_source   => $self,
+			_value    => $value,
+			_major    => $data->{major},
+			_minor    => $data->{minor},
+			_version  => $data->{version},
+			expires   => $data->{expires},
+			ipAddress => $data->{ipAddress},
+			now       => $data->{created},
+			userAgent => $data->{userAgent},
 		});
 	};
 
