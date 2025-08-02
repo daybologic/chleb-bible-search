@@ -579,9 +579,10 @@ sub __search {
 	$hash{links}->{self} = '/1/search?term=' . $search->{term} . '&wholeword=' . $wholeword .'&limit=' . $limit;
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
-		return \%hash;
+		return (\%hash, \%hash);
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __searchResultsToHtml(\%hash);
+		my $html = __searchResultsToHtml(\%hash);
+		return ($html, \%hash);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");

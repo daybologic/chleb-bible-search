@@ -287,16 +287,17 @@ get '/1/search' => sub {
 	$server->handleSessionToken();
 
 	my $limit = param('limit') ? int(param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
-	my $term = param('term');
+	my $term = param('term') // '';
 	my $wholeword = param('wholeword');
 	my $form = Chleb::Utils::boolean('form', param('form'), 0);
 
 	my $dancerRequest = request();
 
 	my $result = '';
+	my $resultHash;
 	if ($term) {
 		eval {
-			$result = $server->__search({
+			($result, $resultHash) = $server->__search({
 				accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 				limit     => $limit,
 				term      => $term,
@@ -326,6 +327,12 @@ get '/1/search' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
+		if (scalar(@{ $resultHash->{data} }) == 0) {
+			$result = fetchStaticPage('generic_head', { TITLE => "Chleb Bible Search: No results for '$term'" });
+			$result .= fetchStaticPage('no_results');
+			$result .= fetchStaticPage('generic_tail');
+		}
+
 		$server->dic->logger->trace('1/search returned as HTML');
 		send_as html => $result;
 	}
