@@ -1122,8 +1122,8 @@ sub handleSessionToken {
 	}
 
 	my $request = Chleb::Server::Dancer2::_request();
-	my $ipAddress = $request->address();
-	my $userAgent = $request->agent();
+	my $ipAddress = $request->address() // '';
+	my $userAgent = $request->agent() // '';
 
 	my $tokenRepo = $self->dic->tokenRepo;
 	my $sessionToken;
