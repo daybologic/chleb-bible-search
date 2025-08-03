@@ -333,11 +333,17 @@ get '/1/search' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		if (scalar(@{ $resultHash->{data} }) == 0) {
+		my $resultCount = scalar(@{ $resultHash->{data} });
+		if ($resultCount > 0) {
+			my $resultHtml = $result;
+			$result = fetchStaticPage('generic_head', { TITLE => "Chleb Bible Search: $resultCount results for '$term'" });
+			$result .= $resultHtml;
+		} else {
 			$result = fetchStaticPage('generic_head', { TITLE => "Chleb Bible Search: No results for '$term'" });
 			$result .= fetchStaticPage('no_results');
-			$result .= fetchStaticPage('generic_tail');
 		}
+
+		$result .= fetchStaticPage('generic_tail');
 
 		$server->dic->logger->trace('1/search returned as HTML');
 		send_as html => $result;
