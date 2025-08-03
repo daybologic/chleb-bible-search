@@ -51,7 +51,10 @@ use Chleb::Utils::OSError::Mapper;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
+use Readonly;
 use Scalar::Util qw(blessed);
+
+Readonly my $PROJECT => 'Chleb Bible Search';
 
 my $server;
 
@@ -316,7 +319,18 @@ get '/1/search' => sub {
 		}
 	}
 
+	my $resultCount = $resultHash ? scalar(@{ $resultHash->{data} }) : 0;
+
 	if (!$term || $form) {
+		my $title;
+		if (!$term) {
+			$title = "$PROJECT: Perform user search";
+		} elsif ($resultCount > 0) {
+			$title = "$PROJECT: $resultCount results for '$term'";
+		} else {
+			$title = "$PROJECT: No results for '$term'";
+		}
+
 		my %templateParams = (
 			SEARCH_LIMIT_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
 			SEARCH_LIMIT_MAX => 2_000, # What's reasonable?  It isn't enforced by the backend anyway
@@ -324,6 +338,7 @@ get '/1/search' => sub {
 			SEARCH_RESULTS => $result,
 			SEARCH_TERM => $term,
 			SEARCH_WHOLEWORD => Chleb::Utils::boolean('wholeword', $wholeword, 0) ? 'checked' : '',
+			TITLE => $title,
 		);
 
 		my $searchPage = fetchStaticPage('search', \%templateParams);
@@ -333,13 +348,12 @@ get '/1/search' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultCount = scalar(@{ $resultHash->{data} });
 		if ($resultCount > 0) {
 			my $resultHtml = $result;
-			$result = fetchStaticPage('generic_head', { TITLE => "Chleb Bible Search: $resultCount results for '$term'" });
+			$result = fetchStaticPage('generic_head', { TITLE => "$PROJECT: $resultCount results for '$term'" });
 			$result .= $resultHtml;
 		} else {
-			$result = fetchStaticPage('generic_head', { TITLE => "Chleb Bible Search: No results for '$term'" });
+			$result = fetchStaticPage('generic_head', { TITLE => "$PROJECT: No results for '$term'" });
 			$result .= fetchStaticPage('no_results');
 		}
 
