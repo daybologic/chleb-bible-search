@@ -243,6 +243,13 @@ sub __lookup {
 	}
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		if ($params->{form}) {
+			die Chleb::Exception->raise(
+				HTTP_BAD_REQUEST,
+				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
+			);
+		}
+
 		return $json[0];
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		return __verseToHtml(\@json, $FUNCTION_LOOKUP);
@@ -317,6 +324,13 @@ sub __random {
 		return __verseToHtml([$json], $FUNCTION_RANDOM);
 	}
 
+	if ($params->{form}) {
+		die Chleb::Exception->raise(
+			HTTP_BAD_REQUEST,
+			"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
+		);
+	}
+
 	return $json;
 
 }
@@ -366,7 +380,17 @@ sub __votd {
 		}
 
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
-		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
+
+		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+			if ($params->{form}) {
+				die Chleb::Exception->raise(
+					HTTP_BAD_REQUEST,
+					"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
+				);
+			}
+
+			return $json[0];
+		}
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 			return __verseToHtml(\@json, $FUNCTION_VOTD);
@@ -382,6 +406,13 @@ sub __votd {
 
 	my $json = __verseToJsonApi($verse, $params);
 	$json->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
+
+	if ($params->{form}) {
+		die Chleb::Exception->raise(
+			HTTP_BAD_REQUEST,
+			"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
+		);
+	}
 
 	return $json;
 }
@@ -580,6 +611,13 @@ sub __search {
 	$hash{links}->{self} = '/1/search?term=' . $search->{term} . '&wholeword=' . $wholeword .'&limit=' . $limit;
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		if ($search->{form}) {
+			die Chleb::Exception->raise(
+				HTTP_BAD_REQUEST,
+				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
+			);
+		}
+
 		return (\%hash, \%hash);
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		my $html = __searchResultsToHtml(\%hash);
