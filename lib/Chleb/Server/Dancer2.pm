@@ -184,13 +184,12 @@ get '/:version/random' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace("${version}/random returned as HTML");
-
 		my $resultHtml = $result;
 		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: random verse lookup" });
 		$result .= $resultHtml;
 		$result .= fetchStaticPage('generic_tail');
 
+		$server->dic->logger->trace("${version}/random returned as HTML");
 		send_as html => $result;
 	}
 
@@ -253,13 +252,12 @@ get '/2/votd' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('2/votd returned as HTML');
-
 		my $resultHtml = $result;
 		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Verse of The Day" });
 		$result .= $resultHtml;
 		$result .= fetchStaticPage('generic_tail');
 
+		$server->dic->logger->trace('2/votd returned as HTML');
 		send_as html => $result;
 	}
 
@@ -294,13 +292,12 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace('1/lookup returned as HTML');
-
 		my $resultHtml = $result;
 		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}:${verse}" });
 		$result .= $resultHtml;
 		$result .= fetchStaticPage('generic_tail');
 
+		$server->dic->logger->trace('1/lookup returned as HTML');
 		send_as html => $result;
 	}
 
@@ -429,6 +426,11 @@ get '/1/info' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
+		my $resultHtml = $result;
+		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Bible info" });
+		$result .= $resultHtml;
+		$result .= fetchStaticPage('generic_tail');
+
 		$server->dic->logger->trace('1/info returned as HTML');
 		send_as html => $result;
 	}
