@@ -51,7 +51,10 @@ use Chleb::Utils::OSError::Mapper;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
+use Readonly;
 use Scalar::Util qw(blessed);
+
+Readonly my $PROJECT => 'Chleb Bible Search';
 
 my $server;
 
@@ -181,6 +184,11 @@ get '/:version/random' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
+		my $resultHtml = $result;
+		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: random verse lookup" });
+		$result .= $resultHtml;
+		$result .= fetchStaticPage('generic_tail');
+
 		$server->dic->logger->trace("${version}/random returned as HTML");
 		send_as html => $result;
 	}
@@ -244,6 +252,11 @@ get '/2/votd' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
+		my $resultHtml = $result;
+		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Verse of The Day" });
+		$result .= $resultHtml;
+		$result .= fetchStaticPage('generic_tail');
+
 		$server->dic->logger->trace('2/votd returned as HTML');
 		send_as html => $result;
 	}
@@ -256,9 +269,9 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $book = param('book');
-	my $chapter = param('chapter');
-	my $verse = param('verse');
+	my $book = param('book') // '';
+	my $chapter = param('chapter') // '';
+	my $verse = param('verse') // '';
 	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
 
 	my $dancerRequest = request();
@@ -279,6 +292,11 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
+		my $resultHtml = $result;
+		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}:${verse}" });
+		$result .= $resultHtml;
+		$result .= fetchStaticPage('generic_tail');
+
 		$server->dic->logger->trace('1/lookup returned as HTML');
 		send_as html => $result;
 	}
@@ -316,7 +334,18 @@ get '/1/search' => sub {
 		}
 	}
 
+	my $resultCount = $resultHash ? scalar(@{ $resultHash->{data} }) : 0;
+
 	if (!$term || $form) {
+		my $title;
+		if (!$term) {
+			$title = "$PROJECT: Perform user search";
+		} elsif ($resultCount > 0) {
+			$title = "$PROJECT: $resultCount results for '$term'";
+		} else {
+			$title = "$PROJECT: No results for '$term'";
+		}
+
 		my %templateParams = (
 			SEARCH_LIMIT_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
 			SEARCH_LIMIT_MAX => 2_000, # What's reasonable?  It isn't enforced by the backend anyway
@@ -324,6 +353,7 @@ get '/1/search' => sub {
 			SEARCH_RESULTS => $result,
 			SEARCH_TERM => $term,
 			SEARCH_WHOLEWORD => Chleb::Utils::boolean('wholeword', $wholeword, 0) ? 'checked' : '',
+			TITLE => $title,
 		);
 
 		my $searchPage = fetchStaticPage('search', \%templateParams);
@@ -333,11 +363,16 @@ get '/1/search' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		if (scalar(@{ $resultHash->{data} }) == 0) {
-			$result = fetchStaticPage('generic_head', { TITLE => "Chleb Bible Search: No results for '$term'" });
+		if ($resultCount > 0) {
+			my $resultHtml = $result;
+			$result = fetchStaticPage('generic_head', { TITLE => "$PROJECT: $resultCount results for '$term'" });
+			$result .= $resultHtml;
+		} else {
+			$result = fetchStaticPage('generic_head', { TITLE => "$PROJECT: No results for '$term'" });
 			$result .= fetchStaticPage('no_results');
-			$result .= fetchStaticPage('generic_tail');
 		}
+
+		$result .= fetchStaticPage('generic_tail');
 
 		$server->dic->logger->trace('1/search returned as HTML');
 		send_as html => $result;
@@ -391,6 +426,11 @@ get '/1/info' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
+		my $resultHtml = $result;
+		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Bible info" });
+		$result .= $resultHtml;
+		$result .= fetchStaticPage('generic_tail');
+
 		$server->dic->logger->trace('1/info returned as HTML');
 		send_as html => $result;
 	}
