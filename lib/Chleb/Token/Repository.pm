@@ -35,6 +35,7 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Token::Repository::Redis;
 use Chleb::Token::Repository::TempDir;
 
 sub repo {
@@ -42,19 +43,33 @@ sub repo {
 
 	if (defined($name)) {
 		if ($name eq 'Dummy') {
-			return Chleb::Token::Repository::Dummy->new();
+			return Chleb::Token::Repository::Dummy->new(repo => $self);
+		} elsif ($name eq 'Redis') {
+			return Chleb::Token::Repository::Redis->new(repo => $self);
 		} elsif ($name eq 'TempDir') {
-			return Chleb::Token::Repository::TempDir->new();
+			return Chleb::Token::Repository::TempDir->new(repo => $self);
 		}
 	}
 
 	...
 }
 
+sub create {
+	my ($self) = @_;
+
+	return $self->repo('Redis')->create();
+}
+
 sub load {
 	my ($self, $tokenValue) = @_;
 
-	return $self->repo('TempDir')->load($tokenValue);
+	return $self->repo('Redis')->load($tokenValue);
+}
+
+sub save {
+	my ($self, $token) = @_;
+
+	return $self->repo('Redis')->save($token);
 }
 
 1;

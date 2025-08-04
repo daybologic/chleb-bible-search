@@ -35,8 +35,34 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Exception;
+use Chleb::Token::Repository;
+use HTTP::Status qw(:constants);
+
+has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, lazy => 1, default => \&__makeRepo);
+
+sub create {
+	die('create must be overridden');
+}
+
+sub load {
+	die('load must be overridden');
+}
+
 sub save {
 	die('save must be overridden');
+}
+
+sub _valueValidate {
+	my ($self, $value) = @_;
+	return 1 if ($value =~ m/^[0-9a-f]{64}$/);
+
+	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be SHA-256');
+}
+
+sub __makeRepo {
+	my ($self) = @_;
+	return Chleb::Token::Repository->new();
 }
 
 1;

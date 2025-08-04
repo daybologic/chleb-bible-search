@@ -48,7 +48,7 @@ via this "DIC" so that they may be reliably replaced during the test suites.
 use Log::Log4perl;
 use Chleb::Bible::Exclusions;
 use Chleb::DI::Config;
-use Chleb::Token::Repository::TempDir;
+use Chleb::Token::Repository;
 use Chleb::Utils::OSError::Mapper;
 
 has bible => (is => 'rw'); # TODO: deprecated
@@ -176,7 +176,7 @@ TODO
 
 sub _makeTokenRepo {
 	my ($self) = @_;
-	return Chleb::Token::Repository::TempDir->new({ dic => $self });
+	return Chleb::Token::Repository->new({ dic => $self });
 }
 
 =item C<_makeErrorMapper()>
