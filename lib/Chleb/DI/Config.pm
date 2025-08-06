@@ -57,12 +57,30 @@ sub __makeData {
 sub get {
 	my ($self, $section, $key, $default, $isBoolean) = @_;
 
+	my $defaultUsed = 0;
+	my $value = $self->__get($section, $key, $default, $isBoolean, \$defaultUsed);
+	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $value, $default);
+
+	my $level = 'debug';
+	if ($defaultUsed) {
+		$level = 'warn';
+		$msg .= ' -- default used!  We recommend you set this value explicitly in your config!';
+	}
+
+	$self->dic->logger->$level($msg);
+	return $value;
+}
+
+sub __get {
+	my ($self, $section, $key, $default, $isBoolean, $pDefaultUsed) = @_;
+
 	if (defined($self->__data->{$section}->{$key})) {
 		my $value = $self->__data->{$section}->{$key};
 		return __boolean($value) if ($isBoolean);
 		return $value;
 	}
 
+	$$pDefaultUsed = 1;
 	return __boolean($default) if ($isBoolean);
 	return $default;
 }
