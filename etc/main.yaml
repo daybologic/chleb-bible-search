@@ -22,3 +22,7 @@ features:
   version: on
 Dancer2:
   public_dir: data/static/public
+session_tokens:
+  enabled_backends:
+    - TempDir
+    - Redis

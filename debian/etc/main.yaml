@@ -22,3 +22,7 @@ features:
   version: on
 Dancer2:
   public_dir: /usr/share/chleb-bible-search/public
+session_tokens:
+  enabled_backends:
+    - TempDir
+    - Redis
