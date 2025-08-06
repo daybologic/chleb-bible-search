@@ -176,6 +176,7 @@ get '/:version/random' => sub {
 			version => $version,
 			parental => $parental,
  			redirect => $redirect,
+			form => 0,
 		});
 	};
 
@@ -213,6 +214,7 @@ get '/1/votd' => sub {
 			redirect    => $redirect,
 			when        => $when,
 			testament   => $testament,
+			form        => 0,
 		});
 	};
 
@@ -244,6 +246,7 @@ get '/2/votd' => sub {
 			translations => $translations,
 			redirect     => $redirect,
 			testament    => $testament,
+			form         => 0,
 		});
 	};
 
@@ -284,6 +287,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 			chapter      => $chapter,
 			translations => $translations,
 			verse        => $verse,
+			form         => 0,
 		});
 	};
 
@@ -323,6 +327,7 @@ get '/1/search' => sub {
 		eval {
 			($result, $resultHash) = $server->__search({
 				accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+				form      => $form,
 				limit     => $limit,
 				term      => $term,
 				wholeword => $wholeword,
