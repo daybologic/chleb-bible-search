@@ -68,13 +68,18 @@ sub load {
 		$data = retrieve($filePath);
 	};
 
-	$self->dic->logger->trace(Dumper $data) if ($data);
-
 	if (my $evalError = $EVAL_ERROR) {
+		if ($evalError =~ m/: No such file or directory/) { # TODO: Fix this because language change will throw it off, don't hard-code
+			$self->dic->logger->debug($evalError);
+			return undef;
+		}
+
 		$self->dic->logger->error($evalError);
 		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken unrecognized via ' . __PACKAGE__);
 	} elsif (!$data) {
 		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Session token is an empty file');
+	} else {
+		$self->dic->logger->trace(Dumper $data);
 	}
 
 	my $token;

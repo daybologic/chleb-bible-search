@@ -35,8 +35,10 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Exception;
 use Chleb::Token::Repository::Redis;
 use Chleb::Token::Repository::TempDir;
+use HTTP::Status qw(:constants);
 
 sub repo {
 	my ($self, $name) = @_;
@@ -63,13 +65,50 @@ sub create {
 sub load {
 	my ($self, $tokenValue) = @_;
 
-	return $self->repo('Redis')->load($tokenValue);
+	my $token = undef;
+	foreach my $backend (@{ $self->__backends() }) {
+		$token = $backend->load($tokenValue);
+		last if ($token);
+	}
+
+	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Session token '$tokenValue' not found")
+	    unless ($token);
+
+	return $token;
 }
 
 sub save {
 	my ($self, $token) = @_;
 
 	return $self->repo('Redis')->save($token);
+}
+
+sub __backends {
+	my ($self) = @_;
+
+	my @backend = ( );
+	foreach my $backendName (@{ $self->__backendNames() }) {
+		push(@backend, $self->repo($backendName));
+	}
+
+	return \@backend;
+}
+
+sub __backendNames {
+	my ($self) = @_;
+
+	my $enabledBackends = $self->dic->config->get('session_tokens', 'enabled_backends', [ 'TempDir' ]);
+	my @backendNames = ( );
+	foreach my $backendName (@$enabledBackends) {
+		if ($backendName =~ m/^(\w+)$/) {
+			push(@backendNames, $backendName);
+		} else {
+			die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be a single word: "'
+			    . $backendName . '"');
+		}
+	}
+
+	return \@backendNames;
 }
 
 1;

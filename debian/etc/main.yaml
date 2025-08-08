@@ -26,3 +26,6 @@ session_tokens:
   enabled_backends:
     - TempDir
     - Redis
+  backend_redis:
+    host: localhost:6379
+    db: 1

@@ -53,6 +53,12 @@ sub save {
 	die('save must be overridden');
 }
 
+sub toString {
+	my ($self) = @_;
+	my @part = split(m/::/, ref($self));
+	return $part[-1];
+}
+
 sub _valueValidate {
 	my ($self, $value) = @_;
 	return 1 if ($value =~ m/^[0-9a-f]{64}$/);

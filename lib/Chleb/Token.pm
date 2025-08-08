@@ -85,6 +85,8 @@ has username => (is => 'ro', isa => 'Str', default => '');
 
 has dirty => (is => 'rw', isa => 'Bool', default => 0);
 
+has isNew => (is => 'rw', isa => 'Bool', default => 1);
+
 sub __markDirty {
 	my ($self) = @_;
 	$self->dirty(1);
@@ -107,12 +109,13 @@ sub save {
 	my ($self) = @_;
 	$self->source->save($self);
 	$self->dirty(0);
+	$self->isNew(0);
 	return;
 }
 
 sub toString {
 	my ($self) = @_;
-	return sprintf('Token %s', $self->value);
+	return sprintf('Token %s (%s)', $self->value, $self->source->toString());
 }
 
 sub expired {

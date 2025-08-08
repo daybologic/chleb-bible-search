@@ -9,9 +9,12 @@ Chleb::Token::Repository::Redis
 
 =head1 CONFIG
 
-	[Chleb::Token::Repository::Redis]
-	host = adll.dlm.dln.example.net
-	db = 1
+	session_tokens:
+	  enabled_backends:
+	    - Redis
+	  backend_redis:
+	    host: localhost:6379
+	    db: 1
 
 =head1 DESCRIPTION
 
@@ -31,15 +34,27 @@ use Scalar::Util qw(looks_like_number);
 
 =over
 
+=item C<$REDIS_HOST>
+
+The default host, which is C<localhost>, for accessing Redis.
+If you are using AWS, or another host, follow their instructions and set via
+the config.  Don't alter this value.
+
 =item C<$REDIS_PORT>
 
 This is the default Redis port if it is not specified in the URI
+
+=item C<$REDIS_DB>
+
+The default db ordinal which will be selected.  We choose C<1> for session token storage.
 
 =back
 
 =cut
 
+Readonly our $REDIS_HOST => 'localhost';
 Readonly our $REDIS_PORT => 6379;
+Readonly our $REDIS_DB   => 1;
 
 =head1 ATTRIBUTES
 
@@ -79,6 +94,12 @@ sub BUILD {
 	return;
 }
 
+=item C<create()>
+
+Create a new L<Chleb::Token> with Redis as the backing store.
+
+=cut
+
 sub create {
 	my ($self) = @_;
 
@@ -91,6 +112,11 @@ sub create {
 
 =item C<load($value)>
 
+Given the token value, which may be a hex string, or a L<Dancer2::Core::Cookie>,
+we search for the token and return a L<Chleb::Token> if it can be recovered from
+this backend, or return C<undef>, in which case, you should check the next backend
+which is enabled.
+
 =cut
 
 sub load {
@@ -99,29 +125,29 @@ sub load {
 	$value = $value->value if (ref($value) && $value->isa('Dancer2::Core::Cookie'));
 	$self->_valueValidate($value);
 
-	my $data;
+	my $data = [ ];
 	eval {
 		$data = $self->do->hmget($value, @{ Chleb::Token::TO_JSON() });
 	};
 	my $evalError = $EVAL_ERROR;
 
-	if ($data) {
-		$self->dic->logger->trace(Dumper $data);
-		my @fieldNames = @{ Chleb::Token::TO_JSON() };
-		my %newData = ( );
-		for (my $fieldIndex = 0; $fieldIndex < scalar(@fieldNames); $fieldIndex++) {
-			my $fieldName = $fieldNames[$fieldIndex];
-			$newData{$fieldName} = $data->[$fieldIndex];
-		}
-		$data = \%newData;
-		$self->dic->logger->trace(Dumper $data);
+	my @fieldNames = @{ Chleb::Token::TO_JSON() };
+	my %newData = ( );
+	for (my $fieldIndex = 0; $fieldIndex < scalar(@fieldNames); $fieldIndex++) {
+		my $fieldName = $fieldNames[$fieldIndex];
+		$newData{$fieldName} = $data->[$fieldIndex];
 	}
+	$data = \%newData;
+	$self->dic->logger->trace(Dumper $data);
 
-	if ($evalError || !$data) {
+	$data = undef unless(defined($data->{created}));
+
+	if ($evalError) {
 		$self->dic->logger->error($evalError);
 		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "error getting session '$value' token via " . __PACKAGE__);
 	} elsif (!$data) {
-		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Session token '$value' not found via " . __PACKAGE__);
+		$self->dic->logger->debug("Session token '$value' not found via " . __PACKAGE__);
+		return undef;
 	}
 
 	my $token;
@@ -156,18 +182,25 @@ sub load {
 
 =item C<save($token)>
 
+Given a L<Chleb::Token>, we will save it into the Redis backend,
+and if it is new, we will set the expiry time to ensure it is automagically evicted.
+
 =cut
 
 sub save {
 	my ($self, $token) = @_;
 
 	eval {
-		$self->do->hmset($token->value, %{ $token->TO_JSON() }); # TODO: Don't send undirty keys for a speed improvement
+		$self->do->hmset($token->value, %{ $token->TO_JSON() }); # TODO: Don't send undirty keys, for a speed improvement
+		$self->do->expireat($token->value, $token->expires) if ($token->isNew);
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
 		die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token');
 	}
+
+	$token->dirty(0);
+	$token->isNew(0);
 
 	return;
 }
@@ -209,14 +242,15 @@ Called by the Moose framework when L</do> is first used.
 sub __makeDo {
 	my ($self) = @_;
 
-	my $uri = $self->dic->config->get($self->configSectionName, 'host', 'localhost');
+	my $config = $self->dic->config->get('session_tokens', 'backend_redis', { host => $REDIS_HOST, db => $REDIS_DB });
+	my $uri = $config->{host};
 	if ($uri !~ m/:/) {
 		$uri = "${uri}:${REDIS_PORT}";
 	}
 
 	my $redis = $self->__buildRedis($uri);
 
-	my $db = $self->dic->config->get($self->configSectionName, 'db', 0);
+	my $db = $config->{db};
 	if (defined($db)) {
 		if ($db =~ m/^\d+$/) {
 			$redis->select($db);
@@ -226,12 +260,6 @@ sub __makeDo {
 	}
 
 	return $redis;
-}
-
-sub __makeConfigSectionName {
-	my $class = __PACKAGE__;
-	$class =~ s/:://g;
-	return $class;
 }
 
 =back
