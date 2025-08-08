@@ -23,6 +23,7 @@ The Redis backend for session token storage
 =cut
 
 use Chleb::Exception;
+use Chleb::Token;
 use Data::Dumper;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
@@ -103,9 +104,14 @@ Create a new L<Chleb::Token> with Redis as the backing store.
 sub create {
 	my ($self) = @_;
 
+	my $config = $self->dic->config->get('session_tokens', 'backend_redis', {
+		expiry => $Chleb::Token::DEFAULT_EXPIRES_SECONDS,
+	});
+
 	return Chleb::Token->new({
-		dic     => $self->dic,
-		_repo   => $self->repo,
+		dic => $self->dic,
+		expiresSeconds => $config->{expiry},
+		_repo => $self->repo,
 		_source => $self,
 	});
 }
