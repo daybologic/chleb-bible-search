@@ -36,10 +36,13 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
+use Chleb::Token;
 use Chleb::Token::Repository;
 use HTTP::Status qw(:constants);
 
 has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, lazy => 1, default => \&__makeRepo);
+
+has _ttl => (is => 'ro', isa => 'Int', required => 1, lazy => 1, default => \&__makeTtl);
 
 sub create {
 	die('create must be overridden');
@@ -69,6 +72,11 @@ sub _valueValidate {
 sub __makeRepo {
 	my ($self) = @_;
 	return Chleb::Token::Repository->new();
+}
+
+sub __makeTtl {
+	my ($self) = @_;
+	return $self->dic->config->get('session_tokens', 'ttl', $Chleb::Token::DEFAULT_TTL);
 }
 
 1;

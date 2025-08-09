@@ -104,11 +104,9 @@ Create a new L<Chleb::Token> with Redis as the backing store.
 sub create {
 	my ($self) = @_;
 
-	my $ttl = $self->dic->config->get('session_tokens', 'ttl', $Chleb::Token::DEFAULT_TTL);
-
 	return Chleb::Token->new({
 		dic     => $self->dic,
-		ttl     => $ttl,
+		ttl     => $self->_ttl,
 		_repo   => $self->repo,
 		_source => $self,
 	});

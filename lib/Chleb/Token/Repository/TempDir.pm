@@ -51,11 +51,9 @@ has dir => (is => 'ro', isa => 'Str', lazy => 1, builder => '_makeDir');
 sub create {
 	my ($self) = @_;
 
-	my $ttl = $self->dic->config->get('session_tokens', 'ttl', $Chleb::Token::DEFAULT_TTL);
-
 	return Chleb::Token->new({
 		dic     => $self->dic,
-		ttl     => $ttl,
+		ttl     => $self->_ttl,
 		_repo   => $self->repo,
 		_source => $self,
 	});
