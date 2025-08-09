@@ -39,9 +39,11 @@ use Chleb::Exception;
 use Chleb::Token;
 use Chleb::Token::Repository;
 use Data::Dumper;
-#use IO::File;
 use English qw(-no_match_vars);
+use Errno qw(:POSIX);
 use HTTP::Status qw(:constants);
+#use IO::File;
+use POSIX qw(strerror);
 use Storable qw(retrieve store);
 
 has dir => (is => 'ro', isa => 'Str', lazy => 1, builder => '_makeDir');
@@ -72,7 +74,9 @@ sub load {
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
-		if ($evalError =~ m/: No such file or directory/) { # TODO: Fix this because language change will throw it off, don't hard-code
+		my $errNum = $ERRNO;
+		my $errStr = strerror($errNum);
+		if ($evalError =~ m/: $errStr/) {
 			return undef; # not found
 		}
 
