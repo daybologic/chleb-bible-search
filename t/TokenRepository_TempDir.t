@@ -27,7 +27,7 @@ sub setUp {
 	return EXIT_SUCCESS;
 }
 
-sub __testSaveLoad { # FIXME
+sub testSaveLoad {
 	my ($self) = @_;
 	plan tests => 3;
 
@@ -107,7 +107,7 @@ sub __testSaveLoad { # FIXME
 	return EXIT_SUCCESS;
 }
 
-sub __testLoadNotFound { # FIXME
+sub testLoadNotFound {
 	my ($self) = @_;
 	plan tests => 2;
 
