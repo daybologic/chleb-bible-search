@@ -25,11 +25,9 @@ Dancer2:
 session_tokens:
   backend_redis:
     db: 1
-    expiry: 3600
     host: localhost:6379
   backend_tempdir:
-    expiry: 604800
-  expiry: 86400
+  ttl: 10800
   enabled_backends:
     - TempDir
     - Redis

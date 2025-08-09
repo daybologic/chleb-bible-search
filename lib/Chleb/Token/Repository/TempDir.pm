@@ -49,14 +49,12 @@ has dir => (is => 'ro', isa => 'Str', lazy => 1, builder => '_makeDir');
 sub create {
 	my ($self) = @_;
 
-	my $config = $self->dic->config->get('session_tokens', 'backend_redis', {
-		expiry => $Chleb::Token::DEFAULT_EXPIRES_SECONDS,
-	});
+	my $ttl = $self->dic->config->get('session_tokens', 'ttl', $Chleb::Token::DEFAULT_TTL);
 
 	return Chleb::Token->new({
-		dic => $self->dic,
-		expiresSeconds => $config->{expiry},
-		_repo => $self->repo,
+		dic     => $self->dic,
+		ttl     => $ttl,
+		_repo   => $self->repo,
 		_source => $self,
 	});
 }

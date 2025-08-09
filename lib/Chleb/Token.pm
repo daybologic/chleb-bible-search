@@ -40,14 +40,14 @@ use Digest::SHA;
 use English qw(-no_match_vars);
 use Readonly;
 
-Readonly our $DEFAULT_EXPIRES_SECONDS => 604_800; # one week
+Readonly our $DEFAULT_TTL => 604_800; # one week
 Readonly our $DATA_VERSION_MAJOR => 3;
 
-has expiresSeconds => (is => 'ro', isa => 'Int', required => 1, default => $DEFAULT_EXPIRES_SECONDS);
+has ttl => (is => 'ro', isa => 'Int', required => 1, default => $DEFAULT_TTL);
 
 has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
 	my ($self) = @_;
-	return $self->created + $self->expiresSeconds;
+	return $self->created + $self->ttl;
 });
 
 has created => (is => 'rw', isa => 'Int', init_arg => 'now', lazy => 1, default => sub {
