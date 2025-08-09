@@ -73,8 +73,7 @@ sub load {
 
 	if (my $evalError = $EVAL_ERROR) {
 		if ($evalError =~ m/: No such file or directory/) { # TODO: Fix this because language change will throw it off, don't hard-code
-			$self->dic->logger->debug($evalError);
-			return undef;
+			return undef; # not found
 		}
 
 		$self->dic->logger->error($evalError);

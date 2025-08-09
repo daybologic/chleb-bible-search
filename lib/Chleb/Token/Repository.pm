@@ -69,6 +69,7 @@ sub load {
 	foreach my $backend (@{ $self->__backends() }) {
 		$token = $backend->load($tokenValue);
 		last if ($token);
+		$self->dic->logger->debug("Session token '$tokenValue' not found via " . $backend->toString());
 	}
 
 	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Session token '$tokenValue' not found")
