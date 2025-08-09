@@ -10,11 +10,13 @@ Chleb::Token::Repository::Redis
 =head1 CONFIG
 
 	session_tokens:
-	  enabled_backends:
-	    - Redis
 	  backend_redis:
 	    host: localhost:6379
 	    db: 1
+	  load_order:
+	    - Redis
+	  save_order:
+	    - Redis
 
 =head1 DESCRIPTION
 

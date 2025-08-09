@@ -28,6 +28,9 @@ session_tokens:
     host: localhost:6379
   backend_tempdir:
   ttl: 10800
-  enabled_backends:
+  load_order:
     - TempDir
     - Redis
+  save_order:
+    - Redis
+    - TempDir

@@ -1184,7 +1184,7 @@ sub handleSessionToken {
 		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 
 		eval {
-			$sessionToken->save();
+			$tokenRepo->save($sessionToken); # save via all configured backends
 		};
 		if (my $exception = $EVAL_ERROR) {
 			Chleb::Server::Dancer2::handleException($exception);
@@ -1220,7 +1220,7 @@ sub handleSessionToken {
 
 	if ($sessionToken->dirty) {
 		eval {
-			$sessionToken->save();
+			$tokenRepo->save($sessionToken); # save via all configured backends
 		};
 		if (my $exception = $EVAL_ERROR) {
 			Chleb::Server::Dancer2::handleException($exception);

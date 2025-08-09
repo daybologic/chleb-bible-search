@@ -36,6 +36,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
+use Chleb::Token::Repository::Dummy;
 use Chleb::Token::Repository::Redis;
 use Chleb::Token::Repository::TempDir;
 use HTTP::Status qw(:constants);
@@ -59,14 +60,23 @@ sub repo {
 sub create {
 	my ($self) = @_;
 
-	return $self->repo('Redis')->create();
+	my $token = undef;
+	my $keyName = 'save_order';
+	foreach my $backend (@{ $self->__backends($keyName) }) {
+		$token = $backend->create();
+	}
+
+	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "No configured backend within '$keyName' created a token")
+	    unless ($token);
+
+	return $token;
 }
 
 sub load {
 	my ($self, $tokenValue) = @_;
 
 	my $token = undef;
-	foreach my $backend (@{ $self->__backends() }) {
+	foreach my $backend (@{ $self->__backends('load_order') }) {
 		$token = $backend->load($tokenValue);
 		last if ($token);
 		$self->dic->logger->debug("Session token '$tokenValue' not found via " . $backend->toString());
@@ -81,14 +91,18 @@ sub load {
 sub save {
 	my ($self, $token) = @_;
 
-	return $self->repo('Redis')->save($token);
+	foreach my $backend (@{ $self->__backends('save_order') }) {
+		$backend->save($token);
+	}
+
+	return;
 }
 
 sub __backends {
-	my ($self) = @_;
+	my ($self, $welp) = @_;
 
 	my @backend = ( );
-	foreach my $backendName (@{ $self->__backendNames() }) {
+	foreach my $backendName (@{ $self->__backendNames($welp) }) {
 		push(@backend, $self->repo($backendName));
 	}
 
@@ -96,9 +110,9 @@ sub __backends {
 }
 
 sub __backendNames {
-	my ($self) = @_;
+	my ($self, $welp) = @_;
 
-	my $enabledBackends = $self->dic->config->get('session_tokens', 'enabled_backends', [ 'TempDir' ]);
+	my $enabledBackends = $self->dic->config->get('session_tokens', $welp, [ 'TempDir' ]);
 	my @backendNames = ( );
 	foreach my $backendName (@$enabledBackends) {
 		if ($backendName =~ m/^(\w+)$/) {
