@@ -22,6 +22,7 @@ sub setUp {
 	my ($self) = @_;
 
 	$self->sut(Chleb::Token::Repository::TempDir->new());
+	$self->sut->dic->configPaths(['etc-defaults']);
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -116,18 +117,8 @@ sub testLoadNotFound {
 		$token = $self->sut->load('a6b2934af53fbfa4c42266765075c4fd7b602345089a5aa825c9117847535aa6');
 	};
 
-	if (my $evalError = $EVAL_ERROR) {
-		cmp_deeply($evalError, all(
-			isa('Chleb::Exception'),
-			methods(
-				description => 'sessionToken unrecognized via Chleb::Token::Repository::TempDir',
-				location    => undef,
-				statusCode  => 401,
-			),
-		), '401 Unauthorized');
-	} else {
-		fail('No exception raised, as was expected');
-	}
+	my $evalError = $EVAL_ERROR;
+	ok(!$evalError, 'no exception thrown');
 
 	ok(!$token, 'token not set');
 

@@ -1,0 +1,4 @@
+# this file is intentionally left empty, so that all defaults apply
+# if you modify it, unit tests will fail.  It is only used for that
+# purpose.  Some tests override Chleb::DI::Container/configPaths to
+# this directory, in order to expose hard-coded defaults.
