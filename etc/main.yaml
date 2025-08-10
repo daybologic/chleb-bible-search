@@ -22,3 +22,14 @@ features:
   version: on
 Dancer2:
   public_dir: data/static/public
+session_tokens:
+  backend_redis:
+    db: 1
+    host: localhost:6379
+  backend_tempdir:
+  ttl: 1800
+  load_order:
+    - TempDir
+    - Redis
+  save_order:
+    - Dummy

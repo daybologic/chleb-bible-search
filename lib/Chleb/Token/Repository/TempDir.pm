@@ -39,23 +39,22 @@ use Chleb::Exception;
 use Chleb::Token;
 use Chleb::Token::Repository;
 use Data::Dumper;
-#use IO::File;
 use English qw(-no_match_vars);
+use Errno qw(:POSIX);
 use HTTP::Status qw(:constants);
+#use IO::File;
+use POSIX qw(strerror);
 use Storable qw(retrieve store);
 
 has dir => (is => 'ro', isa => 'Str', lazy => 1, builder => '_makeDir');
-
-has __repo => (is => 'ro', isa => 'Chleb::Token::Repository', lazy => 1, default => sub {
-	return Chleb::Token::Repository->new();
-});
 
 sub create {
 	my ($self) = @_;
 
 	return Chleb::Token->new({
 		dic     => $self->dic,
-		_repo   => $self->__repo,
+		ttl     => $self->_ttl,
+		_repo   => $self->repo,
 		_source => $self,
 	});
 }
@@ -64,27 +63,34 @@ sub load {
 	my ($self, $value) = @_;
 
 	$value = $value->value if (ref($value) && $value->isa('Dancer2::Core::Cookie'));
-	__valueValidate($value);
+	$self->_valueValidate($value);
 
 	my $data;
 	my $filePath = $self->__getFilePath($value);
 	eval {
 		$data = retrieve($filePath);
-		$self->dic->logger->trace(Dumper $data);
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
+		my $errNum = $ERRNO;
+		my $errStr = strerror($errNum);
+		if ($evalError =~ m/: $errStr/) {
+			return undef; # not found
+		}
+
 		$self->dic->logger->error($evalError);
 		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken unrecognized via ' . __PACKAGE__);
 	} elsif (!$data) {
 		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Session token is an empty file');
+	} else {
+		$self->dic->logger->trace(Dumper $data);
 	}
 
 	my $token;
 	eval {
 		$token = Chleb::Token->new({
 			dic       => $self->dic,
-			_repo     => $self->__repo,
+			_repo     => $self->repo,
 			_source   => $self,
 			_value    => $value,
 			_major    => $data->{major},
@@ -141,13 +147,6 @@ sub __getFilePath {
 	$value = join('/', $self->dir, $value);
 	$self->dic->logger->trace('session file path: ' . $value);
 	return $value;
-}
-
-sub __valueValidate {
-	my ($value) = @_;
-	return 1 if ($value =~ m/^[0-9a-f]{64}$/);
-
-	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be SHA-256');
 }
 
 1;

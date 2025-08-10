@@ -35,8 +35,29 @@ use Moose;
 
 extends 'Chleb::Token::Repository::Base';
 
+sub create {
+	my ($self) = @_;
+
+	# nb. obviously this token has no backing store,
+	# so is not functionally useful on a real server.
+	return Chleb::Token->new({
+		dic     => $self->dic,
+		ttl     => $self->_ttl,
+		_repo   => $self->repo,
+		_source => $self,
+	});
+}
+
+sub load {
+	return undef;
+}
+
 sub save {
-	...
+	my ($self, $token) = @_;
+
+	$self->dic->logger->warn(sprintf('Saving %s to %s has no effect', $token->toString(), $self->toString()));
+
+	return;
 }
 
 1;

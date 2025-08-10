@@ -35,6 +35,7 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Data::Dumper;
 use English qw(-no_match_vars);
 use IO::File;
 use Readonly;
@@ -51,7 +52,7 @@ sub BUILD {
 
 sub __makeData {
 	my ($self) = @_;
-	return LoadFile($self->path);
+	return LoadFile($self->path) || { };
 }
 
 sub get {
@@ -59,7 +60,9 @@ sub get {
 
 	my $defaultUsed = 0;
 	my $value = $self->__get($section, $key, $default, $isBoolean, \$defaultUsed);
-	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $value, $default);
+	my $valuePrintable = (defined($value) && ref($value)) ? (Dumper $value) : $value;
+	my $defaultPrintable = (defined($default) && ref($default)) ? (Dumper $default) : $default;
+	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $valuePrintable, $defaultPrintable);
 
 	my $level = 'debug';
 	if ($defaultUsed) {

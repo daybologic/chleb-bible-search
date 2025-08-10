@@ -1164,49 +1164,16 @@ sub handleSessionToken {
 	my $userAgent = $request->agent() // '';
 
 	my $tokenRepo = $self->dic->tokenRepo;
-	my $sessionToken;
+	my $sessionToken = Chleb::Server::Dancer2::_cookie('sessionToken');
 
-	if ($sessionToken = Chleb::Server::Dancer2::_cookie('sessionToken')) {
-		$self->dic->logger->trace("Got session token '$sessionToken' from client");
-
-		eval {
-			$sessionToken = $tokenRepo->load($sessionToken);
-		};
-		if (my $exception = $EVAL_ERROR) {
-			Chleb::Server::Dancer2::handleException($exception);
+	if (!$sessionToken) {
+		if ($self->dampen()) {
+			Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
+				HTTP_TOO_MANY_REQUESTS,
+				'Slow down, or respect the sessionToken cookie', # TODO: Make a web page explaining this & link to it
+			));
 		}
 
-		Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
-		$self->dic->logger->trace('session token found!  ' . $sessionToken->toString());
-
-		if ($sessionToken->ipAddress ne $ipAddress) {
-			$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',
-			    $sessionToken->toString(), $sessionToken->ipAddress, $ipAddress));
-
-			$sessionToken->ipAddress($ipAddress);
-		}
-
-		if ($sessionToken->userAgent ne $userAgent) {
-			$self->dic->logger->info(sprintf('%s the client changed user agent from %s to %s',
-			    $sessionToken->toString(), $sessionToken->userAgent, $userAgent));
-
-			$sessionToken->userAgent($userAgent);
-		}
-
-		if ($sessionToken->dirty) {
-			eval {
-				$sessionToken->save();
-			};
-			if (my $exception = $EVAL_ERROR) {
-				Chleb::Server::Dancer2::handleException($exception);
-			}
-		}
-	} elsif ($self->dampen()) {
-		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
-			HTTP_TOO_MANY_REQUESTS,
-			'Slow down, or respect the sessionToken cookie',
-		));
-	} else {
 		$sessionToken = $tokenRepo->create();
 		Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
 
@@ -1217,7 +1184,43 @@ sub handleSessionToken {
 		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 
 		eval {
-			$sessionToken->save();
+			$tokenRepo->save($sessionToken); # save via all configured backends
+		};
+		if (my $exception = $EVAL_ERROR) {
+			Chleb::Server::Dancer2::handleException($exception);
+		}
+
+		return;
+	}
+
+	$self->dic->logger->trace("Got session token '$sessionToken' from client");
+	eval {
+		$sessionToken = $tokenRepo->load($sessionToken);
+	};
+	if (my $exception = $EVAL_ERROR) {
+		Chleb::Server::Dancer2::handleException($exception);
+	}
+
+	Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
+	$self->dic->logger->trace('session token found: ' . $sessionToken->toString());
+
+	if ($sessionToken->ipAddress ne $ipAddress) {
+		$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',
+		    $sessionToken->toString(), $sessionToken->ipAddress, $ipAddress));
+
+		$sessionToken->ipAddress($ipAddress);
+	}
+
+	if ($sessionToken->userAgent ne $userAgent) {
+		$self->dic->logger->info(sprintf('%s the client changed user agent from %s to %s',
+		    $sessionToken->toString(), $sessionToken->userAgent, $userAgent));
+
+		$sessionToken->userAgent($userAgent);
+	}
+
+	if ($sessionToken->dirty) {
+		eval {
+			$tokenRepo->save($sessionToken); # save via all configured backends
 		};
 		if (my $exception = $EVAL_ERROR) {
 			Chleb::Server::Dancer2::handleException($exception);

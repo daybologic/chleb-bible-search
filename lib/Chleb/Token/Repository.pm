@@ -35,26 +35,95 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Exception;
+use Chleb::Token::Repository::Dummy;
+use Chleb::Token::Repository::Redis;
 use Chleb::Token::Repository::TempDir;
+use HTTP::Status qw(:constants);
 
 sub repo {
 	my ($self, $name) = @_;
 
 	if (defined($name)) {
 		if ($name eq 'Dummy') {
-			return Chleb::Token::Repository::Dummy->new();
+			return Chleb::Token::Repository::Dummy->new(repo => $self);
+		} elsif ($name eq 'Redis') {
+			return Chleb::Token::Repository::Redis->new(repo => $self);
 		} elsif ($name eq 'TempDir') {
-			return Chleb::Token::Repository::TempDir->new();
+			return Chleb::Token::Repository::TempDir->new(repo => $self);
 		}
 	}
 
 	...
 }
 
+sub create {
+	my ($self) = @_;
+
+	my $token = undef;
+	my $keyName = 'save_order';
+	foreach my $backend (@{ $self->__backends($keyName) }) {
+		$token = $backend->create();
+	}
+
+	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "No configured backend within '$keyName' created a token")
+	    unless ($token);
+
+	return $token;
+}
+
 sub load {
 	my ($self, $tokenValue) = @_;
 
-	return $self->repo('TempDir')->load($tokenValue);
+	my $token = undef;
+	foreach my $backend (@{ $self->__backends('load_order') }) {
+		$token = $backend->load($tokenValue);
+		last if ($token);
+		$self->dic->logger->debug("Session token '$tokenValue' not found via " . $backend->toString());
+	}
+
+	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Session token '$tokenValue' not found")
+	    unless ($token);
+
+	return $token;
+}
+
+sub save {
+	my ($self, $token) = @_;
+
+	foreach my $backend (@{ $self->__backends('save_order') }) {
+		$backend->save($token);
+	}
+
+	return;
+}
+
+sub __backends {
+	my ($self, $welp) = @_;
+
+	my @backend = ( );
+	foreach my $backendName (@{ $self->__backendNames($welp) }) {
+		push(@backend, $self->repo($backendName));
+	}
+
+	return \@backend;
+}
+
+sub __backendNames {
+	my ($self, $welp) = @_;
+
+	my $enabledBackends = $self->dic->config->get('session_tokens', $welp, [ 'TempDir' ]);
+	my @backendNames = ( );
+	foreach my $backendName (@$enabledBackends) {
+		if ($backendName =~ m/^(\w+)$/) {
+			push(@backendNames, $backendName);
+		} else {
+			die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be a single word: "'
+			    . $backendName . '"');
+		}
+	}
+
+	return \@backendNames;
 }
 
 1;

@@ -40,12 +40,14 @@ use Digest::SHA;
 use English qw(-no_match_vars);
 use Readonly;
 
-Readonly my $DEFAULT_EXPIRES_SECONDS => 604_800; # one week
-Readonly our $DATA_VERSION_MAJOR => 2;
+Readonly our $DEFAULT_TTL => 604_800; # one week
+Readonly our $DATA_VERSION_MAJOR => 3;
+
+has ttl => (is => 'ro', isa => 'Int', required => 1, default => $DEFAULT_TTL);
 
 has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
 	my ($self) = @_;
-	return $self->created + $DEFAULT_EXPIRES_SECONDS;
+	return $self->created + $self->ttl;
 });
 
 has created => (is => 'rw', isa => 'Int', init_arg => 'now', lazy => 1, default => sub {
@@ -83,17 +85,9 @@ has userAgent => (is => 'rw', isa => 'Str', default => '', trigger => \&__markDi
 
 has username => (is => 'ro', isa => 'Str', default => '');
 
-has forms => (is => 'ro', isa => 'HashRef[HashRef]', default => sub { {} });
-
-has searchResults => (is => 'ro', isa => 'ArrayRef', default => sub { [] });
-
-has lastTranslationRequested => (is => 'ro', isa => 'ArrayRef[Str]', default => sub { ['kjv'] });
-
-has stats => (is => 'ro', isa => 'HashRef', default => sub { {
-	queryCount => 0,
-} });
-
 has dirty => (is => 'rw', isa => 'Bool', default => 0);
+
+has isNew => (is => 'rw', isa => 'Bool', default => 1);
 
 sub __markDirty {
 	my ($self) = @_;
@@ -117,12 +111,13 @@ sub save {
 	my ($self) = @_;
 	$self->source->save($self);
 	$self->dirty(0);
+	$self->isNew(0);
 	return;
 }
 
 sub toString {
 	my ($self) = @_;
-	return sprintf('Token %s', $self->value);
+	return sprintf('Token %s (%s)', $self->value, $self->source->toString());
 }
 
 sub expired {
@@ -133,23 +128,23 @@ sub expired {
 sub TO_JSON {
 	my ($self) = @_;
 
-	return {
-		created                   => $self->created,
-		expires                   => $self->expires,
-		forms                     => $self->forms,
-		ipAddress                 => $self->ipAddress,
-		lastTranslationRequested  => $self->lastTranslationRequested,
-		loggedIn                  => $self->loggedIn,
-		major                     => $self->major,
-		minor                     => $self->minor,
-		modified                  => $self->modified,
-		searchResults             => $self->searchResults,
-		stats                     => $self->stats,
-		userAgent                 => $self->userAgent,
-		username                  => $self->username,
-		value                     => $self->value,
-		version                   => $self->version,
-	};
+	my @fields = (qw(
+		created
+		expires
+		ipAddress
+		loggedIn
+		major
+		minor
+		modified
+		userAgent
+		username
+		value
+		version
+	));
+
+	return \@fields unless ($self);
+	my %json = map { $_ => $self->$_ } @fields;
+	return \%json;
 }
 
 1;
