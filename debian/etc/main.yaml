@@ -29,8 +29,8 @@ session_tokens:
   backend_tempdir:
   ttl: 10800
   load_order:
-    - TempDir
+    - Local
     - Redis
   save_order:
     - Redis
-    - TempDir
+    - Local

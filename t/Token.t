@@ -36,11 +36,11 @@ sub testRequired {
 	} qr/source is required/, 'source is required';
 
 	throws_ok {
-		Chleb::Token->new({ _source => $self->sut->repo('TempDir') });
+		Chleb::Token->new({ _source => $self->sut->repo('Local') });
 	} qr/repo is required/, 'repo is required';
 
 	lives_ok {
-		Chleb::Token->new({ _repo => $self->sut, _source => $self->sut->repo('TempDir') });
+		Chleb::Token->new({ _repo => $self->sut, _source => $self->sut->repo('Local') });
 	} 'object created';
 
 	return EXIT_SUCCESS;
@@ -53,7 +53,7 @@ sub testInitWithValue {
 	my $value = $self->uniqueStr();
 	$self->sut(Chleb::Token->new({
 		_repo => $self->sut,
-		_source => $self->sut->repo('TempDir'),
+		_source => $self->sut->repo('Local'),
 		_value => $value,
 	}));
 
@@ -73,7 +73,7 @@ sub testInitWithoutValue {
 
 	$self->sut(Chleb::Token->new({
 		_repo => $self->sut,
-		_source => $self->sut->repo('TempDir'),
+		_source => $self->sut->repo('Local'),
 	}));
 
 	my $value = $self->sut->value;

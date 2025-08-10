@@ -177,7 +177,7 @@ lib/Chleb/Token/Repository/Base.pm
 lib/Chleb/Token/Repository/DB/Dynamo.pm
 lib/Chleb/Token/Repository/DB/Maria.pm
 lib/Chleb/Token/Repository/Dummy.pm
-lib/Chleb/Token/Repository/TempDir.pm
+lib/Chleb/Token/Repository/Local.pm
 lib/Chleb/Type/Testament.pm
 lib/Chleb/Utils.pm
 lib/Chleb/Utils/BooleanParserException.pm
@@ -223,7 +223,7 @@ t/Server_version.t
 t/Server_versionFilter.t
 t/Server_votd.t
 t/Token.t
-t/TokenRepository_TempDir.t
+t/TokenRepository_Local.t
 t/traverse_entire_bible.t
 t/traverse_entire_bible_reverse.t
 t/Type_Testament.t

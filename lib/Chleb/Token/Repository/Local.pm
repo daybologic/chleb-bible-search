@@ -28,7 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Token::Repository::TempDir;
+package Chleb::Token::Repository::Local;
 use strict;
 use warnings;
 use Moose;

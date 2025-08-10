@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-package TokenRepository_TempDirTests;
+package TokenRepository_LocalTests;
 use strict;
 use warnings;
 use Moose;
@@ -13,7 +13,7 @@ use POSIX qw(EXIT_SUCCESS);
 use Chleb::DI::MockLogger;
 use Chleb::Token;
 use Chleb::Token::Repository;
-use Chleb::Token::Repository::TempDir;
+use Chleb::Token::Repository::Local;
 use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
 use Test::More 0.96;
@@ -21,7 +21,7 @@ use Test::More 0.96;
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Chleb::Token::Repository::TempDir->new());
+	$self->sut(Chleb::Token::Repository::Local->new());
 	$self->sut->dic->configPaths(['etc-defaults']);
 	$self->__mockLogger();
 
@@ -71,7 +71,7 @@ sub testSaveLoad {
 				expires => $now + 5,
 				repo => isa('Chleb::Token::Repository'),
 				source => all(
-					isa('Chleb::Token::Repository::TempDir'),
+					isa('Chleb::Token::Repository::Local'),
 				),
 				value => $value,
 			),
@@ -93,7 +93,7 @@ sub testSaveLoad {
 			cmp_deeply($evalError, all(
 				isa('Chleb::Exception'),
 				methods(
-					description => 'sessionToken expired via Chleb::Token::Repository::TempDir',
+					description => 'sessionToken expired via Chleb::Token::Repository::Local',
 					location    => undef,
 					statusCode  => 401,
 				),
@@ -161,4 +161,4 @@ sub __mockLogger {
 package main;
 use strict;
 use warnings;
-exit(TokenRepository_TempDirTests->new->run);
+exit(TokenRepository_LocalTests->new->run);
