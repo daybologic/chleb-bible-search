@@ -23,14 +23,15 @@ features:
 Dancer2:
   public_dir: /usr/share/chleb-bible-search/public
 session_tokens:
+  backend_local:
+    dir: /var/lib/chleb-bible-search/sessions
   backend_redis:
     db: 1
     host: localhost:6379
-  backend_tempdir:
-  ttl: 10800
   load_order:
     - Local
     - Redis
   save_order:
     - Redis
     - Local
+  ttl: 10800

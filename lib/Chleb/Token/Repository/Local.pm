@@ -44,9 +44,12 @@ use Errno qw(:POSIX);
 use HTTP::Status qw(:constants);
 #use IO::File;
 use POSIX qw(strerror);
+use Readonly;
 use Storable qw(retrieve store);
 
 has dir => (is => 'ro', isa => 'Str', lazy => 1, builder => '_makeDir');
+
+Readonly our $DIR_LOCAL => '/tmp/chleb-bible-search';
 
 sub create {
 	my ($self) = @_;
@@ -137,7 +140,8 @@ sub save {
 
 sub _makeDir {
 	my ($self) = @_;
-	return '/tmp'; # FIXME: Should be read from a config, with a default?
+	my $config = $self->dic->config->get('session_tokens', 'backend_local', { dir => $DIR_LOCAL });
+	return $config->{dir};
 }
 
 sub __getFilePath {
