@@ -52,7 +52,7 @@ sub BUILD {
 
 sub __makeData {
 	my ($self) = @_;
-	return LoadFile($self->path);
+	return LoadFile($self->path) || { };
 }
 
 sub get {
