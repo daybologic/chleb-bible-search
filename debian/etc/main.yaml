@@ -25,6 +25,7 @@ Dancer2:
 session_tokens:
   backend_local:
     dir: /var/lib/chleb-bible-search/sessions
+    dynamic_mkdir: true
   backend_redis:
     db: 1
     host: localhost:6379

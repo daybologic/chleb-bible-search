@@ -38,6 +38,7 @@ extends 'Chleb::Token::Repository::Base';
 use Chleb::Exception;
 use Chleb::Token;
 use Chleb::Token::Repository;
+use Chleb::Utils;
 use Data::Dumper;
 use English qw(-no_match_vars);
 use Errno qw(:POSIX);
@@ -47,9 +48,22 @@ use POSIX qw(strerror);
 use Readonly;
 use Storable qw(retrieve store);
 
+Readonly our $DIR_LOCAL => '/tmp/chleb-bible-search/sessions';
+
+Readonly my $QUIET => 1 << 0;
+Readonly my $FORCE => 1 << 1;
+
 has dir => (is => 'ro', isa => 'Str', lazy => 1, builder => '_makeDir');
 
-Readonly our $DIR_LOCAL => '/tmp/chleb-bible-search';
+has __dynamic => (is => 'ro', isa => 'Bool', lazy => 1, builder => '__makeDynamic');
+
+sub BUILD {
+	my ($self) = @_;
+
+	$self->__makeHierarchy();
+
+	return;
+}
 
 sub create {
 	my ($self) = @_;
@@ -145,12 +159,55 @@ sub _makeDir {
 }
 
 sub __getFilePath {
-	my ($self, $value) = @_;
+	my ($self, $value, $flags) = @_;
+	my @part = split(m//, $value, 5);
+	pop(@part);
 
-	$value .= '.session';
-	$value = join('/', $self->dir, $value);
-	$self->dic->logger->trace('session file path: ' . $value);
-	return $value;
+	if ($flags & $FORCE || $self->__dynamic) {
+		my $path = $self->dir;
+		for my $p (@part) {
+			$path .= "/$p";
+			if (!mkdir($path, 0700) && $ERRNO != EEXIST) {
+				die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, "mkdir $path: $ERRNO");
+			}
+		}
+	}
+
+	my $return = join('/', $self->dir, @part, $value) . '.session';
+	$self->dic->logger->trace("session file path: '$return'") unless ($flags & $QUIET);
+	return $return;
+}
+
+sub __makeDynamic {
+	my ($self) = @_;
+	my $key = 'dynamic_mkdir';
+	my $config = $self->dic->config->get('session_tokens', 'backend_local', { $key => 1 });
+	$self->dic->logger->trace("$key: " . Dumper $config);
+	my $return = Chleb::Utils::boolean($key, $config->{$key}, 1);
+	$self->dic->logger->trace("$key: " . Dumper $return);
+	return $return;
+}
+
+sub __makeHierarchy {
+	my ($self) = @_;
+
+	if ($self->__dynamic) {
+		$self->dic->logger->debug("Not pre-creating directory hierarchy under '" . $self->dir
+		    . "' because dynamic_mkdir is set");
+
+		return;
+	} else {
+		$self->dic->logger->info("Pre-creating directory hierarchy under '" . $self->dir
+		    . "', this may take some time");
+	}
+
+	for (my $value = 0x0; $value <= 0xffff; $value++) {
+		$self->__getFilePath(sprintf("%04x", $value), $QUIET | $FORCE);
+	}
+
+	$self->dic->logger->info('Directory structure successfully created');
+
+	return;
 }
 
 1;
