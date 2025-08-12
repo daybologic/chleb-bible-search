@@ -79,6 +79,35 @@ sub __get {
 
 	if (defined($self->__data->{$section}->{$key})) {
 		my $value = $self->__data->{$section}->{$key};
+
+		if ($value && ref($value) eq 'HASH' && $default) {
+			if (!exists($self->__data->{$section}->{$key})) {
+				$self->dic->logger->trace("key '$key' *NOT* found in section '$section': returning whole default hard-coded"
+				    . ' section ' . Dumper $default);
+
+				return $default; # whole section missing, return all defaults specified
+			}
+
+			$self->dic->logger->trace("key '$key' found in section '$section': building ephemeral section");
+
+			# section partially populated, construction an ephemeral section and populate keys from default, where supplied
+			my %ephemeralSection = ( );
+			while (my ($k, $v) = each(%$default)) {
+				if (exists($self->__data->{$section}->{$key}->{$k})) {
+					$self->dic->logger->trace(Dumper $self->__data);
+					$v = $self->__data->{$section}->{$key}->{$k};
+					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from real config)");
+				} else {
+					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from default)");
+				}
+
+				$ephemeralSection{$k} = $v;
+			}
+
+			$self->dic->logger->trace('Ephemeral section content: ' . Dumper \%ephemeralSection);
+			return \%ephemeralSection;
+		}
+
 		return __boolean($value) if ($isBoolean);
 		return $value;
 	}
