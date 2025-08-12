@@ -38,7 +38,7 @@ known false values; a fixed list.
 
 =cut
 
-Readonly my @FALSE_VALUES => ('0', 'false', 'off', 'no');
+Readonly my @FALSE_VALUES => ('', '0', 'false', 'off', 'no');
 
 =item C<$MAX_TEXT_LENGTH>
 
@@ -231,19 +231,16 @@ sub boolean {
 			return $v;
 		};
 
-		$value = $trim->($value);
-		if (length($value) > 0) {
-			$value = lc($value);
+		$value = lc($trim->($value));
 
-			return 1 if ($isTrue->($value));
-			return 0 if ($isFalse->($value));
+		return 1 if ($isTrue->($value));
+		return 0 if ($isFalse->($value));
 
-			die(Chleb::Utils::BooleanParserUserException->raise(
-				undef,
-				"Illegal user-supplied value: '$value' for key '$key'",
-				$key,
-			));
-		}
+		die(Chleb::Utils::BooleanParserUserException->raise(
+			undef,
+			"Illegal user-supplied value: '$value' for key '$key'",
+			$key,
+		));
 	}
 
 	return $defaultValueReturned if (defined($defaultValue)); # Apply default, if supplied/available
