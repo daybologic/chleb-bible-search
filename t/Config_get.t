@@ -75,7 +75,7 @@ sub testGetSimpleString {
 
 sub testGetSimpleBoolean {
 	my ($self) = @_;
-	plan tests => 4;
+	plan tests => 5;
 
 	my $sectionName = 'simple_boolean';
 	my $default = 1;
@@ -83,7 +83,7 @@ sub testGetSimpleBoolean {
 	ok(!$self->sut->get($sectionName, 'off_value', $default, 1), 'key present; off');
 	ok($self->sut->get($sectionName, 'on_value', $default, 1), 'key present; on');
 	ok($self->sut->get($sectionName, 'missing_value', $default, 1), 'key *NOT* present; default');
-	#ok(!$self->sut->get($sectionName, 'false_value', $default, 1), 'key present; false');
+	ok(!$self->sut->get($sectionName, 'false_value', $default, 1), 'key present; false');
 	ok($self->sut->get($sectionName, 'true_value', $default, 1), 'key present; true');
 
 	return EXIT_SUCCESS;

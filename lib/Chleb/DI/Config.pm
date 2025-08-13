@@ -120,11 +120,12 @@ sub __get {
 sub __boolean {
 	my ($value) = @_;
 
+	# TODO: Should we remove this method entirely and use the copy in Chleb::Utils?
 	if (defined($value)) {
 		$value = lc($value);
 
 		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
-		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
+		return 0 if ($value =~ m/^\s*$/ || $value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
 
 		die("Invalid boolean value in config: $value");
 	}
