@@ -1,0 +1,37 @@
+#server:
+#  admin_email: example@example.org
+#  admin_name: Unknown
+#  children: 30
+#  domain: chleb-api.example.org
+votd_exclude:
+  terms:
+    - fornication
+    - circumcision
+    - circumcised
+    - harlots
+  refs:
+    - Lev 20:13
+    - Gen 19:8
+    - Psa 137:9
+    - Judges 19:22-29
+    - Kefir 50:1
+    - Rev 1000:11
+    - Deu 22:21
+simple_boolean:
+  off_value: off
+  on_value: on
+  true_value: true
+  false_value: false
+Dancer2:
+  public_dir: data/static/public
+session_tokens:
+  backend_redis:
+    db: 1
+    host: localhost:6379
+  backend_tempdir:
+  ttl: 1800
+  load_order:
+    - TempDir
+    - Redis
+  save_order:
+    - Dummy
