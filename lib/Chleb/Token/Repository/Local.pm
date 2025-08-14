@@ -160,6 +160,8 @@ sub _makeDir {
 
 sub __getFilePath {
 	my ($self, $value, $flags) = @_;
+	$flags = $flags ? int($flags) : 0; # ensure '&' works without a warning
+
 	my @part = split(m//, $value, 5);
 	pop(@part);
 
