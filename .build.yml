@@ -47,6 +47,7 @@ packages:
   - libmoose-perl
   - libmoosex-singleton-perl
   - libreadonly-perl
+  - libredis-perl
   - libtest-deep-perl
   - libtest-exception-perl
   - libtest-mockmodule-perl
