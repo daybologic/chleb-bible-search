@@ -82,13 +82,6 @@ sub __get {
 		my $value = $self->__data->{$section}->{$key};
 
 		if ($value && ref($value) eq 'HASH' && $default) {
-			if (!exists($self->__data->{$section}->{$key})) {
-				$self->dic->logger->trace("key '$key' *NOT* found in section '$section': returning whole default hard-coded"
-				    . ' section ' . Dumper $default);
-
-				return $default; # whole section missing, return all defaults specified
-			}
-
 			$self->dic->logger->trace("key '$key' found in section '$section': building ephemeral section");
 
 			# section partially populated, construction an ephemeral section and populate keys from default, where supplied
