@@ -26,8 +26,8 @@ Dancer2:
   public_dir: data/static/public
 session_tokens:
   backend_redis:
-    db: 1
-    host: localhost:6379
+    db: 5
+    host: redis-82.example.net
   backend_tempdir:
   ttl: 1800
   load_order:

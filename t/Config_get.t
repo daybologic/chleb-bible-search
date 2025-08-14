@@ -89,6 +89,28 @@ sub testGetSimpleBoolean {
 	return EXIT_SUCCESS;
 }
 
+sub testSubsectionHash {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $sectionName = 'session_tokens';
+	my $subsectionName = 'backend_redis';
+
+	my $subsection = $self->sut->get($sectionName, $subsectionName, { db => 2, host => 'x' });
+	cmp_deeply($subsection, {
+		db => 5,
+		host => 'redis-82.example.net',
+	}, 'defaults not used') or diag(explain($subsection));
+
+	$subsection = $self->sut->get($sectionName, $subsectionName, { db => 2 });
+	cmp_deeply($subsection, {
+		db => 5,
+		#host => 'redis-82.example.net',
+	}, 'defaults not used') or diag(explain($subsection));
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
