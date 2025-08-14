@@ -50,6 +50,31 @@ Readonly my $MAX_TEXT_LENGTH => 120;
 
 =back
 
+=head2 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.
+
+=over
+
+=item C<$BOOLEAN_FLAG_NONE>
+
+No special flags; default.
+
+=cut
+
+Readonly our $BOOLEAN_FLAG_NONE => 0;
+
+=item C<$BOOLEAN_FLAG_EMPTY_IS_FALSE>
+
+An empty string is a false value, even if the default is marked as true,
+in other words, C<undef> would match the default desired, and C<''>
+or C<'   '> (only whitespace) would match false explicitly.  Without
+this flag, it would match the default.
+
+=cut
+
+Readonly our $BOOLEAN_FLAG_EMPTY_IS_FALSE => 1 << 0;
+
+=back
+
 =head1 FUNCTIONS
 
 =over
@@ -163,7 +188,7 @@ sub queryParamsHelper {
 	return $str;
 }
 
-=item C<parse($key, $value, [$defaultValue])>
+=item C<boolean($key, $value, [$defaultValue], [$flags])>
 
 Parse a user-supplied config boolean into a simple type.
 
@@ -176,9 +201,12 @@ If no default is specified, the value is considered mandatory and L<Chleb::Utils
 thrown.  If the default is not properly specified and not undef, we throw
 L<Chleb::Utils::BooleanParserSystemException>, which means you need to fix your code.
 
+For the optional flags field, use the bitfield values matching C<BOOLEAN_FLAG_%>.
+
 @param key String
 @param value String
 @param defaultValue String
+@param flags bitfield
 @return boolean
 @throws BooleanParserUserException
 @throws BooleanParserSystemException
@@ -186,8 +214,9 @@ L<Chleb::Utils::BooleanParserSystemException>, which means you need to fix your 
 =cut
 
 sub boolean {
-	my ($key, $value, $defaultValue) = @_;
+	my ($key, $value, $defaultValue, $flags) = @_;
 	my $defaultValueReturned = 0;
+	$flags = $flags ? int($flags) : 0; # ensure '&' works without a warning
 
 	my $isTrue = sub {
 		my ($v) = @_;
@@ -243,6 +272,8 @@ sub boolean {
 				"Illegal user-supplied value: '$value' for key '$key'",
 				$key,
 			));
+		} elsif ($flags & $BOOLEAN_FLAG_EMPTY_IS_FALSE) {
+			return 0;
 		}
 	}
 

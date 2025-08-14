@@ -324,6 +324,26 @@ sub testDefaultNone {
 	return EXIT_SUCCESS;
 }
 
+sub testEmptyIsFalse_withoutImplementingFlag {
+	my ($self) = @_;
+	plan tests => 2;
+
+	ok(Chleb::Utils::boolean($KEY, '', 1, $Chleb::Utils::BOOLEAN_FLAG_NONE), 'empty; no flags; uses default');
+	ok(Chleb::Utils::boolean($KEY, ' ', 1, $Chleb::Utils::BOOLEAN_FLAG_NONE), 'whitespace; no flags; uses default');
+
+	return EXIT_SUCCESS;
+}
+
+sub testEmptyIsFalse_withImplementingFlag {
+	my ($self) = @_;
+	plan tests => 2;
+
+	ok(!Chleb::Utils::boolean($KEY, '', 1, $Chleb::Utils::BOOLEAN_FLAG_EMPTY_IS_FALSE), 'empty; flag set; does not use default');
+	ok(!Chleb::Utils::boolean($KEY, ' ', 1, $Chleb::Utils::BOOLEAN_FLAG_EMPTY_IS_FALSE), 'whitespace; flag set; does not use default');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
