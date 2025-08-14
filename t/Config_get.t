@@ -111,6 +111,24 @@ sub testSubsectionHash {
 	return EXIT_SUCCESS;
 }
 
+sub testSubsectionHash_default {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $sectionName = 'session_tokens';
+	my $subsectionName = 'backend_redis';
+	my $default = $self->uniqueStr();
+
+	my $subsection = $self->sut->get($sectionName, $subsectionName, { host => 'x', nonExist => $default });
+	cmp_deeply($subsection, {
+		db => 5,
+		host => 'redis-82.example.net',
+		nonExist => $default,
+	}, 'key not set - returning default within subsection') or diag(explain($subsection));
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
