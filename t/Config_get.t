@@ -105,8 +105,8 @@ sub testSubsectionHash {
 	$subsection = $self->sut->get($sectionName, $subsectionName, { db => 2 });
 	cmp_deeply($subsection, {
 		db => 5,
-		#host => 'redis-82.example.net',
-	}, 'defaults not used') or diag(explain($subsection));
+		host => 'redis-82.example.net',
+	}, "defaults not used; default keys don't affect keys returned") or diag(explain($subsection));
 
 	return EXIT_SUCCESS;
 }

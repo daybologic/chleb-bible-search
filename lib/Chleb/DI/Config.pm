@@ -93,12 +93,19 @@ sub __get {
 
 			# section partially populated, construction an ephemeral section and populate keys from default, where supplied
 			my %ephemeralSection = ( );
-			while (my ($k, $v) = each(%$default)) {
+			my %allKeys = (
+				%{ $self->__data->{$section}->{$key} },
+				%$default,
+			);
+
+			foreach my $k (keys(%allKeys)) {
+				my $v;
 				if (exists($self->__data->{$section}->{$key}->{$k})) {
 					$self->dic->logger->trace(Dumper $self->__data);
 					$v = $self->__data->{$section}->{$key}->{$k};
 					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from real config)");
 				} else {
+					$v = $default->{$k};
 					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from default)");
 				}
 
