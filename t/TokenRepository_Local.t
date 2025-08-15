@@ -10,6 +10,7 @@ extends 'Test::Module::Runnable';
 
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
+use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Token;
 use Chleb::Token::Repository;
@@ -18,11 +19,14 @@ use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
 use Test::More 0.96;
 
+has dic => (is => 'rw', isa => 'Chleb::DI::Container');
+
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Chleb::Token::Repository::Local->new());
-	$self->sut->dic->configPaths(['etc-defaults']);
+	$self->dic(Chleb::DI::Container->instance);
+	$self->dic->configPaths(['etc-local']);
+	$self->sut(Chleb::Token::Repository::Local->new({ dic => $self->dic }));
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -51,6 +55,9 @@ sub testSaveLoad {
 		lives_ok {
 			$token->save();
 		} 'save called on token';
+		if (my $evalError = $EVAL_ERROR) {
+			BAIL_OUT($evalError->toString());
+		}
 
 		$value = $token->value;
 		ok($value, 'value retrieved');
