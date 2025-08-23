@@ -50,14 +50,14 @@
         "name": "1/a HTML",
         "url": "http://chleb-api.example.org/1/a",
         "method": "GET",
-        "headers": [],
-        "queryParams": [
+        "headers": [
           {
             "name": "Accept",
             "value": "text/html",
             "enabled": true
           }
         ],
+        "queryParams": [],
         "pathParams": [],
         "auth": {
           "type": "inherited"
@@ -85,14 +85,14 @@
         "name": "1/a JSON",
         "url": "http://chleb-api.example.org/1/a",
         "method": "GET",
-        "headers": [],
-        "queryParams": [
+        "headers": [
           {
             "name": "Accept",
             "value": "application/json",
             "enabled": true
           }
         ],
+        "queryParams": [],
         "pathParams": [],
         "auth": {
           "type": "inherited"
@@ -350,17 +350,11 @@
         "headers": [
           {
             "name": "Accept",
-            "value": "application/json",
-            "enabled": true
-          }
-        ],
-        "queryParams": [
-          {
-            "name": "Accept",
             "value": "text/html",
             "enabled": true
           }
         ],
+        "queryParams": [],
         "pathParams": [],
         "auth": {
           "type": "inherited"
@@ -519,6 +513,47 @@
         }
       },
       {
+        "name": "1/random HTML, redirect",
+        "url": "http://chleb-api.example.org/1/random",
+        "method": "GET",
+        "headers": [
+          {
+            "name": "Accept",
+            "value": "text/html",
+            "enabled": true
+          }
+        ],
+        "queryParams": [
+          {
+            "name": "redirect",
+            "value": "true",
+            "enabled": true
+          }
+        ],
+        "pathParams": [],
+        "auth": {
+          "type": "inherited"
+        },
+        "body": {
+          "type": "none",
+          "file": {
+            "name": ""
+          },
+          "text": {
+            "value": "",
+            "format": "application/json"
+          },
+          "form": {
+            "isMultipart": false,
+            "fields": []
+          },
+          "graphql": {
+            "query": "",
+            "variables": ""
+          }
+        }
+      },
+      {
         "name": "1/random JSON",
         "url": "http://chleb-api.example.org/1/random",
         "method": "GET",
@@ -567,7 +602,7 @@
         "queryParams": [
           {
             "name": "redirect",
-            "value": "true\n",
+            "value": "true",
             "enabled": true
           }
         ],
@@ -671,7 +706,7 @@
           },
           {
             "name": "form",
-            "value": "true\n",
+            "value": "true",
             "enabled": true
           }
         ],
@@ -1344,7 +1379,7 @@
         "queryParams": [
           {
             "name": "redirect",
-            "value": "true\n",
+            "value": "true",
             "enabled": true
           }
         ],
@@ -1547,7 +1582,7 @@
         }
       },
       {
-        "name": "2/random HTML",
+        "name": "2/random JSON, redirect",
         "url": "http://chleb-api.example.org/2/random",
         "method": "GET",
         "headers": [
@@ -1557,7 +1592,13 @@
             "enabled": true
           }
         ],
-        "queryParams": [],
+        "queryParams": [
+          {
+            "name": "redirect",
+            "value": "true",
+            "enabled": true
+          }
+        ],
         "pathParams": [],
         "auth": {
           "type": "inherited"
@@ -1757,17 +1798,23 @@
         }
       },
       {
-        "name": "2/votd HTML",
+        "name": "2/votd JSON, redirect",
         "url": "http://chleb-api.example.org/2/votd",
         "method": "GET",
         "headers": [
           {
             "name": "Accept",
-            "value": "text/html",
+            "value": "application/json",
             "enabled": true
           }
         ],
-        "queryParams": [],
+        "queryParams": [
+          {
+            "name": "redirect",
+            "value": "true",
+            "enabled": true
+          }
+        ],
         "pathParams": [],
         "auth": {
           "type": "inherited"
