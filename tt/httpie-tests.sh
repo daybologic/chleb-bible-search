@@ -33,6 +33,9 @@ set -u  # strict on undefined vars, but no `-e`
 
 BASE_DIR="data/tests"
 failures=()
+total=0
+passed=0
+failed=0
 
 # Ensure directory exists
 if [[ ! -d "$BASE_DIR" ]]; then
@@ -42,6 +45,7 @@ fi
 
 # Find and execute .sh files
 while IFS= read -r -d '' script; do
+	(( total++ ))
 	echo "Executing: $script"
 
 	# Run the script in a subshell, so "exit" doesn’t kill the runner
@@ -51,8 +55,10 @@ while IFS= read -r -d '' script; do
 	status=$?
 
 	if [[ $status -eq 0 ]]; then
+		(( passed++ ))
 		echo "✅ PASSED: $script"
 	else
+		(( failed++ ))
 		echo "❌ FAILED (exit $status): $script"
 		failures+=("$script (exit $status)")
 	fi
@@ -60,15 +66,20 @@ while IFS= read -r -d '' script; do
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
 
 # Final summary
-if (( ${#failures[@]} > 0 )); then
-	echo "================================"
+echo "================================"
+echo "Test Summary:"
+echo "  Total : $total"
+echo "  Passed: $passed"
+echo "  Failed: $failed"
+echo
+
+if (( failed > 0 )); then
 	echo "Some tests failed:"
 	for f in "${failures[@]}"; do
 		echo " - $f"
 	done
 	exit 1
 else
-	echo "================================"
 	echo "All tests passed successfully 🎉"
 fi
 
