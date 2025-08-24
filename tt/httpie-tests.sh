@@ -32,6 +32,8 @@
 set -u  # strict on undefined vars, but no `-e`
 
 BASE_DIR="data/tests"
+SERVER_HOST='chleb-api.example.org'
+
 failures=()
 total=0
 passed=0
@@ -44,8 +46,17 @@ if [[ ! -d "$BASE_DIR" ]]; then
 fi
 
 # Check if httpie (http command) is installed
-if ! command -v http >/dev/null 2>&1; then
+if command -v http >/dev/null 2>&1; then
+	echo "✅ HTTPie detected"
+else
 	echo "WARN: HTTPie is not installed or not in the PATH" >&2
+	exit 0
+fi
+
+if getent hosts "$SERVER_HOST" >/dev/null 2>&1; then
+	echo "✅ Host $SERVER_HOST resolves."
+else
+	echo "WARN: Host $SERVER_HOST does not resolve."
 	exit 0
 fi
 
