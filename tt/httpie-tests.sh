@@ -43,10 +43,16 @@ fi
 # Find and execute .sh files
 while IFS= read -r -d '' script; do
 	echo "Executing: $script"
-	if bash "$script"; then
+
+	# Run the script in a subshell, so "exit" doesn’t kill the runner
+	(
+		source "$script"
+	) < /dev/null # <-- critical fix: prevent script from reading find's output
+	status=$?
+
+	if [[ $status -eq 0 ]]; then
 		echo "✅ PASSED: $script"
 	else
-		status=$?
 		echo "❌ FAILED (exit $status): $script"
 		failures+=("$script (exit $status)")
 	fi
