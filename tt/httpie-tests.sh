@@ -39,8 +39,14 @@ failed=0
 
 # Ensure directory exists
 if [[ ! -d "$BASE_DIR" ]]; then
-	echo "Error: Directory '$BASE_DIR' does not exist." >&2
-	exit 1
+	echo "WARN: Directory '$BASE_DIR' does not exist." >&2
+	exit 0
+fi
+
+# Check if httpie (http command) is installed
+if ! command -v http >/dev/null 2>&1; then
+	echo "WARN: HTTPie is not installed or not in the PATH" >&2
+	exit 0
 fi
 
 # Find and execute .sh files
