@@ -38,6 +38,7 @@ failures=()
 total=0
 passed=0
 failed=0
+skipped=0
 
 # Ensure directory exists
 if [[ ! -d "$BASE_DIR" ]]; then
@@ -65,19 +66,24 @@ while IFS= read -r -d '' script; do
 	(( total++ ))
 	echo "Executing: $script"
 
-	# Run the script in a subshell, so "exit" doesn’t kill the runner
-	(
-		source "$script"
-	) < /dev/null # <-- critical fix: prevent script from reading find's output
-	status=$?
+	if [ -x "$script" ]; then
+		# Run the script in a subshell, so "exit" doesn’t kill the runner
+		(
+			source "$script"
+		) < /dev/null # <-- critical fix: prevent script from reading find's output
+		status=$?
 
-	if [[ $status -eq 0 ]]; then
-		(( passed++ ))
-		echo "✅ PASSED: $script"
+		if [[ $status -eq 0 ]]; then
+			(( passed++ ))
+			echo "✅ PASSED: $script"
+		else
+			(( failed++ ))
+			echo "❌ FAILED (exit $status): $script"
+			failures+=("$script (exit $status)")
+		fi
 	else
-		(( failed++ ))
-		echo "❌ FAILED (exit $status): $script"
-		failures+=("$script (exit $status)")
+		(( skipped++ ))
+		echo "⚠️ SKIPPED: $script"
 	fi
 	echo
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
@@ -94,9 +100,10 @@ fi
 # Final summary
 echo "================================"
 echo "Test Summary:"
-echo "  Total : $total"
-echo "  Passed: $passed"
-echo "  Failed: $failed"
+echo "  Total  : $total"
+echo "  Passed : $passed"
+echo "  Skipped: $skipped"
+echo "  Failed : $failed"
 echo
 
 if (( failed > 0 )); then
