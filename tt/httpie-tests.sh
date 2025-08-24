@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -u  # no unbound variables (but allow failures)
+set -u  # strict on undefined vars, but no `-e`
 
 BASE_DIR="data/tests"
 failures=()
@@ -43,11 +43,12 @@ fi
 # Find and execute .sh files
 while IFS= read -r -d '' script; do
 	echo "Executing: $script"
-	if ! bash "$script"; then
-		echo "❌ FAILED: $script"
-		failures+=("$script")
-	else
+	if bash "$script"; then
 		echo "✅ PASSED: $script"
+	else
+		status=$?
+		echo "❌ FAILED (exit $status): $script"
+		failures+=("$script (exit $status)")
 	fi
 	echo
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
