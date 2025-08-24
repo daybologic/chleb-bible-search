@@ -1,1 +1,2 @@
 🚚
+Move or rename resources (e.g.: files, paths, routes).

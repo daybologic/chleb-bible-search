@@ -1,1 +1,2 @@
 🎨
+Improve structure / format of the code.
