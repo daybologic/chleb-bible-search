@@ -81,10 +81,16 @@ deb :: pure_all
 cover :: pure_all
 	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
 
+httpie :: pure_all
+	@tt/httpie-tests.sh
+
 clean :: 
 	rm -rf cover_db
 	cd data/ && make clean
 	cd info/ && make clean
+
+# Extend test target
+test :: httpie
 
     ~;
 }
