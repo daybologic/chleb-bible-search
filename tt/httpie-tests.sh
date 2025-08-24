@@ -65,6 +65,15 @@ while IFS= read -r -d '' script; do
 	echo
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
 
+if (( failed > 0 )); then
+	echo "Some tests failed:"
+	for f in "${failures[@]}"; do
+		echo " - $f"
+	done
+else
+	echo "All tests passed successfully 🎉"
+fi
+
 # Final summary
 echo "================================"
 echo "Test Summary:"
@@ -74,13 +83,7 @@ echo "  Failed: $failed"
 echo
 
 if (( failed > 0 )); then
-	echo "Some tests failed:"
-	for f in "${failures[@]}"; do
-		echo " - $f"
-	done
 	exit 1
-else
-	echo "All tests passed successfully 🎉"
 fi
 
 exit 0
