@@ -74,14 +74,17 @@ while IFS= read -r -d '' script; do
 
 		if [[ $status -eq 0 ]]; then
 			(( passed++ ))
+
 			echo "✅ PASSED: $script"
 		else
 			(( failed++ ))
+
 			echo "❌ FAILED (exit $status): $script"
 			failures+=("$script (exit $status)")
 		fi
 	else
 		(( skipped++ ))
+
 		echo "⚠️ SKIPPED: $script"
 	fi
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
