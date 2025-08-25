@@ -29,4 +29,4 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-http GET chleb-api.example.org/1/lookup/prov/16/18 Accept:text/html
+http --check-status GET chleb-api.example.org/1/lookup/prov/16/18 Accept:text/html
