@@ -42,7 +42,7 @@ skipped=0
 
 # Ensure directory exists
 if [[ ! -d "$BASE_DIR" ]]; then
-	echo "WARN: Directory '$BASE_DIR' does not exist." >&2
+	echo "⚠️ Directory '$BASE_DIR' does not exist." >&2
 	exit 0
 fi
 
@@ -50,14 +50,14 @@ fi
 if command -v http >/dev/null 2>&1; then
 	echo "✅ HTTPie detected"
 else
-	echo "WARN: HTTPie is not installed or not in the PATH" >&2
+	echo "⚠️ HTTPie is not installed or not in the PATH" >&2
 	exit 0
 fi
 
 if getent hosts "$SERVER_HOST" >/dev/null 2>&1; then
 	echo "✅ Host $SERVER_HOST resolves."
 else
-	echo "WARN: Host $SERVER_HOST does not resolve."
+	echo "⚠️ Host $SERVER_HOST does not resolve."
 	exit 0
 fi
 
