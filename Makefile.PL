@@ -82,7 +82,7 @@ cover :: pure_all
 	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
 
 http-test :: pure_all
-	@tt/httpie-tests.sh
+	@bin/maint/run-functional-tests.sh
 
 clean :: 
 	rm -rf cover_db
