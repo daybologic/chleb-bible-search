@@ -29,6 +29,66 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+set -uo pipefail
 
-http --check-status GET chleb-api.example.org/1/random Accept:text/html redirect==true
+# Fetch headers once
+headers=$(http --print=h --pretty=none --check-status GET chleb-api.example.org/1/random Accept:text/html redirect==true 2>/dev/null)
+exitCode=$?
+
+# Extract status code
+statusCode=$(echo "$headers" | head -n 1 | awk '{print $2}')
+
+# === Define expectations ===
+expectedExitCode=3
+expectedStatus="307"
+declare -A expectedHeaders=(
+	["Content-Type"]="text/html; charset=utf-8"
+	["Connection"]="keep-alive"
+	["Server"]="Perl Dancer2 0.400001"
+	["Location"]="^/1/lookup/[a-z]+/[0-9]+/[0-9]+$"
+)
+
+# Exit code test
+if [[ "$exitCode" -eq "$expectedExitCode" ]]; then
+	echo "✅ Exit code: $exitCode"
+else
+	echo "❌ Exit code: got $exitCode, expected $expectedExitCode"
+	exit 1
+fi
+
+# Status code test
+if [[ "$statusCode" == "$expectedStatus" ]]; then
+	echo "✅ Status: $statusCode"
+else
+	echo "❌ Status: got $statusCode, expected $expectedStatus"
+	exit 1
+fi
+
+# === Run tests ===
+# Header tests
+for header in "${!expectedHeaders[@]}"; do
+	# Extract header value, strip leading/trailing spaces and CR
+	actual=$(echo "$headers" | grep -i "^$header:" | cut -d':' -f2- | sed 's/^[[:space:]]*//;s/[[:space:]\r]*$//')
+	expected="${expectedHeaders[$header]}"
+
+	# If expected looks like regex (starts with ^ or ends with $), use regex match
+	if [[ "$expected" =~ ^\^.*\$?$ ]]; then
+		if [[ "$actual" =~ $expected ]]; then
+			echo "✅ $header matches pattern: $expected"
+		else
+			echo "❌ $header: got '$actual', expected pattern '$expected'"
+			exit 1
+		fi
+	else
+		# Exact match
+		if [[ "$actual" == "$expected" ]]; then
+			echo "✅ $header: $actual"
+		else
+			echo "❌ $header: got '$actual', expected '$expected'"
+			exit 1
+		fi
+	fi
+done
+
+echo "🎉 All tests passed!"
+exit 0
