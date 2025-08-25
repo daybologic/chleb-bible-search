@@ -39,6 +39,7 @@ total=0
 passed=0
 failed=0
 skipped=0
+notApplicable=0
 
 # Ensure directory exists
 if [[ ! -d "$BASE_DIR" ]]; then
@@ -84,9 +85,16 @@ while IFS= read -r -d '' script; do
 			failures+=("$testName (exit $status)")
 		fi
 	else
-		(( skipped++ ))
 
-		echo "⚠️ SKIPPED: $testName"
+		if [[ "$testName" == "/1/template.sh" ]]; then
+			(( notApplicable++ ))
+
+			echo "☑️     N/A: $testName"
+		else
+			(( skipped++ ))
+
+			echo "⚠️ SKIPPED: $testName"
+		fi
 	fi
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
 
@@ -105,6 +113,7 @@ echo "================================"
 echo "Test Summary:"
 echo "  Total  : $total"
 echo "✅ Passed : $passed"
+echo "☑️    N/A : $notApplicable"
 echo "⚠️Skipped: $skipped"
 echo "❌ Failed : $failed"
 echo
