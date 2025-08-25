@@ -169,7 +169,7 @@ You can also run these tests by typing:
 
 ```
 ./Makefile.PL
-make && make test-http
+make && make http-test
 ```
 
 nb. if the 'http' utility is not in the path, or chleb-api.example.org does not resolve, then this script exists with a false success case, emitting a warning.
