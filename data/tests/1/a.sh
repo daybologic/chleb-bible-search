@@ -29,4 +29,14 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-http GET chleb-api.example.org/1/a
+set -uo pipefail
+
+statusCode=$(http --print=h --pretty=none --check-status GET chleb-api.example.org/1/a 2>/dev/null | head -n 1 | awk '{print $2}')
+
+if [ $? -eq 4 ]; then
+	if [[ "$statusCode" == "404" ]]; then
+		exit 0
+	fi
+fi
+
+exit 1
