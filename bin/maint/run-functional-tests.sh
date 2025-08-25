@@ -65,6 +65,7 @@ fi
 while IFS= read -r -d '' script; do
 	(( total++ ))
 
+	testName="${script#$BASE_DIR}"
 	if [ -x "$script" ]; then
 		# Run the script in a subshell, so "exit" doesn’t kill the runner
 		(
@@ -75,17 +76,17 @@ while IFS= read -r -d '' script; do
 		if [[ $status -eq 0 ]]; then
 			(( passed++ ))
 
-			echo "✅ PASSED: $script"
+			echo "✅ PASSED: $testName"
 		else
 			(( failed++ ))
 
-			echo "❌ FAILED (exit $status): $script"
-			failures+=("$script (exit $status)")
+			echo "❌ FAILED (exit $status): $testName"
+			failures+=("$testName (exit $status)")
 		fi
 	else
 		(( skipped++ ))
 
-		echo "⚠️ SKIPPED: $script"
+		echo "⚠️ SKIPPED: $testName"
 	fi
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
 
