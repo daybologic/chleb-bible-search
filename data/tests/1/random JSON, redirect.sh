@@ -31,4 +31,6 @@
 
 set -euo pipefail
 
+echo '❌ FIXME this test is broken.  We asked for JSON and received HTML'
+
 http --check-status GET chleb-api.example.org/1/random Accept:application/json redirect==true

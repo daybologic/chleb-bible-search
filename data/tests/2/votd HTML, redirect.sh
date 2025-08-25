@@ -31,4 +31,6 @@
 
 set -euo pipefail
 
+echo '❌ FIXME this test is broken.  We asked for HTML and received JSON'
+
 http --check-status GET chleb-api.example.org/2/votd Accept:text/html redirect==true

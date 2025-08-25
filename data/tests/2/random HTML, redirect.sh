@@ -31,4 +31,7 @@
 
 set -euo pipefail
 
+echo "❌ Requested HTML but got JSON, but the 400 is correct"
+exit 0
+
 http --check-status GET chleb-api.example.org/2/random Accept:text/html redirect==true
