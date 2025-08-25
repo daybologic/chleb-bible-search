@@ -29,6 +29,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+set -euo pipefail
+
 #############################################################################
 # nb. this particular lookup will never work, but note that the file is
 # not marked executable, which means it will always be skipped within the

@@ -29,4 +29,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+set -euo pipefail
+
 http --check-status GET chleb-api.example.org/2/votd redirect==true
