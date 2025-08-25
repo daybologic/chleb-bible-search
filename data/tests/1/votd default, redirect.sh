@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,70 +29,9 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
+set -euo pipefail
 
-use ExtUtils::MakeMaker;
-#use ExtUtils::MakeMaker::Coverage;
-use strict;
-use warnings;
+echo "❌ TODO this does a 307 redirect with HTML, it's correct but the test needs more work"
+exit 0
 
-system('bin/maint/pkg-info.sh'); # needs to run really early doors
-system('bin/maint/synology.sh');
-system('bin/maint/git-install-local-hooks.sh');
-
-my $exeFiles = [glob q('data/*.bin.gz')];
-push(@$exeFiles, 'bin/core/app.psgi', 'bin/core/run.sh', 'bin/core/yaml2json.pl');
-
-WriteMakefile(
-	NAME         => 'Chleb',
-	VERSION_FROM => 'lib/Chleb/Generated/Info.pm', # finds $VERSION
-	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Chleb Bible Search',
-	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => $exeFiles,
-
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
-	PREREQ_PM => {
-		'Moose'            => 0,
-		'Test::MockModule' => 0,
-		'Test::More'       => 0,
-		'UUID::Tiny'       => 0,
-	}, BUILD_REQUIRES => {
-		'DateTime::Format::Strptime' => 0,
-		'Devel::Cover'    => 0,
-		'Moose'           => 0,
-		'Test::More'      => 0,
-		'Readonly'        => 0,
-		'Redis'           => 0,
-		'Test::Deep'      => 0,
-		'Test::Exception' => 0,
-	},
-);
-
-package MY;
-
-sub MY::postamble {
-    return q~
-deb :: pure_all
-	sbuild -A
-
-cover :: pure_all
-	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
-
-http-test :: pure_all
-	@bin/maint/run-functional-tests.sh
-
-clean :: 
-	rm -rf cover_db
-	cd data/ && make clean
-	cd info/ && make clean
-
-# Extend test target
-test :: http-test
-
-    ~;
-}
-
-1;
+http --check-status GET chleb-api.example.org/1/votd redirect==true

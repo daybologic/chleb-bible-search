@@ -134,3 +134,46 @@ All of the standards we use are documented elsewhere on the world-wide web:
 
 Very importantly, the master branch is always the latest release, and should be production ready at any time!
 Please do not submit and target pull requests to the master branch, but to the develop branch!
+
+### Testing
+
+Please ensure when writing new code that there is a test suite for it.  We ask for this to prevent code
+from becoming fragile, so that if any changes are made to your submission, subsequently, we can be
+reasonably confident that there has not been a regression.
+
+We have two levels of testing and you can pick at least one, whichever is more appropriate:
+
+For anything involving code which is not directly-related to an endpoint, write a test-suite under
+the t/ directory.  This is a standard directory for Perl-authored projects, and uses [Test::Module::Runnable](https://github.com/daybologic/libtest-module-runnable-perl)
+Please see the [documentation](https://git.sr.ht/~m6kvm/libtest-module-runnable-perl/tree/master/item/README.md) for writing tests.  Please look at [existing tests](https://git.sr.ht/~m6kvm/libtest-module-runnable-perl/tree/master/item/t) for a guide.
+
+You can run the test suite any time by typing:
+```
+./Makefile.PL
+make && make test
+```
+
+You will need to install all build-dependencies first.
+
+For anything involving endpoints code, especially code within [Moose.pm](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/master/item/lib/Chleb/Server/Moose.pm) or [Dancer2.pm](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/master/item/lib/Chleb/Server/Dancer2.pm), please write one or more tests under [data/tests](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/tests/httpie-1/item/data/tests).
+
+These files are a all bash shell files.  Start with [1/template.sh]((https://git.sr.ht/~m6kvm/chleb-bible-search/tree/tests/httpie-1/item/data/tests/1/template.sh) and copy this. The digit at the start represents the endpoint version.
+
+You can test this by running [bin/maint/run-functional-tests.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/tests/httpie-1/item/bin/maint/run-functional-tests.sh) and specify the 1/name or run all the tests by specifying no parameters.
+
+You will need to edit your /etc/hosts file to ensure that the name [chleb-api.example.org](http://chleb-api.example.org) points to your running code, and set up Nginx.  Remember this does *not* use https (TLS)!
+
+You will need to install [HTTPie](https://www.baeldung.com/httpie-http-client-command-line#bd-1-on-linux) (at least the command-line utilities, if not the full GUI app)
+
+You can also run these tests by typing:
+
+```
+./Makefile.PL
+make && make http-test
+```
+
+nb. if the 'http' utility is not in the path, or chleb-api.example.org does not resolve, then this script exists with a false success case, emitting a warning.
+This is merely to ensure the package still builds, and should be obvious.  Don't be fooled!
+
+When building the Debian package, the unit testing framework will automagically execute and any failing
+tests will cause the package building process to fail.
