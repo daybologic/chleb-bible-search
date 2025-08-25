@@ -64,12 +64,11 @@ fi
 # Find and execute .sh files
 while IFS= read -r -d '' script; do
 	(( total++ ))
-	echo "Executing: $script"
 
 	if [ -x "$script" ]; then
 		# Run the script in a subshell, so "exit" doesn’t kill the runner
 		(
-			source "$script"
+			"$script" >/dev/null 2>&1
 		) < /dev/null # <-- critical fix: prevent script from reading find's output
 		status=$?
 
@@ -85,9 +84,9 @@ while IFS= read -r -d '' script; do
 		(( skipped++ ))
 		echo "⚠️ SKIPPED: $script"
 	fi
-	echo
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
 
+echo "================================"
 if (( failed > 0 )); then
 	echo "Some tests failed:"
 	for f in "${failures[@]}"; do
@@ -101,9 +100,9 @@ fi
 echo "================================"
 echo "Test Summary:"
 echo "  Total  : $total"
-echo "  Passed : $passed"
-echo "  Skipped: $skipped"
-echo "  Failed : $failed"
+echo "✅ Passed : $passed"
+echo "⚠️Skipped: $skipped"
+echo "❌ Failed : $failed"
 echo
 
 if (( failed > 0 )); then
