@@ -52,6 +52,7 @@ the service on your own equipment.  Please install the deb file, where possible,
 
 ```
 sudo dpkg -i chleb-bible-search_2.0.0_all.deb
+sudo apt -yf install
 sudo systemctl enable chleb-bible-search.service
 sudo invoke-rc.d chleb-bible-search start
 ```
