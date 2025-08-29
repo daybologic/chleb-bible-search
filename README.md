@@ -91,7 +91,7 @@ sudo cp -l /etc/nginx/sites-available/chleb-bible-search /etc/nginx/sites-enable
 
 ### Branch naming scheme
 
-When contributing to the project, please fork from the GitHub repository and make all contributions based on the develop branch,
+When contributing to the project, please fork from the GitHub repository and make all contributions based on the master branch,
 unless you are specifically patching a bug within an historical release, in which case, branch from the relevant rel/ branch.
 
 Please name your branch using this scheme:
@@ -99,13 +99,13 @@ Please name your branch using this scheme:
 | ------ | ----------- | ---------- | -------------- |
 | bugfix/&lt;ticket&gt;-&lt;description&gt; | A user bug report, with the ticket number | NO | NO |
 | bugs/&lt;id&gt; | Reserved for the use of git-bug | NO | NO |
-| develop | Mainline merge point for all features | NO except from master | NO |
+| develop | Deprecated; please migrate to 'master' | NO | NO |
 | docs/&lt;description&gt; | Documentation changes _only_ | NO | NO |
 | feature/&lt;description&gt; | New functionality | NO | NO |
 | f/YYYYMM-&lt;description&gt; | Legacy features, please don't create new ones | NO | NO |
 | hotfix/&lt;description&gt; | Emergency fixes only | NO | YES |
 | maint | Maintainer branches (features for developers) | NO | NO |
-| master | Pointer to latest stable release | YES | NO |
+| master | Mainline merge point for all features | NO | NO |
 | platform/&lt;uname&gt;/base | Specific changes which can't be merged to master | NO | NO |
 | private/&lt;user-defined&gt; | Undocumented hierarchy, maintainer-use only | YES | YES |
 | rel/X.Y | released 1.0, 2.0, 2.1 etc, which contain specific tags vX.Y.Z | NO | NO |
@@ -132,9 +132,6 @@ All of the standards we use are documented elsewhere on the world-wide web:
   * [RESTful](https://restfulapi.net/)
   * [Semantic Versioning](https://semver.org/)
   * [Twelve-Factor App](https://12factor.net/)
-
-Very importantly, the master branch is always the latest release, and should be production ready at any time!
-Please do not submit and target pull requests to the master branch, but to the develop branch!
 
 ### Testing
 
