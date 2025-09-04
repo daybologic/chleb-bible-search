@@ -155,8 +155,12 @@ get '/' => sub {
 
 	my $facebookHtml = '';
 	if ($server->dic->config->get('features', 'facebook', 'true', 1)) {
+		my $groupname = $server->dic->config->get('facebook', 'groupname', 'Chleb Bible Search (1268737414574145)');
+		my $url = $server->dic->config->get('facebook', 'url', 'https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr');
+
 		$facebookHtml = fetchStaticPage('facebook', {
-			FACEBOOK_URL => 'https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr',
+			FACEBOOK_GROUPNAME => $groupname,
+			FACEBOOK_URL => $url,
 		});
 	}
 

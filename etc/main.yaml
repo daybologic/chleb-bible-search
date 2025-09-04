@@ -34,3 +34,6 @@ session_tokens:
     - Redis
   save_order:
     - Dummy
+facebook:
+  groupname: Chleb Bible Search (1268737414574145)
+  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr

@@ -35,3 +35,6 @@ session_tokens:
   save_order:
     - Redis
     - TempDir
+facebook:
+  groupname: Chleb Bible Search (1268737414574145)
+  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
