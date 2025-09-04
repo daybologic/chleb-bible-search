@@ -40,8 +40,10 @@ system('bin/maint/pkg-info.sh'); # needs to run really early doors
 system('bin/maint/synology.sh');
 system('bin/maint/git-install-local-hooks.sh');
 
-my $exeFiles = [glob q('data/*.bin.gz')];
-push(@$exeFiles, 'bin/core/app.psgi', 'bin/core/run.sh', 'bin/core/yaml2json.pl');
+my @exeFiles = glob q('data/*.bin.gz');
+push @exeFiles, glob q('bin/core/*.psgi');
+push @exeFiles, glob q('bin/core/*.sh');
+push @exeFiles, glob q('bin/core/*.pl');
 
 WriteMakefile(
 	NAME         => 'Chleb',
@@ -49,7 +51,7 @@ WriteMakefile(
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
 	ABSTRACT     => 'Chleb Bible Search',
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => $exeFiles,
+	EXE_FILES    => \@exeFiles,
 
 	clean => {
 		FILES => [glob q('data/*.bin.gz')],

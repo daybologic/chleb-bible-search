@@ -27,6 +27,8 @@ fi
 echo 'clearing bible translation cache'
 rm -f /var/cache/chleb-bible-search/*.bin
 
+echo 'removing old session files'
+/usr/share/chleb-bible-search/session-clean.sh
 echo 'installing symbolic link run script'
 cp -lf /usr/share/chleb-bible-search/run.sh /usr/bin/chleb-bible-search/run.sh
 

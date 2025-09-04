@@ -10,6 +10,11 @@ rm -vf '/usr/bin/chleb-bible-search/run.sh'
 echo 'clearing bible translation cache'
 rm -f /var/cache/chleb-bible-search/*.bin
 
+sessionCleanupScript='/usr/share/chleb-bible-search/session-clean.sh'
+if [ -x "$sessionCleanupScript" ]; then
+	echo 'removing old session files'
+	"$sessionCleanupScript"
+fi
 #DEBHELPER#
 
 exit 0
