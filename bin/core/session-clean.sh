@@ -45,11 +45,13 @@ fi
 
 force=false
 noop=false
-while getopts ":fnd:h" opt; do
+declare -i days=0
+while getopts ":fnd:t:h" opt; do
 	case $opt in
 		f) force=true ;;
 		n) noop=true ;;
 		d) rootDir=$OPTARG ;;
+		t) days="$OPTARG" ;;
 		h) echo "Usage: $0 [-f] [-h]" ; exit 0 ;;
 		\?) echo "Invalid option: -$OPTARG" >&2 ; exit 1 ;;
 		:)  echo "Option -$OPTARG requires an argument." >&2 ; exit 1 ;;
@@ -58,6 +60,12 @@ done
 
 # Shift away the parsed options
 shift $((OPTIND -1))
+
+if [[ $days -gt 0 ]]; then
+	findDays="-mtime $days"
+else
+	findDays=''
+fi
 
 if [[ $force == false && $EUID -ne 0 ]]; then
 	if [ "$EUID" -ne 0 ]; then
@@ -99,7 +107,12 @@ if [ $noop == true ]; then
 	extraFindArgs=''
 fi
 
+extraFindArgs="$extraFindArgs $findDays"
+
 find "$rootDir" -name "*.session" -type f $extraFindArgs
-for i in $(seq 4 -1 1); do
-	find "$rootDir" -mindepth $i -maxdepth $i -type d $extraFindArgs
-done
+
+if [[ $days -eq 0 ]]; then
+	for i in $(seq 4 -1 1); do
+		find "$rootDir" -mindepth $i -maxdepth $i -type d $extraFindArgs
+	done
+fi
