@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,72 +29,53 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
+set -euo pipefail
 
-use ExtUtils::MakeMaker;
-#use ExtUtils::MakeMaker::Coverage;
-use strict;
-use warnings;
+# TODO: Read from config with yaml2json?
+# --------------------------------------
+# This is still in flux because of this pull request:
+# https://github.com/daybologic/chleb-bible-search/pull/120/files
+rootDir='/tmp/'
 
-system('bin/maint/pkg-info.sh'); # needs to run really early doors
-system('bin/maint/synology.sh');
-system('bin/maint/git-install-local-hooks.sh');
+force=false
+noop=false
+while getopts ":fnd:h" opt; do
+	case $opt in
+		f) force=true ;;
+		n) noop=true ;;
+		d) rootDir=$OPTARG ;;
+		h) echo "Usage: $0 [-f] [-h]" ; exit 0 ;;
+		\?) echo "Invalid option: -$OPTARG" >&2 ; exit 1 ;;
+		:)  echo "Option -$OPTARG requires an argument." >&2 ; exit 1 ;;
+	esac
+done
 
-my @exeFiles = glob q('data/*.bin.gz');
-push @exeFiles, glob q('bin/core/*.psgi');
-push @exeFiles, glob q('bin/core/*.sh');
-push @exeFiles, glob q('bin/core/*.pl');
+# Shift away the parsed options
+shift $((OPTIND -1))
 
-WriteMakefile(
-	NAME         => 'Chleb',
-	VERSION_FROM => 'lib/Chleb/Generated/Info.pm', # finds $VERSION
-	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
-	ABSTRACT     => 'Chleb Bible Search',
-	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => \@exeFiles,
+echo "force = $force"
+echo "noop = $noop"
+echo "leftover arguments = $@"
 
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
-	PREREQ_PM => {
-		'Moose'            => 0,
-		'Test::MockModule' => 0,
-		'Test::More'       => 0,
-		'UUID::Tiny'       => 0,
-	}, BUILD_REQUIRES => {
-		'DateTime::Format::Strptime' => 0,
-		'Devel::Cover'    => 0,
-		'Moose'           => 0,
-		'Test::More'      => 0,
-		'Readonly'        => 0,
-		'Redis'           => 0,
-		'Test::Deep'      => 0,
-		'Test::Exception' => 0,
-	},
-);
+if [[ $force == false && $EUID -ne 0 ]]; then
+	if [ "$EUID" -ne 0 ]; then
+		>&2 echo "ERROR: This script must be run as root."
+		exit 1
+	fi
+fi
 
-package MY;
+#TODO stat -f -c %T /path/to/check
+if [ ! -d "$rootDir" ]; then
+	>&2 echo "ERROR: '$rootDir' not found"
+	exit 1
+fi
 
-sub MY::postamble {
-    return q~
-deb :: pure_all
-	sbuild -A
+extraFindArgs='-delete'
+if [ $noop == true ]; then
+	extraFindArgs=''
+fi
 
-cover :: pure_all
-	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
-
-http-test :: pure_all
-	@bin/maint/run-functional-tests.sh
-
-clean :: 
-	rm -rf cover_db
-	cd data/ && make clean
-	cd info/ && make clean
-
-# Extend test target
-test :: http-test
-
-    ~;
-}
-
-1;
+find "$rootDir" -name "*.session" -type f $extraFindArgs
+for i in $(seq 4 -1 1); do
+	find "$rootDir" -mindepth $i -maxdepth $i -type d $extraFindArgs
+done
