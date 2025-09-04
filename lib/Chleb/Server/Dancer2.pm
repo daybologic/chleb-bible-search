@@ -152,11 +152,18 @@ sub __configGetPublicDir {
 get '/' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	serveStaticPage('index', {
-		FACEBOOK_HTML => fetchStaticPage('facebook', {
+
+	my $facebookHtml = '';
+	if ($server->dic->config->get('features', 'version', 'true', 1)) {
+		$facebookHtml = fetchStaticPage('facebook', {
 			FACEBOOK_URL => 'https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr',
-		}),
-	}); # TODO: '' when disabled
+		});
+	}
+
+	serveStaticPage('index', {
+		FACEBOOK_HTML => $facebookHtml,
+	});
+
 	return;
 };
 
