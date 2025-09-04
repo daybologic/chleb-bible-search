@@ -152,7 +152,11 @@ sub __configGetPublicDir {
 get '/' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	serveStaticPage('index', { FACEBOOK_URL => 'https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr' }); # TODO: '' when disabled
+	serveStaticPage('index', {
+		FACEBOOK_HTML => fetchStaticPage('facebook', {
+			FACEBOOK_URL => 'https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr',
+		}),
+	}); # TODO: '' when disabled
 	return;
 };
 
