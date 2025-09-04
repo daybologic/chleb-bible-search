@@ -12,7 +12,7 @@ rm -f /var/cache/chleb-bible-search/*.bin
 
 sessionCleanupScript='/usr/share/chleb-bible-search/session-clean.sh'
 if [ -x "$sessionCleanupScript" ]; then
-	echo 'cleaing old session files'
+	echo 'removing old session files'
 	"$sessionCleanupScript"
 fi
 #DEBHELPER#
