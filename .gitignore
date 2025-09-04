@@ -18,6 +18,7 @@ data/sessions/*
 data/*-verses.txt
 data/*.bin
 data/*.bin.gz
+data/sessions
 externals
 *.build
 lib/Chleb/Generated/*
