@@ -64,10 +64,32 @@ if [[ $force == false && $EUID -ne 0 ]]; then
 	fi
 fi
 
-#TODO stat -f -c %T /path/to/check
 if [ ! -d "$rootDir" ]; then
 	>&2 echo "ERROR: '$rootDir' not found"
 	exit 1
+fi
+
+fsType=$(stat -f -c %T "$rootDir")
+sharedFileSystemList=(
+	'cifs'
+	'nfs'
+)
+
+sharedFilesystemMatched=false
+for re in "${sharedFileSystemList[@]}"; do
+	if [[ $fsType =~ $re ]]; then
+		sharedFilesystemMatched=true
+		break
+	fi
+done
+
+if [ $sharedFilesystemMatched == true ]; then
+	if [ $force == true ]; then
+		>&2 echo "WARN: Shared filesystem $fsType detected but user force in effect"
+	else
+		>&2 echo "Not interfering with sessions on a shared moint-point.  Use -f to force"
+		exit 2
+	fi
 fi
 
 extraFindArgs='-delete'
