@@ -154,7 +154,7 @@ get '/' => sub {
 	$server->handleSessionToken();
 
 	my $facebookHtml = '';
-	if ($server->dic->config->get('features', 'version', 'true', 1)) {
+	if ($server->dic->config->get('features', 'facebook', 'true', 1)) {
 		$facebookHtml = fetchStaticPage('facebook', {
 			FACEBOOK_URL => 'https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr',
 		});
