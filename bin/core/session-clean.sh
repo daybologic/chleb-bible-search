@@ -31,11 +31,17 @@
 
 set -euo pipefail
 
-# TODO: Read from config with yaml2json?
-# --------------------------------------
-# This is still in flux because of this pull request:
-# https://github.com/daybologic/chleb-bible-search/pull/120/files
-rootDir='/tmp/'
+YAML_SCRIPT='/usr/share/chleb-bible-search/yaml2json.pl'
+CONFIG_PATH='/etc/chleb-bible-search/main.yaml'
+
+rootDir='/var/lib/chleb-bible-search/sessions/'
+if [ -f "$CONFIG_PATH" ]; then
+	json=$($YAML_SCRIPT < $CONFIG_PATH)
+	__rootDir=$(echo $json | jq -r .session_tokens.backend_local.dir)
+	if [ "$__rootDir" != 'null' ]; then
+		rootDir=$__rootDir
+	fi
+fi
 
 force=false
 noop=false
