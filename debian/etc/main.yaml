@@ -18,6 +18,7 @@ votd_exclude:
     - Rev 1000:11
     - Deu 22:21
 features:
+  facebook: on
   sessions: off
   version: on
 Dancer2:
@@ -34,3 +35,6 @@ session_tokens:
   save_order:
     - Redis
     - TempDir
+facebook:
+  groupname: Chleb Bible Search (1268737414574145)
+  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
