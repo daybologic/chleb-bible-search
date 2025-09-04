@@ -59,10 +59,6 @@ done
 # Shift away the parsed options
 shift $((OPTIND -1))
 
-echo "force = $force"
-echo "noop = $noop"
-echo "leftover arguments = $@"
-
 if [[ $force == false && $EUID -ne 0 ]]; then
 	if [ "$EUID" -ne 0 ]; then
 		>&2 echo "ERROR: This script must be run as root."
