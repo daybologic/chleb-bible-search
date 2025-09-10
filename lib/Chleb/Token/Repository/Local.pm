@@ -42,11 +42,14 @@ use Chleb::Utils;
 use Data::Dumper;
 use English qw(-no_match_vars);
 use Errno qw(:POSIX);
+use File::Basename qw(dirname);
+use File::NFSLock;
+use File::Temp qw(tempfile);
 use HTTP::Status qw(:constants);
-#use IO::File;
+use IO::Handle ();
 use POSIX qw(strerror);
 use Readonly;
-use Storable qw(retrieve store);
+use Storable qw(nstore_fd retrieve);
 
 Readonly our $DIR_LOCAL => '/tmp/chleb-bible-search/sessions';
 
@@ -139,7 +142,7 @@ sub save {
 	my $filePath = $self->__getFilePath($token->value);
 
 	eval {
-		store($token->TO_JSON(), $filePath);
+		__store($token->TO_JSON(), $filePath);
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
@@ -208,6 +211,38 @@ sub __makeHierarchy {
 	}
 
 	$self->dic->logger->info('Directory structure successfully created');
+
+	return;
+}
+
+sub __store {
+	my ($href, $filePath) = @_;
+
+	# 1) Acquire NFS-safe exclusive lock for read-modify-write sequences
+	my $lock = File::NFSLock->new("$filePath.lock", 'EX', 30, 5)
+	    or die("Failed to acquire lock on $filePath: $!");
+
+	# 2) Write to temp in same dir
+	my ($tmpfh, $tmpname) = tempfile(DIR => dirname($filePath), UNLINK => 0);
+	binmode($tmpfh, ':raw');
+	nstore_fd($href, $tmpfh);
+
+	# 3) Durability: flush and fsync
+	$tmpfh->flush() if ($tmpfh->can('flush'));
+	$tmpfh->sync() or die("sync failed: $!");
+	close($tmpfh) or die("close(tmp) failed: $!");
+
+	# 4) Atomic replace
+	rename($tmpname, $filePath) or die("rename($tmpname -> $filePath) failed: $!");
+
+	# Optionally sync the directory for stronger durability on crashes
+	if (open(my $dh, '<', dirname($filePath))) {
+		$dh->sync() if ($dh->can('sync'));
+		close($dh);
+	}
+
+	# 5) Release lock
+	undef $lock;
 
 	return;
 }
