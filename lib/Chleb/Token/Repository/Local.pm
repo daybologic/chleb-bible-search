@@ -197,7 +197,7 @@ sub __makeHierarchy {
 	my ($self) = @_;
 
 	if ($self->__dynamic) {
-		$self->dic->logger->debug("Not pre-creating directory hierarchy under '" . $self->dir
+		$self->dic->logger->trace("Not pre-creating directory hierarchy under '" . $self->dir
 		    . "' because dynamic_mkdir is set");
 
 		return;
