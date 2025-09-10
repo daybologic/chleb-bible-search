@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+	purge)
+		sessionCleanupScript='/usr/share/chleb-bible-search/session-clean.sh'
+		if [ -x "$sessionCleanupScript" ]; then
+			echo 'removing old session files'
+			"$sessionCleanupScript"
+		fi
+		;;
+	remove)
+		echo "Removing package but not purging, leaving any disk-based sessions alone"
+		;;
+	upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+		echo "package $1"
+		;;
+esac
+
+#DEBHELPER#
+
+exit 0
