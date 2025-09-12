@@ -102,12 +102,11 @@ if [ $sharedFilesystemMatched == true ]; then
 	fi
 fi
 
-extraFindArgs='-delete'
-if [ $noop == true ]; then
-	extraFindArgs=''
-fi
+extraFindArgs="$findDays"
 
-extraFindArgs="$extraFindArgs $findDays"
+if [ $noop == false ]; then
+	extraFindArgs="$extraFindArgs -delete"
+fi
 
 find "$rootDir" -name "*.session" -type f $extraFindArgs
 
