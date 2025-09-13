@@ -79,26 +79,29 @@ if [ ! -d "$rootDir" ]; then
 	exit 1
 fi
 
-fsType=$(stat -f -c %T "$rootDir")
 sharedFileSystemList=(
 	'cifs'
 	'nfs'
 )
 
-sharedFilesystemMatched=false
-for re in "${sharedFileSystemList[@]}"; do
-	if [[ $fsType =~ $re ]]; then
-		sharedFilesystemMatched=true
-		break
-	fi
-done
+if [[ $days -eq 0 ]]; then
+	fsType=$(stat -f -c %T "$rootDir")
 
-if [ $sharedFilesystemMatched == true ]; then
-	if [ $force == true ]; then
-		>&2 echo "WARN: Shared filesystem $fsType detected but user force in effect"
-	else
-		>&2 echo "Not interfering with sessions on a shared mount-point.  Use -f to force"
-		exit 2
+	sharedFilesystemMatched=false
+	for re in "${sharedFileSystemList[@]}"; do
+		if [[ $fsType =~ $re ]]; then
+			sharedFilesystemMatched=true
+			break
+		fi
+	done
+
+	if [ $sharedFilesystemMatched == true ]; then
+		if [ $force == true ]; then
+			>&2 echo "WARN: Shared filesystem $fsType detected but user force in effect"
+		else
+			>&2 echo "Not interfering with sessions on a shared mount-point.  Use -f to force"
+			exit 2
+		fi
 	fi
 fi
 
