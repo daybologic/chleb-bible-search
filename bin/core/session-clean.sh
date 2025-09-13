@@ -97,7 +97,7 @@ if [ $sharedFilesystemMatched == true ]; then
 	if [ $force == true ]; then
 		>&2 echo "WARN: Shared filesystem $fsType detected but user force in effect"
 	else
-		>&2 echo "Not interfering with sessions on a shared moint-point.  Use -f to force"
+		>&2 echo "Not interfering with sessions on a shared mount-point.  Use -f to force"
 		exit 2
 	fi
 fi
