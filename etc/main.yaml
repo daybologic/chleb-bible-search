@@ -62,7 +62,7 @@ session_tokens:
     host: localhost:6379
   load_order:
     - Local
-    - Redis
+#   - Redis
   save_order:
     - Dummy
   ttl: 1800
