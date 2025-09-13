@@ -41,7 +41,9 @@ maybeSessionCleanup() {
 
 	fsType=$(getFsType "$dirName")
 	if isSharedFileSystem "$fsType"; then
-		>&2 echo "INFO: Not purging sessions on a shared mount-point - '$dirName' of type $fsType"
+		if [ "$fsType" != 'dummy' ]; then
+			>&2 echo "INFO: Not purging sessions on a shared mount-point - '$dirName' of type $fsType"
+		fi
 		return 0
 	fi
 
