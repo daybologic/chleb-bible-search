@@ -33,8 +33,10 @@ set -e
 
 invoke-rc.d chleb-bible-search stop || :
 
-echo 'removing symlink run script'
-rm -vf '/usr/bin/chleb-bible-search/run.sh'
+echo 'removing symbolic links'
+rm -vf \
+	'/usr/bin/chleb-bible-search/run.sh' \
+	'/usr/bin/chleb-bible-search/session-dump'
 
 echo 'clearing bible translation cache'
 rm -f /var/cache/chleb-bible-search/*.bin

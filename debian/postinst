@@ -65,8 +65,9 @@ rm -f /var/cache/chleb-bible-search/*.bin
 echo 'removing expired session files'
 /usr/share/chleb-bible-search/session-clean.sh -t 30
 
-echo 'installing symbolic link run script'
-cp -lf /usr/share/chleb-bible-search/run.sh /usr/bin/chleb-bible-search/run.sh
+echo 'installing symbolic links'
+cp -vlf /usr/share/chleb-bible-search/run.sh /usr/bin/chleb-bible-search/run.sh
+cp -vlf /usr/share/chleb-bible-search/session-dump.pl /usr/bin/chleb-bible-search/session-dump
 
 invoke-rc.d chleb-bible-search restart || :
 

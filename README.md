@@ -131,7 +131,7 @@ Sessions are not routinely deleted at the point of expiry.  Expiry is controlled
 config.  Setting the ttl in the config will not extend the life of existing sessions, it will only affect new
 sessions.
 
-Sessions may be examined and dumped using the bin/maint/session-dump.pl tool
+Sessions may be examined and dumped using the bin/core/session-dump.pl tool
 
 When the package is purged, instead of simply uninstalled (removed), we will delete session files from disk,
 unless we detect that an NFS share is in use.  The point of this is that the sessions might be shared between
