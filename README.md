@@ -87,6 +87,66 @@ the site live.  We will not do this for you!  Under Debian, this name will be
 sudo cp -l /etc/nginx/sites-available/chleb-bible-search /etc/nginx/sites-enabled/chleb-bible-search
 ```
 
+## Session tokens
+
+The session token support is still considered experimental ⚗️
+
+Session tokens can be turned on so that people who use them correctly have a higher throughput,
+because we can see the rate of queries per client, rather than per IP address.  There are not other
+functional reasons to enable session tokens at the moment.
+
+Session tokens use SHA-256 for security, which is considered "strong".  That is, they can be trusted
+for almost any purpose, including military users (US DoD, HMG MoD).  The session token mechanism means
+the code can be certain that they are talking to the same client as it gave the token to previously,
+provided TLS is in use.
+
+Multiple storage backends are supported for the session tokens.  More can be written in the future.
+Multiple backends can be enabled and configured at the same time!  The caveats is that all backends
+must be operational, in order to work correctly.  The order of the backends can also be configured.
+
+The first backend to return the session is used, where-as on save or creation, the session is saved
+into all configured backends in order.  If one runs out of space, it will cause an error, so use
+this with caution.  We might work on these rules in the future, to increase robustness.
+
+The following backends are supported:
+
+### Dummy
+
+The Dummy backend is a blackhole, you can create and save tokens but you cannot load them.
+This is used for test purposes only, and you should not use it on a production server.
+
+You could use the dummy load point for debug hooks or logging, etc.
+
+### Local
+
+Session tokens by default are stored in the (presumably) local directory:
+/var/lib/chleb-bible-search/sessions/
+
+This may be altered via the config main.yaml
+
+Sessions will be deleted from disk every month if they are over 30 days old, nb. that means that there can be
+a fairly wide-window of up to a couple of months before a session is deleted.  This is to keep load down and
+allow a session file to be examined by the administrator for debugging or auditing purposes if required.
+Sessions are not routinely deleted at the point of expiry.  Expiry is controlled by the ttl flag within the
+config.  Setting the ttl in the config will not extend the life of existing sessions, it will only affect new
+sessions.
+
+Sessions may be examined and dumped using the bin/core/session-dump.pl tool
+
+When the package is purged, instead of simply uninstalled (removed), we will delete session files from disk,
+unless we detect that an NFS share is in use.  The point of this is that the sessions might be shared between
+servers in a cluster, and we use NFS-safe locking to ensure this works correctly.
+
+### Redis
+
+Redis support is preferred over Local!  It's much simpler, there are no Crontabs to clear expired sessions,
+and they are instrinsically-safer for clustered nodes.  There is less maintenance for the administrator,
+if you are paying for a shared Redis service.
+
+All you need to do is install a Redis server on either localhost (for a single node), or edit the main.yaml
+config file to point to the shared Redis end-point.  Ensure you are pointing at the correct database number,
+which will typically be 0-15.
+
 ## Contributing
 
 ### Branch naming scheme

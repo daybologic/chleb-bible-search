@@ -31,19 +31,27 @@
 
 set -euo pipefail
 
-# TODO: Read from config with yaml2json?
-# --------------------------------------
-# This is still in flux because of this pull request:
-# https://github.com/daybologic/chleb-bible-search/pull/120/files
-rootDir='/tmp/'
+YAML_SCRIPT='/usr/share/chleb-bible-search/yaml2json.pl'
+CONFIG_PATH='/etc/chleb-bible-search/main.yaml'
+
+rootDir='/var/lib/chleb-bible-search/sessions/'
+if [ -f "$CONFIG_PATH" ]; then
+	json=$($YAML_SCRIPT < $CONFIG_PATH)
+	__rootDir=$(echo $json | jq -r .session_tokens.backend_local.dir)
+	if [ "$__rootDir" != 'null' ]; then
+		rootDir=$__rootDir
+	fi
+fi
 
 force=false
 noop=false
-while getopts ":fnd:h" opt; do
+declare -i days=0
+while getopts ":fnd:t:h" opt; do
 	case $opt in
 		f) force=true ;;
 		n) noop=true ;;
 		d) rootDir=$OPTARG ;;
+		t) days="$OPTARG" ;;
 		h) echo "Usage: $0 [-f] [-h]" ; exit 0 ;;
 		\?) echo "Invalid option: -$OPTARG" >&2 ; exit 1 ;;
 		:)  echo "Option -$OPTARG requires an argument." >&2 ; exit 1 ;;
@@ -53,9 +61,11 @@ done
 # Shift away the parsed options
 shift $((OPTIND -1))
 
-echo "force = $force"
-echo "noop = $noop"
-echo "leftover arguments = $@"
+if [[ $days -gt 0 ]]; then
+	findDays="-mtime $days"
+else
+	findDays=''
+fi
 
 if [[ $force == false && $EUID -ne 0 ]]; then
 	if [ "$EUID" -ne 0 ]; then
@@ -69,35 +79,42 @@ if [ ! -d "$rootDir" ]; then
 	exit 1
 fi
 
-fsType=$(stat -f -c %T "$rootDir")
 sharedFileSystemList=(
 	'cifs'
 	'nfs'
 )
 
-sharedFilesystemMatched=false
-for re in "${sharedFileSystemList[@]}"; do
-	if [[ $fsType =~ $re ]]; then
-		sharedFilesystemMatched=true
-		break
-	fi
-done
+if [[ $days -eq 0 ]]; then
+	fsType=$(stat -f -c %T "$rootDir")
 
-if [ $sharedFilesystemMatched == true ]; then
-	if [ $force == true ]; then
-		>&2 echo "WARN: Shared filesystem $fsType detected but user force in effect"
-	else
-		>&2 echo "Not interfering with sessions on a shared moint-point.  Use -f to force"
-		exit 2
+	sharedFilesystemMatched=false
+	for re in "${sharedFileSystemList[@]}"; do
+		if [[ $fsType =~ $re ]]; then
+			sharedFilesystemMatched=true
+			break
+		fi
+	done
+
+	if [ $sharedFilesystemMatched == true ]; then
+		if [ $force == true ]; then
+			>&2 echo "WARN: Shared filesystem $fsType detected but user force in effect"
+		else
+			>&2 echo "Not interfering with sessions on a shared mount-point.  Use -f to force"
+			exit 2
+		fi
 	fi
 fi
 
-extraFindArgs='-delete'
-if [ $noop == true ]; then
-	extraFindArgs=''
+extraFindArgs="$findDays"
+
+if [ $noop == false ]; then
+	extraFindArgs="$extraFindArgs -delete"
 fi
 
 find "$rootDir" -name "*.session" -type f $extraFindArgs
-for i in $(seq 4 -1 1); do
-	find "$rootDir" -mindepth $i -maxdepth $i -type d $extraFindArgs
-done
+
+if [[ $days -eq 0 ]]; then
+	for i in $(seq 4 -1 1); do
+		find "$rootDir" -mindepth $i -maxdepth $i -type d $extraFindArgs
+	done
+fi
