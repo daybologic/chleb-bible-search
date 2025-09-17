@@ -102,7 +102,7 @@ but in some translations, this may vary, so please do not assume.
 
 =cut
 
-has verseCount => (is => 'ro', isa => 'Int', default => 31_102); # TODO: Hard-coded 31,102: works for "kjv", "asv" (canonical)
+has verseCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeVerseCount);
 
 =item C<translation>
 
@@ -454,6 +454,23 @@ Lazy-initializer for L</books>.
 sub __makeBooks {
 	my ($self) = @_;
 	return $self->__backend->getBooks();
+}
+
+=item C<__makeVerseCount>
+
+Lazy-initializer for L</verseCount>.
+
+=cut
+
+sub __makeVerseCount {
+	my ($self) = @_;
+
+	my $verseCount = 0;
+	foreach my $book (@{ $self->books }) {
+		$verseCount += $book->verseCount;
+	}
+
+	return $verseCount;
 }
 
 =item C<__makeId>
