@@ -41,6 +41,7 @@ packages:
   - libdbd-mysql-perl
   - libdbi-perl
   - libdigest-crc-perl
+  - libfile-nfslock-perl
   - libjson-maybexs-perl
   - libjson-perl
   - liblog-log4perl-perl
