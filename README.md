@@ -17,6 +17,10 @@ For up to date documentation, please ensure you are viewing the latest copy at [
 
 For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/2.0.0)
 
+### Privacy Policy
+
+Please see our [Privacy Policy](./PRIVACY.md) for details about how we handle data.
+
 ## Configuration
 
 The configuration YAML file can be found in etc/main.yaml or when installed,
