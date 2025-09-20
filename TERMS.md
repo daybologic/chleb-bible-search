@@ -1,12 +1,12 @@
 # Terms & Conditions
-_Last updated: 2025-09-10_
+_Last updated: 2025-09-20_
 
 These Terms & Conditions ("Terms") govern the use of the **Chleb Bible Search API** ("the Service").
 By using the Service, you agree to be bound by these Terms.
 
 ## 1. Service Provider
-The Service is operated by [Your Name / Organisation].
-Contact: [your contact email]
+The Service is operated by Rev. Duncan Ross Palmer (2E0EOL, M6KVM).
+Contact: 2e0eol@gmail.com
 
 ## 2. Use of the Service
 - The Service is provided free of charge.
