@@ -36,9 +36,30 @@ use ExtUtils::MakeMaker;
 use strict;
 use warnings;
 
-system('bin/maint/pkg-info.sh'); # needs to run really early doors
-system('bin/maint/synology.sh');
-system('bin/maint/git-install-local-hooks.sh');
+sub invoke {
+	my ($command) = @_;
+
+	my $rc = system($command);
+
+	if ($rc == -1) {
+		die("failed to execute: $!\n");
+	} elsif ($rc & 127) {
+		die(sprintf("child died with signal %d, %s coredump\n",
+		    ($rc & 127), ($rc & 128) ? 'with' : 'without'));
+	} else {
+		my $exit_code = $rc >> 8;
+		if ($exit_code != 0) {
+			die("command exited with code $exit_code\n");
+		} else {
+			return 0;
+		}
+	}
+}
+
+invoke('bin/maint/pkg-info.sh'); # needs to run really early doors
+invoke('bin/maint/synology.sh');
+invoke('bin/maint/git-install-local-hooks.sh');
+invoke('bin/maint/make-privacy-policy.sh');
 
 my @exeFiles = glob q('data/*.bin.gz');
 push @exeFiles, glob q('bin/core/*.psgi');

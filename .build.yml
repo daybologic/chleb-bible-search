@@ -53,6 +53,7 @@ packages:
   - libtest-exception-perl
   - libtest-mockmodule-perl
   - libtext-levenshteinxs-perl
+  - libtext-markdown-perl
   - libtime-duration-perl
   - libuniversal-require-perl
   - liburi-encode-perl
