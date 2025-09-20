@@ -16,6 +16,7 @@ log/*.log
 cache/*.bin
 data/sessions/*
 data/static/public/privacy.html
+data/static/public/terms.html
 data/*-verses.txt
 data/*.bin
 data/*.bin.gz
