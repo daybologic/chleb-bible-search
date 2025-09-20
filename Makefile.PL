@@ -59,7 +59,7 @@ sub invoke {
 invoke('bin/maint/pkg-info.sh'); # needs to run really early doors
 invoke('bin/maint/synology.sh');
 invoke('bin/maint/git-install-local-hooks.sh');
-invoke('bin/maint/make-privacy-policy.sh');
+invoke('bin/maint/make-legal-notices.sh');
 
 my @exeFiles = glob q('data/*.bin.gz');
 push @exeFiles, glob q('bin/core/*.psgi');

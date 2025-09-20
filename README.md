@@ -17,9 +17,9 @@ For up to date documentation, please ensure you are viewing the latest copy at [
 
 For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/2.0.0)
 
-### Privacy Policy
-
-Please see our [Privacy Policy](./PRIVACY.md) for details about how we handle data.
+### Legal
+- [Privacy Policy](./PRIVACY.md)
+- [Terms & Conditions](./TERMS.md)
 
 ## Configuration
 

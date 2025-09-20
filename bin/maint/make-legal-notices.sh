@@ -31,12 +31,20 @@
 
 set -eu
 
-INPUT='PRIVACY.md'
+PRIVACY='PRIVACY.md'
+TERMS='TERMS.md'
 
-if [ -f "$INPUT" ]; then
-	bin/maint/md2html.pl "$INPUT" > data/static/public/privacy.html
+if [ -f "$PRIVACY" ]; then
+	bin/maint/md2html.pl "$PRIVACY" > data/static/public/privacy.html
 else
-	>&2 echo "ERROR: $INPUT not found - run from repository root"
+	>&2 echo "ERROR: $PRIVACY not found - run from repository root"
+	exit 1
+fi
+
+if [ -f "$TERMS" ]; then
+	bin/maint/md2html.pl "$TERMS" > data/static/public/terms.html
+else
+	>&2 echo "ERROR: $TERMS not found"
 	exit 1
 fi
 
