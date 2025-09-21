@@ -326,6 +326,45 @@ get '/1/lookup' => sub {
 	redirect "/1/lookup/$book/$chapter/$verse", 307;
 };
 
+get '/1/lookup/:book/:chapter' => sub {
+	$server->logRequest();
+	$server->handleSessionToken();
+
+	my $book = param('book') // '';
+	my $chapter = param('chapter') // '';
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
+
+	my $dancerRequest = request();
+
+	my $result;
+	eval {
+		$result = $server->__lookup({
+			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			book         => $book,
+			chapter      => $chapter,
+			translations => $translations,
+			form         => 0,
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	if (ref($result) ne 'HASH') {
+		my $resultHtml = $result;
+		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}" });
+		$result .= $resultHtml;
+		$result .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/lookup chapter returned as HTML');
+		send_as html => $result;
+	}
+
+	$server->dic->logger->trace('1/lookup chapter returned as JSON');
+	return $result;
+};
+
 get '/1/lookup/:book/:chapter/:verse' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
@@ -359,13 +398,12 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 		$result .= $resultHtml;
 		$result .= fetchStaticPage('generic_tail');
 
-		$server->dic->logger->trace('1/lookup returned as HTML');
+		$server->dic->logger->trace('1/lookup verse returned as HTML');
 		send_as html => $result;
 	}
 
-	$server->dic->logger->trace('1/lookup returned as JSON');
+	$server->dic->logger->trace('1/lookup verse returned as JSON');
 	return $result;
-
 };
 
 get '/1/search' => sub {
