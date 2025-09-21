@@ -1,3 +1,7 @@
+3.0.0
+=====
+The experimental session token backend has been revamped
+
 2.0.0
 =====
 Upgrading from version 1.3.0 requires a few important changes which will need to be
