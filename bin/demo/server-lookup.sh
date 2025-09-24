@@ -30,16 +30,16 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 if [ -z "$CHLEB_SCHEME" ]; then
-	CHLEB_SCHEME=https
+	CHLEB_SCHEME=http
 fi
 if [ -z "$CHLEB_HOSTNAME" ]; then
-	CHLEB_HOSTNAME=chleb-api.daybologic.co.uk
+	CHLEB_HOSTNAME=chleb-api.example.org
 fi
 
 if [ -z "$CHLEB_PORT" ]; then
-	CHLEB_PORT=443
+	CHLEB_PORT=80
 fi
 
 H="$CHLEB_HOSTNAME:$CHLEB_PORT"
 
-curl -s --header 'Accept: application/json' $CHLEB_SCHEME://$H/1/lookup/prov/16/18 | jq .
+curl -s --header 'Accept: application/json' $CHLEB_SCHEME://$H/1/lookup/mat/4

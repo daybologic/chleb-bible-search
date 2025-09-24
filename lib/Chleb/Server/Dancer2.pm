@@ -351,7 +351,7 @@ get '/1/lookup/:book/:chapter' => sub {
 		handleException($exception);
 	}
 
-	if (ref($result) ne 'HASH') {
+	if (ref($result) ne 'HASH' && ref($result) ne 'ARRAY') {
 		my $resultHtml = $result;
 		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}" });
 		$result .= $resultHtml;

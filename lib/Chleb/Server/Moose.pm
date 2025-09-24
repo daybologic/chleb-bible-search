@@ -167,10 +167,10 @@ sub __makeJsonApi {
 
 =item C<__lookup($params)>
 
-Given the user-supplied C<$params> (C<HASH>), we attempt to fetch a verse,
-which includes links to the previous and next verses.
+Given the user-supplied C<$params> (C<HASH>), we attempt to fetch a verse, or series of verses
+which include links to the previous and next verses.
 
-returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
+returns a an (C<ARRAY>) of C<JSON:API> C<HASH> es or throws a L<Chleb::Exception>.
 
 The following C<$params> are required:
 
@@ -184,13 +184,15 @@ Numerical ordinal, short name, or long name for the sought book
 
 =item C<chapter>
 
-Numerical chapter ordinal within C<book>
+C<Mandatory>; Numerical chapter ordinal within C<book>
 
 =cut
 
 =item C<verse>
 
 Numerical verse ordinal within C<chapter>
+
+Optional; if not specified, we return the whole chapter.
 
 =cut
 
@@ -212,9 +214,9 @@ sub __lookup {
 		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
-	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
-		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
-	}
+#	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
+#		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
+#	}
 
 	foreach my $type (qw(next prev first last)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
@@ -253,7 +255,7 @@ sub __lookup {
 			);
 		}
 
-		return $json[0];
+		return \@json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
 	}

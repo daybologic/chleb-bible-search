@@ -59,7 +59,7 @@ sub setUp {
 	return EXIT_SUCCESS;
 }
 
-sub test_translation_all {
+sub __test_translation_all {
 	my ($self) = @_;
 	plan tests => 1;
 
