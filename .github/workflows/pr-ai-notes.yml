@@ -19,6 +19,7 @@ jobs:
         uses: coderabbitai/ai-pr-reviewer@v1
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           language: "en"
           summarize: true
