@@ -1,8 +1,36 @@
 chleb-bible-search (2.1.0) stable; urgency=low
 
-  * TODO
+  * 🔀 Merge branch 'docs/terms-conditions/1' into develop
+  * 💚 Fix BitBucket Pipeline by adding libtext-markdown-perl
+  * 🔀 Merge branch 'docs/privacy-policy/1' into develop
+  * ➕ libfile-nfslock-perl to SourceHut pipeline
+  * 🔀 Merge branch 'refactor/dynamic-bible-verse-count/1' into develop
+  * 🔀 Merge branch 'maint/custom-gitmoji/1' into develop
+  * 🔀 Merge branch 'feature/107-tempdir-improvements' into develop
+  * 🧹 clean old sessions on (re-)installation
+  * 🔀 added 'facebook' feature flag #121
+  * 🔀 Merge maint/branch-iteration into develop
+  * 🔀 added sudo apt -yf install (#122)
+  * 🔀 HTTPie (#116)
+  * 🔀 all Gitmoji recommendations (#115)
+  * 🔀 Merge branch 'feature/git-new-branch-creator-tool' into develop
+  * ✏️ fix OpenAPI spec, the included items can be multiple types
+  * 🙈 ignore data/sessions/ in Git VCS
+  * 🔀 Merge branch 'maint/110-improvements-to-config-engine' into develop
+  * 💚 fix Sourcehut build by adding Redis
+  * 🔀 Redis session support #101 (#104)
+  * 🔊 added warning/debug for config reading (#103)
+  * 🥅 trap use of form mode in JSON mode (#100)
+  * 🔀 Merge branch 'feature/86-nicer-style-sheet' into develop
+  * 🚑️ added blank string default for IP address / user agent (#99)
+  * 🔀 Merge branch 'feature/search-form-with-results' into develop
+  * 📜 new script to merge branches into develop
+  * 🔀 Merge branch 'feature/64-include-ip-address-in-log' into develop
+  * 🚚 move mergepreview
+  * 📜 new script to see merge preview for a feature
+  * 📝 caveat FF involving master -> develop
 
- -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 20 Sep 2025 14:57:17 +0100
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 25 Sep 2025 08:17:00 +0100
 
 chleb-bible-search (2.0.0) stable; urgency=medium
 

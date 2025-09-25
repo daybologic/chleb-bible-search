@@ -2,6 +2,22 @@
 =====
 The experimental session token backend has been revamped
 
+New dependenices:
+  * libfile-nfslock-perl
+  * libredis-perl
+  * libtext-markdown-perl
+
+Verse count is now dynamic, not fixed to 31,102 verses
+
+The Chleb::DI::Config file has been refactored to improve logging and handling of default values.
+
+CSS has been re-styled.  Linked to new Facebook Group.
+
+Search form improved
+
+Handy local GitMoji list and tool for making new feature branches.
+New HTTpie automatic test suite
+
 2.0.0
 =====
 Upgrading from version 1.3.0 requires a few important changes which will need to be
