@@ -1,3 +1,4 @@
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,45 +29,79 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-server:
-  admin_email: example@example.org
-  admin_name: Unknown
-  children: 30
-  domain: chleb-api.example.org
-votd_exclude:
-  terms:
-    - fornication
-    - circumcision
-    - circumcised
-    - harlots
-  refs:
-    - Lev 20:13
-    - Gen 19:8
-    - Psa 137:9
-    - Judges 19:22-29
-    - Kefir 50:1
-    - Rev 1000:11
-    - Deu 22:21
-features:
-  facebook: on
-  sessions: off
-  version: on
-Dancer2:
-  public_dir: /usr/share/chleb-bible-search/public
-session_tokens:
-  backend_local:
-    dir: /var/lib/chleb-bible-search/sessions
-    dynamic_mkdir: true
-  backend_redis:
-    db: 1
-    host: localhost:6379
-  load_order:
-    - Local
-#   - Redis
-  save_order:
-#   - Redis
-    - Local
-  ttl: 10800
-facebook:
-  groupname: Chleb Bible Search (1268737414574145)
-  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
+set -e
+
+# This is the default location.  If you have changed it in the config,
+# you will simply need to clean up sessions yourself, because we can't
+# read the config with tools which are guaranteed to be installed and
+# available.
+rootOfSessions='/var/lib/chleb-bible-search/sessions/'
+
+isSharedFileSystem() {
+	fsType="$1"
+
+	sharedFileSystemList="cifs nfs dummy"
+
+	for sharedFsType in $sharedFileSystemList; do
+		if [ "$fsType" = "$sharedFsType" ]; then
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+getFsType() {
+	dirName="$1"
+
+	if [ -d "$dirName" ]; then
+		fsType=$(stat -f -c %T "$dirName")
+		echo "$fsType"
+	else
+		>&2 echo "WARNING: '$dirName' not found"
+		echo 'dummy' # we always have to succeed to avoid broken packages
+	fi
+
+	return 0
+}
+
+maybeSessionCleanup() {
+	dirName="$1"
+
+	fsType=$(getFsType "$dirName")
+	if isSharedFileSystem "$fsType"; then
+		if [ "$fsType" != 'dummy' ]; then
+			>&2 echo "INFO: Not purging sessions on a shared mount-point - '$dirName' of type $fsType"
+		fi
+		return 0
+	fi
+
+	sessionCleanup "$dirName"
+	return 0
+}
+
+sessionCleanup() {
+	dirName="$1"
+
+	find "$dirName" -name "*.session" -type f -delete
+
+	for i in $(seq 4 -1 1); do
+		find "$dirName" -mindepth $i -maxdepth $i -type d -delete
+	done
+
+	return 0
+}
+
+case "$1" in
+	purge)
+		echo "DEBUG: package $1"
+		maybeSessionCleanup "$rootOfSessions"
+		;;
+	remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+		echo "DEBUG: package $1"
+		;;
+esac
+
+#DEBHELPER#
+
+exit 0

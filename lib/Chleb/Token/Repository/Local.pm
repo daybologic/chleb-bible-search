@@ -28,7 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Chleb::Token::Repository::TempDir;
+package Chleb::Token::Repository::Local;
 use strict;
 use warnings;
 use Moose;
@@ -38,15 +38,35 @@ extends 'Chleb::Token::Repository::Base';
 use Chleb::Exception;
 use Chleb::Token;
 use Chleb::Token::Repository;
+use Chleb::Utils;
 use Data::Dumper;
 use English qw(-no_match_vars);
 use Errno qw(:POSIX);
+use File::Basename qw(dirname);
+use File::NFSLock;
+use File::Temp qw(tempfile);
 use HTTP::Status qw(:constants);
-#use IO::File;
+use IO::Handle ();
 use POSIX qw(strerror);
-use Storable qw(retrieve store);
+use Readonly;
+use Storable qw(nstore_fd retrieve);
+
+Readonly our $DIR_LOCAL => '/tmp/chleb-bible-search/sessions';
+
+Readonly my $QUIET => 1 << 0;
+Readonly my $FORCE => 1 << 1;
 
 has dir => (is => 'ro', isa => 'Str', lazy => 1, builder => '_makeDir');
+
+has __dynamic => (is => 'ro', isa => 'Bool', lazy => 1, builder => '__makeDynamic');
+
+sub BUILD {
+	my ($self) = @_;
+
+	$self->__makeHierarchy();
+
+	return;
+}
 
 sub create {
 	my ($self) = @_;
@@ -122,7 +142,7 @@ sub save {
 	my $filePath = $self->__getFilePath($token->value);
 
 	eval {
-		store($token->TO_JSON(), $filePath);
+		__store($token->TO_JSON(), $filePath);
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
@@ -137,16 +157,94 @@ sub save {
 
 sub _makeDir {
 	my ($self) = @_;
-	return '/tmp'; # FIXME: Should be read from a config, with a default?
+	my $config = $self->dic->config->get('session_tokens', 'backend_local', { dir => $DIR_LOCAL });
+	return $config->{dir};
 }
 
 sub __getFilePath {
-	my ($self, $value) = @_;
+	my ($self, $value, $flags) = @_;
+	$flags = $flags ? int($flags) : 0; # ensure '&' works without a warning
 
-	$value .= '.session';
-	$value = join('/', $self->dir, $value);
-	$self->dic->logger->trace('session file path: ' . $value);
-	return $value;
+	my @part = split(m//, $value, 5);
+	pop(@part);
+
+	if ($flags & $FORCE || $self->__dynamic) {
+		my $path = $self->dir;
+		for my $p (@part) {
+			$path .= "/$p";
+			if (!mkdir($path, 0700) && $ERRNO != EEXIST) {
+				die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, "mkdir $path: $ERRNO");
+			}
+		}
+	}
+
+	my $return = join('/', $self->dir, @part, $value) . '.session';
+	$self->dic->logger->trace("session file path: '$return'") unless ($flags & $QUIET);
+	return $return;
+}
+
+sub __makeDynamic {
+	my ($self) = @_;
+	my $key = 'dynamic_mkdir';
+	my $config = $self->dic->config->get('session_tokens', 'backend_local', { $key => 1 });
+	$self->dic->logger->trace("$key: " . Dumper $config);
+	my $return = Chleb::Utils::boolean($key, $config->{$key}, 1);
+	$self->dic->logger->trace("$key: " . Dumper $return);
+	return $return;
+}
+
+sub __makeHierarchy {
+	my ($self) = @_;
+
+	if ($self->__dynamic) {
+		$self->dic->logger->trace("Not pre-creating directory hierarchy under '" . $self->dir
+		    . "' because dynamic_mkdir is set");
+
+		return;
+	} else {
+		$self->dic->logger->info("Pre-creating directory hierarchy under '" . $self->dir
+		    . "', this may take some time");
+	}
+
+	for (my $value = 0x0; $value <= 0xffff; $value++) {
+		$self->__getFilePath(sprintf("%04x", $value), $QUIET | $FORCE);
+	}
+
+	$self->dic->logger->info('Directory structure successfully created');
+
+	return;
+}
+
+sub __store {
+	my ($href, $filePath) = @_;
+
+	# 1) Acquire NFS-safe exclusive lock for read-modify-write sequences
+	my $lock = File::NFSLock->new("$filePath.lock", 'EX', 30, 5)
+	    or die("Failed to acquire lock on $filePath: $!");
+
+	# 2) Write to temp in same dir
+	my ($tmpfh, $tmpname) = tempfile(DIR => dirname($filePath), UNLINK => 0);
+	binmode($tmpfh, ':raw');
+	nstore_fd($href, $tmpfh);
+
+	# 3) Durability: flush and fsync
+	$tmpfh->flush() if ($tmpfh->can('flush'));
+	$tmpfh->sync() or die("sync failed: $!");
+	close($tmpfh) or die("close(tmp) failed: $!");
+
+	# 4) Atomic replace
+	rename($tmpname, $filePath) or die("rename($tmpname -> $filePath) failed: $!");
+
+	# Optionally sync the directory for stronger durability on crashes
+	if (open(my $dh, '<', dirname($filePath))) {
+		$dh->sync() if ($dh->can('sync'));
+		close($dh);
+	}
+
+	# 5) Release lock
+	undef $lock;
+
+	return;
 }
 
 1;

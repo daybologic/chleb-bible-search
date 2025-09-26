@@ -147,7 +147,8 @@ case "$branchType" in
 		;;
 esac
 
-fullBranchName="${branchType}/${branchName}"
+iteration=1
+fullBranchName="${branchType}/${branchName}/${iteration}"
 echo "${fullBranchName}"
 
 git stash push

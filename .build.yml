@@ -41,6 +41,7 @@ packages:
   - libdbd-mysql-perl
   - libdbi-perl
   - libdigest-crc-perl
+  - libfile-nfslock-perl
   - libjson-maybexs-perl
   - libjson-perl
   - liblog-log4perl-perl
@@ -52,6 +53,7 @@ packages:
   - libtest-exception-perl
   - libtest-mockmodule-perl
   - libtext-levenshteinxs-perl
+  - libtext-markdown-perl
   - libtime-duration-perl
   - libuniversal-require-perl
   - liburi-encode-perl

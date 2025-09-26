@@ -1,0 +1,45 @@
+# .github/workflows/pr-ai-notes.yml
+name: PR AI Notes
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ai-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: AI PR Review + Summary + Release Notes
+        uses: coderabbitai/ai-pr-reviewer@v1
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          language: "en"
+          summarize: true
+          summarize_release_notes: true
+          # Optional tuning:
+          # review_simple_changes: true
+          # path_filters: |
+          #   !**/*.md
+          #   src/**
+          # max_files: 200
+          # openai_light_model: "gpt-4o-mini"
+          # openai_heavy_model: "o4-mini"
+          # openai_model_temperature: "0.2"
+          # openai_timeout_ms: "60000"
+          # openai_retries: "2"
+          # openai_concurrency_limit: "2"
+          # github_concurrency_limit: "2"
+          # system_message: "You are a meticulous, terse PR reviewer."
+          # summarize: true
+          # summarize_release_notes: true
+          # disable_review: false
+          # disable_release_notes: false
+          # debug: false

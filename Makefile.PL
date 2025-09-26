@@ -36,12 +36,35 @@ use ExtUtils::MakeMaker;
 use strict;
 use warnings;
 
-system('bin/maint/pkg-info.sh'); # needs to run really early doors
-system('bin/maint/synology.sh');
-system('bin/maint/git-install-local-hooks.sh');
+sub invoke {
+	my ($command) = @_;
 
-my $exeFiles = [glob q('data/*.bin.gz')];
-push(@$exeFiles, 'bin/core/app.psgi', 'bin/core/run.sh', 'bin/core/yaml2json.pl');
+	my $rc = system($command);
+
+	if ($rc == -1) {
+		die("failed to execute: $!\n");
+	} elsif ($rc & 127) {
+		die(sprintf("child died with signal %d, %s coredump\n",
+		    ($rc & 127), ($rc & 128) ? 'with' : 'without'));
+	} else {
+		my $exit_code = $rc >> 8;
+		if ($exit_code != 0) {
+			die("command exited with code $exit_code\n");
+		} else {
+			return 0;
+		}
+	}
+}
+
+invoke('bin/maint/pkg-info.sh'); # needs to run really early doors
+invoke('bin/maint/synology.sh');
+invoke('bin/maint/git-install-local-hooks.sh');
+invoke('bin/maint/make-legal-notices.sh');
+
+my @exeFiles = glob q('data/*.bin.gz');
+push @exeFiles, glob q('bin/core/*.psgi');
+push @exeFiles, glob q('bin/core/*.sh');
+push @exeFiles, glob q('bin/core/*.pl');
 
 WriteMakefile(
 	NAME         => 'Chleb',
@@ -49,7 +72,7 @@ WriteMakefile(
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
 	ABSTRACT     => 'Chleb Bible Search',
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => $exeFiles,
+	EXE_FILES    => \@exeFiles,
 
 	clean => {
 		FILES => [glob q('data/*.bin.gz')],

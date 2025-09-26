@@ -1,4 +1,6 @@
 /usr/bin/chleb-bible-search/
 /var/cache/chleb-bible-search/
+/var/lib/chleb-bible-search/
+/var/lib/chleb-bible-search/sessions/
 /var/log/chleb-bible-search/
 /var/run/chleb-bible-search/

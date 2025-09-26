@@ -37,8 +37,8 @@ extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
 use Chleb::Token::Repository::Dummy;
+use Chleb::Token::Repository::Local;
 use Chleb::Token::Repository::Redis;
-use Chleb::Token::Repository::TempDir;
 use HTTP::Status qw(:constants);
 
 sub repo {
@@ -47,10 +47,10 @@ sub repo {
 	if (defined($name)) {
 		if ($name eq 'Dummy') {
 			return Chleb::Token::Repository::Dummy->new(repo => $self);
+		} elsif ($name eq 'Local') {
+			return Chleb::Token::Repository::Local->new(repo => $self);
 		} elsif ($name eq 'Redis') {
 			return Chleb::Token::Repository::Redis->new(repo => $self);
-		} elsif ($name eq 'TempDir') {
-			return Chleb::Token::Repository::TempDir->new(repo => $self);
 		}
 	}
 
@@ -112,7 +112,7 @@ sub __backends {
 sub __backendNames {
 	my ($self, $welp) = @_;
 
-	my $enabledBackends = $self->dic->config->get('session_tokens', $welp, [ 'TempDir' ]);
+	my $enabledBackends = $self->dic->config->get('session_tokens', $welp, [ 'Local' ]);
 	my @backendNames = ( );
 	foreach my $backendName (@$enabledBackends) {
 		if ($backendName =~ m/^(\w+)$/) {

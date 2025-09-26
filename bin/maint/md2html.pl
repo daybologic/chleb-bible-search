@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,45 +29,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-server:
-  admin_email: example@example.org
-  admin_name: Unknown
-  children: 30
-  domain: chleb-api.example.org
-votd_exclude:
-  terms:
-    - fornication
-    - circumcision
-    - circumcised
-    - harlots
-  refs:
-    - Lev 20:13
-    - Gen 19:8
-    - Psa 137:9
-    - Judges 19:22-29
-    - Kefir 50:1
-    - Rev 1000:11
-    - Deu 22:21
-features:
-  facebook: on
-  sessions: off
-  version: on
-Dancer2:
-  public_dir: /usr/share/chleb-bible-search/public
-session_tokens:
-  backend_local:
-    dir: /var/lib/chleb-bible-search/sessions
-    dynamic_mkdir: true
-  backend_redis:
-    db: 1
-    host: localhost:6379
-  load_order:
-    - Local
-#   - Redis
-  save_order:
-#   - Redis
-    - Local
-  ttl: 10800
-facebook:
-  groupname: Chleb Bible Search (1268737414574145)
-  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
+use strict;
+use warnings;
+use Text::Markdown 'markdown';
+
+local $/; # slurp mode
+my $md = <>;
+print markdown($md);

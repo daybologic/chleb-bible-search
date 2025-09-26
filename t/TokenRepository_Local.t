@@ -1,5 +1,35 @@
 #!/usr/bin/perl
-package TokenRepository_TempDirTests;
+# Chleb Bible Search
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+#     * Neither the name of the Daybo Logic nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+package TokenRepository_LocalTests;
 use strict;
 use warnings;
 use Moose;
@@ -10,19 +40,23 @@ extends 'Test::Module::Runnable';
 
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_SUCCESS);
+use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Token;
 use Chleb::Token::Repository;
-use Chleb::Token::Repository::TempDir;
+use Chleb::Token::Repository::Local;
 use Test::Deep qw(cmp_deeply all isa methods bool re);
 use Test::Exception;
 use Test::More 0.96;
 
+has dic => (is => 'rw', isa => 'Chleb::DI::Container');
+
 sub setUp {
 	my ($self) = @_;
 
-	$self->sut(Chleb::Token::Repository::TempDir->new());
-	$self->sut->dic->configPaths(['etc-defaults']);
+	$self->dic(Chleb::DI::Container->instance);
+	$self->dic->configPaths(['etc-local']);
+	$self->sut(Chleb::Token::Repository::Local->new({ dic => $self->dic }));
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
@@ -51,6 +85,9 @@ sub testSaveLoad {
 		lives_ok {
 			$token->save();
 		} 'save called on token';
+		if (my $evalError = $EVAL_ERROR) {
+			BAIL_OUT($evalError->toString());
+		}
 
 		$value = $token->value;
 		ok($value, 'value retrieved');
@@ -71,7 +108,7 @@ sub testSaveLoad {
 				expires => $now + 5,
 				repo => isa('Chleb::Token::Repository'),
 				source => all(
-					isa('Chleb::Token::Repository::TempDir'),
+					isa('Chleb::Token::Repository::Local'),
 				),
 				value => $value,
 			),
@@ -93,7 +130,7 @@ sub testSaveLoad {
 			cmp_deeply($evalError, all(
 				isa('Chleb::Exception'),
 				methods(
-					description => 'sessionToken expired via Chleb::Token::Repository::TempDir',
+					description => 'sessionToken expired via Chleb::Token::Repository::Local',
 					location    => undef,
 					statusCode  => 401,
 				),
@@ -161,4 +198,4 @@ sub __mockLogger {
 package main;
 use strict;
 use warnings;
-exit(TokenRepository_TempDirTests->new->run);
+exit(TokenRepository_LocalTests->new->run);

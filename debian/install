@@ -6,3 +6,4 @@ data/*.bin.gz /usr/share/chleb-bible-search/
 etc/logrotate/chleb-bible-search /etc/logrotate.d/
 data/static/*.html /usr/share/chleb-bible-search/
 data/static/public/* /usr/share/chleb-bible-search/public/
+debian/etc/cron.monthly/chleb-bible-search /etc/cron.monthly/
