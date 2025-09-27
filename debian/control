@@ -30,7 +30,7 @@ Build-Depends-Indep:
 Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
-Package: chleb-bible-search
+Package: chleb-bible-search-core
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
  bash (>= 5.2.15-2),
@@ -52,9 +52,15 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
  libtime-duration-perl,
  libuuid-tiny-perl,
  libyaml-libyaml-perl,
-Replaces: libreligion-bible-verses-perl
+Replaces: chleb-bible-search, libreligion-bible-verses-perl
 Description: Chleb Bible Search - Bible Query Service
  For further information see:
  .
  https://github.com/daybologic/chleb-bible-search
  https://bitbucket.org/2E0EOL/chleb-bible-search
+
+Package: chleb-bible-search-dict
+Architecture: all
+Depends: chleb-bible-search-core (= ${binary:Version})
+Description: Chleb Bible Search - Core Dictionaries
+ Dictionary content only.
