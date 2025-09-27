@@ -29,6 +29,24 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+# this function mimics dpkg-parsechangelog --show-field Version
+# so we can generate the version number on FreeBSD or where the
+# Debian toolchain is not available, or it isn't work installing
+# for our purposes.
+
+set -e
+
+dpkg_parsechangelog_version() {
+	local changelog='debian/changelog'
+	if [ ! -f "$changelog" ]; then
+		echo "ERROR: $changelog not found" >&2
+		return 1
+	fi
+
+	# Print version from first line of changelog
+	head -n1 "$changelog" | sed -E 's/^[^(]*\(([^)]*)\).*/\1/'
+}
+
 outFile='lib/Chleb/Generated/Info.pm'
 
 buildUser=$(whoami)
@@ -37,7 +55,7 @@ buildOS=$(uname -o)
 buildArch=$(uname -m)
 buildTime=$(date '+%Y-%m-%dT%H:%M:%S%z')
 buildPerlVersion=$(perl -e 'print "$^V ($])"')
-version=$(dpkg-parsechangelog --show-field Version)
+version=$(dpkg_parsechangelog_version)
 
 buildChangeset=''
 if [ -f '.git-changeset' ]; then
