@@ -48,9 +48,29 @@ via this "DIC" so that they may be reliably replaced during the test suites.
 use Log::Log4perl;
 use Chleb::Bible::Exclusions;
 use Chleb::DI::Config;
+use Chleb::Token::Repository;
 use Chleb::Utils::OSError::Mapper;
+use Readonly;
+
+=head1 CONSTANTS
+
+=over
+
+=item C<@DEFAULT_PATHS>
+
+The paths we use to find the config files by default; hard-coded.
+May be overridden by setting L</configPaths>.
+
+=cut
+
+Readonly our @DEFAULT_CONFIG_PATHS => (
+	'etc',
+	'/etc/chleb-bible-search',
+);
 
 has bible => (is => 'rw'); # TODO: deprecated
+
+=back
 
 =head1 ATTRIBUTES
 
@@ -66,7 +86,7 @@ Otherwise, you should replace it with L<Chleb::DI::MockLogger> during a test.
 
 =cut
 
-has logger => (is => 'rw', lazy => 1, builder => '_makeLogger');
+has logger => (is => 'rw', lazy => 1, builder => '_makeLogger', clearer => 'resetLogger');
 
 =item C<config>
 
@@ -92,6 +112,14 @@ TODO
 
 has cache => (is => 'rw', lazy => 1, builder => '_makeCache');
 
+=item C<tokenRepo>
+
+TODO
+
+=cut
+
+has tokenRepo => (is => 'rw', lazy => 1, builder => '_makeTokenRepo');
+
 =item C<errorMapper>
 
 A Link to the L<Chleb::Utils::OSError::Mapper>.
@@ -106,6 +134,14 @@ called L</_makeErrorMapper()>.
 =cut
 
 has errorMapper => (is => 'rw', lazy => 1, builder => '_makeErrorMapper');
+
+=item C<configPaths>
+
+The paths in which we look for config files, defaulting to L</@DEFAULT_PATHS>.
+
+=cut
+
+has configPaths => (is => 'rw', isa => 'ArrayRef[Str]', lazy => 1, default => \&__makeConfigPaths);
 
 =back
 
@@ -123,7 +159,10 @@ This is the recommended approach.
 =cut
 
 sub _makeLogger {
-	foreach my $path ('etc/log4perl.conf', '/etc/chleb-bible-search/log4perl.conf') {
+	my ($self) = @_;
+
+	my $paths = $self->__makePathsFor('log4perl.conf');
+	foreach my $path (@$paths) {
 		next unless (-e $path);
 		Log::Log4perl->init($path);
 		last;
@@ -148,12 +187,14 @@ This is the recommended approach.
 sub _makeConfig {
 	my ($self) = @_;
 
-	foreach my $path ('etc/main.conf', '/etc/chleb-bible-search/main.conf') {
+	my $configFileName = 'main.yaml';
+	my $paths = $self->__makePathsFor($configFileName);
+	foreach my $path (@$paths) {
 		next unless (-e $path);
 		return Chleb::DI::Config->new({ dic => $self, path => $path });
 	}
 
-	die('No config available!');
+	die("No config available ($configFileName)");
 }
 
 =item C<_makeExclusions()>
@@ -178,6 +219,17 @@ sub _makeCache {
 	return Chleb::DI::Cache->new({ dic => $self });
 }
 
+=item C<_makeTokenRepo()>
+
+TODO
+
+=cut
+
+sub _makeTokenRepo {
+	my ($self) = @_;
+	return Chleb::Token::Repository->new({ dic => $self });
+}
+
 =item C<_makeErrorMapper()>
 
 Constructs a L<Chleb::Utils::OSError::Mapper> for L</errorMapper>.
@@ -189,8 +241,34 @@ sub _makeErrorMapper {
 	return Chleb::Utils::OSError::Mapper->new({ dic => $self });
 }
 
+=item C<__makeConfigPaths()>
+
+=cut
+
+sub __makeConfigPaths {
+	my ($self) = @_;
+	return \@DEFAULT_CONFIG_PATHS;
+}
+
+=item C<__makePathsFor($fileName)>
+
+=cut
+
+sub __makePathsFor {
+	my ($self, $fileName) = @_;
+
+	my @fullPaths = ( );
+	foreach my $dirName (@{ $self->configPaths }) {
+		push(@fullPaths, join('/', $dirName, $fileName));
+	}
+
+	return \@fullPaths;
+}
+
 =back
 
 =cut
+
+__PACKAGE__->meta->make_immutable;
 
 1;

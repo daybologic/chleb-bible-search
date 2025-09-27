@@ -1,0 +1,36 @@
+<!-- Chleb Bible Search -->
+<!DOCTYPE html>
+
+<!-- Chleb Template -->
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<link href="/style.css" rel="stylesheet" type="text/css">
+	<title>__TITLE__</title>
+</head>
+	<body>
+		<form class="search-form" method="GET" action="/1/search">
+			<h2>Search Criteria</h2>
+
+			<div class="form-group">
+				<label for="term">Term(s)</label>
+				<input type="text" id="term" name="term" placeholder="e.g. love, grace, salvation" value="__SEARCH_TERM__">
+				<label>
+					<input type="checkbox" id="wholeword" name="wholeword" __SEARCH_WHOLEWORD__> Whole word
+				</label>
+			</div>
+
+			<!-- FIXME: Restore book, testament, translation options -->
+
+			<div class="form-group">
+				<label for="limit">Limit</label>
+				<input type="number" id="limit" name="limit" placeholder="__SEARCH_LIMIT_DEFAULT__" min="1" max="__SEARCH_LIMIT_MAX__" value="__SEARCH_LIMIT_VALUE__">
+			</div>
+
+			<input type="hidden" id="form" name="form" value="true">
+
+			<button type="submit">Search</button>
+		</form>
+		__SEARCH_RESULTS__
+	</body>
+</html>

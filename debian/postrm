@@ -1,0 +1,107 @@
+#!/bin/sh
+# Chleb Bible Search
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+#     * Neither the name of the Daybo Logic nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+set -e
+
+# This is the default location.  If you have changed it in the config,
+# you will simply need to clean up sessions yourself, because we can't
+# read the config with tools which are guaranteed to be installed and
+# available.
+rootOfSessions='/var/lib/chleb-bible-search/sessions/'
+
+isSharedFileSystem() {
+	fsType="$1"
+
+	sharedFileSystemList="cifs nfs dummy"
+
+	for sharedFsType in $sharedFileSystemList; do
+		if [ "$fsType" = "$sharedFsType" ]; then
+			return 0
+		fi
+	done
+
+	return 1
+}
+
+getFsType() {
+	dirName="$1"
+
+	if [ -d "$dirName" ]; then
+		fsType=$(stat -f -c %T "$dirName")
+		echo "$fsType"
+	else
+		>&2 echo "WARNING: '$dirName' not found"
+		echo 'dummy' # we always have to succeed to avoid broken packages
+	fi
+
+	return 0
+}
+
+maybeSessionCleanup() {
+	dirName="$1"
+
+	fsType=$(getFsType "$dirName")
+	if isSharedFileSystem "$fsType"; then
+		if [ "$fsType" != 'dummy' ]; then
+			>&2 echo "INFO: Not purging sessions on a shared mount-point - '$dirName' of type $fsType"
+		fi
+		return 0
+	fi
+
+	sessionCleanup "$dirName"
+	return 0
+}
+
+sessionCleanup() {
+	dirName="$1"
+
+	find "$dirName" -name "*.session" -type f -delete
+
+	for i in $(seq 4 -1 1); do
+		find "$dirName" -mindepth $i -maxdepth $i -type d -delete
+	done
+
+	return 0
+}
+
+case "$1" in
+	purge)
+		echo "DEBUG: package $1"
+		maybeSessionCleanup "$rootOfSessions"
+		;;
+	remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+		echo "DEBUG: package $1"
+		;;
+esac
+
+#DEBHELPER#
+
+exit 0

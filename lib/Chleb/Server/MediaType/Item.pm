@@ -33,6 +33,8 @@ use Moose;
 use strict;
 use warnings;
 
+use HTTP::Status qw(:constants);
+
 =head1 NAME
 
 Chleb::Server::MediaType::Item
@@ -74,12 +76,11 @@ has [qw(major minor)] => (is => 'ro', required => 1, isa => 'Part');
 =item C<weight>
 
 The weight, whose default is always 1.0.  Lower values indicate a backup priority only.
-
-TODO: 1.1 and above is illegal, I think?  Check the standards.
+Valid values are between 0.000 and 1.000.  Greater precisions are not permitted.
 
 =cut
 
-has weight => (is => 'ro', required => 1, isa => 'Num', default => 1.0, required => 1);
+has weight => (is => 'ro', required => 1, isa => 'Num', default => 1.0, required => 1, trigger => \&__triggerWeight);
 
 =back
 
@@ -101,11 +102,40 @@ sub toString {
 
 	my $str = join('/', $self->major, $self->minor);
 
-	$str .= sprintf(';q=%.1f', $self->weight)
+	$str .= sprintf(';q=%.3f', $self->weight)
 	    if ($args->verbose);
 
 	return $str;
 }
+
+=back
+
+=head1 PRIVATE METHODS
+
+=over
+
+=item C<__triggerWeight>
+
+Special trap handler for initial set of L</weight>.
+
+We check that the value does not have too much precison, and is a positive number,
+including zero, if not we die with a L<Chleb::Exception>.
+
+=cut
+
+sub __triggerWeight {
+	my ($self) = @_;
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, sprintf("Accept: negative qValue, %.3f", $self->weight))
+	    if ($self->weight < 0);
+
+	my (undef, $mantissa) = split(m/\./, $self->weight);
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: weight (qValue) precisions are limited to 3 digits')
+	    if (defined($mantissa) && length($mantissa) > 3);
+
+	return;
+};
 
 =back
 

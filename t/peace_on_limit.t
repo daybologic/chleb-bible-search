@@ -77,11 +77,14 @@ sub testPeaceSearch {
 			isa('Chleb::Bible::Book'),
 			methods(
 				chapterCount => 22,
-				longName    => 'I Kings',
+				longName     => 'I Kings',
 				ordinal      => 11,
 				shortName    => '1ki',
 				shortNameRaw => '1Ki',
-				testament    => 'old',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'old'),
+				),
 				verseCount   => 816,
 			),
 		),
@@ -93,7 +96,10 @@ sub testPeaceSearch {
 				ordinal      => 40,
 				shortName    => 'mat',
 				shortNameRaw => 'Mat',
-				testament    => 'new',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'new'),
+				),
 				verseCount   => 1_071,
 			),
 		),
@@ -105,7 +111,10 @@ sub testPeaceSearch {
 				ordinal      => 41,
 				shortName    => 'mark',
 				shortNameRaw => 'Mark',
-				testament    => 'new',
+				testament    => all(
+					isa('Chleb::Type::Testament'),
+					methods(value => 'new'),
+				),
 				verseCount   => 678,
 			),
 		),
@@ -171,6 +180,8 @@ sub testPeaceSearch {
 
 	return EXIT_SUCCESS;
 }
+
+__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;

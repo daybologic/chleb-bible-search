@@ -29,13 +29,29 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#set -x
+set -e
+
+if [ -z "$CHLEB_SCHEME" ]; then
+	CHLEB_SCHEME=https
+fi
+
+if [ -z "$CHLEB_HOSTNAME" ]; then
+	CHLEB_HOSTNAME=chleb-api.daybologic.co.uk
+fi
+
+if [ -z "$CHLEB_PORT" ]; then
+	CHLEB_PORT=443
+fi
+
+set -u
 
 p="/1/lookup/rev/22/21"
-scheme=http
-host=localhost
-port=3000
+scheme=$CHLEB_SCHEME
+host=$CHLEB_HOSTNAME
+port=$CHLEB_PORT
 base="${scheme}://${host}:${port}"
+
+now=`date '+%Y-%m-%dT09:00:00%%2B0100'`
 
 while [ ! -z "$p" ]; do
 	json=$(curl --header 'Accept: application/json' -s "${base}${p}");

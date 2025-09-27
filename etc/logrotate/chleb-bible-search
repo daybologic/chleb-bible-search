@@ -1,6 +1,11 @@
-/var/log/chleb-bible-search/* {
-	monthly
-	rotate 12
+/var/log/chleb-bible-search/*.log {
+	weekly
+	rotate 52
 	compress
 	delaycompress
+	missingok
+	notifempty
+	postrotate
+		/usr/bin/systemctl kill -s HUP --kill-who=all chleb-bible-search.service
+	endscript
 }

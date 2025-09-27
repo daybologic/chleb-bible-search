@@ -35,10 +35,12 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
-use Config::INI::Reader;
+use Chleb::Utils;
+use Data::Dumper;
 use English qw(-no_match_vars);
 use IO::File;
 use Readonly;
+use YAML::XS 'LoadFile';
 
 has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
 
@@ -51,35 +53,71 @@ sub BUILD {
 
 sub __makeData {
 	my ($self) = @_;
-	return Config::INI::Reader->read_file($self->path);
+	return LoadFile($self->path) || { };
 }
 
 sub get {
 	my ($self, $section, $key, $default, $isBoolean) = @_;
 
+	my $defaultUsed = 0;
+	my $value = $self->__get($section, $key, $default, $isBoolean, \$defaultUsed);
+	my $valuePrintable = (defined($value) && ref($value)) ? (Dumper $value) : $value;
+	my $defaultPrintable = (defined($default) && ref($default)) ? (Dumper $default) : $default;
+	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $valuePrintable, $defaultPrintable);
+
+	my $level = 'debug';
+	if ($defaultUsed) {
+		$level = 'warn';
+		$msg .= ' -- default used!  We recommend you set this value explicitly in your config!';
+	}
+
+	$self->dic->logger->$level($msg);
+	return $value;
+}
+
+sub __get {
+	my ($self, $section, $key, $default, $isBoolean, $pDefaultUsed) = @_;
+
 	if (defined($self->__data->{$section}->{$key})) {
 		my $value = $self->__data->{$section}->{$key};
-		return __boolean($value) if ($isBoolean);
+
+		if ($value && ref($value) eq 'HASH' && $default) {
+			$self->dic->logger->trace("key '$key' found in section '$section': building ephemeral section");
+
+			# section partially populated, construction an ephemeral section and populate keys from default, where supplied
+			my %ephemeralSection = ( );
+			my %allKeys = (
+				%{ $self->__data->{$section}->{$key} },
+				%$default,
+			);
+
+			foreach my $k (keys(%allKeys)) {
+				my $v;
+				if (exists($self->__data->{$section}->{$key}->{$k})) {
+					$self->dic->logger->trace(Dumper $self->__data);
+					$v = $self->__data->{$section}->{$key}->{$k};
+					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from real config)");
+				} else {
+					$v = $default->{$k};
+					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from default)");
+				}
+
+				$ephemeralSection{$k} = $v;
+			}
+
+			$self->dic->logger->trace('Ephemeral section content: ' . Dumper \%ephemeralSection);
+			return \%ephemeralSection;
+		}
+
+		return Chleb::Utils::boolean($key, $value, $default, $Chleb::Utils::BOOLEAN_FLAG_EMPTY_IS_FALSE) if ($isBoolean);
 		return $value;
 	}
 
-	return __boolean($default) if ($isBoolean);
+	$$pDefaultUsed = 1;
+	return Chleb::Utils::boolean($key, $default, 0, $Chleb::Utils::BOOLEAN_FLAG_EMPTY_IS_FALSE) if ($isBoolean);
 	return $default;
 }
 
-sub __boolean {
-	my ($value) = @_;
-
-	if (defined($value)) {
-		$value = lc($value);
-
-		return 1 if ($value eq 'true' || $value eq 'on' || $value eq 'yes' || $value eq '1' || $value =~ m/^enable/);
-		return 0 if ($value eq 'false' || $value eq 'off' || $value eq 'no' || $value eq '0' || $value =~ m/^disable/);
-
-		die("Invalid boolean value in config: $value");
-	}
-
-	return 0;
-}
+__PACKAGE__->meta->make_immutable;
 
 1;

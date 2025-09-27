@@ -36,15 +36,43 @@ use ExtUtils::MakeMaker;
 use strict;
 use warnings;
 
-system('bin/maint/synology.sh');
+sub invoke {
+	my ($command) = @_;
+
+	my $rc = system($command);
+
+	if ($rc == -1) {
+		die("failed to execute: $!\n");
+	} elsif ($rc & 127) {
+		die(sprintf("child died with signal %d, %s coredump\n",
+		    ($rc & 127), ($rc & 128) ? 'with' : 'without'));
+	} else {
+		my $exit_code = $rc >> 8;
+		if ($exit_code != 0) {
+			die("command exited with code $exit_code\n");
+		} else {
+			return 0;
+		}
+	}
+}
+
+invoke('bin/maint/pkg-info.sh'); # needs to run really early doors
+invoke('bin/maint/synology.sh');
+invoke('bin/maint/git-install-local-hooks.sh');
+invoke('bin/maint/make-legal-notices.sh');
+
+my @exeFiles = glob q('data/*.bin.gz');
+push @exeFiles, glob q('bin/core/*.psgi');
+push @exeFiles, glob q('bin/core/*.sh');
+push @exeFiles, glob q('bin/core/*.pl');
 
 WriteMakefile(
 	NAME         => 'Chleb',
-	VERSION_FROM => 'lib/Chleb.pm', # finds $VERSION
+	VERSION_FROM => 'lib/Chleb/Generated/Info.pm', # finds $VERSION
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
 	ABSTRACT     => 'Chleb Bible Search',
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
-	EXE_FILES    => [glob q('data/*.bin.gz')],
+	EXE_FILES    => \@exeFiles,
 
 	clean => {
 		FILES => [glob q('data/*.bin.gz')],
@@ -60,6 +88,7 @@ WriteMakefile(
 		'Moose'           => 0,
 		'Test::More'      => 0,
 		'Readonly'        => 0,
+		'Redis'           => 0,
 		'Test::Deep'      => 0,
 		'Test::Exception' => 0,
 	},
@@ -75,8 +104,16 @@ deb :: pure_all
 cover :: pure_all
 	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
 
-clean :: pure_all
+http-test :: pure_all
+	@bin/maint/run-functional-tests.sh
+
+clean :: 
 	rm -rf cover_db
+	cd data/ && make clean
+	cd info/ && make clean
+
+# Extend test target
+test :: http-test
 
     ~;
 }

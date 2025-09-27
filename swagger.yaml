@@ -1,8 +1,41 @@
+# Chleb Bible Search
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+#     * Neither the name of the Daybo Logic nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
 openapi: 3.0.0
 info:
+  license:
+    name: BSD-3-Clause
+    url: https://opensource.org/licenses/BSD-3-Clause
   title: Chleb Bible Search
   description: Query the bible, or get a verse of the day.
-  version: 1.1.0
+  version: 2.1.0
 servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
@@ -31,9 +64,12 @@ paths:
                   included:
                     type: array
                     items:
-                      - $ref: '#/components/schemas/Book'
-                      - $ref: '#/components/schemas/Chapter'
-                      - $ref: '#/components/schemas/Stats'
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
+        '429':
+          description: Rate-limited
   /1/uptime:
     get:
       summary: Get server uptime
@@ -123,10 +159,88 @@ paths:
             default: any
           required: false
           description: Only retrieve a verse from the given testament
+        - in: query
+          name: parental
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+        - in: query
+          name: redirect
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Provide a 307 redirect to the appropriate verse lookup
       security: [] # No security
       responses:
         '200':
           description: Successfully retrieved verse
+          content:
+            text/html:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stats'
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
+  /2/random:
+    get:
+      summary: Random Verse
+      operationId: getRandom2
+      description: Retrieve one or more verses from The Bible, at random.
+      parameters:
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
+        - in: query
+          name: testament
+          schema:
+            type: string
+            enum:
+              - any
+              - old
+              - new
+            default: any
+          required: false
+          description: Only retrieve a verse from the given testament
+        - in: query
+          name: parental
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
+      security: [] # No security
+      responses:
+        '200':
+          description: Successfully retrieved verses
           content:
             text/html:
               schema:
@@ -300,11 +414,17 @@ paths:
       description: Search for criteria in the whole bible
       parameters:
         - in: query
+          name: form
+          schema:
+            type: boolean
+          required: false
+          description: In text/html mode, display a form, and pre-fill values from your query
+        - in: query
           name: term
           schema:
             type: string
-          required: true
-          description: Critereon for search
+          required: false
+          description: Critereon for search, not required if you want the form mode, which is only valid in text/html mode
         - in: query
           name: limit
           schema:

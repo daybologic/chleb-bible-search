@@ -29,17 +29,30 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-H=localhost:3000
+set -e
 
-SCHEME=https
-SCHEME=http
+if [ -z "$CHLEB_SCHEME" ]; then
+	CHLEB_SCHEME=https
+fi
+
+if [ -z "$CHLEB_HOSTNAME" ]; then
+	CHLEB_HOSTNAME=chleb-api.daybologic.co.uk
+fi
+
+if [ -z "$CHLEB_PORT" ]; then
+	CHLEB_PORT=443
+fi
+
+set -u
+
+H="$CHLEB_HOSTNAME:$CHLEB_PORT"
 
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		uptime=$(curl -s "${SCHEME}://${H}/1/uptime")
+		uptime=$(curl -s "${CHLEB_SCHEME}://${H}/1/uptime")
 		echo "$uptime" | jq -r '.data[0].attributes | .uptime'
 		echo "$uptime" | jq -r '.data[0].attributes | .text'
 	else
-		curl -s "${SCHEME}://${H}/1/uptime" | tr -d '\n' | grep -o '"uptime":[^"]*"[^"]*"'
+		curl -s "${CHLEB_SCHEME}://${H}/1/uptime" | tr -d '\n' | grep -o '"uptime":[^"]*"[^"]*"'
 	fi
 fi

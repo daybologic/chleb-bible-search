@@ -61,4 +61,11 @@ sub raise {
 	return $class->new(\%params);
 }
 
+sub toString {
+	my ($self) = @_;
+	return sprintf('HTTP code %d: %s', $self->statusCode, $self->description);
+}
+
+__PACKAGE__->meta->make_immutable;
+
 1;

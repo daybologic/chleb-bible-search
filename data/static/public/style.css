@@ -1,0 +1,231 @@
+body {
+	font-family: 'Georgia', serif;
+	font-size: 1.1em;
+	font-weight: normal;
+	color: #333;
+	background-color: #f5e5ff;
+	margin: 0;
+	padding: 0;
+}
+
+.main-menu {
+	width: 100%;
+	margin: 0 auto;
+	background-color: #4a6b82;
+	overflow: hidden;
+}
+
+.main-menu ul {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	justify-content: center;
+}
+
+.main-menu ul li {
+	flex: none;
+	margin: 0 10px;
+}
+
+.main-menu ul li a {
+	display: block;
+	color: #fff;
+	text-align: center;
+	padding: 14px 20px;
+	text-decoration: none;
+	font-weight: bold;
+	letter-spacing: 0.05em;
+}
+
+.main-menu ul li a:hover {
+	background-color: #6c90a9;
+}
+
+div.container {
+	width: 100%;
+}
+
+div.content {
+	width: auto;
+	min-width: 200px;
+	min-height: 250px;
+	margin: 20px auto;
+	border: 1px solid #ccc;
+	color: #333;
+	background-color: #fff;
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+	border-radius: 8px;
+}
+
+div.contentbody {
+	font-size: 1em;
+	padding: 20px;
+	line-height: 1.6em;
+	letter-spacing: 0.02em;
+}
+
+h1, h4 {
+	color: #2f4f4f;
+	font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+}
+
+h1 {
+	font-size: 1.8em;
+	padding-top: 20px;
+	text-align: center;
+}
+
+h4 {
+	padding-top: 15px;
+	font-size: 1.2em;
+	text-align: center;
+}
+
+a {
+	color: #2a5d84;
+	text-decoration: none;
+}
+
+a:hover {
+	color: #3c7db2;
+	text-decoration: underline;
+}
+
+span.code {
+	font-family: monospace;
+}
+
+.justify {
+	text-align: justify;
+}
+
+.center {
+	text-align: center;
+}
+
+.right {
+	text-align: right;
+}
+
+/* Updated login styles */
+#login {
+	background-color: #eef2f3;
+	color: #000;
+	border: 1px solid #ccc;
+	font-family: 'Georgia', serif;
+	font-size: 0.9em;
+	text-align: right;
+	width: 700px;
+	margin: 10px auto;
+	padding: 10px;
+	border-radius: 5px;
+}
+
+#login .theInput {
+	font-family: 'Georgia', serif;
+	font-size: 1em;
+	width: 120px;
+	margin-right: 5px;
+}
+
+#login .theSubmit {
+	font-family: 'Georgia', serif;
+	font-size: 0.9em;
+	background-color: #4a6b82;
+	color: #fff;
+	margin-right: 5px;
+	padding: 5px 10px;
+	border: none;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+#login .theSubmit:hover {
+	background-color: #6c90a9;
+}
+
+/* Additional spiritual feel elements */
+.banneradbox, .logonavbox {
+	display: none;
+}
+
+.navbox, .latestbox {
+	border: none;
+	background-color: #f1f5f8;
+	color: #333;
+	padding: 10px;
+	border-radius: 8px;
+	box-shadow: 0 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.navlinks, .latestbody {
+	font-size: 1em;
+	letter-spacing: 0.02em;
+}
+
+.versiontitle {
+	color: #4a6b82;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.errorbox {
+	text-align: center;
+	border: 1px solid #d9534f;
+	color: #d9534f;
+	background-color: #f9e6e6;
+	padding: 10px;
+	margin-bottom: 10px;
+	border-radius: 5px;
+}
+
+.copyrightbox {
+	font-size: 0.8em;
+	text-align: center;
+	margin: 20px 0 10px 0;
+	color: #777;
+}
+
+.search-form {
+	max-width: 500px;
+	margin: 0 auto;
+	padding: 2em;
+	border-radius: 12px;
+	box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.search-form h2 {
+	margin-top: 0;
+}
+
+.form-group {
+	margin-bottom: 1.2em;
+}
+
+label {
+	display: block;
+	margin-bottom: .5em;
+	font-weight: bold;
+}
+
+input[type="text"],
+select {
+	width: 100%;
+	padding: .7em;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+}
+
+button {
+	padding: 0.7em 1.5em;
+	background: #333;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+}
+
+button:hover {
+	background: #555;
+}

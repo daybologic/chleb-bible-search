@@ -1,25 +1,22 @@
 <!-- Chleb Bible Search -->
 <!DOCTYPE html>
+
+<!-- Chleb Template -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Chleb Bible Search Service</title>
-    <style>
-        body { font-family: sans-serif; margin: 2em; background: #f9f9f9; }
-        h1 { color: #2c3e50; }
-        ul { line-height: 1.7; }
-        a { color: #2980b9; text-decoration: none; }
-        a:hover { text-decoration: underline; }
-        .swagger { margin-top: 2em; font-size: 0.95em; }
-    </style>
+    <link rel="icon" href="/images/favicon.png" type="image/png">
+    <link href="/style.css" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <h1>Welcome to Chleb Bible Search</h1>
-    <p>This is a microservice for querying and searching the Bible. You can use the following endpoints directly, or explore the <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.0.0" target="_blank">Swagger API documentation</a>.</p>
+    <img src="/images/bible.png" alt="Chleb Bible Search: The Holy Bible (royalty free image)" width="273" height="214">
+    <h1>Welcome to Chleb Bible Search __VERSION__</h1>
+    <p>This is a microservice for querying and searching the Bible. You can use the following endpoints directly, or explore the <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/__VERSION__" target="_blank">Swagger API documentation</a>.</p>
     <ul>
-        <li><a href="/1/search?term=love">Search for verses</a> (e.g. <code>/1/search?term=love</code>)</li>
+        <li><a href="/1/search?wholeword=on&form=true">Search for verses</a> (e.g. <code>/1/search?wholeword=on&amp;form=true</code>)</li>
         <li><a href="/2/votd">Verse of the Day</a> (<code>/2/votd</code>)</li>
-        <li><a href="/1/random">Random Verse</a> (<code>/1/random</code>)</li>
+        <li><a href="/2/random?testament=any">Random Verse</a> (<code>/2/random?testament=any</code>)</li>
         <li><a href="/1/lookup/john/3/16">Lookup a Verse</a> (e.g. <code>/1/lookup/john/3/16</code>)</li>
         <li><a href="/1/info">Bible Info</a> (<code>/1/info</code>)</li>
         <li><a href="/1/ping">Ping</a> (<code>/1/ping</code>)</li>
@@ -27,7 +24,14 @@
         <li><a href="/1/uptime">Service Uptime</a> (<code>/1/uptime</code>)</li>
     </ul>
     <div class="swagger">
-        <strong>API Documentation:</strong> <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/1.0.0" target="_blank">SwaggerHub</a>
+        <strong>developers:</strong> <a href="https://github.com/daybologic/chleb-bible-search" target="_blank">GitHub</a>
+    </div>
+    <div class="legal">
+        <strong>legal:</strong> <a href="/privacy.html" target="_blank">Privacy policy</a> <a href="/terms.html" target="_blank">Terms & Conditions</a>
+    </div>
+    __FACEBOOK_HTML__
+    <div class="buildinfo">
+        Chleb Bible Search __VERSION__ (__BUILD_CHANGESET__) built by __BUILD_USER__@__BUILD_HOST__ (__BUILD_OS__/__BUILD_ARCH__) with Perl __BUILD_PERL_VERSION__ at __BUILD_TIME__
     </div>
 </body>
 </html>

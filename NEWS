@@ -1,0 +1,86 @@
+2.1.0
+=====
+The experimental session token backend has been revamped
+
+New dependenices:
+  * libfile-nfslock-perl
+  * libredis-perl
+  * libtext-markdown-perl
+
+Verse count is now dynamic, not fixed to 31,102 verses
+
+The Chleb::DI::Config file has been refactored to improve logging and handling of default values.
+
+CSS has been re-styled.  Linked to new Facebook Group.
+
+Search form improved
+
+Handy local GitMoji list and tool for making new feature branches.
+New HTTpie automatic test suite
+
+2.0.0
+=====
+Upgrading from version 1.3.0 requires a few important changes which will need to be
+performed by the system administrator.
+
+Nginx
+-----
+Your Nginx config will now need to access the fastcgi socket on the local system at
+the path /var/run/chleb-bible-search/sock, which only exists after the daemon starts.
+please refer to the example configuration under etc/nginx/chleb-bible-search in the
+source distribution.
+
+You can also view this file at the following address:
+https://github.com/daybologic/chleb-bible-search/blob/master/etc/nginx/chleb-bible-search.example
+
+systemd
+-------
+If you are using systemd, ensure you update /etc/systemd/system/chleb-bible-search.service
+with etc/chleb-bible-search.service because the way we launch is via Plack now, so quite
+different to the previous distribution.  You can also obtain this launcher configuration
+file from the following address:
+https://github.com/daybologic/chleb-bible-search/blob/master/etc/chleb-bible-search.service
+
+once the file is changed, ensure you run
+
+sudo systemctl daemon-reload
+
+FastCGI
+-------
+If you are running local scripts, they must be modified to use the UNIX socket, and
+FastCGI.  See examples under bin/demo/socket-*.sh
+
+Alternatively, access via Nginx (recommended).
+
+Memory usage
+------------
+The default installation now runs 20 processes, rather than a single process.  This
+is a vast improvement, especially in terms of performance and avoiding a denial of
+service scenario, but it will mean that more resources are used.
+
+log4perl
+--------
+We have also changed our log4perl configuration to log the PID.  Please see:
+https://github.com/daybologic/chleb-bible-search/blob/master/etc/log4perl.conf
+
+logrotate
+---------
+We now only rotate files named *.log and rotate weekly, not monthly, it is
+recommended that you copy the project config from
+https://github.com/daybologic/chleb-bible-search/blob/master/etc/logrotate/chleb-bible-search
+
+Perl developers
+---------------
+Library constructionTime has been removed as not required for anything useful
+translation within Book is now an object, not a scalar string!
+
+Config
+------
+The config file has changed!  The old config file was:
+/etc/chleb-bible-search/main.conf
+and the new file is
+/etc/chleb-bible-search/main.yaml
+
+This is not simply a rename.  The older config is no longer supported, and the format
+has changed to YAML.  This allows us to have a more complex format, and to read the
+config from bash scripts.

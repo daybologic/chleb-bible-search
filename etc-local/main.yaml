@@ -1,0 +1,4 @@
+session_tokens:
+  backend_local:
+    dir: data/sessions
+    dynamic_mkdir: true

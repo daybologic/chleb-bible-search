@@ -1,5 +1,5 @@
 # Chleb Bible Search
-# Copyright (c) 2024, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# Copyright (c) 2024-2025, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,21 +41,25 @@ packages:
   - libdbd-mysql-perl
   - libdbi-perl
   - libdigest-crc-perl
+  - libfile-nfslock-perl
   - libjson-maybexs-perl
   - libjson-perl
   - liblog-log4perl-perl
   - libmoose-perl
   - libmoosex-singleton-perl
   - libreadonly-perl
+  - libredis-perl
   - libtest-deep-perl
   - libtest-exception-perl
   - libtest-mockmodule-perl
   - libtext-levenshteinxs-perl
+  - libtext-markdown-perl
   - libtime-duration-perl
   - libuniversal-require-perl
   - liburi-encode-perl
   - libuuid-tiny-perl
   - libwww-perl
+  - libyaml-libyaml-perl
   - perl
 
 sources:

@@ -47,6 +47,7 @@ extends 'Chleb::Bible::Base';
 
 use Digest::CRC qw(crc32);
 use HTTP::Status qw(:constants);
+use List::Util qw(shuffle);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Text::LevenshteinXS qw(distance);
@@ -101,7 +102,7 @@ but in some translations, this may vary, so please do not assume.
 
 =cut
 
-has verseCount => (is => 'ro', isa => 'Int', default => 31_102); # TODO: Hard-coded 31,102: works for "kjv", "asv" (canonical)
+has verseCount => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeVerseCount);
 
 =item C<translation>
 
@@ -165,7 +166,8 @@ sub getBookByShortName {
 
 	my $closestBook;
 	my $lowestDistance = $Chleb::Constants::UINT_MAX; # an impossibly high number, all mismatches will be lower
-	foreach my $book (@{ $self->books }) {
+	my @books = shuffle(@{ $self->books }); # be fair; don't bias against books near the end of the bible
+	foreach my $book (@books) {
 		my $distance = distance($book->shortName, $shortName);
 		if ($distance < $lowestDistance) {
 			$lowestDistance = $distance;
@@ -454,6 +456,23 @@ sub __makeBooks {
 	return $self->__backend->getBooks();
 }
 
+=item C<__makeVerseCount>
+
+Lazy-initializer for L</verseCount>.
+
+=cut
+
+sub __makeVerseCount {
+	my ($self) = @_;
+
+	my $verseCount = 0;
+	foreach my $book (@{ $self->books }) {
+		$verseCount += $book->verseCount;
+	}
+
+	return $verseCount;
+}
+
 =item C<__makeId>
 
 =cut
@@ -466,5 +485,7 @@ sub __makeId {
 =back
 
 =cut
+
+__PACKAGE__->meta->make_immutable;
 
 1;
