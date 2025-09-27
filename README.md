@@ -9,7 +9,7 @@ Welcome to the Chleb Bible Search by Rev. Duncan Ross Palmer
 A self-hostable microservice for querying the bible and searching for content.
 The backend Perl library is also designed to be easily integrated with applications.
 
-The service also provides a determinsitic verse of the day lookup.
+The service also provides a deterministic verse of the day lookup.
 
 ## Documentation
 
