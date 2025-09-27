@@ -43,7 +43,7 @@ branchToMerge="$1"
 # Ignominious exit if we're not the Git repo
 git -C . rev-parse 2>/dev/null
 
-targetBranch='develop'
+targetBranch='master'
 currentBranch=$(git branch --show-current)
 if [ "$currentBranch" != "$targetBranch" ]; then
 	>&2 echo "ERROR: you are in branch '$currentBranch', please git switch '$targetBranch' before merging $branchToMerge"
