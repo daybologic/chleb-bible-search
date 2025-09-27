@@ -29,13 +29,12 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+set -e
+
 # this function mimics dpkg-parsechangelog --show-field Version
 # so we can generate the version number on FreeBSD or where the
 # Debian toolchain is not available, or it isn't work installing
 # for our purposes.
-
-set -e
-
 dpkg_parsechangelog_version() {
 	local changelog='debian/changelog'
 	if [ ! -f "$changelog" ]; then
