@@ -40,7 +40,8 @@ Description: Chleb Bible Search - Bible Query Service (meta-package)
 
 Package: chleb-bible-search-core
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends},
+Depends: ${shlibs:Depends},
+ ${misc:Depends},
  bash (>= 5.2.15-2),
  jq,
  libdatetime-perl,
