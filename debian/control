@@ -30,6 +30,13 @@ Build-Depends-Indep:
 Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
+Package: chleb-bible-search
+Architecture: all
+Depends: chleb-bible-search-core (= ${binary:Version}), chleb-bible-search-dict (= ${binary:Version})
+Description: Chleb Bible Search - Meta Package
+ This is a meta package that installs both the core bible search service
+ and the dictionary data needed for operation.
+
 Package: chleb-bible-search-core
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends},
@@ -52,7 +59,7 @@ Depends: ${shlibs:Depends}, ${misc:Depends},
  libtime-duration-perl,
  libuuid-tiny-perl,
  libyaml-libyaml-perl,
-Replaces: chleb-bible-search, libreligion-bible-verses-perl
+Replaces: libreligion-bible-verses-perl
 Description: Chleb Bible Search - Bible Query Service
  For further information see:
  .
