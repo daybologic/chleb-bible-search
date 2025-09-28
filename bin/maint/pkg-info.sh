@@ -54,7 +54,7 @@ buildOS=$(uname -o)
 buildArch=$(uname -m)
 buildTime=$(date '+%Y-%m-%dT%H:%M:%S%z')
 buildPerlVersion=$(perl -e 'print "$^V ($])"')
-version=$(dpkg_parsechangelog_version)
+version=$(dpkg_parsechangelog_version) || exit 1
 
 buildChangeset=''
 if [ -f '.git-changeset' ]; then
