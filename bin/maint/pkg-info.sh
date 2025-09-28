@@ -31,19 +31,31 @@
 
 set -e
 
-# this function mimics dpkg-parsechangelog --show-field Version
-# so we can generate the version number on FreeBSD or where the
-# Debian toolchain is not available, or it isn't work installing
-# for our purposes.
+# Parses the given Debian changelog file to extract the version number.
+# Mimics the behavior of `dpkg-parsechangelog --show-field Version`.
+# Arguments:
+#   $1 - The path to the Debian changelog file.
+# Returns:
+#   The extracted version number, or an error message if the version number could not be extracted.
 dpkg_parsechangelog_version() {
-	local changelog='debian/changelog'
-	if [ ! -f "$changelog" ]; then
-		echo "ERROR: $changelog not found" >&2
+	local changelog="$1"
+
+	# Check if the changelog file exists and is readable.
+	if [[ ! -r "$changelog" ]]; then
+		echo "ERROR: Cannot read the changelog file: $changelog" >&2
 		return 1
 	fi
 
-	# Print version from first line of changelog
-	head -n1 "$changelog" | sed -E 's/^[^(]*\(([^)]*)\).*/\1/'
+	# Use awk to process the file line by line.
+	local version_line=$(head -n1 "$changelog" | sed -E 's/^[^(]*\(([^)]*)\).*/\1/')
+
+	# Check if the version line was found.
+	if [[ -z "$version_line" ]]; then
+		echo "ERROR: Could not find the version line in the changelog file: $changelog" >&2
+		return 1
+	fi
+
+	echo "$version_line"
 }
 
 outFile='lib/Chleb/Generated/Info.pm'
@@ -54,7 +66,7 @@ buildOS=$(uname -o)
 buildArch=$(uname -m)
 buildTime=$(date '+%Y-%m-%dT%H:%M:%S%z')
 buildPerlVersion=$(perl -e 'print "$^V ($])"')
-version=$(dpkg_parsechangelog_version) || exit 1
+version=$(dpkg_parsechangelog_version debian/changelog) || exit 1
 
 buildChangeset=''
 if [ -f '.git-changeset' ]; then
