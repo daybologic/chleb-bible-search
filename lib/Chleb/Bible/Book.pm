@@ -247,11 +247,17 @@ sub search {
 			my $found = 0;
 
 			if ($query->wholeword) {
-				$found = 1 if ($text =~ m/\s+$critereonText,/i);
-				$found = 1 if ($text =~ m/\s+$critereonText:/i);
-				$found = 1 if ($text =~ m/\s+$critereonText;/i);
-				$found = 1 if ($text =~ m/^$critereonText\s+/i);
-				$found = 1 if ($text =~ m/\s+$critereonText\s+/i);
+				my @words = split(m/\s+/, $text);
+				foreach my $word (@words) {
+					if (lc($word) eq lc($critereonText)) {
+						$found = 1;
+						last;
+					}
+				}
+				if ($found == 0) {
+					@words = grep { /^$critereonText[\s\.,:;-]/i } @words;
+					$found = (scalar(@words) > 0);
+				}
 			} else {
 				$found = 1 if ($text =~ m/$critereonText/i);
 			}
