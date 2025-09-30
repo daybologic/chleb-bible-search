@@ -405,7 +405,7 @@ sub test {
 
 sub testWholeWordPunctuation {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 3;
 
 	my $term = 'pricks';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
@@ -417,6 +417,12 @@ sub testWholeWordPunctuation {
 	});
 
 	is(scalar(@{ $json->{data} }), 2, 'two results, as expected');
+
+	# assertions to verify the content of the results
+	my $counter = 0;
+	foreach my $result (@{ $json->{data} }) {
+		like($result->{attributes}->{text}, qr/\b$term\b/, sprintf("Result (%d/2) text contains the term '%s'", ++$counter, $term));
+	}
 
 	return EXIT_SUCCESS;
 }
