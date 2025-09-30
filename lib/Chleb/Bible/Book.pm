@@ -255,7 +255,7 @@ sub search {
 					}
 				}
 				if ($found == 0) {
-					@words = grep { /^$critereonText[\s\.,:;-]/i } @words;
+					@words = grep { /^$critereonText[\s\.,:;-]/io } @words;
 					$found = (scalar(@words) > 0);
 				}
 			} else {
