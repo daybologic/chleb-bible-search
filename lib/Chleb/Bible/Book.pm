@@ -244,14 +244,12 @@ sub search {
 			# but you need some more methods in the library to avoid it
 			# Perhaps have a getVerseByKey in _library?
 			my $text = $self->bible->__backend->getVerseDataByKey($verseKey);
-			my $found = 0;
 
+			my $found;
 			if ($query->wholeword) {
-				my @words = split(m/\s+/, $text);
-				@words = grep { /^$critereonText([\s\.,:;-]|$)/i } @words;
-				$found = (scalar(@words) > 0);
+				$found = grep { /^$critereonText(?:[\s\.,:;-]|$)/i } split(m/\s+/, $text);
 			} else {
-				$found = 1 if ($text =~ m/$critereonText/i);
+				$found = ($text =~ m/$critereonText/i);
 			}
 
 			push(@verses, Chleb::Bible::Verse->new({
