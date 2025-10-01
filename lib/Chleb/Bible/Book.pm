@@ -238,8 +238,8 @@ sub search {
 
 	my $rx;
 	if ($query->wholeword) {
-		my $safe = quotemeta($critereonText);
-		$rx = qr/^$safe(?:[\s.,:;()?!-]|$)/i;
+		$critereonText = quotemeta($critereonText);
+		$rx = qr/^$critereonText(?:[\s.,:;()?!-]|$)/i;
 	} else {
 		$rx = qr/$critereonText/i;
 	}
