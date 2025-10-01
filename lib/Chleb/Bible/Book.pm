@@ -235,6 +235,14 @@ sub search {
 	my @verses;
 
 	my $critereonText = $query->text;
+
+	my $rx;
+	if ($query->wholeword) {
+		$rx = qr/^$critereonText(?:[\s\.,:;-]|$)/i;
+	} else {
+		$rx = qr/$critereonText/i;
+	}
+
 	CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
 		my $chapter = $self->getChapterByOrdinal($chapterOrdinal);
 
@@ -247,9 +255,9 @@ sub search {
 
 			my $found;
 			if ($query->wholeword) {
-				$found = grep { /^$critereonText(?:[\s\.,:;-]|$)/i } split(m/\s+/, $text);
+				$found = grep { m/$rx/ } split(m/\s+/, $text);
 			} else {
-				$found = ($text =~ m/$critereonText/i);
+				$found = ($text =~ m/$rx/);
 			}
 
 			push(@verses, Chleb::Bible::Verse->new({
