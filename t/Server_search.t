@@ -403,6 +403,30 @@ sub test {
 	return EXIT_SUCCESS;
 }
 
+sub testWholeWordPunctuation {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $term = 'pricks';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__search({
+		accept => $mediaType,
+		limit => 2,
+		term => $term,
+		wholeword => 'true',
+	});
+
+	is(scalar(@{ $json->{data} }), 2, 'two results, as expected');
+
+	# assertions to verify the content of the results
+	my $counter = 0;
+	foreach my $result (@{ $json->{data} }) {
+		like($result->{attributes}->{text}, qr/\b$term\b/, sprintf("Result (%d/2) text contains the term '%s'", ++$counter, $term));
+	}
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
