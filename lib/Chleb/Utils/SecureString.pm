@@ -10,8 +10,8 @@ Chleb::Utils::SecureString - Detainter
 
 Store trusted strings
 
-TODO: It is possible to get a tainted string via $MODE_PERMIT,
-should we have an optional mode which strips bad characters?
+TODO: Convert fancy characters to ASCII, ie. special directional quotes,
+phantom spaces to normal spaces etc.
 
 =cut
 
@@ -71,10 +71,25 @@ Readonly my $MAX_TEXT_LENGTH => 4_096;
 
 =over
 
+=item C<stripped>
+
+Indicates that tainted characters have been stripped, when the object
+was created in C<$MODE_PERMIT> mode.  This might mean the value carries
+little meaning, or that characters have been modified, but it might be fine,
+ie. punctuation converted, weird characters taken out.
+
+=cut
+
+has stripped => (is => 'ro', isa => 'Bool', default => 0);
+
 =item C<tainted>
 
 B<read-only> value indicating that the L</value> is tainted, and must not be used,
-it does B<not> mean that the bad values have been stripped!
+it does B<not> mean that the bad values have been stripped, for that meaning, see
+L</stripped>.
+
+If you construct a C<SecureString> which has not been created via the detaint function,
+it will have this flag set.
 
 =cut
 
@@ -139,21 +154,21 @@ sub detaint {
 		}
 	}
 
-	my $tainted = 0;
+	my $stripped = 0;
 
+	my $detaintedValue = '';
 	my $l = length($value);
 	my @chars = split(m//, $value);
-	CHAR: for (my $i = 0; $i < $l; $i++) {
+	for (my $i = 0; $i < $l; $i++) {
 		my $c = $chars[$i];
 		my $rangePointer = 0;
 		for (my $rangePointer = 0; $rangePointer < scalar(@RANGES); $rangePointer += 2) {
 			my ($rangeBegin, $rangeEnd) = ($RANGES[$rangePointer], $RANGES[$rangePointer+1]);
 			$rangeEnd = $rangeBegin unless (defined($rangeEnd)); # single char in range
 			my $cv = oct($c);
-			if ($cv < $rangeBegin || $cv > $rangeEnd) {
+			if ($cv < $rangeBegin || $cv > $rangeEnd) { # out of range
 				if ($mode && $mode == $MODE_PERMIT) {
-					$tainted = 1;
-					last CHAR;
+					$stripped = 1;
 				} else {
 					die(Chleb::Utils::BooleanParserUserException->raise(
 						undef,
@@ -164,13 +179,16 @@ sub detaint {
 						$c,
 					));
 				}
+			} else {
+				$detaintedValue .= $c;
 			}
 		}
 	}
 
 	return __PACKAGE__->new({
-		tainted => $tainted,
-		value   => $value,
+		stripped => $stripped,
+		tainted  => 0,
+		value    => $detaintedValue,
 	});
 }
 
