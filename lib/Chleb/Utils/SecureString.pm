@@ -1,6 +1,7 @@
 package Chleb::Utils::SecureString;
 use strict;
 use warnings;
+use utf8;
 
 =head1 NAME
 
@@ -18,6 +19,7 @@ phantom spaces to normal spaces etc.
 use Chleb::Utils::TypeParserException;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
+use Moose;
 use Readonly;
 
 =head1 CONSTANTS
@@ -129,7 +131,7 @@ sub detaint {
 	my ($value, $mode) = @_;
 
 	if (!defined($value)) {
-		die(Chleb::Utils::BooleanParserUserException->raise(
+		die(Chleb::Utils::TypeParserException->raise(
 			undef,
 			sprintf(
 				"\$value (<undef>) in call to %s/detaint, should be a %s or scalar (Str)",
@@ -143,7 +145,7 @@ sub detaint {
 			$value = $value->value;
 			return $value unless ($tainted); # shortcut because we know it's safe
 		} else {
-			die(Chleb::Utils::BooleanParserUserException->raise(
+			die(Chleb::Utils::TypeParserException->raise(
 				undef,
 				sprintf(
 					"Wrong \$value ref type (%s) in call to %s/detaint, should be a %s or scalar (Str)",
@@ -155,32 +157,38 @@ sub detaint {
 	}
 
 	my $stripped = 0;
-
 	my $detaintedValue = '';
-	my $l = length($value);
+
 	my @chars = split(m//, $value);
-	for (my $i = 0; $i < $l; $i++) {
-		my $c = $chars[$i];
-		my $rangePointer = 0;
-		for (my $rangePointer = 0; $rangePointer < scalar(@RANGES); $rangePointer += 2) {
+	for my $c (@chars) {
+		my $cv = ord($c);
+		my $inAnyRange = 0;
+
+		for (my $rangePointer = 0; $rangePointer < @RANGES; $rangePointer += 2) {
 			my ($rangeBegin, $rangeEnd) = ($RANGES[$rangePointer], $RANGES[$rangePointer+1]);
-			$rangeEnd = $rangeBegin unless (defined($rangeEnd)); # single char in range
-			my $cv = oct($c);
-			if ($cv < $rangeBegin || $cv > $rangeEnd) { # out of range
-				if ($mode && $mode == $MODE_PERMIT) {
-					$stripped = 1;
-				} else {
-					die(Chleb::Utils::BooleanParserUserException->raise(
-						undef,
-						sprintf(
-							'$value contains illegal character 0x%X at position %d of %d',
-							$cv, $i+1, $l,
-						),
-						$c,
-					));
-				}
+			$rangeEnd = $rangeBegin unless(defined($rangeEnd));
+			if ($cv >= $rangeBegin && $cv <= $rangeEnd) {
+				$inAnyRange = 1;
+				last; # no need to check further ranges
+			}
+		}
+
+		if ($inAnyRange) {
+			$detaintedValue .= $c;
+		} else {
+			if ($mode && $mode == $MODE_PERMIT) {
+				$stripped = 1; # drop character silently
 			} else {
-				$detaintedValue .= $c;
+				die Chleb::Utils::TypeParserException->raise(
+					undef,
+					sprintf(
+						'$value contains illegal character 0x%X at position %d of %d',
+						$cv,
+						@chars ? (scalar(@chars) - (@chars - $.)) : 0,
+						scalar(@chars)
+					),
+					$c,
+				);
 			}
 		}
 	}
