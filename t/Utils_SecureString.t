@@ -124,6 +124,56 @@ sub testDetaintPermissiveUTF8String {
 	return EXIT_SUCCESS;
 }
 
+sub testDetaintPermissiveUndef {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint(undef, $Chleb::Utils::SecureString::MODE_PERMIT);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = '$value (<undef>) in call to Chleb::Utils::SecureString/detaint, should be a Chleb::Utils::SecureString or scalar (Str)';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => undef,
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
+sub testDetaintTrapUndef {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint(undef, $Chleb::Utils::SecureString::MODE_TRAP);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = '$value (<undef>) in call to Chleb::Utils::SecureString/detaint, should be a Chleb::Utils::SecureString or scalar (Str)';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => undef,
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
