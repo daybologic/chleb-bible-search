@@ -226,6 +226,58 @@ sub testDetaintTrapUnblessed {
 	return EXIT_SUCCESS;
 }
 
+sub testDetaintPermissiveWrongbless {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $value = $self;
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_PERMIT);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = 'Wrong $value ref type (UtilsSecureStringTests) in call to Chleb::Utils::SecureString/detaint, should be a Chleb::Utils::SecureString or scalar (Str)';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => "$value",
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
+sub testDetaintTrapWrongbless {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $value = $self;
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_TRAP);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = 'Wrong $value ref type (UtilsSecureStringTests) in call to Chleb::Utils::SecureString/detaint, should be a Chleb::Utils::SecureString or scalar (Str)';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => "$value",
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
