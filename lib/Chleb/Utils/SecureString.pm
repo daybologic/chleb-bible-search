@@ -163,7 +163,8 @@ sub detaint {
 	my $detaintedValue = '';
 
 	my @chars = split(m//, $value);
-	for my $c (@chars) {
+	for (my $ci = 0; $ci < scalar(@chars); $ci++) {
+		my $c = $chars[$ci];
 		my $cv = ord($c);
 		my $inAnyRange = 0;
 
@@ -187,10 +188,10 @@ sub detaint {
 					sprintf(
 						'$value contains illegal character 0x%X at position %d of %d',
 						$cv,
-						@chars ? (scalar(@chars) - (@chars - $.)) : 0,
-						scalar(@chars)
+						$ci + 1,
+						scalar(@chars),
 					),
-					$c,
+					$value,
 				);
 			}
 		}
