@@ -16,6 +16,7 @@ phantom spaces to normal spaces etc.
 
 =cut
 
+use Chleb::Exception;
 use Chleb::Utils::TypeParserException;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
@@ -176,8 +177,15 @@ sub detaint {
 		if ($inAnyRange) {
 			$detaintedValue .= $c;
 		} else {
-			if ($mode && $mode == $MODE_PERMIT) {
-				$stripped = 1; # drop character silently
+			if ($mode) {
+				if ($mode == $MODE_PERMIT) {
+					$stripped = 1; # drop character silently
+				} elsif ($mode != $MODE_TRAP) {
+					die Chleb::Exception->raise(
+						HTTP_INTERNAL_SERVER_ERROR,
+						'Illegal mode in call to Chleb::Utils::SecureString/detaint',
+					);
+				}
 			} else {
 				die Chleb::Utils::TypeParserException->raise(
 					undef,
