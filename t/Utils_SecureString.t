@@ -104,7 +104,27 @@ sub testDetaintPermissiveNormalString {
 	return EXIT_SUCCESS;
 }
 
-sub testDetaintPermissiveUTF8String {
+sub testDetaintPermissiveUTF8StringLow {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $strippedValue = $self->uniqueStr();
+	my $value = "\a$strippedValue\a";
+	my $sut = Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_PERMIT);
+
+	cmp_deeply($sut, all(
+		isa('Chleb::Utils::SecureString'),
+		methods(
+			stripped => bool(1),
+			tainted  => bool(0),
+			value    => $strippedValue,
+		),
+	), 'object') or diag(explain($sut->value));
+
+	return EXIT_SUCCESS;
+}
+
+sub testDetaintPermissiveUTF8StringHigh {
 	my ($self) = @_;
 	plan tests => 1;
 
