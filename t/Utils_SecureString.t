@@ -104,6 +104,25 @@ sub testDetaintPermissiveNormalString {
 	return EXIT_SUCCESS;
 }
 
+sub testDetaintTrapNormalString {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $value = $self->uniqueStr();
+	my $sut = Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_TRAP);
+
+	cmp_deeply($sut, all(
+		isa('Chleb::Utils::SecureString'),
+		methods(
+			stripped => bool(0),
+			tainted  => bool(0),
+			value    => $value,
+		),
+	), 'object');
+
+	return EXIT_SUCCESS;
+}
+
 sub testDetaintPermissiveUTF8StringLow {
 	my ($self) = @_;
 	plan tests => 1;
@@ -124,6 +143,33 @@ sub testDetaintPermissiveUTF8StringLow {
 	return EXIT_SUCCESS;
 }
 
+sub testDetaintTrapUTF8StringLow {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $strippedValue = $self->uniqueStr();
+	my $value = "\a$strippedValue\a";
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_TRAP);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = '$value contains illegal character 0x7 at position 1 of 7';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => "$value",
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
 sub testDetaintPermissiveUTF8StringHigh {
 	my ($self) = @_;
 	plan tests => 1;
@@ -140,6 +186,33 @@ sub testDetaintPermissiveUTF8StringHigh {
 			value    => $strippedValue,
 		),
 	), 'object') or diag(explain($sut->value));
+
+	return EXIT_SUCCESS;
+}
+
+sub testDetaintTrapUTF8StringHigh {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my ($strippedValueFirst, $strippedValueSecond) = ('be', 'an');
+	my $value = $strippedValueFirst . '🙏🙌' . $strippedValueSecond . '☦️';
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_TRAP);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = '$value contains illegal character 0x1F64F at position 3 of 8';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => "$value",
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
 
 	return EXIT_SUCCESS;
 }
