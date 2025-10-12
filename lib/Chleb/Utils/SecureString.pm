@@ -210,12 +210,10 @@ sub __checkMode {
 	return if ($mode == $MODE_TRAP);
 	return if ($mode == $MODE_PERMIT);
 
-	die Chleb::Exception->raise(
+	return die Chleb::Exception->raise(
 		HTTP_INTERNAL_SERVER_ERROR,
 		'Illegal mode in call to Chleb::Utils::SecureString/detaint',
 	);
-
-	return; # perlcritic
 }
 
 =back
