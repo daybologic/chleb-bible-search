@@ -151,7 +151,7 @@ sub detaint {
 					"Wrong \$value ref type (%s) in call to %s/detaint, should be a %s or scalar (Str)",
 					ref($value), __PACKAGE__, __PACKAGE__,
 				),
-				$value,
+				"$value",
 			));
 		}
 	}
