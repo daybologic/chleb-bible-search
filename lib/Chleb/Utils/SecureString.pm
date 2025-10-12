@@ -131,6 +131,8 @@ regardless of mode.
 sub detaint {
 	my ($value, $mode) = @_;
 
+	__checkMode($mode);
+
 	if (!defined($value)) {
 		die(Chleb::Utils::TypeParserException->raise(
 			undef,
@@ -177,15 +179,8 @@ sub detaint {
 		if ($inAnyRange) {
 			$detaintedValue .= $c;
 		} else {
-			if ($mode) {
-				if ($mode == $MODE_PERMIT) {
-					$stripped = 1; # drop character silently
-				} elsif ($mode != $MODE_TRAP) {
-					die Chleb::Exception->raise(
-						HTTP_INTERNAL_SERVER_ERROR,
-						'Illegal mode in call to Chleb::Utils::SecureString/detaint',
-					);
-				}
+			if ($mode && $mode == $MODE_PERMIT) {
+				$stripped = 1; # drop character silently
 			} else {
 				die Chleb::Utils::TypeParserException->raise(
 					undef,
@@ -206,6 +201,21 @@ sub detaint {
 		tainted  => 0,
 		value    => $detaintedValue,
 	});
+}
+
+sub __checkMode {
+	my ($mode) = @_;
+
+	return unless ($mode);
+	return if ($mode == $MODE_TRAP);
+	return if ($mode == $MODE_PERMIT);
+
+	die Chleb::Exception->raise(
+		HTTP_INTERNAL_SERVER_ERROR,
+		'Illegal mode in call to Chleb::Utils::SecureString/detaint',
+	);
+
+	return; # perlcritic
 }
 
 =back

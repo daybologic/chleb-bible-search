@@ -278,13 +278,39 @@ sub testDetaintTrapWrongbless {
 	return EXIT_SUCCESS;
 }
 
-sub testIllegalMode {
+sub testIllegalModeUTF8 {
 	my ($self) = @_;
 	plan tests => 2;
 
 	my $exceptionType = 'Chleb::Exception';
 	my $mode = -1;
 	my $value = '😲';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint($value, $mode);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = 'Illegal mode in call to Chleb::Utils::SecureString/detaint';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			location => undef,
+			statusCode => 500,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
+sub testIllegalModeNormalString {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $exceptionType = 'Chleb::Exception';
+	my $mode = -1;
+	my $value = $self->uniqueStr();
 
 	throws_ok {
 		Chleb::Utils::SecureString::detaint($value, $mode);
