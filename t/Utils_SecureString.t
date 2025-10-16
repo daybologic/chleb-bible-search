@@ -156,7 +156,7 @@ sub testDetaintTrapUTF8StringLow {
 	} $exceptionType, $exceptionType;
 	my $evalError = $EVAL_ERROR; # save ASAP
 
-	my $description = '$value contains illegal character 0x7 at position 1 of 7';
+	my $description = '$value contains illegal character 0x7 at position 1 of ' . length($value);
 	cmp_deeply($evalError, all(
 		isa($exceptionType),
 		methods(
