@@ -35,16 +35,65 @@ $MODE_TRAP (default)
 
 $MODE_PERMIT
 
+=item *
+
+$MODE_COERCE
+
+=item *
+
+$MODE_TRIM
+
 =back
 
 =cut
 
-Readonly our $MODE_TRAP => 0;
-Readonly our $MODE_PERMIT => 1;
+Readonly our $MODE_TRAP   => 1 << 0;  # 0x0001
+Readonly our $MODE_PERMIT => 1 << 1;  # 0x0002
+Readonly our $MODE_COERCE => 1 << 2;  # 0x0004
+Readonly our $MODE_TRIM   => 1 << 3;  # 0x0008
 
 =head1 PRIVATE CONSTANTS
 
 =over
+
+=item C<%COERCIONS>
+
+A list of Unicode characters and their LATIN-1 translations.
+You need tm specify L</$MODE_COERCE> in order to take advantage of these.
+
+=cut
+
+Readonly my %COERCIONS => (
+	"\x{A0}"   => ' ',
+	"\x{2002}" => ' ',
+	"\x{2003}" => ' ',
+	"\x{2009}" => ' ',
+	"\x{200A}" => ' ',
+	"\x{2008}" => ' ',
+	"\x{3000}" => ' ',
+	"\x{200B}" => ' ',
+	"\x{FEFF}" => ' ',
+
+	"\x{201C}" => '"',
+	"\x{201D}" => '"',
+	"\x{201E}" => '"',
+	"\x{AB}"   => '"',
+	"\x{BB}"   => '"',
+	"\x{301D}" => '"',
+	"\x{301E}" => '"',
+
+	"\x{2018}" => "'",
+	"\x{2019}" => "'",
+	"\x{201A}" => "'",
+	"\x{2018}" => "'",
+	"\x{2019}" => "'",
+	"\x{2BB}"  => "'",
+	"\x{2BB}"  => "'",
+	"\x{3010}" => "'",
+	"\x{3011}" => "'",
+
+	"–"        => '-',
+);
 
 =item C<@RANGES>
 
@@ -74,6 +123,15 @@ Readonly my $MAX_TEXT_LENGTH => 4_096;
 
 =over
 
+=item C<coerced>
+
+Indicates that characters have been coerced for stylistic characters, such
+as special spaces and quotes to raw LATIN-1.
+
+=cut
+
+has coerced => (is => 'ro', isa => 'Bool', default => 0);
+
 =item C<stripped>
 
 Indicates that tainted characters have been stripped, when the object
@@ -97,6 +155,14 @@ it will have this flag set.
 =cut
 
 has tainted => (is => 'ro', isa => 'Bool', default => 1);
+
+=item C<trimmed>
+
+True if, and only if, whitespace has been trimmed, which requires C<$MODE_TRIM> to be requested.
+
+=cut
+
+has trimmed => (is => 'ro', isa => 'Bool', default => 0);
 
 =item C<value>
 
@@ -160,27 +226,42 @@ sub detaint {
 	}
 
 	my $stripped = 0;
+	my $coerced = 0;
 	my $detaintedValue = '';
 
 	my @chars = split(m//, $value);
 	for (my $ci = 0; $ci < scalar(@chars); $ci++) {
+		my $thisCharCoerced = 0;
 		my $c = $chars[$ci];
 		my $cv = ord($c);
-		my $inAnyRange = 0;
 
-		for (my $rangePointer = 0; $rangePointer < @RANGES; $rangePointer += 2) {
-			my ($rangeBegin, $rangeEnd) = ($RANGES[$rangePointer], $RANGES[$rangePointer+1]);
-			$rangeEnd = $rangeBegin unless(defined($rangeEnd));
-			if ($cv >= $rangeBegin && $cv <= $rangeEnd) {
-				$inAnyRange = 1;
-				last; # no need to check further ranges
+		if (defined($mode) && ($mode & $MODE_COERCE) == $MODE_COERCE) {
+			COERCE_LOOP: while (my ($bad, $good) = each(%COERCIONS)) {
+				next COERCE_LOOP if ($cv != ord($bad));
+
+				$c = $chars[$ci] = $good;
+				$cv = ord($c);
+				$coerced = $thisCharCoerced = 1;
+			}
+		}
+
+		my $inAnyRange = 0;
+		if ($thisCharCoerced) {
+			$inAnyRange = 1;
+		} else {
+			for (my $rangePointer = 0; $rangePointer < @RANGES; $rangePointer += 2) {
+				my ($rangeBegin, $rangeEnd) = ($RANGES[$rangePointer], $RANGES[$rangePointer+1]);
+				$rangeEnd = $rangeBegin unless(defined($rangeEnd));
+				if ($cv >= $rangeBegin && $cv <= $rangeEnd) {
+					$inAnyRange = 1;
+				}
 			}
 		}
 
 		if ($inAnyRange) {
 			$detaintedValue .= $c;
 		} else {
-			if ($mode && $mode == $MODE_PERMIT) {
+			if (defined($mode) && ($mode & $MODE_PERMIT) == $MODE_PERMIT) {
 				$stripped = 1; # drop character silently
 			} else {
 				die Chleb::Utils::TypeParserException->raise(
@@ -197,9 +278,18 @@ sub detaint {
 		}
 	}
 
+	my $preTrim = $detaintedValue;
+	if (defined($mode) && ($mode & $MODE_TRIM) == $MODE_TRIM) {
+		$detaintedValue =~ s/^\s+//;
+		$detaintedValue =~ s/\s+$//;
+		$detaintedValue =~ s/\s+/ /g;
+	}
+
 	return __PACKAGE__->new({
+		coerced  => $coerced,
 		stripped => $stripped,
 		tainted  => 0,
+		trimmed  => (length($preTrim) > length($detaintedValue)),
 		value    => $detaintedValue,
 	});
 }
@@ -207,9 +297,11 @@ sub detaint {
 sub __checkMode {
 	my ($mode) = @_;
 
-	return unless ($mode);
-	return if ($mode == $MODE_TRAP);
-	return if ($mode == $MODE_PERMIT);
+	return unless (defined($mode));
+	my @modes = ($MODE_TRAP, $MODE_PERMIT, $MODE_COERCE, $MODE_TRIM);
+	foreach my $checkMode (@modes) {
+		return if (($mode & $checkMode) == $checkMode);
+	}
 
 	return die Chleb::Exception->raise(
 		HTTP_INTERNAL_SERVER_ERROR,

@@ -57,8 +57,10 @@ sub testDirectlyInstantiate {
 	cmp_deeply($sut, all(
 		isa('Chleb::Utils::SecureString'),
 		methods(
+			coerced  => bool(0),
 			stripped => bool(0),
 			tainted  => bool(1),
+			trimmed  => bool(0),
 			value    => $value,
 		),
 	), 'object');
@@ -76,8 +78,10 @@ sub testUTF8 {
 	cmp_deeply($sut, all(
 		isa('Chleb::Utils::SecureString'),
 		methods(
+			coerced  => bool(0),
 			stripped => bool(0),
 			tainted  => bool(1),
+			trimmed  => bool(0),
 			value    => "\x{1F64F}\x{2626}\x{FE0F}\x{1F64C}",
 		),
 	), 'object');
@@ -95,8 +99,10 @@ sub testDetaintPermissiveNormalString {
 	cmp_deeply($sut, all(
 		isa('Chleb::Utils::SecureString'),
 		methods(
+			coerced  => bool(0),
 			stripped => bool(0),
 			tainted  => bool(0),
+			trimmed  => bool(0),
 			value    => $value,
 		),
 	), 'object');
@@ -114,8 +120,10 @@ sub testDetaintTrapNormalString {
 	cmp_deeply($sut, all(
 		isa('Chleb::Utils::SecureString'),
 		methods(
+			coerced  => bool(0),
 			stripped => bool(0),
 			tainted  => bool(0),
+			trimmed  => bool(0),
 			value    => $value,
 		),
 	), 'object');
@@ -134,8 +142,10 @@ sub testDetaintPermissiveUTF8StringLow {
 	cmp_deeply($sut, all(
 		isa('Chleb::Utils::SecureString'),
 		methods(
+			coerced  => bool(0),
 			stripped => bool(1),
 			tainted  => bool(0),
+			trimmed  => bool(0),
 			value    => $strippedValue,
 		),
 	), 'object') or diag(explain($sut->value));
@@ -181,8 +191,10 @@ sub testDetaintPermissiveUTF8StringHigh {
 	cmp_deeply($sut, all(
 		isa('Chleb::Utils::SecureString'),
 		methods(
+			coerced  => bool(0),
 			stripped => bool(1),
 			tainted  => bool(0),
+			trimmed  => bool(0),
 			value    => $strippedValue,
 		),
 	), 'object') or diag(explain($sut->value));
@@ -376,7 +388,7 @@ sub testIllegalModeUTF8 {
 	plan tests => 2;
 
 	my $exceptionType = 'Chleb::Exception';
-	my $mode = -1;
+	my $mode = 1 << 4;
 	my $value = '😲';
 
 	throws_ok {
@@ -402,7 +414,7 @@ sub testIllegalModeNormalString {
 	plan tests => 2;
 
 	my $exceptionType = 'Chleb::Exception';
-	my $mode = -1;
+	my $mode = 1 << 4;
 	my $value = $self->uniqueStr();
 
 	throws_ok {
@@ -419,6 +431,37 @@ sub testIllegalModeNormalString {
 			statusCode => 500,
 		),
 	), $description);
+
+	return EXIT_SUCCESS;
+}
+
+sub testCoerceAndTrim {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $coercedValue = "\"Christ Jesus; The Lord\", as he is known";# TODO use single quotes on 'he'
+	my $inputValue = "\x{2002}“Christ\x{00a0}Jesus;\x{2003}The\x{2009}Lord”,\x{200a}as\x{2008}he\x{3000}is\x{200b}known\x{feff}";
+	my $mode = $Chleb::Utils::SecureString::MODE_COERCE | $Chleb::Utils::SecureString::MODE_TRIM;
+
+	my $sut;
+	eval {
+		$sut = Chleb::Utils::SecureString::detaint($inputValue, $mode);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		diag($evalError->toString());
+	}
+
+	cmp_deeply($sut, all(
+		isa('Chleb::Utils::SecureString'),
+		methods(
+			coerced  => bool(1),
+			stripped => bool(0),
+			tainted  => bool(0),
+			trimmed  => bool(1),
+			value    => $coercedValue,
+		),
+	), 'object') or diag(explain($sut->value));
 
 	return EXIT_SUCCESS;
 }
