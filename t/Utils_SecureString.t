@@ -497,6 +497,64 @@ sub testCoercePermitAndTrim {
 	return EXIT_SUCCESS;
 }
 
+sub testCoerceAndPermit {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $coercedValue = " \"Christ Jesus; The Lord\"  - as 'he`' is known ";
+	my $inputValue = "\x{2002}“Christ\x{00a0}Jesus;\x{2003}The\x{2009}Lord”\x{200a} \x{2013} as\x{2008}\x{2018}he`\x{2019}\x{3000}is\x{200b}known\x{feff}\x{2020}";
+	my $mode = $Chleb::Utils::SecureString::MODE_COERCE | $Chleb::Utils::SecureString::MODE_PERMIT;
+
+	my $sut;
+	eval {
+		$sut = Chleb::Utils::SecureString::detaint($inputValue, $mode);
+	};
+
+	if (my $evalError = $EVAL_ERROR) {
+		diag($evalError->toString());
+	}
+
+	cmp_deeply($sut, all(
+		isa('Chleb::Utils::SecureString'),
+		methods(
+			coerced  => bool(1),
+			stripped => bool(1),
+			tainted  => bool(0),
+			trimmed  => bool(0),
+			value    => $coercedValue,
+		),
+	), 'object') or diag(explain($sut->value));
+
+	return EXIT_SUCCESS;
+}
+
+sub testCoerce {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $coercedValue = " \"Christ Jesus; The Lord\"  - as 'he`' is known ";
+	my $inputValue = "\x{2002}“Christ\x{00a0}Jesus;\x{2003}The\x{2009}Lord”\x{200a} \x{2013} as\x{2008}\x{2018}he`\x{2019}\x{3000}is\x{200b}known\x{feff}\x{2020}";
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint($inputValue, $Chleb::Utils::SecureString::MODE_COERCE);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = '$value contains illegal character 0x2020 at position 48 of 48';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => "\x{2002}“Christ\x{00a0}Jesus;\x{2003}The\x{2009}Lord”\x{200a} \x{2013} as\x{2008}\x{2018}he`\x{2019}\x{3000}is\x{200b}known\x{feff}\x{2020}",
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
