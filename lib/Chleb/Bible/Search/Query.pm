@@ -46,7 +46,7 @@ use Time::HiRes ();
 Readonly our $SEARCH_RESULTS_LIMIT => 50;
 
 subtype 'MooseTrimmedStr', as 'Str';
-coerce  'MooseTrimmedStr', from 'Str', via {
+coerce 'MooseTrimmedStr', from 'Chleb::Utils::SecureString', via {
 	__detaint($_)
 };
 
@@ -125,7 +125,7 @@ sub __detaint {
 	my ($value) = @_;
 	my $mode = $Chleb::Utils::SecureString::MODE_TRAP
 	    | $Chleb::Utils::SecureString::MODE_COERCE
-	    | $Chleb::Utils::SecureString::MODE_STRIP;
+	    | $Chleb::Utils::SecureString::MODE_TRIM;
 
 	my $secureString = Chleb::Utils::SecureString::detaint($value, $mode);
 	return $secureString->value;
