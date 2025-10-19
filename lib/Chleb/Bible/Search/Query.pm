@@ -32,16 +32,23 @@ package Chleb::Bible::Search::Query;
 use strict;
 use warnings;
 use Moose;
+use Moose::Util::TypeConstraints;
 
 extends 'Chleb::Bible::Base';
 
 use Data::Dumper;
 use Moose::Util::TypeConstraints qw(enum);
 use Chleb::Bible::Search::Results;
+use Chleb::Utils::SecureString;
 use Readonly;
 use Time::HiRes ();
 
 Readonly our $SEARCH_RESULTS_LIMIT => 50;
+
+subtype 'MooseTrimmedStr', as 'Str';
+coerce  'MooseTrimmedStr', from 'Str', via {
+	__detaint($_)
+};
 
 has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
@@ -51,7 +58,7 @@ has testament => (is => 'ro', isa => enum(['old', 'new']), required => 0);
 
 has bookShortName => (is => 'ro', isa => 'Str', required => 0);
 
-has text => (is => 'ro', isa => 'Str', required => 1);
+has text => (is => 'ro', isa => 'MooseTrimmedStr', required => 1, coerce => 1);
 
 has wholeword => (is => 'rw', isa => 'Bool', default => 0);
 
@@ -112,6 +119,16 @@ sub translation {
 sub toString {
 	my ($self) = @_;
 	return sprintf("%s text '%s'", 'Query', $self->text);
+}
+
+sub __detaint {
+	my ($value) = @_;
+	my $mode = $Chleb::Utils::SecureString::MODE_TRAP
+	    | $Chleb::Utils::SecureString::MODE_COERCE
+	    | $Chleb::Utils::SecureString::MODE_STRIP;
+
+	my $secureString = Chleb::Utils::SecureString::detaint($value, $mode);
+	return $secureString->value;
 }
 
 __PACKAGE__->meta->make_immutable;
