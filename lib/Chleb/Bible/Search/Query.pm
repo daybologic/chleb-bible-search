@@ -125,6 +125,7 @@ sub __detaint {
 	my ($value) = @_;
 	my $mode = $Chleb::Utils::SecureString::MODE_TRAP
 	    | $Chleb::Utils::SecureString::MODE_COERCE
+	    | $Chleb::Utils::SecureString::MODE_STRIP_QUOTES
 	    | $Chleb::Utils::SecureString::MODE_TRIM;
 
 	my $secureString = Chleb::Utils::SecureString::detaint($value, $mode);

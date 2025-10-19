@@ -488,7 +488,7 @@ sub testIllegalModeUTF8 {
 	plan tests => 2;
 
 	my $exceptionType = 'Chleb::Exception';
-	my $mode = 1 << 4;
+	my $mode = 1 << 5;
 	my $value = '😲';
 
 	throws_ok {
@@ -514,7 +514,7 @@ sub testIllegalModeNormalString {
 	plan tests => 2;
 
 	my $exceptionType = 'Chleb::Exception';
-	my $mode = 1 << 4;
+	my $mode = 1 << 5;
 	my $value = $self->uniqueStr();
 
 	throws_ok {

@@ -45,10 +45,11 @@ $MODE_TRIM
 
 =cut
 
-Readonly our $MODE_TRAP   => 1 << 0;  # 0x0001
-Readonly our $MODE_PERMIT => 1 << 1;  # 0x0002
-Readonly our $MODE_COERCE => 1 << 2;  # 0x0004
-Readonly our $MODE_TRIM   => 1 << 3;  # 0x0008
+Readonly our $MODE_TRAP         => 1 << 0; # 0x0001
+Readonly our $MODE_PERMIT       => 1 << 1; # 0x0002
+Readonly our $MODE_COERCE       => 1 << 2; # 0x0004
+Readonly our $MODE_TRIM         => 1 << 3; # 0x0008
+Readonly our $MODE_STRIP_QUOTES => 1 << 4; # 0x0010
 
 =head1 PRIVATE CONSTANTS
 
@@ -210,7 +211,7 @@ sub __checkMode {
 	my ($mode) = @_;
 
 	return 0 unless (defined($mode));
-	my @modes = ($MODE_TRAP, $MODE_PERMIT, $MODE_COERCE, $MODE_TRIM);
+	my @modes = ($MODE_TRAP, $MODE_PERMIT, $MODE_COERCE, $MODE_TRIM, $MODE_STRIP_QUOTES);
 	foreach my $checkMode (@modes) {
 		return $mode if (($mode & $checkMode) == $checkMode);
 	}
@@ -259,7 +260,7 @@ sub __detaint {
 		my $c = $chars[$ci];
 		my $cv = ord($c);
 
-		if (($mode & $MODE_COERCE) == $MODE_COERCE) {
+		if ($mode & $MODE_COERCE) {
 			COERCE_LOOP: while (my ($bad, $good) = each(%COERCIONS)) {
 				next COERCE_LOOP if ($cv != ord($bad));
 
@@ -285,7 +286,7 @@ sub __detaint {
 		if ($inAnyRange) {
 			$detaintedValue .= $c;
 		} else {
-			if (($mode & $MODE_PERMIT) == $MODE_PERMIT) {
+			if ($mode & $MODE_PERMIT) {
 				$stripped = 1; # drop character silently
 			} else {
 				die Chleb::Utils::TypeParserException->raise(
@@ -302,8 +303,13 @@ sub __detaint {
 		}
 	}
 
+	if ($mode & $MODE_STRIP_QUOTES) {
+		$detaintedValue =~ s/"//g;
+		$stripped = 1;
+	}
+
 	my $preTrim = $detaintedValue;
-	if (($mode & $MODE_TRIM) == $MODE_TRIM) {
+	if ($mode & $MODE_TRIM) {
 		$detaintedValue =~ s/^\s+//;
 		$detaintedValue =~ s/\s+$//;
 		$detaintedValue =~ s/\s+/ /g;
@@ -317,7 +323,6 @@ sub __detaint {
 		value    => $detaintedValue,
 	});
 }
-
 
 =back
 
