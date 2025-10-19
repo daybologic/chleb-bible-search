@@ -160,7 +160,7 @@ sub testDetaintTrapNormalString {
 
 sub testDetaintTrapNormalObjectTainted {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $inputValue = $self->uniqueStr();
 	my $value = Chleb::Utils::SecureString->new({ value => $inputValue });
@@ -177,12 +177,14 @@ sub testDetaintTrapNormalObjectTainted {
 		),
 	), 'object');
 
+	isnt($sut, $value, 'tainted object replaced (no shortcut)');
+
 	return EXIT_SUCCESS;
 }
 
 sub testDetaintTrapNormalObjectNotTainted {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $inputValue = $self->uniqueStr();
 	my $value = Chleb::Utils::SecureString->new({ tainted => 0, value => $inputValue });
@@ -198,6 +200,8 @@ sub testDetaintTrapNormalObjectNotTainted {
 			value    => $inputValue,
 		),
 	), 'object');
+
+	is($sut, $value, 'untainted object returned (shortcut)');
 
 	return EXIT_SUCCESS;
 }
