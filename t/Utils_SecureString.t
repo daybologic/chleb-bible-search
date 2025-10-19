@@ -158,12 +158,34 @@ sub testDetaintTrapNormalString {
 	return EXIT_SUCCESS;
 }
 
-sub testDetaintTrapNormalObject {
+sub testDetaintTrapNormalObjectTainted {
 	my ($self) = @_;
 	plan tests => 1;
 
 	my $inputValue = $self->uniqueStr();
 	my $value = Chleb::Utils::SecureString->new({ value => $inputValue });
+	my $sut = Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_TRAP);
+
+	cmp_deeply($sut, all(
+		isa('Chleb::Utils::SecureString'),
+		methods(
+			coerced  => bool(0),
+			stripped => bool(0),
+			tainted  => bool(0),
+			trimmed  => bool(0),
+			value    => $inputValue,
+		),
+	), 'object');
+
+	return EXIT_SUCCESS;
+}
+
+sub testDetaintTrapNormalObjectNotTainted {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $inputValue = $self->uniqueStr();
+	my $value = Chleb::Utils::SecureString->new({ tainted => 0, value => $inputValue });
 	my $sut = Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_TRAP);
 
 	cmp_deeply($sut, all(

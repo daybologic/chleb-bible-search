@@ -210,9 +210,8 @@ sub detaint {
 		));
 	} elsif (ref($value)) {
 		if (ref($value) eq __PACKAGE__) {
-			my $tainted = $value->tainted;
+			return $value unless ($value->tainted); # shortcut because we know it's safe
 			$value = $value->value;
-			return $value unless ($tainted); # shortcut because we know it's safe
 		} else {
 			die(Chleb::Utils::TypeParserException->raise(
 				undef,
