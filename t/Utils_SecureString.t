@@ -131,6 +131,28 @@ sub testDetaintTrapNormalString {
 	return EXIT_SUCCESS;
 }
 
+sub testDetaintTrapNormalObject {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $inputValue = $self->uniqueStr();
+	my $value = Chleb::Utils::SecureString->new({ value => $inputValue });
+	my $sut = Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_TRAP);
+
+	cmp_deeply($sut, all(
+		isa('Chleb::Utils::SecureString'),
+		methods(
+			coerced  => bool(0),
+			stripped => bool(0),
+			tainted  => bool(0),
+			trimmed  => bool(0),
+			value    => $inputValue,
+		),
+	), 'object');
+
+	return EXIT_SUCCESS;
+}
+
 sub testDetaintPermissiveUTF8StringLow {
 	my ($self) = @_;
 	plan tests => 1;
@@ -215,7 +237,7 @@ sub testDetaintTrapUTF8StringHigh {
 	} $exceptionType, $exceptionType;
 	my $evalError = $EVAL_ERROR; # save ASAP
 
-	my $description = '$value contains illegal character 0x1F64F at position 3 of 8';
+	my $description = '$value contains illegal character 0x1f64f at position 3 of 8';
 	cmp_deeply($evalError, all(
 		isa($exceptionType),
 		methods(
@@ -237,6 +259,31 @@ sub testDetaintPermissiveUndef {
 
 	throws_ok {
 		Chleb::Utils::SecureString::detaint(undef, $Chleb::Utils::SecureString::MODE_PERMIT);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = '$value (<undef>) in call to Chleb::Utils::SecureString/detaint, should be a Chleb::Utils::SecureString or scalar (Str)';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => undef,
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	return EXIT_SUCCESS;
+}
+
+sub testDetaintDefaultModeUndef {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint(undef);
 	} $exceptionType, $exceptionType;
 	my $evalError = $EVAL_ERROR; # save ASAP
 
