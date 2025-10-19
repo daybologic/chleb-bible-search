@@ -197,7 +197,7 @@ regardless of mode.
 sub detaint {
 	my ($value, $mode) = @_;
 
-	__checkMode($mode);
+	$mode = __checkMode($mode);
 
 	if (!defined($value)) {
 		die(Chleb::Utils::TypeParserException->raise(
@@ -235,7 +235,7 @@ sub detaint {
 		my $c = $chars[$ci];
 		my $cv = ord($c);
 
-		if (defined($mode) && ($mode & $MODE_COERCE) == $MODE_COERCE) {
+		if (($mode & $MODE_COERCE) == $MODE_COERCE) {
 			COERCE_LOOP: while (my ($bad, $good) = each(%COERCIONS)) {
 				next COERCE_LOOP if ($cv != ord($bad));
 
@@ -261,7 +261,7 @@ sub detaint {
 		if ($inAnyRange) {
 			$detaintedValue .= $c;
 		} else {
-			if (defined($mode) && ($mode & $MODE_PERMIT) == $MODE_PERMIT) {
+			if (($mode & $MODE_PERMIT) == $MODE_PERMIT) {
 				$stripped = 1; # drop character silently
 			} else {
 				die Chleb::Utils::TypeParserException->raise(
@@ -279,7 +279,7 @@ sub detaint {
 	}
 
 	my $preTrim = $detaintedValue;
-	if (defined($mode) && ($mode & $MODE_TRIM) == $MODE_TRIM) {
+	if (($mode & $MODE_TRIM) == $MODE_TRIM) {
 		$detaintedValue =~ s/^\s+//;
 		$detaintedValue =~ s/\s+$//;
 		$detaintedValue =~ s/\s+/ /g;
@@ -297,10 +297,10 @@ sub detaint {
 sub __checkMode {
 	my ($mode) = @_;
 
-	return unless (defined($mode));
+	return 0 unless (defined($mode));
 	my @modes = ($MODE_TRAP, $MODE_PERMIT, $MODE_COERCE, $MODE_TRIM);
 	foreach my $checkMode (@modes) {
-		return if (($mode & $checkMode) == $checkMode);
+		return $mode if (($mode & $checkMode) == $checkMode);
 	}
 
 	return die Chleb::Exception->raise(
