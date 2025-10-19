@@ -439,8 +439,8 @@ sub testCoerceAndTrim {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my $coercedValue = "\"Christ Jesus; The Lord\", as he is known";# TODO use single quotes on 'he'
-	my $inputValue = "\x{2002}“Christ\x{00a0}Jesus;\x{2003}The\x{2009}Lord”,\x{200a}as\x{2008}he\x{3000}is\x{200b}known\x{feff}";
+	my $coercedValue = "\"Christ Jesus; The Lord\" - as 'he`' is known";
+	my $inputValue = "\x{2002}“Christ\x{00a0}Jesus;\x{2003}The\x{2009}Lord”\x{200a} \x{2013} as\x{2008}\x{2018}he`\x{2019}\x{3000}is\x{200b}known\x{feff}";
 	my $mode = $Chleb::Utils::SecureString::MODE_COERCE | $Chleb::Utils::SecureString::MODE_TRIM;
 
 	my $sut;
