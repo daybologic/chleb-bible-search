@@ -64,31 +64,31 @@ You need tm specify L</$MODE_COERCE> in order to take advantage of these.
 =cut
 
 Readonly my %COERCIONS => (
-	"\x{A0}"   => ' ',
+	"\x{a0}"   => ' ',
 	"\x{2002}" => ' ',
 	"\x{2003}" => ' ',
 	"\x{2009}" => ' ',
-	"\x{200A}" => ' ',
+	"\x{200a}" => ' ',
 	"\x{2008}" => ' ',
 	"\x{3000}" => ' ',
-	"\x{200B}" => ' ',
-	"\x{FEFF}" => ' ',
+	"\x{200b}" => ' ',
+	"\x{feff}" => ' ',
 
-	"\x{201C}" => '"',
-	"\x{201D}" => '"',
-	"\x{201E}" => '"',
-	"\x{AB}"   => '"',
-	"\x{BB}"   => '"',
-	"\x{301D}" => '"',
-	"\x{301E}" => '"',
+	"\x{201c}" => '"',
+	"\x{201d}" => '"',
+	"\x{201e}" => '"',
+	"\x{ab}"   => '"',
+	"\x{bb}"   => '"',
+	"\x{301d}" => '"',
+	"\x{301e}" => '"',
 
 	"\x{2018}" => "'",
 	"\x{2019}" => "'",
-	"\x{201A}" => "'",
+	"\x{201a}" => "'",
 	"\x{2018}" => "'",
 	"\x{2019}" => "'",
-	"\x{2BB}"  => "'",
-	"\x{2BB}"  => "'",
+	"\x{2bb}"  => "'",
+	"\x{2bb}"  => "'",
 	"\x{3010}" => "'",
 	"\x{3011}" => "'",
 
@@ -103,10 +103,10 @@ A list of tuples of ranges of acceptable character value ranges.
 
 Readonly my @RANGES => (
 	0x09, undef,
-	0x0A, undef,
-	0x0D, undef,
-	0x20, 0x7E,
-	#0xA0, 0xFF,
+	0x0a, undef,
+	0x0d, undef,
+	0x20, 0x7e,
+	#0xa0, 0xff,
 );
 
 =item C<$MAX_TEXT_LENGTH>
@@ -267,7 +267,7 @@ sub detaint {
 				die Chleb::Utils::TypeParserException->raise(
 					undef,
 					sprintf(
-						'$value contains illegal character 0x%X at position %d of %d',
+						'$value contains illegal character 0x%x at position %d of %d',
 						$cv,
 						$ci + 1,
 						scalar(@chars),

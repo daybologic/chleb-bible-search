@@ -82,9 +82,36 @@ sub testUTF8 {
 			stripped => bool(0),
 			tainted  => bool(1),
 			trimmed  => bool(0),
-			value    => "\x{1F64F}\x{2626}\x{FE0F}\x{1F64C}",
+			value    => "\x{1f64f}\x{2626}\x{fe0f}\x{1f64c}",
 		),
 	), 'object');
+
+	return EXIT_SUCCESS;
+}
+
+sub testDefaultModeUTF8String {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $strippedValue = 'xy';
+	my $value = 'x🙏☦️🙌y';
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint($value, $Chleb::Utils::SecureString::MODE_TRAP);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $description = '$value contains illegal character 0x1f64f at position 2 of ' . length($value);
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => "$value",
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
 
 	return EXIT_SUCCESS;
 }
