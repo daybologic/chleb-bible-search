@@ -13,6 +13,7 @@ Store, process, and detaint trusted strings
 
 =cut
 
+use Chleb::DI::Container;
 use Chleb::Exception;
 use Chleb::Utils::TypeParserException;
 use English qw(-no_match_vars);
@@ -194,7 +195,32 @@ regardless of mode.
 sub detaint {
 	my ($value, $mode) = @_;
 
-	$mode = __checkMode($mode);
+	$value = __detaint($value, __checkMode($mode));
+
+	my $dic = Chleb::DI::Container->instance;
+	$dic->logger->warn('characters have been coered') if ($value->coerced);
+	$dic->logger->warn('whitespace has been stripped') if ($value->stripped);
+
+	return $value;
+}
+
+sub __checkMode {
+	my ($mode) = @_;
+
+	return 0 unless (defined($mode));
+	my @modes = ($MODE_TRAP, $MODE_PERMIT, $MODE_COERCE, $MODE_TRIM);
+	foreach my $checkMode (@modes) {
+		return $mode if (($mode & $checkMode) == $checkMode);
+	}
+
+	return die Chleb::Exception->raise(
+		HTTP_INTERNAL_SERVER_ERROR,
+		'Illegal mode in call to Chleb::Utils::SecureString/detaint',
+	);
+}
+
+sub __detaint {
+	my ($value, $mode) = @_;
 
 	if (!defined($value)) {
 		die(Chleb::Utils::TypeParserException->raise(
@@ -290,20 +316,6 @@ sub detaint {
 	});
 }
 
-sub __checkMode {
-	my ($mode) = @_;
-
-	return 0 unless (defined($mode));
-	my @modes = ($MODE_TRAP, $MODE_PERMIT, $MODE_COERCE, $MODE_TRIM);
-	foreach my $checkMode (@modes) {
-		return $mode if (($mode & $checkMode) == $checkMode);
-	}
-
-	return die Chleb::Exception->raise(
-		HTTP_INTERNAL_SERVER_ERROR,
-		'Illegal mode in call to Chleb::Utils::SecureString/detaint',
-	);
-}
 
 =back
 
