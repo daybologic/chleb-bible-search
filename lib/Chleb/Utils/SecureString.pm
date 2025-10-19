@@ -9,10 +9,7 @@ Chleb::Utils::SecureString - Detainter
 
 =head1 DESCRIPTION
 
-Store trusted strings
-
-TODO: Convert fancy characters to ASCII, ie. special directional quotes,
-phantom spaces to normal spaces etc.
+Store, process, and detaint trusted strings
 
 =cut
 
