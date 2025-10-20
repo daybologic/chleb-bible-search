@@ -543,7 +543,7 @@ sub __search {
 		my $verse = $results->verses->[$i];
 
 		my %attributes = ( %{ $verse->TO_JSON() } );
-		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $i+1, $results->count, $search->{term});
+		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $i+1, $results->count, $query->text);
 
 		push(@{ $hash{included} }, {
 			type => $verse->chapter->type,
@@ -608,7 +608,7 @@ sub __search {
 		},
 	);
 
-	$hash{links}->{self} = '/1/search?term=' . $search->{term} . '&wholeword=' . $wholeword .'&limit=' . $limit;
+	$hash{links}->{self} = '/1/search?term=' . $query->text . '&wholeword=' . $wholeword .'&limit=' . $limit;
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		if ($search->{form}) {
