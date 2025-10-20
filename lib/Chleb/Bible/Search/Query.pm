@@ -128,8 +128,7 @@ sub __detaint {
 	    | $Chleb::Utils::SecureString::MODE_STRIP_QUOTES
 	    | $Chleb::Utils::SecureString::MODE_TRIM;
 
-	my $secureString = Chleb::Utils::SecureString::detaint($value, $mode);
-	return $secureString->value;
+	return Chleb::Utils::SecureString::detaint($value, $mode)->value;
 }
 
 __PACKAGE__->meta->make_immutable;
