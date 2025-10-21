@@ -48,6 +48,7 @@ use Chleb::Bible::Search::Query;
 use Chleb::Server::Moose;
 use Chleb::TemplateProcessor;
 use Chleb::Utils::OSError::Mapper;
+use Chleb::Utils::SecureString;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
@@ -149,9 +150,25 @@ sub __configGetPublicDir {
 	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public'),
 }
 
+sub __detaint {
+	my ($value) = @_;
+
+	my $detainted;
+	eval {
+		my $mode = $Chleb::Utils::SecureString::MODE_TRAP;
+		$detainted = Chleb::Utils::SecureString::detaint($value, $mode)->value;
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	return $detainted;
+}
+
 sub __param {
 	my ($name) = @_;
-	return param($name);
+	return __detaint(param($name));
 }
 
 get '/' => sub {
