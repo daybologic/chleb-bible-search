@@ -151,12 +151,12 @@ sub __configGetPublicDir {
 }
 
 sub __detaint {
-	my ($value) = @_;
+	my ($value, $name) = @_;
 
 	my $detainted;
 	eval {
 		my $mode = $Chleb::Utils::SecureString::MODE_TRAP;
-		$detainted = Chleb::Utils::SecureString::detaint($value, $mode)->value;
+		$detainted = Chleb::Utils::SecureString::detaint($value, $mode, $name)->value;
 	};
 
 	if (my $exception = $EVAL_ERROR) {
@@ -170,7 +170,7 @@ sub __param {
 	my ($name) = @_;
 	my $value = param($name);
 	return undef unless (defined($value));
-	return __detaint($value);
+	return __detaint($value, $name);
 }
 
 get '/' => sub {

@@ -180,7 +180,7 @@ has value => (is => 'ro', isa => 'Str', required => 1);
 
 =over
 
-=item C<detaint($value, [$mode])>
+=item C<detaint($value, [$mode], [$name])>
 
 Returns a new L<Chleb::Utils::SecureString> which has been detainted.
 
@@ -193,12 +193,15 @@ L<Chleb::Utils::TypeParserException> will be thrown.
 An C<undef> value is never valid and will trigger L<Chleb::Utils::TypeParserException>
 regardless of mode.
 
+Optionally, C<$name> may specify the name of the C<$value>, which will be used for
+diagnostic purposes, and will be exposed to the consumer.
+
 =cut
 
 sub detaint {
-	my ($value, $mode) = @_;
+	my ($value, $mode, $name) = @_;
 
-	$value = __detaint($value, __checkMode($mode));
+	$value = __detaint($value, __checkMode($mode), $name);
 
 	my $dic = Chleb::DI::Container->instance;
 	$dic->logger->warn('characters have been coered') if ($value->coerced);
@@ -223,13 +226,15 @@ sub __checkMode {
 }
 
 sub __detaint {
-	my ($value, $mode) = @_;
+	my ($value, $mode, $name) = @_;
+
+	$name = '$value' unless (defined($name));
 
 	if (!defined($value)) {
 		die(Chleb::Utils::TypeParserException->raise(
 			undef,
 			sprintf(
-				"\$value (<undef>) in call to %s/detaint, should be a %s or scalar (Str)",
+				"$name (<undef>) in call to %s/detaint, should be a %s or scalar (Str)",
 				__PACKAGE__, __PACKAGE__,
 			),
 			$value,
@@ -242,7 +247,7 @@ sub __detaint {
 			die(Chleb::Utils::TypeParserException->raise(
 				undef,
 				sprintf(
-					"Wrong \$value ref type (%s) in call to %s/detaint, should be a %s or scalar (Str)",
+					"Wrong $name ref type (%s) in call to %s/detaint, should be a %s or scalar (Str)",
 					ref($value), __PACKAGE__, __PACKAGE__,
 				),
 				"$value",
@@ -292,7 +297,8 @@ sub __detaint {
 				die Chleb::Utils::TypeParserException->raise(
 					undef,
 					sprintf(
-						'$value contains illegal character 0x%x at position %d of %d',
+						'%s contains illegal character 0x%x at position %d of %d',
+						$name,
 						$cv,
 						$ci + 1,
 						scalar(@chars),
