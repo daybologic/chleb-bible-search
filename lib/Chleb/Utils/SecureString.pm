@@ -221,7 +221,7 @@ sub __checkMode {
 
 	return die Chleb::Exception->raise(
 		HTTP_INTERNAL_SERVER_ERROR,
-		'Illegal mode in call to Chleb::Utils::SecureString/detaint',
+		"Illegal mode $mode in call to Chleb::Utils::SecureString/detaint",
 	);
 }
 

@@ -496,7 +496,7 @@ sub testIllegalModeUTF8 {
 	} $exceptionType, $exceptionType;
 	my $evalError = $EVAL_ERROR; # save ASAP
 
-	my $description = 'Illegal mode in call to Chleb::Utils::SecureString/detaint';
+	my $description = 'Illegal mode 32 in call to Chleb::Utils::SecureString/detaint';
 	cmp_deeply($evalError, all(
 		isa($exceptionType),
 		methods(
@@ -522,7 +522,7 @@ sub testIllegalModeNormalString {
 	} $exceptionType, $exceptionType;
 	my $evalError = $EVAL_ERROR; # save ASAP
 
-	my $description = 'Illegal mode in call to Chleb::Utils::SecureString/detaint';
+	my $description = 'Illegal mode 32 in call to Chleb::Utils::SecureString/detaint';
 	cmp_deeply($evalError, all(
 		isa($exceptionType),
 		methods(
