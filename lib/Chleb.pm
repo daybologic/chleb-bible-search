@@ -83,7 +83,7 @@ sub newSearchQuery {
 
 	my %params = @args;
 	__fixTranslationsParam(\%params);
-	if (ref($params{text}) eq 'Chleb::Utils::SecureString') {
+	if (ref($params{text}) ne 'Chleb::Utils::SecureString') {
 		$params{text} = Chleb::Utils::SecureString->new({ value => $params{text} })
 	}
 	($defaults{bible}) = $self->__getBible(\%params); # TODO: Needs testing, probably won't work with multiple translations
