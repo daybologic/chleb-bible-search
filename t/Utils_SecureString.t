@@ -655,6 +655,57 @@ sub testCoerce {
 	return EXIT_SUCCESS;
 }
 
+sub testExceedMaximumLength {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my @chars = map { $self->uniqueStr() } 1..4096;
+	my $inputValue = join('', @chars);
+	my $exceptionType = 'Chleb::Utils::TypeParserException';
+	my $name = 'Abraham';
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint($inputValue, $Chleb::Utils::SecureString::MODE_TRAP, $name);
+	} $exceptionType, $exceptionType;
+	my $evalError = $EVAL_ERROR; # save ASAP
+
+	my $length = length($inputValue);
+	my $description = "$name exceeds maximum length ($length/4096)";
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => $length,
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	$name = undef;
+	$inputValue = substr($inputValue, 0, 4097);
+
+	throws_ok {
+		Chleb::Utils::SecureString::detaint($inputValue, $Chleb::Utils::SecureString::MODE_TRAP, $name);
+	} $exceptionType, $exceptionType;
+	$evalError = $EVAL_ERROR; # save ASAP
+
+	$length = length($inputValue);
+	$description = '$value exceeds maximum length (4097/4096)';
+	cmp_deeply($evalError, all(
+		isa($exceptionType),
+		methods(
+			description => $description,
+			name => $length,
+			location => undef,
+			statusCode => 400,
+		),
+	), $description);
+
+	# TODO: Test that 4096 length passes?
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
