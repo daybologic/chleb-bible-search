@@ -255,6 +255,17 @@ sub __detaint {
 		}
 	}
 
+	if (length($value) > $MAX_TEXT_LENGTH) {
+		die(Chleb::Utils::TypeParserException->raise(
+			undef,
+			sprintf(
+				'%s exceeds maximum length (%d/%d)',
+				$name, length($value), $MAX_TEXT_LENGTH,
+			),
+			length($value),
+		));
+	}
+
 	my $stripped = 0;
 	my $coerced = 0;
 	my $detaintedValue = '';
