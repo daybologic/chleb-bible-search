@@ -657,7 +657,7 @@ sub testCoerce {
 
 sub testExceedMaximumLength {
 	my ($self) = @_;
-	plan tests => 4;
+	plan tests => 5;
 
 	my @chars = map { $self->uniqueStr() } 1..4096;
 	my $inputValue = join('', @chars);
@@ -701,7 +701,19 @@ sub testExceedMaximumLength {
 		),
 	), $description);
 
-	# TODO: Test that 4096 length passes?
+	$inputValue = substr($inputValue, 0, 4096);
+	my $sut = Chleb::Utils::SecureString::detaint($inputValue, $Chleb::Utils::SecureString::MODE_TRAP, $name);
+
+	cmp_deeply($sut, all(
+		isa('Chleb::Utils::SecureString'),
+		methods(
+			coerced  => bool(0),
+			stripped => bool(0),
+			tainted  => bool(0),
+			trimmed  => bool(0),
+			value    => $inputValue,
+		),
+	), 'object from 4096 length string') or diag(explain($sut->value));
 
 	return EXIT_SUCCESS;
 }
