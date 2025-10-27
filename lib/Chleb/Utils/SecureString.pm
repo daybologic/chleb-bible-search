@@ -49,7 +49,7 @@ Readonly our $MODE_TRAP         => 1 << 0; # 0x0001
 Readonly our $MODE_PERMIT       => 1 << 1; # 0x0002
 Readonly our $MODE_COERCE       => 1 << 2; # 0x0004
 Readonly our $MODE_TRIM         => 1 << 3; # 0x0008
-Readonly our $MODE_STRIP_QUOTES => 1 << 4; # 0x0010
+Readonly our $MODE_STRIP_QUOTES => 1 << 4; # 0x0010 - This mode will strip all quote characters from the string.
 
 =head1 PRIVATE CONSTANTS
 
@@ -210,6 +210,13 @@ sub detaint {
 	return $value;
 }
 
+=item C<__checkMode($mode)>
+
+Given C<$mode> which is bitfield, check its validity and return the mode.
+If it is invalid, an C<HTTP_INTERNAL_SERVER_ERROR> is thrown.
+
+=cut
+
 sub __checkMode {
 	my ($mode) = @_;
 
@@ -224,6 +231,12 @@ sub __checkMode {
 		"Illegal mode $mode in call to Chleb::Utils::SecureString/detaint",
 	);
 }
+
+=item C<__detaint($value, $mode, $name)>
+
+The main internal detainting function, called by L</detaint($value, [$mode], [$name])>.
+
+=cut
 
 sub __detaint {
 	my ($value, $mode, $name) = @_;
@@ -290,13 +303,7 @@ sub __detaint {
 		if ($thisCharCoerced) {
 			$inAnyRange = 1;
 		} else {
-			for (my $rangePointer = 0; $rangePointer < @RANGES; $rangePointer += 2) {
-				my ($rangeBegin, $rangeEnd) = ($RANGES[$rangePointer], $RANGES[$rangePointer+1]);
-				$rangeEnd = $rangeBegin unless(defined($rangeEnd));
-				if ($cv >= $rangeBegin && $cv <= $rangeEnd) {
-					$inAnyRange = 1;
-				}
-			}
+			$inAnyRange = __isCharInRange($cv);
 		}
 
 		if ($inAnyRange) {
@@ -339,6 +346,27 @@ sub __detaint {
 		trimmed  => (length($preTrim) > length($detaintedValue)),
 		value    => $detaintedValue,
 	});
+}
+
+=item C<__isCharInRange($cv)>
+
+Given a character - C<$cv>, if it is within any allowed range, return true,
+otherwise return false.
+
+=cut
+
+sub __isCharInRange {
+	my ($cv) = @_;
+
+	for (my $rangePointer = 0; $rangePointer < @RANGES; $rangePointer += 2) {
+		my ($rangeBegin, $rangeEnd) = ($RANGES[$rangePointer], $RANGES[$rangePointer+1]);
+		$rangeEnd = $rangeBegin unless(defined($rangeEnd));
+		if ($cv >= $rangeBegin && $cv <= $rangeEnd) {
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 =back
