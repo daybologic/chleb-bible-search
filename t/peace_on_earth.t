@@ -43,6 +43,7 @@ use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb;
 use Chleb::DI::MockLogger;
+use Chleb::Utils::SecureString;
 use Test::More 0.96;
 
 sub setUp {
@@ -60,7 +61,7 @@ sub setUp {
 sub testPeaceSearch_defaultTranslation {
 	my ($self) = @_;
 
-	$self->__checkPeaceSearch_defaultTranslation('peace on earth');
+	$self->__checkPeaceSearch_defaultTranslation(text => 'peace on earth');
 
 	return EXIT_SUCCESS;
 }
@@ -68,7 +69,8 @@ sub testPeaceSearch_defaultTranslation {
 sub testPeaceSearch_defaultTranslation_viaObject {
 	my ($self) = @_;
 
-	$self->__checkPeaceSearch_defaultTranslation(text => 'peace on earth');
+	my $secureString = Chleb::Utils::SecureString->new({ value => 'peace on earth' });
+	$self->__checkPeaceSearch_defaultTranslation(text => $secureString);
 
 	return EXIT_SUCCESS;
 }
