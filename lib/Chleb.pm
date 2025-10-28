@@ -83,9 +83,9 @@ sub newSearchQuery {
 
 	my %params = @args;
 	__fixTranslationsParam(\%params);
-	if (ref($params{text}) ne 'Chleb::Utils::SecureString') {
-		$params{text} = Chleb::Utils::SecureString->new({ value => $params{text} })
-	}
+
+	$params{text} = __ensureSecureString($params{text});
+
 	($defaults{bible}) = $self->__getBible(\%params); # TODO: Needs testing, probably won't work with multiple translations
 	return Chleb::Bible::Search::Query->new({ %defaults, %params });
 }
@@ -401,6 +401,16 @@ sub __isTestamentMatch {
 	));
 
 	return 0;
+}
+
+sub __ensureSecureString {
+	my ($input) = @_;
+
+	if (ref($input) ne 'Chleb::Utils::SecureString') {
+		return Chleb::Utils::SecureString->new({ value => $input });
+	}
+
+	return $input;
 }
 
 __PACKAGE__->meta->make_immutable;
