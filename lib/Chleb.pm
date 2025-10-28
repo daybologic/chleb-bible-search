@@ -406,7 +406,7 @@ sub __isTestamentMatch {
 sub __ensureSecureString {
 	my ($input) = @_;
 
-	if (ref($input) ne 'Chleb::Utils::SecureString') {
+	if (!defined($input) || ref($input) ne 'Chleb::Utils::SecureString') {
 		return Chleb::Utils::SecureString->new({ value => $input });
 	}
 
