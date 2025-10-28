@@ -34,11 +34,12 @@ use strict;
 use warnings;
 use utf8;
 use open ':std', ':encoding(UTF-8)';
+use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb::Utils::SecureString;
 use English qw(-no_match_vars);
