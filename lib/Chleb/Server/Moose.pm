@@ -61,6 +61,7 @@ use JSON;
 use Log::Log4perl::MDC;
 use Readonly;
 use Time::Duration;
+use URI::Escape;
 use UUID::Tiny ':std';
 
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
@@ -543,7 +544,7 @@ sub __search {
 		my $verse = $results->verses->[$i];
 
 		my %attributes = ( %{ $verse->TO_JSON() } );
-		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $i+1, $results->count, $search->{term});
+		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $i+1, $results->count, $query->text);
 
 		push(@{ $hash{included} }, {
 			type => $verse->chapter->type,
@@ -608,7 +609,10 @@ sub __search {
 		},
 	);
 
-	$hash{links}->{self} = '/1/search?term=' . $search->{term} . '&wholeword=' . $wholeword .'&limit=' . $limit;
+	my $safeTerm = uri_escape($query->text);
+	my $safeWholeword = uri_escape($wholeword);
+	my $safeLimit = uri_escape($limit);
+	$hash{links}->{self} = "/1/search?term=$safeTerm&wholeword=$safeWholeword&limit=$safeLimit";
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
 		if ($search->{form}) {
