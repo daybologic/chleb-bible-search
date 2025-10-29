@@ -43,6 +43,7 @@ use Test::Deep qw(all cmp_deeply isa methods);
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb;
 use Chleb::DI::MockLogger;
+use Chleb::Utils::SecureString;
 use Test::More 0.96;
 
 sub setUp {
@@ -59,9 +60,26 @@ sub setUp {
 
 sub testPeaceSearch_defaultTranslation {
 	my ($self) = @_;
+
+	$self->__checkPeaceSearch_defaultTranslation(text => 'peace on earth');
+
+	return EXIT_SUCCESS;
+}
+
+sub testPeaceSearch_defaultTranslation_viaObject {
+	my ($self) = @_;
+
+	my $secureString = Chleb::Utils::SecureString->new({ value => 'peace on earth' });
+	$self->__checkPeaceSearch_defaultTranslation(text => $secureString);
+
+	return EXIT_SUCCESS;
+}
+
+sub __checkPeaceSearch_defaultTranslation {
+	my ($self, @params) = @_;
 	plan tests => 2;
 
-	my $query = $self->sut->newSearchQuery('peace on earth')->setLimit(3);
+	my $query = $self->sut->newSearchQuery(@params)->setLimit(3);
 	cmp_deeply($query, all(
 		isa('Chleb::Bible::Search::Query'),
 		methods(
@@ -148,7 +166,7 @@ sub testPeaceSearch_defaultTranslation {
 		),
 	), 'results inspection');
 
-	return EXIT_SUCCESS;
+	return;
 }
 
 sub testPeaceSearch_asvTranslation {
