@@ -1,3 +1,12 @@
+2.1.1
+=====
+Punctuation, and UTF-8 in searches is now all properly handled or whisked away.
+
+  * 🐛 backport bugfix/wholeword-punctuation/1 into v2.1.1 (issue #108)
+  * 🩹 respect '(' at the beginning of a word search (issue #108)
+  * 🔀 backport branch 'bugfix/strip-quotes-and-utf8/1' into rel/2.1 (issue #143)
+  * ❌ disable test which intermittently fails (random redirect) (issue #144)
+
 2.1.0
 =====
 The experimental session token backend has been revamped
