@@ -1,11 +1,7 @@
-/var/log/chleb-bible-search/*.log {
+/var/log/chleb-bible-search/*.log.[2-9]* {
 	weekly
 	rotate 52
 	compress
-	delaycompress
 	missingok
 	notifempty
-	postrotate
-		/usr/bin/systemctl kill -s HUP --kill-who=all chleb-bible-search.service
-	endscript
 }
