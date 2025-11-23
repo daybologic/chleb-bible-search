@@ -39,20 +39,15 @@ use Chleb::Bible;
 use English qw(-no_match_vars);
 use Getopt::Std;
 use JSON;
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
+use POSIX qw(EXIT_SUCCESS);
 use Readonly;
 
 sub main {
 	my (%opts);
 
-	unless (getopts('t:', \%opts)) {
-		return EXIT_FAILURE;
-	}
+	getopts('t:', \%opts) or die "Usage: $0 -t translation\n";
 
-	unless ($opts{t}) {
-		print("Specify translation with -t\n");
-		return EXIT_FAILURE;
-	}
+	die "Specify translation with -t\n" unless $opts{t};
 
 	my $bible = Chleb::Bible->new({ translation => $opts{t} });
 	my $verse = $bible->books->[0]->getVerseByOrdinal(1);
