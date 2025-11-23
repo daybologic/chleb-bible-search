@@ -4,8 +4,9 @@ chleb-bible-search (2.1.1) UNRELEASED; urgency=medium
   * 🩹 respect '(' at the beginning of a word search (issue #108)
   * 🔀 backport branch 'bugfix/strip-quotes-and-utf8/1' into rel/2.1 (issue #143)
   * ❌ disable test which intermittently fails (random redirect) (issue #144)
+  * 🚑️ create RunTimeDirectory via systemd (issue #146)
 
- -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Thu, 30 Oct 2025 08:41:54 +0000
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 23 Nov 2025 13:39:51 +0000
 
 chleb-bible-search (2.1.0) stable; urgency=low
 
