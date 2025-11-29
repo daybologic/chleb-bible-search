@@ -39,9 +39,13 @@ has book => (is => 'ro', isa => 'Chleb::Bible::Book', required => 1);
 
 has chapter => (is => 'ro', isa => 'Chleb::Bible::Chapter', required => 1);
 
+has emotion => (is => 'ro', isa => 'Str', required => 1, default => 'neutral');
+
 has ordinal => (is => 'ro', isa => 'Int', required => 1);
 
 has text => (is => 'ro', isa => 'Str', required => 1);
+
+has tones => (is => 'ro', isa => 'ArrayRef[Str]', required => 1, default => sub { [] });
 
 has type => (is => 'ro', isa => 'Str', default => sub { 'verse' });
 

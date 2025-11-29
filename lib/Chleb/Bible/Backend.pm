@@ -47,7 +47,7 @@ use Chleb::Type::Testament;
 use Storable;
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
-Readonly my $FILE_VERSION => 10;
+Readonly my $FILE_VERSION => 11;
 
 Readonly my $OT_COUNT => 39;
 
@@ -57,6 +57,8 @@ Readonly my $MAIN_OFFSET_VERSION => ++$offsetMaster; # int
 Readonly my $MAIN_OFFSET_BOOKS   => ++$offsetMaster; # array, see $BOOK_*
 Readonly my $MAIN_OFFSET_VERSES  => ++$offsetMaster; # global array of verses to key names
 Readonly my $MAIN_OFFSET_DATA    => ++$offsetMaster; # main verse map
+Readonly my $MAIN_OFFSET_EMOTION => ++$offsetMaster; # global array of verses to emotion
+Readonly my $MAIN_OFFSET_TONES   => ++$offsetMaster; # global array of verses to tone lists
 
 $offsetMaster = -1;
 Readonly my $BOOK_OFFSET_SHORT_NAMES    => ++$offsetMaster; # array of book names in canon order
@@ -167,6 +169,15 @@ sub getVerseKeyByBookVerseKey {
 sub getBookInfoByShortName {
 	my ($self, $shortNameRaw) = @_;
 	return $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortNameRaw};
+}
+
+sub getSentimentByOrdinal {
+	my ($self, $ordinal) = @_;
+
+	return {
+		emotion => $self->data->[$MAIN_OFFSET_EMOTION]->[$ordinal],
+		tones   => $self->data->[$MAIN_OFFSET_TONES]->[$ordinal],
+	};
 }
 
 sub __fsck {
