@@ -37,6 +37,7 @@ use warnings;
 use Data::Dumper;
 use English qw(-no_match_vars);
 use IO::File;
+use JSON;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
 use Storable qw(nstore);
@@ -47,7 +48,7 @@ Readonly my $DATA_DIR   => 'data';
 Readonly my $BOOK_INPUT => 'static/kjv.cvs';
 
 Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
-Readonly my $FILE_VERSION => 10;
+Readonly my $FILE_VERSION => 11;
 
 my $offsetMaster = -1;
 Readonly my $MAIN_OFFSET_SIG     => ++$offsetMaster; # string
@@ -55,6 +56,8 @@ Readonly my $MAIN_OFFSET_VERSION => ++$offsetMaster; # int
 Readonly my $MAIN_OFFSET_BOOKS   => ++$offsetMaster; # array, see $BOOK_*
 Readonly my $MAIN_OFFSET_VERSES  => ++$offsetMaster; # global array of verses to key names
 Readonly my $MAIN_OFFSET_DATA    => ++$offsetMaster; # main verse map
+Readonly my $MAIN_OFFSET_EMOTION => ++$offsetMaster; # global array of verses to emotion
+Readonly my $MAIN_OFFSET_TONES   => ++$offsetMaster; # global array of verses to tone lists
 
 $offsetMaster = -1;
 Readonly my $BOOK_OFFSET_SHORT_NAMES    => ++$offsetMaster; # array of book names in canon order
@@ -85,6 +88,11 @@ sub writeOutput {
 sub __inputFromTranslation {
 	my ($translation) = @_;
 	return join('/', 'static', sprintf('%s.txt', $translation));
+}
+
+sub __emotionFromTranslation {
+	my ($translation) = @_;
+	return join('/', 'static', 'emotion', sprintf('%s.json', $translation));
 }
 
 sub __outputFromTranslation {
@@ -123,6 +131,8 @@ sub main {
 	}
 
 	$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES] = \@bookShortNames;
+
+	my $emotional = getEmotions($translation);
 
 	if (my $fh = IO::File->new(join('/', $DATA_DIR, __inputFromTranslation($translation)), 'r')) {
 		while (my $line = <$fh>) {
@@ -163,6 +173,8 @@ sub main {
 					my $verseKeyRelativeBook = join(':', $translation, $bookShortName, ++$verseOrdinalRelativeBook);
 					$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_VERSES_TO_KEYS]->{$verseKeyRelativeBook} = $verseKey;
 					$data->[$MAIN_OFFSET_VERSES]->[++$verseOrdinalRelativeBible] = $verseKey;
+					$data->[$MAIN_OFFSET_EMOTION]->[$verseOrdinalRelativeBible] = $emotional->[$verseOrdinalRelativeBible - 1]->{emotion};
+					$data->[$MAIN_OFFSET_TONES]->[$verseOrdinalRelativeBible] = $emotional->[$verseOrdinalRelativeBible - 1]->{tones};
 				}
 
 				# if the chapter ordinal is out of range, the first verse of that chapter won't exist
@@ -174,6 +186,21 @@ sub main {
 	}
 
 	return writeOutput($data, $translation);
+}
+
+sub getEmotions {
+	my ($translation) = @_;
+
+	my $text;
+	if (my $fh = IO::File->new(join('/', $DATA_DIR, __emotionFromTranslation($translation)), 'r')) {
+		$text = do { local $/; <$fh> };
+		$fh = undef;
+	}
+
+	my $data = decode_json($text);
+	die("Emotional data for $translation is incomplete") unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == 31_102);
+
+	return $data;
 }
 
 exit(main()) unless (caller());
