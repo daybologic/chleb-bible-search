@@ -5,6 +5,7 @@ chleb-bible-search (2.1.1) stable; urgency=high
   * 🔀 backport branch 'bugfix/strip-quotes-and-utf8/1' into rel/2.1 (issue #143)
   * ❌ disable test which intermittently fails (random redirect) (issue #144)
   * 🚑️ create RunTimeDirectory via systemd (issue #146)
+  * 🧹 fix MANIFEST
 
  -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Wed, 03 Dec 2025 20:15:43 +0000
 

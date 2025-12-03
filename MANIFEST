@@ -1,8 +1,15 @@
 .build.yml
+.git-changeset
+.github/etc/log4perl.conf
+.github/workflows/perl.yml
+.github/workflows/pr-ai-notes.yml
+.gitignore
 .gitmodules
 bin/bugs/4e03075-wholeword-boolean-swagger/run.sh
 bin/core/app.psgi
 bin/core/run.sh
+bin/core/session-clean.sh
+bin/core/session-dump.pl
 bin/core/yaml2json.pl
 bin/demo/john.pl
 bin/demo/search.pl
@@ -29,48 +36,203 @@ bin/demo/socket-walk-book.sh
 bin/demo/votd.pl
 bin/git/hooks/post-checkout
 bin/git/hooks/post-commit
+bin/git/tools/mergebranch
+bin/git/tools/mergepreview
+bin/git/tools/newbranch
 bin/import/text-to-asv.sh
 bin/import/text-to-bin.pl
 bin/import/text-to-kjv.sh
 bin/maint/copyright-bump.sh
 bin/maint/git-install-local-hooks.sh
+bin/maint/make-legal-notices.sh
+bin/maint/md2html.pl
 bin/maint/pkg-info.sh
 bin/maint/rename-files-by-pattern.sh
+bin/maint/run-functional-tests.sh
 bin/maint/session-dump.pl
 bin/maint/swagger-check.sh
 bin/maint/synology.sh
 bitbucket-pipelines.yml
 cache/.keep
-cache/asv.bin
-cache/kjv.bin
-Chleb-1.0.0/META.json
-Chleb-1.0.0/META.yml
 COPYING
 data.PL
+data/.gitignore
 data/.keep
-data/asv.bin.gz
+data/gitmoji/custom/bible.txt
+data/gitmoji/custom/book.txt
+data/gitmoji/custom/books_compendium.txt
+data/gitmoji/custom/bread.txt
+data/gitmoji/custom/break_chain.txt
+data/gitmoji/custom/broom.txt
+data/gitmoji/custom/chain.txt
+data/gitmoji/custom/chains.txt
+data/gitmoji/custom/exploding_head.txt
+data/gitmoji/custom/folded_hands.txt
+data/gitmoji/custom/penguin.txt
+data/gitmoji/custom/robot.txt
+data/gitmoji/custom/smiling_face_with_horns.txt
+data/gitmoji/custom/swirl.txt
+data/gitmoji/custom/wine.txt
+data/gitmoji/vendor/adhesive_bandage.txt
+data/gitmoji/vendor/airplane.txt
+data/gitmoji/vendor/alembic.txt
+data/gitmoji/vendor/alien.txt
+data/gitmoji/vendor/ambulance.txt
+data/gitmoji/vendor/arrow_down.txt
+data/gitmoji/vendor/arrow_up.txt
+data/gitmoji/vendor/art.txt
+data/gitmoji/vendor/beers.txt
+data/gitmoji/vendor/bento.txt
+data/gitmoji/vendor/bookmark.txt
+data/gitmoji/vendor/boom.txt
+data/gitmoji/vendor/bricks.txt
+data/gitmoji/vendor/bug.txt
+data/gitmoji/vendor/building_construction.txt
+data/gitmoji/vendor/bulb.txt
+data/gitmoji/vendor/busts_in_silhouette.txt
+data/gitmoji/vendor/camera_flash.txt
+data/gitmoji/vendor/card_file_box.txt
+data/gitmoji/vendor/chart_with_upwards_trend.txt
+data/gitmoji/vendor/children_crossing.txt
+data/gitmoji/vendor/closed_lock_with_key.txt
+data/gitmoji/vendor/clown_face.txt
+data/gitmoji/vendor/coffin.txt
+data/gitmoji/vendor/construction.txt
+data/gitmoji/vendor/construction_worker.txt
+data/gitmoji/vendor/dizzy.txt
+data/gitmoji/vendor/egg.txt
+data/gitmoji/vendor/fire.txt
+data/gitmoji/vendor/globe_with_meridians.txt
+data/gitmoji/vendor/goal_net.txt
+data/gitmoji/vendor/green_heart.txt
+data/gitmoji/vendor/hammer.txt
+data/gitmoji/vendor/heavy_minus_sign.txt
+data/gitmoji/vendor/heavy_plus_sign.txt
+data/gitmoji/vendor/iphone.txt
+data/gitmoji/vendor/label.txt
+data/gitmoji/vendor/lipstick.txt
+data/gitmoji/vendor/lock.txt
+data/gitmoji/vendor/loud_sound.txt
+data/gitmoji/vendor/mag.txt
+data/gitmoji/vendor/memo.txt
+data/gitmoji/vendor/money_with_wings.txt
+data/gitmoji/vendor/monocle_face.txt
+data/gitmoji/vendor/mute.txt
+data/gitmoji/vendor/necktie.txt
+data/gitmoji/vendor/package.txt
+data/gitmoji/vendor/page_facing_up.txt
+data/gitmoji/vendor/passport_control.txt
+data/gitmoji/vendor/pencil2.txt
+data/gitmoji/vendor/poop.txt
+data/gitmoji/vendor/pushpin.txt
+data/gitmoji/vendor/recycle.txt
+data/gitmoji/vendor/rewind.txt
+data/gitmoji/vendor/rocket.txt
+data/gitmoji/vendor/rotating_light.txt
+data/gitmoji/vendor/safety_vest.txt
+data/gitmoji/vendor/see_no_evil.txt
+data/gitmoji/vendor/seedling.txt
+data/gitmoji/vendor/sparkles.txt
+data/gitmoji/vendor/speech_balloon.txt
+data/gitmoji/vendor/stethoscope.txt
+data/gitmoji/vendor/tada.txt
+data/gitmoji/vendor/technologist.txt
+data/gitmoji/vendor/test_tube.txt
+data/gitmoji/vendor/thread.txt
+data/gitmoji/vendor/triangular_flag_on_post.txt
+data/gitmoji/vendor/truck.txt
+data/gitmoji/vendor/twisted_rightwards_arrows.txt
+data/gitmoji/vendor/wastebasket.txt
+data/gitmoji/vendor/wheelchair.txt
+data/gitmoji/vendor/white_check_mark.txt
+data/gitmoji/vendor/wrench.txt
+data/gitmoji/vendor/zap.txt
 data/kjv.bin.gz
+data/Makefile
 data/static/asv.txt
+data/static/facebook.html
+data/static/generic_head.html
+data/static/generic_tail.html
 data/static/index.html
 data/static/kjv.cvs
 data/static/kjv.txt
 data/static/no_results.html
 data/static/public/images/bible.png
 data/static/public/images/favicon.png
+data/static/public/privacy.html
 data/static/public/robots.txt
+data/static/public/style.css
+data/static/public/terms.html
 data/static/search.html
+'data/tests/1/a HTML.sh'
+'data/tests/1/a JSON.sh'
+data/tests/1/a.sh
+'data/tests/1/info default.sh'
+'data/tests/1/info HTML.sh'
+'data/tests/1/info JSON.sh'
+'data/tests/1/lookup default.sh'
+'data/tests/1/lookup HTML.sh'
+'data/tests/1/lookup JSON.sh'
+'data/tests/1/ping default.sh'
+'data/tests/1/ping HTML.sh'
+'data/tests/1/ping JSON.sh'
+'data/tests/1/random default, redirect.sh'
+'data/tests/1/random default.sh'
+'data/tests/1/random HTML, redirect.sh'
+'data/tests/1/random HTML.sh'
+'data/tests/1/random JSON, redirect.sh'
+'data/tests/1/random JSON.sh'
+'data/tests/1/search default \'son\', form.sh'
+'data/tests/1/search default \'son\'.sh'
+'data/tests/1/search default (no criteria).sh'
+'data/tests/1/search HTML \'dwell\', form.sh'
+'data/tests/1/search HTML \'dwell\'.sh'
+'data/tests/1/search HTML (no criteria).sh'
+'data/tests/1/search JSON \'fire\', form.sh'
+'data/tests/1/search JSON \'fire\'.sh'
+'data/tests/1/search JSON (no criteria).sh'
+data/tests/1/template.sh
+'data/tests/1/uptime default.sh'
+'data/tests/1/uptime HTML.sh'
+'data/tests/1/uptime JSON.sh'
+'data/tests/1/version default.sh'
+'data/tests/1/version HTML.sh'
+'data/tests/1/version JSON.sh'
+'data/tests/1/votd default, redirect.sh'
+'data/tests/1/votd default.sh'
+'data/tests/1/votd HTML, redirect.sh'
+'data/tests/1/votd HTML.sh'
+'data/tests/1/votd JSON, redirect.sh'
+'data/tests/1/votd JSON.sh'
+'data/tests/2/random default, redirect.sh'
+'data/tests/2/random default.sh'
+'data/tests/2/random HTML, redirect.sh'
+'data/tests/2/random HTML.sh'
+'data/tests/2/random JSON, redirect.sh'
+'data/tests/2/random JSON.sh'
+'data/tests/2/votd default, redirect.sh'
+'data/tests/2/votd default.sh'
+'data/tests/2/votd HTML, redirect.sh'
+'data/tests/2/votd HTML.sh'
+'data/tests/2/votd JSON, redirect.sh'
+'data/tests/2/votd JSON.sh'
+data/tests/httpie-collection-chleb-bible-search.json
 debian/changelog
 debian/compat
 debian/control
 debian/copyright
 debian/dirs
+debian/etc/cron.monthly/chleb-bible-search
 debian/etc/log4perl.conf
 debian/etc/main.yaml
 debian/install
 debian/postinst
+debian/postrm
 debian/prerm
 debian/rules
 debian/source/format
+etc-defaults/main.yaml
+etc-local/main.yaml
 etc/chleb-bible-search.service
 etc/log4perl.conf
 etc/logrotate/chleb-bible-search
@@ -78,73 +240,10 @@ etc/main.conf
 etc/main.yaml
 etc/nginx/chleb-bible-search-notls.example
 etc/nginx/chleb-bible-search.example
-externals/httpie-tools/bin/httpie-export-to-shell
-externals/httpie-tools/bin/palmer.sh
-externals/httpie-tools/COPYING
-externals/httpie-tools/data/static/demo/chleb-bible-search.json
-externals/httpie-tools/debian/changelog
-externals/httpie-tools/debian/compat
-externals/httpie-tools/debian/control
-externals/httpie-tools/debian/copyright
-externals/httpie-tools/debian/dirs
-externals/httpie-tools/debian/etc/log4perl.conf
-externals/httpie-tools/debian/install
-externals/httpie-tools/debian/rules
-externals/httpie-tools/debian/source/format
-externals/httpie-tools/etc/log4perl.conf
-externals/httpie-tools/lib/HTTPie/Tools.pm
-externals/httpie-tools/lib/HTTPie/Tools/DI/Container.pm
-externals/httpie-tools/lib/HTTPie/Tools/ExportToShell.pm
-externals/httpie-tools/lib/HTTPie/Tools/Objects/CollectionFile.pm
-externals/httpie-tools/lib/HTTPie/Tools/Objects/RequestHeader.pm
-externals/httpie-tools/lib/HTTPie/Tools/Objects/ShellCommand.pm
-externals/httpie-tools/lib/HTTPie/Tools/Objects/ShellCommands.pm
-externals/httpie-tools/log/.keep
-externals/httpie-tools/Makefile.PL
-externals/httpie-tools/run-suite.sh
-externals/libtest-module-runnable-perl/.build.yml
-externals/libtest-module-runnable-perl/.github/workflows/perl.yml
-externals/libtest-module-runnable-perl/AUTHORS
-externals/libtest-module-runnable-perl/bitbucket-pipelines.yml
-externals/libtest-module-runnable-perl/BUGS
-externals/libtest-module-runnable-perl/ChangeLog
-externals/libtest-module-runnable-perl/CHANGES
-externals/libtest-module-runnable-perl/contributors.txt
-externals/libtest-module-runnable-perl/COPYING
-externals/libtest-module-runnable-perl/debian/changelog
-externals/libtest-module-runnable-perl/debian/compat
-externals/libtest-module-runnable-perl/debian/control
-externals/libtest-module-runnable-perl/debian/copyright
-externals/libtest-module-runnable-perl/debian/rules
-externals/libtest-module-runnable-perl/debian/source/format
-externals/libtest-module-runnable-perl/lib/Test/Module/Runnable.pm
-externals/libtest-module-runnable-perl/lib/Test/Module/Runnable/Base.pm
-externals/libtest-module-runnable-perl/LICENCE
-externals/libtest-module-runnable-perl/Makefile.PL
-externals/libtest-module-runnable-perl/MANIFEST
-externals/libtest-module-runnable-perl/MANIFEST.SKIP
-externals/libtest-module-runnable-perl/NEWS
-externals/libtest-module-runnable-perl/README.md
-externals/libtest-module-runnable-perl/t/getopts.t
-externals/libtest-module-runnable-perl/t/lib/Private/Test/Module/Runnable/Appender.pm
-externals/libtest-module-runnable-perl/t/lib/Private/Test/Module/Runnable/Dummy.pm
-externals/libtest-module-runnable-perl/t/lib/Private/Test/Module/Runnable/DummyWithAutoload.pm
-externals/libtest-module-runnable-perl/t/lib/Private/Test/Module/Runnable/unique.pm
-externals/libtest-module-runnable-perl/t/mock.t
-externals/libtest-module-runnable-perl/t/mockNonExistentMethod.t
-externals/libtest-module-runnable-perl/t/modeSwitch.t
-externals/libtest-module-runnable-perl/t/podchecker.t
-externals/libtest-module-runnable-perl/t/tester.t
-externals/libtest-module-runnable-perl/t/unique.t
-externals/libtest-module-runnable-perl/t/uniqueDomain.t
-externals/libtest-module-runnable-perl/t/uniqueDomain_fuzz.t
-externals/libtest-module-runnable-perl/t/uniqueDomain_notExported.t
-externals/libtest-module-runnable-perl/t/uniqueExport.t
-externals/libtest-module-runnable-perl/t/uniqueStr.t
-externals/libtest-module-runnable-perl/t/unmock.t
-externals/libtest-module-runnable-perl/t/version.t
-externals/libtest-module-runnable-perl/TODO
+etc/test-suite.yaml
 info.PL
+info/.gitignore
+info/Makefile
 lib/Chleb.pm
 lib/Chleb/Args/Base.pm
 lib/Chleb/Bible.pm
@@ -178,19 +277,22 @@ lib/Chleb/Token/Repository/DB/Dynamo.pm
 lib/Chleb/Token/Repository/DB/Maria.pm
 lib/Chleb/Token/Repository/Dummy.pm
 lib/Chleb/Token/Repository/Local.pm
+lib/Chleb/Token/Repository/Redis.pm
 lib/Chleb/Type/Testament.pm
 lib/Chleb/Utils.pm
 lib/Chleb/Utils/BooleanParserException.pm
 lib/Chleb/Utils/BooleanParserSystemException.pm
 lib/Chleb/Utils/BooleanParserUserException.pm
 lib/Chleb/Utils/OSError/Mapper.pm
+lib/Chleb/Utils/SecureString.pm
 lib/Chleb/Utils/TypeParserException.pm
 log/.keep
-log/default.log
-log/export-to-shell.log
+Makefile
 Makefile.PL
 MANIFEST			This list of files
+MANIFEST.SKIP
 NEWS
+PRIVACY.md
 README.md
 swagger.yaml
 t/Base.t
@@ -202,6 +304,7 @@ t/Book_getVerseByOrdinal.t
 t/Chleb_getBible.t
 t/Chleb_getTranslation.t
 t/Chleb_isTestamentMatch.t
+t/Config_get.t
 t/Exception.t
 t/info.t
 t/lib/Test/Chleb/DummyType.pm
@@ -234,5 +337,7 @@ t/Utils_limitText.t
 t/Utils_OSError_Mapper.t
 t/Utils_parseIntoType.t
 t/Utils_removeArrayEmptyItems.t
+t/Utils_SecureString.t
 t/verse.t
 t/votd.t
+TERMS.md
