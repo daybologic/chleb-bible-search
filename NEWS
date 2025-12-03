@@ -8,6 +8,7 @@ Punctuation, and UTF-8 in searches is now all properly handled or whisked away.
   * ❌ disable test which intermittently fails (random redirect) (issue #144)
   * 🚑️ create RunTimeDirectory via systemd (issue #146)
   * 🧹 fix MANIFEST
+  * 🩹 fix legacy obsolete tmpPath access when cache corrupt
 
 2.1.0
 =====
