@@ -49,7 +49,6 @@ bin/maint/md2html.pl
 bin/maint/pkg-info.sh
 bin/maint/rename-files-by-pattern.sh
 bin/maint/run-functional-tests.sh
-bin/maint/session-dump.pl
 bin/maint/swagger-check.sh
 bin/maint/synology.sh
 bitbucket-pipelines.yml
@@ -147,7 +146,6 @@ data/gitmoji/vendor/wheelchair.txt
 data/gitmoji/vendor/white_check_mark.txt
 data/gitmoji/vendor/wrench.txt
 data/gitmoji/vendor/zap.txt
-data/kjv.bin.gz
 data/Makefile
 data/static/asv.txt
 data/static/facebook.html
@@ -236,7 +234,6 @@ etc-local/main.yaml
 etc/chleb-bible-search.service
 etc/log4perl.conf
 etc/logrotate/chleb-bible-search
-etc/main.conf
 etc/main.yaml
 etc/nginx/chleb-bible-search-notls.example
 etc/nginx/chleb-bible-search.example
@@ -263,7 +260,6 @@ lib/Chleb/Exception.pm
 lib/Chleb/Generated/.keep
 lib/Chleb/Generated/Info.pm
 lib/Chleb/Info.pm
-lib/Chleb/Server.pm
 lib/Chleb/Server/Dancer2.pm
 lib/Chleb/Server/MediaType.pm
 lib/Chleb/Server/MediaType/Args/ToString.pm
@@ -287,7 +283,6 @@ lib/Chleb/Utils/OSError/Mapper.pm
 lib/Chleb/Utils/SecureString.pm
 lib/Chleb/Utils/TypeParserException.pm
 log/.keep
-Makefile
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
@@ -328,7 +323,6 @@ t/Server_votd.t
 t/Token.t
 t/TokenRepository_Local.t
 t/traverse_entire_bible.t
-t/traverse_entire_bible_reverse.t
 t/Type_Testament.t
 t/Utils_boolean.t
 t/Utils_explodeHtmlFilePath.t
