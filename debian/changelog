@@ -1,4 +1,4 @@
-chleb-bible-search (2.1.1) UNRELEASED; urgency=medium
+chleb-bible-search (2.1.1) stable; urgency=high
 
   * 🐛 backport bugfix/wholeword-punctuation/1 into v2.1.1 (issue #108)
   * 🩹 respect '(' at the beginning of a word search (issue #108)
@@ -6,7 +6,7 @@ chleb-bible-search (2.1.1) UNRELEASED; urgency=medium
   * ❌ disable test which intermittently fails (random redirect) (issue #144)
   * 🚑️ create RunTimeDirectory via systemd (issue #146)
 
- -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 23 Nov 2025 13:39:51 +0000
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Wed, 03 Dec 2025 20:15:43 +0000
 
 chleb-bible-search (2.1.0) stable; urgency=low
 
