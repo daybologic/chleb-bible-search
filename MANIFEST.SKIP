@@ -6,3 +6,4 @@
 ^externals/
 ^log/.*\.log$
 ^cache/.*\.bin$
+\.old$
