@@ -7,6 +7,7 @@ chleb-bible-search (2.1.1) stable; urgency=high
   * 🚑️ create RunTimeDirectory via systemd (issue #146)
   * 🧹 fix MANIFEST
   * 🩹 fix legacy obsolete tmpPath access when cache corrupt
+  * 👷 ensure cached data is removed on make clean
 
  -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Wed, 03 Dec 2025 20:15:43 +0000
 

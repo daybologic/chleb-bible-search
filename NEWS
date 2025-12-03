@@ -9,6 +9,7 @@ Punctuation, and UTF-8 in searches is now all properly handled or whisked away.
   * 🚑️ create RunTimeDirectory via systemd (issue #146)
   * 🧹 fix MANIFEST
   * 🩹 fix legacy obsolete tmpPath access when cache corrupt
+  * 👷 ensure cached data is removed on make clean
 
 2.1.0
 =====
