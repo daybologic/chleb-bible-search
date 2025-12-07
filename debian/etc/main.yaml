@@ -70,3 +70,6 @@ session_tokens:
 facebook:
   groupname: Chleb Bible Search (1268737414574145)
   url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
+mailing_list_votd:
+  groupname: chleb-votd
+  url: https://lists.sr.ht/~m6kvm/chleb-votd
