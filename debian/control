@@ -61,6 +61,7 @@ Depends: ${shlibs:Depends},
  libtime-duration-perl,
  libuuid-tiny-perl,
  libyaml-libyaml-perl,
+ swaks,
 Replaces: libreligion-bible-verses-perl
 Description: Chleb Bible Search - Bible Query Service
  For further information see:
