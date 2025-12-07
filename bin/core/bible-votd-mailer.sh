@@ -218,7 +218,6 @@ swaks \
 Date: $(date -R)
 From: Chleb VoTD <$mailFrom>
 To: Chleb VoTD Mailing List <$mailTo>
-Bcc: <2e0eol@gmail.com>
 Subject: $mailSubject
 MIME-Version: 1.0
 Content-Type: multipart/alternative; boundary="$boundary"
