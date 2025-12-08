@@ -176,7 +176,7 @@ sub getSentimentByOrdinal {
 
 	return {
 		emotion => $self->data->[$MAIN_OFFSET_EMOTION]->[$ordinal],
-		tones   => $self->data->[$MAIN_OFFSET_TONES]->[$ordinal],
+		tones   => [ sort @{ $self->data->[$MAIN_OFFSET_TONES]->[$ordinal] } ],
 	};
 }
 

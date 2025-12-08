@@ -71,8 +71,10 @@ sub test_translation_all {
 				attributes => {
 					book => 'psa',
 					chapter => 110,
+					emotion => 'neutral',
 					ordinal => 1,
 					text => 'Jehovah saith unto my Lord, Sit thou at my right hand, Until I make thine enemies thy footstool.',
+					tones => [],
 					translation => 'asv',
 				},
 				id => 'asv/psa/110/1',
@@ -105,8 +107,10 @@ sub test_translation_all {
 				attributes => {
 					book => 'psa',
 					chapter => 110,
+					emotion => 'neutral',
 					ordinal => 1,
 					text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
+					tones => [],
 					translation => 'kjv',
 				},
 				id => 'kjv/psa/110/1',
