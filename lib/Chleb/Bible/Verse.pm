@@ -104,8 +104,10 @@ sub TO_JSON {
 	return {
 		book        => $self->book->shortName,
 		chapter     => $self->chapter->ordinal+0,
+		emotion     => $self->emotion,
 		ordinal     => $self->ordinal+0,
 		text        => $self->text,
+		tones       => $self->tones,
 		translation => $self->book->bible->translation,
 	};
 }

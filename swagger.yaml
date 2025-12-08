@@ -749,6 +749,10 @@ components:
               type: integer
               description: Chapter number in which verse appears
               example: 6
+            emotion:
+              type: string
+              description: Primary emotional sentiment of the verse
+              example: "hope"
             ordinal:
               type: integer
               description: Verse number within chapter
@@ -757,6 +761,12 @@ components:
               type: string
               description: Verbatim and unedited text from the Holy Bible.
               example: Thus did Noah; according to all that God commanded him, so did he.
+            tones:
+              type: array
+              items:
+                type: string
+                description: Additional sentiment(s) detected for the verse
+                example: encouragement
             translation:
               $ref: '#/components/schemas/Translation'
     Stats:
