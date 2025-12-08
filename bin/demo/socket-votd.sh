@@ -70,8 +70,29 @@ if [ -x /usr/bin/cgi-fcgi ]; then
 		done
 
 		i=0
+		emotion=''
+		declare -A toneSeen
+		tones=()
+
 		while true; do
 			bookRelationship=$(echo "$json" | jq -r '.data['$i'].relationships.book.data.id');
+			if [ -z "$emotion" ]; then
+				emotion=$(echo "$json" | jq -r '.data['$i'].attributes.emotion');
+			fi
+			toneI=0
+			while true; do
+				tone=$(echo "$json" | jq -r '.data['$i'].attributes.tones['$toneI']');
+				if [ "$tone" = 'null' ]; then
+					break;
+				fi
+
+				if [[ ! -v "toneSeen[$tone]" ]]; then
+					tones+=("$tone")
+					toneSeen[$tone]=1
+				fi
+
+				((++toneI))
+			done
 			if [ "$bookRelationship" = "$bookId" ]; then
 				line1=$(echo "$json" | jq -r '.data['$i'].attributes | (.chapter|tostring) + ":" + (.ordinal|tostring) + " " + .text');
 				if [ "${line1}" = "null:null " ]; then
@@ -85,6 +106,16 @@ if [ -x /usr/bin/cgi-fcgi ]; then
 
 			((++i))
 		done
+
+		if [ ! -z "$emotion" ] && [ "$emotion" != 'null' ]; then
+			sentiment="sentiment: $emotion"
+			if [ "${#tones[@]}" -gt 0 ]; then
+				IFS=, printf -v joined '%s' "${tones[*]}"
+				joined=${joined// /, }
+				sentiment="${sentiment}, ${joined}"
+			fi
+			echo "$sentiment"
+		fi
 	else
 		export HTTP_ACCEPT='text/html'
 		cgi-fcgi -connect "$SOCKET" /
