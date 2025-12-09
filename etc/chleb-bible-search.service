@@ -15,6 +15,7 @@ Type=exec
 Nice=15
 Restart=always
 User=chleb
+Group=nogroup
 UMask=000
 RuntimeDirectory=chleb-bible-search
 RuntimeDirectoryMode=0755
