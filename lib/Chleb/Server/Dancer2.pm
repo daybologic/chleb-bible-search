@@ -48,6 +48,7 @@ use Chleb::Bible::Search::Query;
 use Chleb::Server::Moose;
 use Chleb::TemplateProcessor;
 use Chleb::Utils::OSError::Mapper;
+use Chleb::Utils::SecureString;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
@@ -149,6 +150,29 @@ sub __configGetPublicDir {
 	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public'),
 }
 
+sub __detaint {
+	my ($value, $name) = @_;
+
+	my $detainted;
+	eval {
+		my $mode = $Chleb::Utils::SecureString::MODE_TRAP;
+		$detainted = Chleb::Utils::SecureString::detaint($value, $mode, $name)->value;
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	return $detainted;
+}
+
+sub __param {
+	my ($name) = @_;
+	my $value = param($name);
+	return undef unless (defined($value));
+	return __detaint($value, $name);
+}
+
 get '/' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
@@ -175,10 +199,10 @@ get '/:version/random' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-	my $version = int(param('version') || 1);
-	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(__param('translations')));
+	my $version = int(__param('version') || 1);
+	my $parental = Chleb::Utils::boolean('parental', __param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', __param('redirect'), 0);
 
 	my $dancerRequest = request();
 
@@ -187,7 +211,7 @@ get '/:version/random' => sub {
 		$result = $server->__random({
 			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			translations => $translations,
-			testament => param('testament'),
+			testament => __param('testament'),
 			version => $version,
 			parental => $parental,
  			redirect => $redirect,
@@ -217,10 +241,10 @@ get '/1/votd' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
-	my $when = param('when');
-	my $testament = param('testament');
+	my $parental = Chleb::Utils::boolean('parental', __param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', __param('redirect'), 0);
+	my $when = __param('when');
+	my $testament = __param('testament');
 
 	my $result;
 	eval {
@@ -244,11 +268,11 @@ get '/2/votd' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $parental = Chleb::Utils::boolean('parental', param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', param('redirect'), 0);
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-	my $when = param('when');
-	my $testament = param('testament');
+	my $parental = Chleb::Utils::boolean('parental', __param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', __param('redirect'), 0);
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(__param('translations')));
+	my $when = __param('when');
+	my $testament = __param('testament');
 	my $dancerRequest = request();
 
 	my $result;
@@ -287,10 +311,10 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $book = param('book') // '';
-	my $chapter = param('chapter') // '';
-	my $verse = param('verse') // '';
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
+	my $book = __param('book') // '';
+	my $chapter = __param('chapter') // '';
+	my $verse = __param('verse') // '';
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(__param('translations')));
 
 	my $dancerRequest = request();
 
@@ -329,10 +353,10 @@ get '/1/search' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $limit = param('limit') ? int(param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
-	my $term = param('term') // '';
-	my $wholeword = param('wholeword');
-	my $form = Chleb::Utils::boolean('form', param('form'), 0);
+	my $limit = __param('limit') ? int(__param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	my $term = __param('term') // '';
+	my $wholeword = __param('wholeword');
+	my $form = Chleb::Utils::boolean('form', __param('form'), 0);
 
 	my $dancerRequest = request();
 

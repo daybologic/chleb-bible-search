@@ -9,13 +9,13 @@ Welcome to the Chleb Bible Search by Rev. Duncan Ross Palmer
 A self-hostable microservice for querying the bible and searching for content.
 The backend Perl library is also designed to be easily integrated with applications.
 
-The service also provides a determinsitic verse of the day lookup.
+The service also provides a deterministic verse of the day lookup.
 
 ## Documentation
 
 For up to date documentation, please ensure you are viewing the latest copy at [GitHub](https://github.com/daybologic/chleb-bible-search/blob/master/README.md)
 
-For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/2.1.0)
+For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/2.1.1)
 
 ### Legal
 - [Privacy Policy](./PRIVACY.md)
@@ -38,15 +38,15 @@ Hosting for Chleb Bible Search source code is provided at the following sites:
   * [GitHub](https://github.com/daybologic/chleb-bible-search)
   * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search)
 
-The latest release is version 2.1.0, which is available for download at the following sites:
+The latest release is version 2.1.1, which is available for download at the following sites:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v2.1.0.tar.gz)
-  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/archive/v2.1.0.tar.gz)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v2.1.1.tar.gz)
+  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/archive/v2.1.1.tar.gz)
 
 The latest release is available as a Debian package from the following locations:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v2.1.0/chleb-bible-search_2.1.0_all.deb)
-  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v2.1.0)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v2.1.1/chleb-bible-search_2.1.1_all.deb)
+  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v2.1.1)
 
 ## Self-hosted installation
 
@@ -55,7 +55,11 @@ This is the easiest way to fire up and get searching the bible via your applicat
 the service on your own equipment.  Please install the deb file, where possible, an then run:
 
 ```
-sudo dpkg -i chleb-bible-search_2.1.0_all.deb
+sudo dpkg -i \
+	chleb-bible-search_2.1.1_all.deb
+	chleb-bible-search-core_2.1.1_all.deb
+	chleb-bible-search-dict_2.1.1_all.deb
+
 sudo apt -yf install
 sudo systemctl enable chleb-bible-search.service
 sudo invoke-rc.d chleb-bible-search start
@@ -155,7 +159,7 @@ which will typically be 0-15.
 
 ### Branch naming scheme
 
-When contributing to the project, please fork from the GitHub repository and make all contributions based on the develop branch,
+When contributing to the project, please fork from the GitHub repository and make all contributions based on the master branch,
 unless you are specifically patching a bug within an historical release, in which case, branch from the relevant rel/ branch.
 
 Please name your branch using this scheme:
@@ -163,13 +167,13 @@ Please name your branch using this scheme:
 | ------ | ----------- | ---------- | -------------- |
 | bugfix/&lt;ticket&gt;-&lt;description&gt; | A user bug report, with the ticket number | NO | NO |
 | bugs/&lt;id&gt; | Reserved for the use of git-bug | NO | NO |
-| develop | Mainline merge point for all features | NO except from master | NO |
+| develop | Deprecated; please migrate to 'master' | NO | NO |
 | docs/&lt;description&gt; | Documentation changes _only_ | NO | NO |
 | feature/&lt;description&gt; | New functionality | NO | NO |
 | f/YYYYMM-&lt;description&gt; | Legacy features, please don't create new ones | NO | NO |
 | hotfix/&lt;description&gt; | Emergency fixes only | NO | YES |
 | maint | Maintainer branches (features for developers) | NO | NO |
-| master | Pointer to latest stable release | YES | NO |
+| master | Mainline merge point for all features | NO | NO |
 | platform/&lt;uname&gt;/base | Specific changes which can't be merged to master | NO | NO |
 | private/&lt;user-defined&gt; | Undocumented hierarchy, maintainer-use only | YES | YES |
 | rel/X.Y | released 1.0, 2.0, 2.1 etc, which contain specific tags vX.Y.Z | NO | NO |
@@ -196,9 +200,6 @@ All of the standards we use are documented elsewhere on the world-wide web:
   * [RESTful](https://restfulapi.net/)
   * [Semantic Versioning](https://semver.org/)
   * [Twelve-Factor App](https://12factor.net/)
-
-Very importantly, the master branch is always the latest release, and should be production ready at any time!
-Please do not submit and target pull requests to the master branch, but to the develop branch!
 
 ### Testing
 

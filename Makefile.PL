@@ -109,6 +109,7 @@ http-test :: pure_all
 
 clean :: 
 	rm -rf cover_db
+	rm -f cache/*.bin
 	cd data/ && make clean
 	cd info/ && make clean
 

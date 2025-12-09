@@ -32,7 +32,16 @@ Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
 Package: chleb-bible-search
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends},
+Depends: chleb-bible-search-core (= ${binary:Version}), chleb-bible-search-dict (= ${binary:Version})
+Description: Chleb Bible Search - Bible Query Service (meta-package)
+ This is a meta package that installs both the core bible search service, which provides the main
+ functionality for searching within the Bible text and the dictionary data, which contains the necessary
+ linguistic data for interpreting search queries.
+
+Package: chleb-bible-search-core
+Architecture: all
+Depends: ${shlibs:Depends},
+ ${misc:Depends},
  bash (>= 5.2.15-2),
  jq,
  libdatetime-perl,
@@ -59,3 +68,10 @@ Description: Chleb Bible Search - Bible Query Service
  .
  https://github.com/daybologic/chleb-bible-search
  https://bitbucket.org/2E0EOL/chleb-bible-search
+
+Package: chleb-bible-search-dict
+Architecture: all
+Depends: chleb-bible-search-core (= ${binary:Version})
+Description: Chleb Bible Search - Core Dictionaries
+ This package contains the dictionary data used by the Chleb Bible Search service.
+ It includes linguistic data for interpreting search queries.

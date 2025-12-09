@@ -1,3 +1,16 @@
+chleb-bible-search (2.1.1) stable; urgency=high
+
+  * 🐛 backport bugfix/wholeword-punctuation/1 into v2.1.1 (issue #108)
+  * 🩹 respect '(' at the beginning of a word search (issue #108)
+  * 🔀 backport branch 'bugfix/strip-quotes-and-utf8/1' into rel/2.1 (issue #143)
+  * ❌ disable test which intermittently fails (random redirect) (issue #144)
+  * 🚑️ create RunTimeDirectory via systemd (issue #146)
+  * 🧹 fix MANIFEST
+  * 🩹 fix legacy obsolete tmpPath access when cache corrupt
+  * 👷 ensure cached data is removed on make clean
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Wed, 03 Dec 2025 20:15:43 +0000
+
 chleb-bible-search (2.1.0) stable; urgency=low
 
   * 🔀 Merge branch 'docs/terms-conditions/1' into develop

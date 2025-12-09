@@ -235,6 +235,15 @@ sub search {
 	my @verses;
 
 	my $critereonText = $query->text;
+
+	my $rx;
+	if ($query->wholeword) {
+		$critereonText = quotemeta($critereonText);
+		$rx = qr/^\(?$critereonText(?:[\s.,:;()?!-]|$)/i;
+	} else {
+		$rx = qr/$critereonText/i;
+	}
+
 	CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
 		my $chapter = $self->getChapterByOrdinal($chapterOrdinal);
 
@@ -244,16 +253,12 @@ sub search {
 			# but you need some more methods in the library to avoid it
 			# Perhaps have a getVerseByKey in _library?
 			my $text = $self->bible->__backend->getVerseDataByKey($verseKey);
-			my $found = 0;
 
+			my $found;
 			if ($query->wholeword) {
-				$found = 1 if ($text =~ m/\s+$critereonText,/i);
-				$found = 1 if ($text =~ m/\s+$critereonText:/i);
-				$found = 1 if ($text =~ m/\s+$critereonText;/i);
-				$found = 1 if ($text =~ m/^$critereonText\s+/i);
-				$found = 1 if ($text =~ m/\s+$critereonText\s+/i);
+				$found = grep { m/$rx/ } split(m/\s+/, $text);
 			} else {
-				$found = 1 if ($text =~ m/$critereonText/i);
+				$found = ($text =~ m/$rx/);
 			}
 
 			push(@verses, Chleb::Bible::Verse->new({

@@ -17,6 +17,8 @@ Restart=always
 User=chleb
 Group=nogroup
 UMask=000
+RuntimeDirectory=chleb-bible-search
+RuntimeDirectoryMode=0755
 
 [Install]
 WantedBy=multi-user.target
