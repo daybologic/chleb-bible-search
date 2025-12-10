@@ -121,7 +121,7 @@ sub BUILD {
 	my ($self) = @_;
 
 	if ($self->__fsck() != EXIT_SUCCESS) {
-		die(sprintf("'%s' is corrupt or otherwise cannot be handled", $self->tmpPath));
+		die(sprintf("'%s' is corrupt or otherwise cannot be handled", $self->cachePath));
 	}
 
 	return;

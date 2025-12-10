@@ -1,0 +1,10 @@
+^\.git/
+^MYMETA\.
+^blib/
+\.bak$
+^data/sessions/
+^externals/
+^log/.*\.log$
+^cache/.*\.bin$
+\.old$
+pm_to_blib
