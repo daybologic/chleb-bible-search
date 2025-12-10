@@ -889,13 +889,16 @@ sub __verseToHtml {
 		}
 	}
 
-	my $translation = $json->[0]->{data}->[0]->{attributes}->{translation};
+	my $firstVerse = $json->[0]->{data}->[0];
+	my ($translation, $emotion) = @{ $firstVerse->{attributes} }{qw(translation emotion)};
 
 	if ($verseCount == 1) {
 		$output .= sprintf(" [%s]\r\n", $translation);
 	} else {
 		$output .= sprintf("\r\n\r\n\t(%s)\r\n", $translation);
 	}
+
+	$output .= sprintf("<p>Emotion: %s</p>\r\n", $emotion);
 
 	return $output;
 }

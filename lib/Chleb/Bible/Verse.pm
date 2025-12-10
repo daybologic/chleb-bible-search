@@ -39,13 +39,15 @@ has book => (is => 'ro', isa => 'Chleb::Bible::Book', required => 1);
 
 has chapter => (is => 'ro', isa => 'Chleb::Bible::Chapter', required => 1);
 
-has emotion => (is => 'ro', isa => 'Str', required => 1, default => 'neutral');
+has emotion => (is => 'ro', isa => 'Str', required => 1, lazy => 1, default => \&__makeEmotion);
 
 has ordinal => (is => 'ro', isa => 'Int', required => 1);
 
+has ordinalAbsolute => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeOrdinalAbsolute);
+
 has text => (is => 'ro', isa => 'Str', required => 1);
 
-has tones => (is => 'ro', isa => 'ArrayRef[Str]', required => 1, default => sub { [] });
+has tones => (is => 'ro', isa => 'ArrayRef[Str]', required => 1, lazy => 1, default => \&__makeTones);
 
 has type => (is => 'ro', isa => 'Str', default => sub { 'verse' });
 
@@ -56,6 +58,10 @@ has id => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeId);
 has continues => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeContinues);
 
 has parental => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeParental);
+
+has key => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeKey);
+
+has __sentiment => (is => 'ro', isa => 'HashRef', lazy => 1, init_arg => undef, default => \&__makeSentiment);
 
 sub BUILD {
 }
@@ -140,6 +146,31 @@ sub __makeContinues {
 sub __makeParental {
 	my ($self) = @_;
 	return $self->dic->exclusions->isExcluded($self);
+}
+
+sub __makeEmotion {
+	my ($self) = @_;
+	return $self->__sentiment->{emotion};
+}
+
+sub __makeTones {
+	my ($self) = @_;
+	return $self->__sentiment->{tones};
+}
+
+sub __makeSentiment {
+	my ($self) = @_;
+	return $self->book->bible->__backend->getSentimentByOrdinal($self->ordinalAbsolute);
+}
+
+sub __makeOrdinalAbsolute {
+	my ($self) = @_;
+	return $self->book->bible->__backend->getOrdinalByVerseKey($self->key);
+}
+
+sub __makeKey {
+	my ($self) = @_;
+	return join(':', $self->book->bible->translation, $self->book->shortNameRaw, $self->chapter->ordinal, $self->ordinal);
 }
 
 __PACKAGE__->meta->make_immutable;

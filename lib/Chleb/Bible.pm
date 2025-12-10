@@ -284,15 +284,12 @@ sub getVerseByOrdinal {
 		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
 			if (my $book = $self->getBookByShortName($bookShortName, $args)) {
 				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
-				my $sentiment = $self->__backend->getSentimentByOrdinal($ordinal);
 
 				return Chleb::Bible::Verse->new({
 					book    => $book,
 					chapter => $chapter,
-					emotion => $sentiment->{emotion},
 					ordinal => $verseNumber,
 					text    => $text,
-					tones   => $sentiment->{tones},
 				});
 			}
 		} else {
