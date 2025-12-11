@@ -79,9 +79,11 @@ sub test_kjv {
 
 sub __check {
 	my ($self) = @_;
-	plan tests => 16;
+	plan tests => 17;
 
 	my $translation = $self->sut->bible->translation;
+
+	my $wrongTranslation = ($translation eq 'asv') ? 'kjv' : 'asv';
 
 	Readonly my %EXPECTATIONS => (
 		"${translation}:Gen:1:1" => 1,
@@ -95,6 +97,7 @@ sub __check {
 		"${translation}:Rev:22:22" => 0, # spill-over translation by one verse
 		'xxx:Gen:1:1' => 0, # no such translation
 		"${translation}:Moz:1:1" => 0, # no such book
+		"${wrongTranslation}:Gen:1:1" => 0, # wrong translation
 	);
 
 	while (my ($input, $output) = each(%EXPECTATIONS)) {
