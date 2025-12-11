@@ -79,6 +79,7 @@ sub test_kjv {
 
 sub __check {
 	my ($self) = @_;
+	plan tests => 16;
 
 	my $translation = $self->sut->bible->translation;
 
@@ -96,8 +97,6 @@ sub __check {
 		"${translation}:Moz:1:1" => 0, # no such book
 	);
 
-	plan tests => 16;
-
 	while (my ($input, $output) = each(%EXPECTATIONS)) {
 		my $ordinalAbsolute = $self->sut->getOrdinalByVerseKey($input);
 		is($ordinalAbsolute, $output, "getOrdinalByVerseKey('$input') -> $output");
@@ -105,6 +104,41 @@ sub __check {
 			is($self->sut->getVerseKeyByOrdinal($ordinalAbsolute), $input, "getVerseKeyByOrdinal($output) -> '$input'");
 		}
 	}
+
+	return EXIT_SUCCESS;
+}
+
+sub testGetVerseKeyByOrdinal_edgeCaseOrdinals_asv {
+	my ($self) = @_;
+	$self->__checkGetVerseKeyByOrdinal_edgeCaseOrdinals();
+	return EXIT_SUCCESS;
+}
+
+sub testGetVerseKeyByOrdinal_edgeCaseOrdinals_kjv {
+	my ($self) = @_;
+	$self->__checkGetVerseKeyByOrdinal_edgeCaseOrdinals();
+	return EXIT_SUCCESS;
+}
+
+sub __checkGetVerseKeyByOrdinal_edgeCaseOrdinals {
+	my ($self) = @_;
+	plan tests => 6;
+
+	my $translation = $self->sut->bible->translation;
+
+	is($self->sut->getVerseKeyByOrdinal(0), undef, 'getVerseKeyByOrdinal(0) -> <undef>');
+	is($self->sut->getVerseKeyByOrdinal(undef), undef, 'getVerseKeyByOrdinal(<undef>) -> <undef>');
+
+	is($self->sut->getVerseKeyByOrdinal(-1), "${translation}:Rev:22:21",
+	    "getVerseKeyByOrdinal(-1) -> '${translation}:Rev:22:21'");
+
+	is($self->sut->getVerseKeyByOrdinal(-2), "${translation}:Rev:22:20",
+	    "getVerseKeyByOrdinal(-2) -> '${translation}:Rev:22:20'");
+
+	is($self->sut->getVerseKeyByOrdinal(-31102), "${translation}:Gen:1:1",
+	    "getVerseKeyByOrdinal(-31102) -> '${translation}:Gen:1:1'");
+
+	is($self->sut->getVerseKeyByOrdinal(-31103), undef, 'getVerseKeyByOrdinal(-31103) -> <undef>');
 
 	return EXIT_SUCCESS;
 }

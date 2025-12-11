@@ -159,6 +159,7 @@ sub getOrdinalByVerseKey {
 
 sub getVerseKeyByOrdinal {
 	my ($self, $ordinal) = @_;
+	return undef if (!defined($ordinal));
 	return $self->data->[$MAIN_OFFSET_VERSES]->[$ordinal];
 }
 
