@@ -96,10 +96,14 @@ sub __check {
 		"${translation}:Moz:1:1" => 0, # no such book
 	);
 
-	plan tests => scalar(keys(%EXPECTATIONS));
+	plan tests => 16;
 
 	while (my ($input, $output) = each(%EXPECTATIONS)) {
-		is($self->sut->getOrdinalByVerseKey($input), $output, "'$input' -> $output");
+		my $ordinalAbsolute = $self->sut->getOrdinalByVerseKey($input);
+		is($ordinalAbsolute, $output, "getOrdinalByVerseKey('$input') -> $output");
+		if ($ordinalAbsolute > 0) {
+			is($self->sut->getVerseKeyByOrdinal($ordinalAbsolute), $input, "getVerseKeyByOrdinal($output) -> '$input'");
+		}
 	}
 
 	return EXIT_SUCCESS;
