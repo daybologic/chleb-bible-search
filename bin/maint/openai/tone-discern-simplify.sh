@@ -14,8 +14,13 @@ if [ -z "$output" ]; then
 	exit 1
 fi
 
-if [ -e "$output" ] || [ ! -f "$input" ]; then
-	echo "Input must exist and output must not exist" >&2
+if [ ! -f "$input" ]; then
+	echo "Input file does not exist: $input" >&2
+	exit 1
+fi
+
+if [ -e "$output" ]; then
+	echo "Output file already exists: $output" >&2
 	exit 1
 fi
 
