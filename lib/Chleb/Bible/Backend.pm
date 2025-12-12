@@ -181,16 +181,31 @@ sub getBookInfoByShortName {
 sub getSentimentByOrdinal {
 	my ($self, $ordinal) = @_;
 
-	if ($ordinal == 0) { # TODO: trap boundaries?
-		return {
-			emotion => 'neutral',
-			tones => [ ],
-		};
+	if (!defined($ordinal)) {
+		$self->dic->logger->warn('ordinal undefined! Converted to 0 - fix your code');
+		$ordinal = 0;
+	}
+
+	$self->dic->logger->warn('sentiment ARRAYs are ordinal-based (starting index 1, not 0)')
+	    if ($ordinal == 0);
+
+	my $emotion = 'neutral';
+	if (defined($self->data->[$MAIN_OFFSET_EMOTION]->[$ordinal])) {
+		$emotion = $self->data->[$MAIN_OFFSET_EMOTION]->[$ordinal];
+	} else {
+		$self->dic->logger->warn("No emotion for verse at ordinal $ordinal");
+	}
+
+	my $tones = [ ];
+	if (defined($self->data->[$MAIN_OFFSET_TONES]->[$ordinal])) {
+		$tones = [ sort @{ $self->data->[$MAIN_OFFSET_TONES]->[$ordinal] } ];
+	} else {
+		$self->dic->logger->warn("No tones entry for verse at ordinal $ordinal (missing entry, not empty set!)");
 	}
 
 	return {
-		emotion => $self->data->[$MAIN_OFFSET_EMOTION]->[$ordinal],
-		tones   => [ sort @{ $self->data->[$MAIN_OFFSET_TONES]->[$ordinal] } ],
+		emotion => $emotion,
+		tones   => $tones,
 	};
 }
 
