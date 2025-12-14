@@ -118,8 +118,10 @@ sub test {
 	cmp_deeply($json, {
 		book        => 'susana',
 		chapter     => 1_121,
+		emotion     => 'neutral',
 		ordinal     => 5,
 		text        => $text,
+		tones       => [ ],
 		translation => $translation,
 	}, 'TO_JSON') or diag(explain($json));
 
