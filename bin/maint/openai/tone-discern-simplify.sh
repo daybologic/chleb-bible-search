@@ -25,8 +25,8 @@ if [ -e "$output" ]; then
 fi
 
 echo "[" > "$output"
-for verseOrdinal in {1..31102}; do
-	json=$(head -n $verseOrdinal "$input" | tail -n 1)
+verseOrdinal=1
+while IFS= read -r json; do
 	echo "$json"
 
 	emotion=$(echo "$json" | jq .primary_emotion)
@@ -38,7 +38,8 @@ for verseOrdinal in {1..31102}; do
 	fi
 
 	echo "$itemData" >> "$output"
-done
+	verseOrdinal=$((verseOrdinal+1))
+done < "$input"
 
 echo "]" >> "$output"
 
