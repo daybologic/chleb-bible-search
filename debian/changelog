@@ -1,3 +1,10 @@
+chleb-bible-search (2.2.0) stable; urgency=medium
+
+  * AI analysis!
+    We now provide sentiment analysis per-verse.  Primary emotion and an array of tones
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 14 Dec 2025 17:18:45 +0000
+
 chleb-bible-search (2.1.2) stable; urgency=high
 
   * We have split the package from 'chleb-bible-search' into three packages:
