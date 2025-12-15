@@ -284,6 +284,7 @@ sub getVerseByOrdinal {
 		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
 			if (my $book = $self->getBookByShortName($bookShortName, $args)) {
 				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
+
 				return Chleb::Bible::Verse->new({
 					book    => $book,
 					chapter => $chapter,

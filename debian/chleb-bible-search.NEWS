@@ -1,0 +1,11 @@
+v2.1.2
+======
+We have split the package from 'chleb-bible-search' into three packages:
+
+  * chleb-bible-search: meta-package
+  * chleb-bible-search-core: The code
+  * chleb-bible-search-dict: Dictionaries
+
+In the future, optional dictionary files will be supplied in one or more additional, separate .deb files
+
+We have made significant changes to the logrotate config so it merely compresses, but Log4Perl rotates.

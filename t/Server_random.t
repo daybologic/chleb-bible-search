@@ -43,7 +43,7 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Moose;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::Deep qw(all array_each cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
 sub setUp {
@@ -70,8 +70,10 @@ sub test_translation_kjv {
 				attributes => {
 					book => ignore(),
 					chapter => re(qr/^\d{1,3}$/),
+					emotion => re(qr/^\w+$/),
 					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
+					tones => array_each(re(qr/^\w+$/)), # every element must be a single non-empty word
 					translation => 'kjv',
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
@@ -167,8 +169,10 @@ sub test_translation_asv {
 				attributes => {
 					book => ignore(),
 					chapter => re(qr/^\d{1,3}$/),
+					emotion => re(qr/^\w+$/),
 					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
+					tones => array_each(re(qr/^\w+$/)), # every element must be a single non-empty word
 					translation => 'asv',
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
@@ -264,8 +268,10 @@ sub test_translation_all {
 				attributes => {
 					book => ignore(),
 					chapter => re(qr/^\d{1,3}$/),
+					emotion => re(qr/^\w+$/),
 					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
+					tones => array_each(re(qr/^\w+$/)),
 					translation => re(qr/^\w{3}$/),
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),

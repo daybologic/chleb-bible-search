@@ -65,7 +65,7 @@ sub get {
 	my $defaultPrintable = (defined($default) && ref($default)) ? (Dumper $default) : $default;
 	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $valuePrintable, $defaultPrintable);
 
-	my $level = 'debug';
+	my $level = 'trace';
 	if ($defaultUsed) {
 		$level = 'warn';
 		$msg .= ' -- default used!  We recommend you set this value explicitly in your config!';
