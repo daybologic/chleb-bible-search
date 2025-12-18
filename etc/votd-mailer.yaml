@@ -30,7 +30,6 @@
 
 mailing_list:
   smtp:
-    #server: "smtp.gmail.com"
     server: "smtp.example.org"
     port: 587
     username: "2e0eol@gmail.com"
