@@ -31,9 +31,42 @@
 
 set -xeuo pipefail
 
+# Directory of this script (absolute, no matter where it's run from)
+scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+yaml2json="${scriptDir}/yaml2json.pl"
+if [ ! -x "$yaml2json" ]; then
+	yaml2json='/usr/share/chleb-bible-search/yaml2json.pl'
+fi
+
+config="${scriptDir}/../../etc/votd-mailer.yaml"
+if [ ! -f "$config" ]; then
+	config="/etc/chleb-bible-search/votd-mailer.yaml"
+fi
+
+echo "command: $yaml2json"
+
 nowCoarse=$(date "+%a. %d %b %Y")
 now=$(date '+%Y-%m-%dT09:00:00%%2B0100')
-siteRoot='https://chleb-api.daybologic.co.uk'
+
+configJson=$("$yaml2json" < "$config")
+
+smtpAuthUser=$(jq -r .mailing_list.smtp.username <<< "$configJson")
+smtpAuthPass=$(jq -r .mailing_list.smtp.password <<< "$configJson")
+smtpServerHost=$(jq -r .mailing_list.smtp.server <<< "$configJson")
+smtpServerPort=$(jq -r .mailing_list.smtp.port <<< "$configJson")
+smtpServerTls=$(jq -r .mailing_list.smtp.use_tls <<< "$configJson")
+
+url=$(jq -r .mailing_list.list_info.url <<< "$configJson")
+listName=$(jq -r .mailing_list.list_info.name <<< "$configJson")
+#listSubscribe=$(jq -r .mailing_list.list_info.subscribe <<< "$configJson")
+listUnsubscribe=$(jq -r .mailing_list.list_info.unsubscribe <<< "$configJson")
+mailTo=$(jq -r .mailing_list.list_info.to <<< "$configJson")
+mailToName=$(jq -r .mailing_list.list_info.to_name <<< "$configJson")
+mailFrom=$(jq -r .mailing_list.list_info.from <<< "$configJson")
+mailFromName=$(jq -r .mailing_list.list_info.from_name <<< "$configJson")
+
+siteRoot=$(jq -r .mailing_list.site_info.root_url <<< "$configJson")
 
 # --- 1. Fetch VoTD as JSON:API ---
 #    -H 'Accept: application/vnd.api+json' \
@@ -96,7 +129,6 @@ permalink="$(jq -r '.data[0].links.self // .links.self // empty' <<< "$json")"
 permalink="${siteRoot}${permalink}"
 
 mailSubject="Verse of the Day - $nowCoarse"
-mailUnsubscribe='~m6kvm/chleb-votd+unsubscribe@lists.sr.ht?subject=unsubscribe'
 
 # --- 2. Build HTML body into a variable ---
 htmlBody="$(cat <<EOF
@@ -188,9 +220,9 @@ htmlBody="$(cat <<EOF
       fi)
 
       <div class="footer">
-        You are receiving this email from the <a href="https://lists.sr.ht/~m6kvm/chleb-votd">chleb-votd</a> mailing list.<br />
+        You are receiving this email from the <a href="${url}">${listName}</a> mailing list.<br />
 
-        To unsubscribe, email <a href="mailto:${mailUnsubscribe}">${mailUnsubscribe}</a>
+        To unsubscribe, email <a href="mailto:${listUnsubscribe}?subject=unsubscribe">${listUnsubscribe}</a>
       </div>
     </div>
   </div>
@@ -200,24 +232,29 @@ EOF
 )"
 
 boundary="chleb-votd-boundary-$(date +%s)"
-mailTo="~m6kvm/chleb-votd-dev@lists.sr.ht"
-mailTo="~m6kvm/chleb-votd@lists.sr.ht"
-mailFrom="2e0eol@gmail.com"
-mailFrom="~m6kvm/chleb-votd@lists.sr.ht"
+
+case "$smtpServerTls" in
+	1|true|yes|on|True|TRUE)
+		tlsFlag="--tls"
+		;;
+	*)
+		tlsFlag=""
+		;;
+esac
 
 swaks \
-    --server smtp.gmail.com \
-    --port 587 \
+    --server "$smtpServerHost" \
+    --port "$smtpServerPort" \
     --auth LOGIN \
-    --auth-user "2e0eol@gmail.com" \
-    --auth-password "XXXXXXXXXXXXXXXX" \
+    --auth-user "$smtpAuthUser" \
+    --auth-password "$smtpAuthPass" \
     --from "$mailFrom" \
     --to "$mailTo" \
-    --tls \
+    "$tlsFlag" \
     --data - <<EOF2
 Date: $(date -R)
-From: Chleb VoTD <$mailFrom>
-To: Chleb VoTD Mailing List <$mailTo>
+From: $mailFromName <$mailFrom>
+To: $mailToName <$mailTo>
 Subject: $mailSubject
 MIME-Version: 1.0
 Content-Type: multipart/alternative; boundary="$boundary"
@@ -233,8 +270,8 @@ $reference
 $plainVerseTexts
 
 Open this verse on Chleb: $permalink
-You are receiving this email from the chleb-votd mailing list.
-To unsubscribe, email ~m6kvm/chleb-votd+unsubscribe@lists.sr.ht?subject=unsubscribe
+You are receiving this email from the $listName mailing list.
+To unsubscribe, email $listUnsubscribe with a subject of "unsubscribe".
 
 --$boundary
 Content-Type: text/html; charset="UTF-8"
