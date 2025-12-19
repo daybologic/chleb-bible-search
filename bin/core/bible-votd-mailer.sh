@@ -70,12 +70,18 @@ siteRoot=$(jq -r .mailing_list.site_info.root_url <<< "$configJson")
 
 # --- 1. Fetch VoTD as JSON:API ---
 #    -H 'Accept: application/vnd.api+json' \
-json="$(
-  curl -s \
-    -H 'Accept: application/json' \
-    "${siteRoot}/2/votd?when=${now}"
-)"
+jsonFile=$(mktemp)
+httpStatus=$(curl -s -o >(cat > "$jsonFile") -w "%{http_code}" \
+	-H 'Accept: application/json' \
+	"${siteRoot}/2/votd?when=${now}")
 
+if [ "$httpStatus" != "200" ]; then
+	echo "Error: Failed. Status $httpStatus"
+	exit 1
+fi
+
+json=$(cat "$jsonFile")
+rm -f "$jsonFile"
 
 i=0
 bookId=''
