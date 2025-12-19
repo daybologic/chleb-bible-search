@@ -10,6 +10,7 @@ bin/core/app.psgi
 bin/core/run.sh
 bin/core/session-clean.sh
 bin/core/session-dump.pl
+bin/core/votd-mailer.sh
 bin/core/yaml2json.pl
 bin/demo/john.pl
 bin/demo/search.pl
@@ -34,6 +35,7 @@ bin/demo/socket-votd.sh
 bin/demo/socket-walk-book-reverse.sh
 bin/demo/socket-walk-book.sh
 bin/demo/votd.pl
+bin/export/to-flat-json.pl
 bin/git/hooks/post-checkout
 bin/git/hooks/post-commit
 bin/git/tools/mergebranch
@@ -46,6 +48,9 @@ bin/maint/copyright-bump.sh
 bin/maint/git-install-local-hooks.sh
 bin/maint/make-legal-notices.sh
 bin/maint/md2html.pl
+bin/maint/normalize-json.sh
+bin/maint/openai/tone-discern-simplify.sh
+bin/maint/openai/tone-discern.py
 bin/maint/pkg-info.sh
 bin/maint/rename-files-by-pattern.sh
 bin/maint/run-functional-tests.sh
@@ -148,12 +153,15 @@ data/gitmoji/vendor/wrench.txt
 data/gitmoji/vendor/zap.txt
 data/Makefile
 data/static/asv.txt
+data/static/emotion/asv.json
+data/static/emotion/kjv.json
 data/static/facebook.html
 data/static/generic_head.html
 data/static/generic_tail.html
 data/static/index.html
 data/static/kjv.cvs
 data/static/kjv.txt
+data/static/mailing_list_votd.html
 data/static/no_results.html
 data/static/public/images/bible.png
 data/static/public/images/favicon.png
@@ -216,6 +224,16 @@ data/tests/1/template.sh
 'data/tests/2/votd JSON.sh'
 data/tests/httpie-collection-chleb-bible-search.json
 debian/changelog
+debian/chleb-bible-search-core.dirs
+debian/chleb-bible-search-core.install
+debian/chleb-bible-search-core.postinst
+debian/chleb-bible-search-core.postrm
+debian/chleb-bible-search-core.prerm
+debian/chleb-bible-search-dict.dirs
+debian/chleb-bible-search-dict.install
+debian/chleb-bible-search.dirs
+debian/chleb-bible-search.install
+debian/chleb-bible-search.NEWS
 debian/compat
 debian/control
 debian/copyright
@@ -223,6 +241,7 @@ debian/dirs
 debian/etc/cron.monthly/chleb-bible-search
 debian/etc/log4perl.conf
 debian/etc/main.yaml
+debian/etc/votd-mailer.yaml
 debian/install
 debian/postinst
 debian/postrm
@@ -238,6 +257,7 @@ etc/main.yaml
 etc/nginx/chleb-bible-search-notls.example
 etc/nginx/chleb-bible-search.example
 etc/test-suite.yaml
+etc/votd-mailer.yaml
 info.PL
 info/.gitignore
 info/Makefile
@@ -283,6 +303,7 @@ lib/Chleb/Utils/OSError/Mapper.pm
 lib/Chleb/Utils/SecureString.pm
 lib/Chleb/Utils/TypeParserException.pm
 log/.keep
+Makefile
 Makefile.PL
 MANIFEST			This list of files
 MANIFEST.SKIP
@@ -290,6 +311,8 @@ NEWS
 PRIVACY.md
 README.md
 swagger.yaml
+t/Backend_getOrdinalByVerseKey.t
+t/Backend_getSentimentByOrdinal.t
 t/Base.t
 t/Bible_getBookByLongName.t
 t/Bible_getBookByShortName.t

@@ -179,17 +179,23 @@ get '/' => sub {
 
 	my $facebookHtml = '';
 	if ($server->dic->config->get('features', 'facebook', 'true', 1)) {
-		my $groupname = $server->dic->config->get('facebook', 'groupname', 'Chleb Bible Search (1268737414574145)');
-		my $url = $server->dic->config->get('facebook', 'url', 'https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr');
-
 		$facebookHtml = fetchStaticPage('facebook', {
-			FACEBOOK_GROUPNAME => $groupname,
-			FACEBOOK_URL => $url,
+			FACEBOOK_GROUPNAME => $server->dic->config->get('facebook', 'groupname', 'Chleb Bible Search (1268737414574145)'),
+			FACEBOOK_URL => $server->dic->config->get('facebook', 'url', 'https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr'),
+		});
+	}
+
+	my $mailingListVoTDHtml = '';
+	if ($server->dic->config->get('features', 'mailing_list_votd', 'true', 1)) {
+		$mailingListVoTDHtml = fetchStaticPage('mailing_list_votd', {
+			MAILING_LIST_VOTD_GROUPNAME => $server->dic->config->get('mailing_list_votd', 'groupname', 'chleb-votd'),
+			MAILING_LIST_VOTD_URL => $server->dic->config->get('mailing_list_votd', 'url', 'https://lists.sr.ht/~m6kvm/chleb-votd'),
 		});
 	}
 
 	serveStaticPage('index', {
 		FACEBOOK_HTML => $facebookHtml,
+		MAILING_LIST_VOTD_HTML => $mailingListVoTDHtml,
 	});
 
 	return;
