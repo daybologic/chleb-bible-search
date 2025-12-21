@@ -369,6 +369,26 @@ sub explodeHtmlFilePath {
 	return \@returnedPaths;
 }
 
+=item C<colorIndexFromWord($word)>
+
+Map a word to an integer 0–63 for color selection
+
+=cut
+
+sub colorIndexFromWord {
+	my ($word) = @_;
+	$word //= '';
+
+	my $h = 0;
+
+	# Tiny rolling hash (inspired by djb2-style hash)
+	foreach my $ch (split(m//, $word)) {
+		$h = (($h * 33) + ord($ch)) & 0xFFFFFFFF; # keep it in 32 bits
+	}
+
+	return $h & 63; # low 6 bits => 0..63
+}
+
 =back
 
 =cut
