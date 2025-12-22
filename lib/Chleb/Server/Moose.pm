@@ -253,7 +253,7 @@ sub __lookup {
 
 		return $json[0];
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml(\@json, $FUNCTION_LOOKUP);
+		return __verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -307,7 +307,7 @@ sub __random {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml(\@json, $FUNCTION_RANDOM);
+			return __verseToHtml($verse, \@json, $FUNCTION_RANDOM);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -322,7 +322,7 @@ sub __random {
 	$json->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml([$json], $FUNCTION_RANDOM);
+		return __verseToHtml($verse, [$json], $FUNCTION_RANDOM);
 	}
 
 	if ($params->{form}) {
@@ -394,7 +394,7 @@ sub __votd {
 		}
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml(\@json, $FUNCTION_VOTD);
+			return __verseToHtml($verse, \@json, $FUNCTION_VOTD);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -845,7 +845,7 @@ sub __verseToJsonApi {
 }
 
 sub __verseToHtml {
-	my ($json, $function) = @_;
+	my ($verse, $json, $function) = @_;
 
 	my $output = '';
 	my $includedCount = scalar(@{ $json->[0]->{included} });
@@ -859,30 +859,32 @@ sub __verseToHtml {
 		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
-	$output .= __linkToHome();
-
-	if ($function == $FUNCTION_RANDOM) {
-		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $json->[0]->{links}->{self}, 'another');
+	my $random;
+	{
+		my $pattern = "<a class=\"vn-link vn-chapter\" href=\"%s\">%s</a>";
+		if ($function == $FUNCTION_RANDOM) {
+			#$random = sprintf($pattern, $json->[0]->{links}->{self}, 'another'); # FIXME: because testament is '' which is invalid
+			$random = sprintf($pattern, '/1/random', 'another'); # FIXME: use self link, once it works
+		} else {
+			$random = sprintf($pattern, '/1/random', 'random');
+		}
 	}
-
-	$output .= "<p>\r\n";
-	foreach my $type (qw(first prev self next last)) {
-		my $link = $json->[0]->{data}->[0]->{links}->{$type};
-		next unless ($link);
-		my $linkText = ($type eq 'self') ? 'permalink' : $type;
-		$output .= sprintf("\t<a href=\"%s\">%s</a>&nbsp;\r\n", $link, $linkText);
-	}
-	$output .= "</p>\r\n";
 
 	my $verseCount = scalar(@{ $json->[0]->{data} });
+	my $reference;
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
-		$output .= sprintf('<p>%s %d:%d %s</p>',
-			$rawBookNameMap{ $attributes->{book} },
-			$attributes->{chapter},
-			$attributes->{ordinal},
-			$attributes->{text},
-		);
+		my $bookName = $rawBookNameMap{ $attributes->{book} };
+		my $chapter = $attributes->{chapter};
+		my $verseOrdinal = $attributes->{ordinal};
+
+		if ($verseIndex == 0) {
+			$reference = sprintf('%s %d:%d', $bookName, $chapter, $verseOrdinal);
+		} else {
+			$output .= "<sup class=\"versenum\">${verseOrdinal} </sup>";
+		}
+
+		$output .= $attributes->{text};
 
 		if ($verseIndex < $verseCount-1) { # not last verse
 			$output .= "\r\n";
@@ -890,22 +892,81 @@ sub __verseToHtml {
 	}
 
 	my $firstVerse = $json->[0]->{data}->[0];
-	my ($translation, $emotion, $tones) = @{ $firstVerse->{attributes} }{qw(translation emotion tones)};
+	my ($translation, $emotion) = @{ $firstVerse->{attributes} }{qw(translation emotion)};
 
-	if ($verseCount == 1) {
-		$output .= sprintf(" [%s]\r\n", $translation);
+	my (@allTones, %toneSeen);
+	foreach my $verseData (@{ $json->[0]->{data} }) {
+		my $tones = $verseData->{attributes}->{tones};
+		foreach my $tone (@$tones) {
+			next if ($tone eq $emotion || $toneSeen{$tone});
+			push(@allTones, $tone);
+			$toneSeen{$tone}++;
+		}
+	}
+
+	my $sentiments = '';
+	foreach my $sentiment ($emotion, @allTones) {
+		my $colorIndex = Chleb::Utils::colorIndexFromWord($sentiment);
+		$sentiments .= "<span class=\"tag tag-color-${colorIndex}\">$sentiment</span> ";
+	}
+
+	my $firstVerseObject = $verse;
+	$firstVerseObject = $firstVerseObject->[0] if (ref($firstVerseObject) eq 'ARRAY');
+
+	my $prevBookLink = '';
+	if (my $prevBook = $firstVerseObject->book->getPrev()) {
+		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1/1">prev book</a>';
+	}
+
+	my $prevChapterLink = '';
+	if (my $prevChapter = $firstVerseObject->chapter->getPrev()) {
+		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '/1">prev chapter</a>';
+	}
+
+	my $nextBookLink = '';
+	if (my $nextBook = $firstVerseObject->book->getNext()) {
+		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1/1">next book</a>';
+	}
+
+	my $nextChapterLink = '';
+	if (my $nextChapter = $firstVerseObject->chapter->getNext()) {
+		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '/1">next chapter</a>';
+	}
+
+	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
+		PREV_BOOK_URL => $prevBookLink,
+		PREV_CHAPTER_URL => $prevChapterLink,
+		HOME_URL => __linkToHome(),
+		BOOK_URL => '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1/1">book index</a>',
+		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">this chapter</a>',
+		NEXT_CHAPTER_URL => $nextChapterLink,
+		NEXT_BOOK_URL => $nextBookLink,
+		PERMALINK_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{self} . '">permalink</a>',
+		FIRST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">first verse</a>',
+		PREV_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{prev} . '">prev verse</a>',
+		NEXT_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{next} . '">next verse</a>',
+		LAST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{last} . '">last verse</a>',
+		RANDOM_URL => $random,
+	});
+
+	my $title = 'FIXME';
+	if ($function == $FUNCTION_RANDOM) {
+		$title = 'Random Verse';
+	} elsif ($function == $FUNCTION_VOTD) {
+		$title = 'Verse of The Day';
 	} else {
-		$output .= sprintf("\r\n\r\n\t(%s)\r\n", $translation);
+		$title = 'Lookup';
 	}
 
-	$output .= sprintf("<p>Emotion: %s</p>\r\n", $emotion);
-	if (scalar(@$tones) > 0) {
-		$output .= '<p>Tones: ';
-		$output .= join(', ', @$tones);
-		$output .= "</p>\r\n";
-	}
-
-	return $output;
+	return Chleb::Server::Dancer2::fetchStaticPage('verse', {
+		TITLE => "Chleb Bible Search - ${title}",
+		REFERENCE => $reference,
+		HOME => __linkToHome(),
+		VERSES => $output,
+		TRANSLATION => $translation,
+		SENTIMENTS => $sentiments,
+		BROWSING_HEAD => $browsingHead,
+	});
 }
 
 sub __searchResultsToHtml {
@@ -954,7 +1015,7 @@ sub __searchResultsToHtml {
 
 sub __linkToHome { # add a link to home (root)
 	my $output .= "<p>\r\n";
-	$output .= sprintf("\t<a href=\"%s\">%s</a>\r\n", '/', 'home');
+	$output .= sprintf("\t<a class=\"vn-link vn-home\" href=\"%s\">%s</a>\r\n", '/', 'home');
 	$output .= "</p>\r\n";
 	return $output;
 }

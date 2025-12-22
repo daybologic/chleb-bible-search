@@ -287,6 +287,11 @@ sub randomVerse {
 	return $self->getVerseByOrdinal(1 + int(rand($self->verseCount)));
 }
 
+sub getPath {
+	my ($self) = @_;
+	return join('/', $self->shortName);
+}
+
 =item C<toString()>
 
 Return an opaque, loggable version of this book's name.
