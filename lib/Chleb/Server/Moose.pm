@@ -33,6 +33,8 @@ package Chleb::Server::Moose;
 use strict;
 use warnings;
 use Moose;
+use utf8;
+binmode STDOUT, ":encoding(UTF-8)";
 
 extends 'Chleb::Bible::Base';
 
@@ -253,7 +255,7 @@ sub __lookup {
 
 		return $json[0];
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
+		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
@@ -307,7 +309,7 @@ sub __random {
 		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml($verse, \@json, $FUNCTION_RANDOM);
+			return $self->__verseToHtml($verse, \@json, $FUNCTION_RANDOM);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -322,7 +324,7 @@ sub __random {
 	$json->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __verseToHtml($verse, [$json], $FUNCTION_RANDOM);
+		return $self->__verseToHtml($verse, [$json], $FUNCTION_RANDOM);
 	}
 
 	if ($params->{form}) {
@@ -394,7 +396,7 @@ sub __votd {
 		}
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return __verseToHtml($verse, \@json, $FUNCTION_VOTD);
+			return $self->__verseToHtml($verse, \@json, $FUNCTION_VOTD);
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 		}
@@ -845,7 +847,7 @@ sub __verseToJsonApi {
 }
 
 sub __verseToHtml {
-	my ($verse, $json, $function) = @_;
+	my ($self, $verse, $json, $function) = @_;
 
 	my $output = '';
 	my $includedCount = scalar(@{ $json->[0]->{included} });
@@ -947,6 +949,7 @@ sub __verseToHtml {
 		NEXT_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{next} . '">next verse</a>',
 		LAST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{last} . '">last verse</a>',
 		RANDOM_URL => $random,
+		BOOKS => $self->__makeBooks(),
 	});
 
 	my $title = 'FIXME';
@@ -967,6 +970,36 @@ sub __verseToHtml {
 		SENTIMENTS => $sentiments,
 		BROWSING_HEAD => $browsingHead,
 	});
+}
+
+sub __makeBooks {
+	my ($self) = @_;
+
+	my $thisBook = Chleb::Server::Dancer2::_param('book');
+
+	my $books = $self->__library->info->bibles->[0]->books; # TODO: do we need info, or can we skip it somehow?
+	my @options = ( );
+	foreach my $book (@$books) {
+		my $isSelected = ($thisBook eq $book->shortName);
+		push(@options, sprintf('<option value="%s"%s>%s</option>',
+			$book->shortName,
+			($isSelected ? ' selected' : ''),
+			$book->longName,
+		));
+	}
+
+	my $html='<form action="/1/lookup" method="GET">
+		<select name="book">
+	';
+
+	$html .= join("\r\n", @options)
+	    . '</select>
+		<input type="hidden" name="chapter" value="1">
+		<input type="hidden" name="verse" value="1">
+		<button>→</button>
+	</form>';
+
+	return $html;
 }
 
 sub __searchResultsToHtml {
