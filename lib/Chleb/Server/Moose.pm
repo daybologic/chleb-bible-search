@@ -935,6 +935,17 @@ sub __verseToHtml {
 		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '/1">next chapter</a>';
 	}
 
+	my $lastChapterLink = '';
+	my $chapterCount = $firstVerseObject->book->chapterCount;
+	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
+		if (my $lastChapter = $firstVerseObject->book->getChapterByOrdinal($chapterCount, { nonFatal => 1 })) {
+			$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '/1">last chapter</a>',
+		} else {
+			$self->dic->logger->error("Can't get chapter $chapterCount from book " . $firstVerseObject->book->shortName
+			    . 'even though it logically exists, so LAST_CHAPTER_URL will be broken');
+		}
+	}
+
 	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
 		PREV_BOOK_URL => $prevBookLink,
 		PREV_CHAPTER_URL => $prevChapterLink,
@@ -945,6 +956,7 @@ sub __verseToHtml {
 		NEXT_BOOK_URL => $nextBookLink,
 		PERMALINK_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{self} . '">permalink</a>',
 		FIRST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">first verse</a>',
+		LAST_CHAPTER_URL => $lastChapterLink,
 		PREV_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{prev} . '">prev verse</a>',
 		NEXT_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{next} . '">next verse</a>',
 		LAST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{last} . '">last verse</a>',
