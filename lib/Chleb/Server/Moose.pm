@@ -961,7 +961,7 @@ sub __verseToHtml {
 		NEXT_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{next} . '">next verse</a>',
 		LAST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{last} . '">last verse</a>',
 		RANDOM_URL => $random,
-		BOOKS => $self->__makeBooks(),
+		BOOKS => $self->__makeBooks($firstVerseObject->book),
 	});
 
 	my $title = 'FIXME';
@@ -985,14 +985,19 @@ sub __verseToHtml {
 }
 
 sub __makeBooks {
-	my ($self) = @_;
+	my ($self, $currentBook) = @_;
 
-	my $thisBook = Chleb::Server::Dancer2::_param('book');
+	my $thisBookName;
+	if ($currentBook) {
+		$thisBookName = $currentBook->shortName;
+	} else {
+		$thisBookName = Chleb::Server::Dancer2::_param('book');
+	}
 
 	my $books = $self->__library->info->bibles->[0]->books; # TODO: do we need info, or can we skip it somehow?
 	my @options = ( );
 	foreach my $book (@$books) {
-		my $isSelected = ($thisBook eq $book->shortName);
+		my $isSelected = ($thisBookName eq $book->shortName);
 		push(@options, sprintf('<option value="%s"%s>%s</option>',
 			$book->shortName,
 			($isSelected ? ' selected' : ''),
