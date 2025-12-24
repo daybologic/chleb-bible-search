@@ -481,6 +481,58 @@ paths:
           description: Service Unavailable
         '504':
           description: Gateway Timeout
+  /1/lookup:
+    get:
+      summary: Bible lookup via query params
+      operationId: getVerseViaQuery
+      description: Look up a specific verse via query parameters - a compatibility route, for form-submission only.  Please use the /1/lookup/{book}/{chapter}/{verse} route where possible, all parameters supported there, are implicitly supported here, but if you use this route, you will encounter and need to handle a redirect (307).
+      parameters:
+        - in: query
+          name: book
+          schema:
+            oneOf:
+              - type: string
+              - type: integer
+          required: true
+          description: Book of the bible
+        - in: query
+          name: chapter
+          schema:
+            type: integer
+          required: true
+          description: Chapter within book (ordinal)
+        - in: query
+          name: verse
+          schema:
+            type: integer
+          required: true
+          description: Verse within chapter (ordinal)
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
+      security: [] # No security
+      responses:
+        '307':
+          description: Temporary redirect
+        '400':
+          description: Bad request
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
   /1/lookup/{book}/{chapter}/{verse}:
     get:
       summary: Bible lookup

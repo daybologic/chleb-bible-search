@@ -100,6 +100,11 @@ sub getPrev {
 	return undef;
 }
 
+sub getPath {
+	my ($self) = @_;
+	return join('/', $self->book->shortName, $self->ordinal);
+}
+
 sub toString {
 	my ($self) = @_;
 	return sprintf('%s %d', $self->book->shortNameRaw, $self->ordinal);

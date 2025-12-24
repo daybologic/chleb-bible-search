@@ -8,6 +8,145 @@ body {
 	padding: 0;
 }
 
+.tag {
+	padding: 2px 6px;
+	margin: 2px;
+	border-radius: 4px;
+	font-size: 13px;
+	color: #fff;
+	display: inline-block;
+}
+
+.tag-color-0  { background-color: hsl(0, 65%, 40%); }
+.tag-color-1  { background-color: hsl(5, 65%, 40%); }
+.tag-color-2  { background-color: hsl(11, 65%, 40%); }
+.tag-color-3  { background-color: hsl(16, 65%, 40%); }
+.tag-color-4  { background-color: hsl(22, 65%, 40%); }
+.tag-color-5  { background-color: hsl(28, 65%, 40%); }
+.tag-color-6  { background-color: hsl(33, 65%, 40%); }
+.tag-color-7  { background-color: hsl(39, 65%, 40%); }
+.tag-color-8  { background-color: hsl(45, 65%, 40%); }
+.tag-color-9  { background-color: hsl(50, 65%, 40%); }
+.tag-color-10 { background-color: hsl(56, 65%, 40%); }
+.tag-color-11 { background-color: hsl(62, 65%, 40%); }
+.tag-color-12 { background-color: hsl(67, 65%, 40%); }
+.tag-color-13 { background-color: hsl(73, 65%, 40%); }
+.tag-color-14 { background-color: hsl(79, 65%, 40%); }
+.tag-color-15 { background-color: hsl(84, 65%, 40%); }
+.tag-color-16 { background-color: hsl(90, 65%, 40%); }
+.tag-color-17 { background-color: hsl(96, 65%, 40%); }
+.tag-color-18 { background-color: hsl(101, 65%, 40%); }
+.tag-color-19 { background-color: hsl(107, 65%, 40%); }
+.tag-color-20 { background-color: hsl(113, 65%, 40%); }
+.tag-color-21 { background-color: hsl(118, 65%, 40%); }
+.tag-color-22 { background-color: hsl(124, 65%, 40%); }
+.tag-color-23 { background-color: hsl(130, 65%, 40%); }
+.tag-color-24 { background-color: hsl(135, 65%, 40%); }
+.tag-color-25 { background-color: hsl(141, 65%, 40%); }
+.tag-color-26 { background-color: hsl(147, 65%, 40%); }
+.tag-color-27 { background-color: hsl(152, 65%, 40%); }
+.tag-color-28 { background-color: hsl(158, 65%, 40%); }
+.tag-color-29 { background-color: hsl(164, 65%, 40%); }
+.tag-color-30 { background-color: hsl(169, 65%, 40%); }
+.tag-color-31 { background-color: hsl(175, 65%, 40%); }
+.tag-color-32 { background-color: hsl(180, 65%, 40%); }
+.tag-color-33 { background-color: hsl(186, 65%, 40%); }
+.tag-color-34 { background-color: hsl(192, 65%, 40%); }
+.tag-color-35 { background-color: hsl(197, 65%, 40%); }
+.tag-color-36 { background-color: hsl(203, 65%, 40%); }
+.tag-color-37 { background-color: hsl(209, 65%, 40%); }
+.tag-color-38 { background-color: hsl(214, 65%, 40%); }
+.tag-color-39 { background-color: hsl(220, 65%, 40%); }
+.tag-color-40 { background-color: hsl(226, 65%, 40%); }
+.tag-color-41 { background-color: hsl(231, 65%, 40%); }
+.tag-color-42 { background-color: hsl(237, 65%, 40%); }
+.tag-color-43 { background-color: hsl(243, 65%, 40%); }
+.tag-color-44 { background-color: hsl(248, 65%, 40%); }
+.tag-color-45 { background-color: hsl(254, 65%, 40%); }
+.tag-color-46 { background-color: hsl(260, 65%, 40%); }
+.tag-color-47 { background-color: hsl(265, 65%, 40%); }
+.tag-color-48 { background-color: hsl(271, 65%, 40%); }
+.tag-color-49 { background-color: hsl(277, 65%, 40%); }
+.tag-color-50 { background-color: hsl(281, 65%, 40%); }
+.tag-color-51 { background-color: hsl(286, 65%, 40%); }
+.tag-color-52 { background-color: hsl(292, 65%, 40%); }
+.tag-color-53 { background-color: hsl(298, 65%, 40%); }
+.tag-color-54 { background-color: hsl(303, 65%, 40%); }
+.tag-color-55 { background-color: hsl(309, 65%, 40%); }
+.tag-color-56 { background-color: hsl(315, 65%, 40%); }
+.tag-color-57 { background-color: hsl(320, 65%, 40%); }
+.tag-color-58 { background-color: hsl(326, 65%, 40%); }
+.tag-color-59 { background-color: hsl(332, 65%, 40%); }
+.tag-color-60 { background-color: hsl(337, 65%, 40%); }
+.tag-color-61 { background-color: hsl(343, 65%, 40%); }
+.tag-color-62 { background-color: hsl(349, 65%, 40%); }
+.tag-color-63 { background-color: hsl(354, 65%, 40%); }
+
+sup.versenum {
+	font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu,
+	    Cantarell, "Noto Sans", Arial, sans-serif;
+	font-weight: 700;
+	font-size: 0.7em;        /* smaller than body text */
+	vertical-align: text-top;
+	line-height: 1;
+	margin-left: 0.15em;     /* small gap from the previous word */
+}
+
+.wrapper {
+	max-width: 640px;
+	margin: 0 auto;
+	padding: 24px 12px;
+}
+
+.card {
+	background: #ffffff;
+	border-radius: 8px;
+	padding: 24px;
+	border: 1px solid #e0e0e0;
+}
+
+h1 {
+	font-size: 22px;
+	margin: 0 0 8px 0;
+}
+
+.subtitle {
+	font-size: 13px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: #777777;
+	margin-bottom: 16px;
+}
+
+blockquote {
+	margin: 0 0 16px 0;
+	padding-left: 12px;
+	border-left: 3px solid #cccccc;
+	font-size: 16px;
+	line-height: 1.5;
+}
+
+.translation {
+	font-size: 13px;
+	color: #777777;
+	margin-bottom: 16px;
+}
+
+.footer {
+	font-size: 11px;
+	color: #999999;
+	margin-top: 16px;
+}
+
+a {
+	color: #0069c0;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
 .main-menu {
 	width: 100%;
 	margin: 0 auto;
@@ -228,4 +367,112 @@ button {
 
 button:hover {
 	background: #555;
+}
+
+.verse-nav-row-bottom {
+	margin-top: 0.5rem;
+	justify-content: flex-end;
+}
+
+.verse-nav-group {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.verse-nav-center {
+	flex: 1;
+	justify-content: center;
+	text-align: center;
+}
+
+.vn-link {
+	padding: 0.35rem 0.65rem;
+	border-radius: 999px;
+	text-decoration: none;
+	border: 1px solid transparent;
+	cursor: pointer;
+	background: #ffffff;
+	box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+	font-size: 0.9rem;
+}
+
+.vn-link:hover {
+	background: #f0f0ff;
+	border-color: #d0d0ff;
+}
+
+.vn-home {
+	font-weight: 600;
+}
+
+.vn-permalink {
+	border-style: solid;
+}
+
+.vn-permalink-status {
+	margin-left: 0.5rem;
+	font-size: 0.85rem;
+	opacity: 0.8;
+}
+
+/* --- Navigation container --- */
+.verse-nav {
+	margin: 1rem 0;
+	padding: 0.75rem 1rem;
+	border-radius: 0.65rem;
+	border: 1px solid #ccc;
+	background: #f7f8fb;
+	font-size: 0.95rem;
+}
+
+/* top/bottom rows */
+.verse-nav-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+/* left / centre / right groups */
+.verse-nav-group {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+/* centre group expands */
+.verse-nav-center {
+	flex: 1;
+	justify-content: center;
+	text-align: center;
+}
+
+/* --- Link styling --- */
+.verse-nav a {
+	display: inline-block;
+	padding: 0.35rem 0.65rem;
+	border-radius: 999px;	/* pill shape */
+	text-decoration: none;
+	background: #ffffff;
+	border: 1px solid #d4d4e0;
+	color: #2a3a5a;
+	cursor: pointer;
+	transition: 0.15s background, 0.15s border-color;
+}
+
+.verse-nav a:hover {
+	background: #e9ecff;
+	border-color: #b4b8ff;
+	color: #1a2a4a;
+}
+
+.verse-nav a:active {
+	background: #d3d8ff;
+}
+
+/* emphasise "Home" */
+.vn-home {
+	font-weight: 600;
 }

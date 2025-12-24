@@ -32,6 +32,8 @@
 package Chleb::Server::Dancer2;
 use strict;
 use warnings;
+use utf8;
+binmode STDOUT, ":encoding(UTF-8)";
 use Dancer2 0.2;
 
 =head1 NAME
@@ -105,7 +107,7 @@ sub fetchStaticPage {
 	my $templateProcessor;
 	my $filePathFailed;
 	foreach my $filePath (@{ Chleb::Utils::explodeHtmlFilePath($name) }) {
-		if (my $file = IO::File->new($filePath, 'r')) {
+		if (my $file = IO::File->new($filePath, '<:encoding(UTF-8)')) {
 			my $templateMode = 0; # off
 			my $lineCounter = 0;
 			while (my $line = $file->getline()) {
@@ -166,7 +168,7 @@ sub __detaint {
 	return $detainted;
 }
 
-sub __param {
+sub _param {
 	my ($name) = @_;
 	my $value = param($name);
 	return undef unless (defined($value));
@@ -205,10 +207,10 @@ get '/:version/random' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(__param('translations')));
-	my $version = int(__param('version') || 1);
-	my $parental = Chleb::Utils::boolean('parental', __param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', __param('redirect'), 0);
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
+	my $version = int(_param('version') || 1);
+	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
 
 	my $dancerRequest = request();
 
@@ -217,7 +219,7 @@ get '/:version/random' => sub {
 		$result = $server->__random({
 			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
 			translations => $translations,
-			testament => __param('testament'),
+			testament => _param('testament'),
 			version => $version,
 			parental => $parental,
  			redirect => $redirect,
@@ -247,10 +249,10 @@ get '/1/votd' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $parental = Chleb::Utils::boolean('parental', __param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', __param('redirect'), 0);
-	my $when = __param('when');
-	my $testament = __param('testament');
+	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
+	my $when = _param('when');
+	my $testament = _param('testament');
 
 	my $result;
 	eval {
@@ -274,11 +276,11 @@ get '/2/votd' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $parental = Chleb::Utils::boolean('parental', __param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', __param('redirect'), 0);
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(__param('translations')));
-	my $when = __param('when');
-	my $testament = __param('testament');
+	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
+	my $when = _param('when');
+	my $testament = _param('testament');
 	my $dancerRequest = request();
 
 	my $result;
@@ -313,14 +315,25 @@ get '/2/votd' => sub {
 	return $result;
 };
 
+get '/1/lookup' => sub {
+	$server->logRequest();
+	$server->handleSessionToken();
+
+	my $book = _param('book') // '';
+	my $chapter = _param('chapter') // 1;
+	my $verse = _param('verse') // 1;
+
+	redirect "/1/lookup/$book/$chapter/$verse", 307;
+};
+
 get '/1/lookup/:book/:chapter/:verse' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $book = __param('book') // '';
-	my $chapter = __param('chapter') // '';
-	my $verse = __param('verse') // '';
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(__param('translations')));
+	my $book = _param('book') // '';
+	my $chapter = _param('chapter') // '';
+	my $verse = _param('verse') // '';
+	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
 
 	my $dancerRequest = request();
 
@@ -359,10 +372,10 @@ get '/1/search' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $limit = __param('limit') ? int(__param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
-	my $term = __param('term') // '';
-	my $wholeword = __param('wholeword');
-	my $form = Chleb::Utils::boolean('form', __param('form'), 0);
+	my $limit = _param('limit') ? int(_param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	my $term = _param('term') // '';
+	my $wholeword = _param('wholeword');
+	my $form = Chleb::Utils::boolean('form', _param('form'), 0);
 
 	my $dancerRequest = request();
 
