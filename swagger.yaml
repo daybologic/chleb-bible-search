@@ -523,8 +523,6 @@ paths:
           description: Temporary redirect
         '400':
           description: Bad request
-        '404':
-          description: Verse not found
         '429':
           description: Rate-limited
         '500':
