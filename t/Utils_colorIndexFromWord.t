@@ -54,6 +54,19 @@ sub testFixedMappings {
 	return EXIT_SUCCESS;
 }
 
+sub testUnexpected {
+	my ($self) = @_;
+	plan tests => 5;
+
+	is_deeply(Chleb::Utils::colorIndexFromWord(''), 0, "'' -> 0");
+	is_deeply(Chleb::Utils::colorIndexFromWord(' '), 32, "32 -> 32");
+	is_deeply(Chleb::Utils::colorIndexFromWord("\t"), 9, "9 -> 9");
+	is_deeply(Chleb::Utils::colorIndexFromWord(0), 48, "48 -> 48");
+	is_deeply(Chleb::Utils::colorIndexFromWord(undef), 0, "<undef> -> 0");
+
+	return EXIT_SUCCESS;
+}
+
 sub testLimits {
 	my ($self) = @_;
 
