@@ -369,23 +369,6 @@ button:hover {
 	background: #555;
 }
 
-.verse-nav {
-	margin: 1rem 0;
-	padding: 0.75rem 1rem;
-	border-radius: 0.75rem;
-	border: 1px solid #ddd;
-	background: #f8f8fb;
-	font-size: 0.95rem;
-}
-
-.verse-nav-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 1rem;
-	flex-wrap: wrap;
-}
-
 .verse-nav-row-bottom {
 	margin-top: 0.5rem;
 	justify-content: flex-end;
