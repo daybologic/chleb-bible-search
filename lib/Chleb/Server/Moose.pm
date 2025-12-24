@@ -946,16 +946,19 @@ sub __verseToHtml {
 		}
 	}
 
+	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1/1">%s</a>';
+
 	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
 		PREV_BOOK_URL => $prevBookLink,
 		PREV_CHAPTER_URL => $prevChapterLink,
 		HOME_URL => __linkToHome(),
-		BOOK_URL => '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1/1">book index</a>',
+		BOOK_URL => sprintf($bookLinkFormat, 'book index'),
 		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">this chapter</a>',
 		NEXT_CHAPTER_URL => $nextChapterLink,
 		NEXT_BOOK_URL => $nextBookLink,
 		PERMALINK_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{self} . '">permalink</a>',
 		FIRST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">first verse</a>',
+		FIRST_CHAPTER_URL => sprintf($bookLinkFormat, 'first chapter'),
 		LAST_CHAPTER_URL => $lastChapterLink,
 		PREV_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{prev} . '">prev verse</a>',
 		NEXT_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{next} . '">next verse</a>',
