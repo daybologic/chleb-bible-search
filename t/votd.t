@@ -87,6 +87,15 @@ sub testV2 {
 			methods(
 				book    => isa('Chleb::Bible::Book'),
 				chapter => isa('Chleb::Bible::Chapter'),
+				ordinal => 50,
+				text    => 'And the LORD spake unto Moses in the plains of Moab by Jordan [near] Jericho, saying,',
+			),
+		),
+		all(
+			isa('Chleb::Bible::Verse'),
+			methods(
+				book    => isa('Chleb::Bible::Book'),
+				chapter => isa('Chleb::Bible::Chapter'),
 				ordinal => 51,
 				text    => 'Speak unto the children of Israel, and say unto them, When ye are passed over Jordan into the land of Canaan;',
 			),
@@ -185,7 +194,7 @@ sub testParentalRef {
 				isa('Chleb::Bible::Chapter'),
 				methods(ordinal => 22),
 			),
-			ordinal => 21,
+			ordinal => 20,
 			text    => ignore(),
 		),
 	), 'verse inspection') or diag(explain($verse->toString()));
@@ -206,7 +215,7 @@ sub testParentalRef {
 				isa('Chleb::Bible::Chapter'),
 				methods(ordinal => 37),
 			),
-			ordinal => 19,
+			ordinal => 18,
 			text    => ignore(),
 		),
 	), 'verse inspection, parental') or diag(explain($verse->toString()));

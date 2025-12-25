@@ -249,6 +249,11 @@ sub votd {
 		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
 	}
 
+	while ($verse->previous && $verse->previous->continues) {
+		# look upwards until we are not on a continuation, to give increased context
+		$verse = $verse->previous;
+	}
+
 	$self->dic->logger->debug($verse->toString());
 
 	my $msecAll = 0;
