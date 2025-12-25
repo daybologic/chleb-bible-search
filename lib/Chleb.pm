@@ -271,10 +271,10 @@ sub votd {
 				$msec = int(1000 * ($endTiming - $startTiming));
 				$verse->[-1]->msec($msec);
 				$msecAll += $msec;
-				$startTiming = Time::HiRes::time();
+				$startTiming = Time::HiRes::time() unless (defined($startTiming));
 			}
 
-			$startTiming = Time::HiRes::time();
+			$startTiming = Time::HiRes::time() unless (defined($startTiming));
 		}
 	} else {
 		my $endTiming = Time::HiRes::time();
