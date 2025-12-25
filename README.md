@@ -15,7 +15,7 @@ The service also provides a deterministic verse of the day lookup.
 
 For up to date documentation, please ensure you are viewing the latest copy at [GitHub](https://github.com/daybologic/chleb-bible-search/blob/master/README.md)
 
-For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/2.2.0)
+For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/2.3.0)
 
 ### Legal
 - [Privacy Policy](./PRIVACY.md)
@@ -38,15 +38,15 @@ Hosting for Chleb Bible Search source code is provided at the following sites:
   * [GitHub](https://github.com/daybologic/chleb-bible-search)
   * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search)
 
-The latest release is version 2.2.0, which is available for download at the following sites:
+The latest release is version 2.3.0, which is available for download at the following sites:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v2.2.0.tar.gz)
-  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/archive/v2.2.0.tar.gz)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v2.3.0.tar.gz)
+  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/archive/v2.3.0.tar.gz)
 
 The latest release is available as a Debian package from the following locations:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v2.2.0/chleb-bible-search_2.2.0_all.deb)
-  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v2.2.0)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v2.3.0/chleb-bible-search_2.3.0_all.deb)
+  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v2.3.0)
 
 ## Self-hosted installation
 
@@ -56,9 +56,9 @@ the service on your own equipment.  Please install the deb file, where possible,
 
 ```
 sudo dpkg -i \
-	chleb-bible-search_2.2.0_all.deb
-	chleb-bible-search-core_2.2.0_all.deb
-	chleb-bible-search-dict_2.2.0_all.deb
+	chleb-bible-search_2.3.0_all.deb
+	chleb-bible-search-core_2.3.0_all.deb
+	chleb-bible-search-dict_2.3.0_all.deb
 
 sudo apt -yf install
 sudo systemctl enable chleb-bible-search.service
@@ -223,9 +223,9 @@ You will need to install all build-dependencies first.
 
 For anything involving endpoints code, especially code within [Moose.pm](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/master/item/lib/Chleb/Server/Moose.pm) or [Dancer2.pm](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/master/item/lib/Chleb/Server/Dancer2.pm), please write one or more tests under [data/tests](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/tests/httpie-1/item/data/tests).
 
-These files are a all bash shell files.  Start with [data/tests/1/template.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v2.2.0/item/data/tests/1/template.sh) and copy this. The digit at the start represents the endpoint version.
+These files are a all bash shell files.  Start with [data/tests/1/template.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v2.3.0/item/data/tests/1/template.sh) and copy this. The digit at the start represents the endpoint version.
 
-You can test this by running [bin/maint/run-functional-tests.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v2.2.0/item/bin/maint/run-functional-tests.sh) and specify the 1/name or run all the tests by specifying no parameters.
+You can test this by running [bin/maint/run-functional-tests.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v2.3.0/item/bin/maint/run-functional-tests.sh) and specify the 1/name or run all the tests by specifying no parameters.
 
 You will need to edit your /etc/hosts file to ensure that the name [chleb-api.example.org](http://chleb-api.example.org) points to your running code, and set up Nginx.  Remember this does *not* use https (TLS)!
 
