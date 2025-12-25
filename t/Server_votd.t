@@ -176,6 +176,44 @@ sub testV2 {
 					book => 'num',
 					chapter => 33,
 					emotion => 'neutral',
+					ordinal => 50,
+					text => 'And the LORD spake unto Moses in the plains of Moab by Jordan [near] Jericho, saying,',
+					tones => [
+						'instruction',
+					],
+					translation => 'kjv',
+				},
+				id => 'kjv/num/33/50',
+				links => {
+					first => '/1/lookup/num/33/1',
+					last => '/1/lookup/num/33/56',
+					next => '/1/lookup/num/33/51',
+					prev => '/1/lookup/num/33/49',
+					self => '/1/lookup/num/33/50',
+				},
+				relationships => {
+					book => {
+						data => {
+							id => 'kjv/num',
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => 'kjv/num/33',
+							type => 'chapter',
+						},
+						links => {},
+					},
+				},
+				type => 'verse',
+			},
+			{
+				attributes => {
+					book => 'num',
+					chapter => 33,
+					emotion => 'neutral',
 					ordinal => 51,
 					text => 'Speak unto the children of Israel, and say unto them, When ye are passed over Jordan into the land of Canaan;',
 					tones => ['instruction'],
