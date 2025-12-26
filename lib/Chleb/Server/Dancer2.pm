@@ -321,9 +321,13 @@ get '/1/lookup' => sub {
 
 	my $book = _param('book') // '';
 	my $chapter = _param('chapter') // 1;
-	my $verse = _param('verse') // 1;
+	my $verse = _param('verse');
 
-	redirect "/1/lookup/$book/$chapter/$verse", 307;
+	if (defined($verse)) {
+		redirect "/1/lookup/${book}/${chapter}/${verse}", 307;
+	}
+
+	redirect "/1/lookup/${book}/${chapter}", 307;
 };
 
 get '/1/lookup/:book/:chapter' => sub {

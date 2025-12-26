@@ -214,9 +214,9 @@ sub __lookup {
 		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
-#	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
-#		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
-#	}
+	for (my $jsonI = 1; $jsonI < scalar(@json); $jsonI++) {
+		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
+	}
 
 	foreach my $type (qw(next prev first last)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
@@ -922,43 +922,52 @@ sub __verseToHtml {
 
 	my $prevBookLink = '';
 	if (my $prevBook = $firstVerseObject->book->getPrev()) {
-		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1/1">prev book</a>';
+		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1">prev book</a>';
 	}
 
 	my $prevChapterLink = '';
 	if (my $prevChapter = $firstVerseObject->chapter->getPrev()) {
-		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '/1">prev chapter</a>';
+		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '">prev chapter</a>';
 	}
 
 	my $nextBookLink = '';
 	if (my $nextBook = $firstVerseObject->book->getNext()) {
-		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1/1">next book</a>';
+		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1">next book</a>';
 	}
 
 	my $nextChapterLink = '';
 	if (my $nextChapter = $firstVerseObject->chapter->getNext()) {
-		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '/1">next chapter</a>';
+		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '">next chapter</a>';
 	}
 
 	my $lastChapterLink = '';
 	my $chapterCount = $firstVerseObject->book->chapterCount;
 	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
 		if (my $lastChapter = $firstVerseObject->book->getChapterByOrdinal($chapterCount, { nonFatal => 1 })) {
-			$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '/1">last chapter</a>',
+			$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>',
 		} else {
 			$self->dic->logger->error("Can't get chapter $chapterCount from book " . $firstVerseObject->book->shortName
 			    . 'even though it logically exists, so LAST_CHAPTER_URL will be broken');
 		}
 	}
 
-	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1/1">%s</a>';
+	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
+
+	my $thisChapter = $json->[0]->{data}->[0]->{links}->{first};
+	$self->dic->logger->trace("Link kludge in effect (pre): ${thisChapter}");
+	my $thisChapter_KLUDGE = $thisChapter;
+	$thisChapter_KLUDGE =~ s@/1(?=\?)@@; # TODO: This is a kludge, the JSON should provide it somehow.
+	if ($thisChapter_KLUDGE eq $thisChapter) {
+		$thisChapter_KLUDGE =~ s@/1$@@; # TODO: This is a kludge, the JSON should provide it somehow.
+	}
+	$self->dic->logger->trace("Link kludge in effect (post): ${thisChapter_KLUDGE}");
 
 	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
 		PREV_BOOK_URL => $prevBookLink,
 		PREV_CHAPTER_URL => $prevChapterLink,
 		HOME_URL => __linkToHome(),
 		BOOK_URL => sprintf($bookLinkFormat, 'book index'),
-		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">this chapter</a>',
+		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
 		NEXT_CHAPTER_URL => $nextChapterLink,
 		NEXT_BOOK_URL => $nextBookLink,
 		PERMALINK_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{self} . '">permalink</a>',
@@ -1020,7 +1029,6 @@ sub __makeBooks {
 	$html .= join("\r\n", @options)
 	    . '</select>
 		<input type="hidden" name="chapter" value="1">
-		<input type="hidden" name="verse" value="1">
 		<button>→</button>
 	</form>';
 
