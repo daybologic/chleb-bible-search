@@ -894,6 +894,8 @@ sub __verseToHtml {
 		$output .= $attributes->{text};
 
 		if ($verseIndex < $verseCount-1) { # not last verse
+			my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
+			$output .= '<br /><br />' unless ($thisVerse->continues);
 			$output .= "\r\n";
 		}
 	}
