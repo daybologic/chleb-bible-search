@@ -1,3 +1,10 @@
+chleb-bible-search (2.3.1) UNRELEASED; urgency=medium
+
+  * VoTD/random: look upwards until we are not on a continuation, to give increased context
+  * superscript verse numbers link back to their specific-verses
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 27 Dec 2025 11:35:45 +0000
+
 chleb-bible-search (2.3.0) stable; urgency=low
 
   * Improved web navigation and a new route for resolving verses via query parameters
