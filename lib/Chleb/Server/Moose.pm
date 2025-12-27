@@ -886,9 +886,9 @@ sub __verseToHtml {
 		if ($verseIndex == 0) {
 			$reference = sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal);
 		} else {
-			$output .= sprintf('<a href="/1/lookup/%s/%d/%d"', $bookName, $chapter, $verseOrdinal);
-			$output .= "<sup class=\"versenum\">${verseOrdinal} </sup>";
-			$output .= '</a>';
+			$output .= '<sup class="versenum">';
+			$output .= sprintf('<a href="/1/lookup/%s/%d/%d">', $bookName, $chapter, $verseOrdinal);
+			$output .= "${verseOrdinal} </a></sup>";
 		}
 
 		$output .= $attributes->{text};

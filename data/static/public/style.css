@@ -92,6 +92,11 @@ sup.versenum {
 	margin-left: 0.15em;     /* small gap from the previous word */
 }
 
+sup.versenum a {
+	text-decoration: none;
+	color: inherit;
+}
+
 .wrapper {
 	max-width: 640px;
 	margin: 0 auto;
