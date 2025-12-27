@@ -61,6 +61,8 @@ has parental => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeParenta
 
 has key => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeKey);
 
+has previous => (is => 'ro', isa => 'Maybe[Chleb::Bible::Verse]', lazy => 1, init_arg => undef, builder => 'getPrev');
+
 has __sentiment => (is => 'ro', isa => 'HashRef', lazy => 1, init_arg => undef, default => \&__makeSentiment);
 
 sub BUILD {

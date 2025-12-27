@@ -876,14 +876,17 @@ sub __verseToHtml {
 	my $reference;
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
-		my $bookName = $rawBookNameMap{ $attributes->{book} };
+		my $bookName = $attributes->{book};
+		my $bookNameRaw = $rawBookNameMap{$bookName};
 		my $chapter = $attributes->{chapter};
 		my $verseOrdinal = $attributes->{ordinal};
 
 		if ($verseIndex == 0) {
-			$reference = sprintf('%s %d:%d', $bookName, $chapter, $verseOrdinal);
+			$reference = sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal);
 		} else {
+			$output .= sprintf('<a href="/1/lookup/%s/%d/%d"', $bookName, $chapter, $verseOrdinal);
 			$output .= "<sup class=\"versenum\">${verseOrdinal} </sup>";
+			$output .= '</a>';
 		}
 
 		$output .= $attributes->{text};
