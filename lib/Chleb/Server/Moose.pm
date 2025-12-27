@@ -868,9 +868,9 @@ sub __verseToHtml {
 		my $pattern = "<a class=\"vn-link vn-chapter\" href=\"%s\">%s</a>";
 		if ($function == $FUNCTION_RANDOM) {
 			#$random = sprintf($pattern, $json->[0]->{links}->{self}, 'another'); # FIXME: because testament is '' which is invalid
-			$random = sprintf($pattern, '/1/random', 'another'); # FIXME: use self link, once it works
+			$random = sprintf($pattern, '/2/random', 'another'); # FIXME: use self link, once it works
 		} else {
-			$random = sprintf($pattern, '/1/random', 'random');
+			$random = sprintf($pattern, '/2/random', 'random');
 		}
 	}
 
