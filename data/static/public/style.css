@@ -99,7 +99,7 @@ sup.versenum a {
 
 .wrapper {
 	max-width: 640px;
-	margin: 0 auto;
+	margin: 0;
 	padding: 24px 12px;
 }
 
@@ -447,6 +447,13 @@ button:hover {
 	align-items: center;
 }
 
+.verse-nav-group-left {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;      /* vertical alignment */
+	justify-content: flex-start; /* left alignment */
+}
+
 /* centre group expands */
 .verse-nav-center {
 	flex: 1;
@@ -480,4 +487,80 @@ button:hover {
 /* emphasise "Home" */
 .vn-home {
 	font-weight: 600;
+}
+
+.page-left {
+	position: sticky;
+	top: 1rem;
+	align-self: start;
+}
+
+.page-main {
+	min-width: 0;
+}
+
+.page {
+	display: grid;
+	grid-template-columns: 10rem 1fr;
+	gap: 1rem;
+	align-items: start;
+	padding: 1rem;
+}
+
+.sidebar {
+	position: sticky;
+	top: 1rem;
+	align-self: start;
+}
+
+.maincol {
+	min-width: 0;
+}
+
+/* Sidebar chapter nav */
+.chapter-nav {
+	border: 1px solid #ccc;
+	background: #f7f8fb;
+	border-radius: 0.65rem;
+	padding: 0.75rem;
+	max-height: calc(100vh - 2rem);
+	overflow: auto;
+}
+
+.chapter-nav-title {
+	margin: 0 0 0.5rem 0;
+	padding-top: 0;
+	text-align: left;
+	font-size: 1rem;
+}
+
+.chapter-nav-links a {
+	display: block;
+	padding: 0.2rem 0.35rem;
+	border-radius: 0.35rem;
+	color: #2a5d84;
+	text-decoration: none;
+}
+
+.chapter-nav-links a:hover {
+	background: #e9ecff;
+	text-decoration: underline;
+}
+
+.chapter-nav-links a.current {
+	font-weight: 700;
+	background: #dfe4ff;
+	color: #1a2a4a;
+}
+
+@media (max-width: 800px) {
+	.page {
+		grid-template-columns: 1fr;
+	}
+	.sidebar {
+		position: static;
+	}
+	.chapter-nav {
+		max-height: none;
+	}
 }
