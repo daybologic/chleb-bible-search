@@ -944,16 +944,38 @@ sub __verseToHtml {
 
 	my $lastChapterLink = '';
 	my $chapterCount = $firstVerseObject->book->chapterCount;
-	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
-		if (my $lastChapter = $firstVerseObject->book->getChapterByOrdinal($chapterCount, { nonFatal => 1 })) {
-			$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>',
+	my @chapters = ( );
+	for (my $chapterOrdinal = 1; $chapterOrdinal <= $firstVerseObject->book->chapterCount; $chapterOrdinal++) {
+		if (my $chapter = $firstVerseObject->book->getChapterByOrdinal($chapterOrdinal, { nonFatal => 1 })) {
+			push(@chapters, $chapter);
 		} else {
 			$self->dic->logger->error("Can't get chapter $chapterCount from book " . $firstVerseObject->book->shortName
 			    . 'even though it logically exists, so LAST_CHAPTER_URL will be broken');
 		}
 	}
 
+	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
+		my $lastChapter = $chapters[-1];
+		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>',
+	}
+
 	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
+
+	my $browsingLeft;
+	{
+		my $chapterLinks = '';
+		foreach my $chapter (@chapters) {
+			my $classCurrent = '';
+			if ($chapter->ordinal == $firstVerseObject->chapter->ordinal) {
+				$classCurrent = 'class="current" ';
+			}
+			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s">%s %d</a><br />', $classCurrent, $chapter->getPath(),
+			    $chapter->book->shortNameRaw, $chapter->ordinal);
+		}
+		$browsingLeft = Chleb::Server::Dancer2::fetchStaticPage('browsing_left', {
+			CHAPTER_LINKS => $chapterLinks,
+		});
+	}
 
 	my $thisChapter = $json->[0]->{data}->[0]->{links}->{first};
 	$self->dic->logger->trace("Link kludge in effect (pre): ${thisChapter}");
@@ -999,6 +1021,7 @@ sub __verseToHtml {
 		VERSES => $output,
 		TRANSLATION => $translation,
 		SENTIMENTS => $sentiments,
+		BROWSING_LEFT => $browsingLeft,
 		BROWSING_HEAD => $browsingHead,
 	});
 }
