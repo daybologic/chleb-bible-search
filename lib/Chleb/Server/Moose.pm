@@ -1017,10 +1017,11 @@ sub __makeBooks {
 	my @options = ( );
 	foreach my $book (@$books) {
 		my $isSelected = ($thisBookName eq $book->shortName);
-		push(@options, sprintf('<option value="%s"%s>%s</option>',
+		push(@options, sprintf('<option value="%s"%s>%s (%d)</option>',
 			$book->shortName,
 			($isSelected ? ' selected' : ''),
 			$book->longName,
+			$book->chapterCount,
 		));
 	}
 
