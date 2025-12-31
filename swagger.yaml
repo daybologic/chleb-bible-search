@@ -35,7 +35,7 @@ info:
     url: https://opensource.org/licenses/BSD-3-Clause
   title: Chleb Bible Search
   description: Query the bible, or get a verse of the day.
-  version: 2.3.0
+  version: 2.4.0
 servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
