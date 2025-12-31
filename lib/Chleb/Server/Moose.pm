@@ -167,10 +167,10 @@ sub __makeJsonApi {
 
 =item C<__lookup($params)>
 
-Given the user-supplied C<$params> (C<HASH>), we attempt to fetch a verse,
-which includes links to the previous and next verses.
+Given the user-supplied C<$params> (C<HASH>), we attempt to fetch a verse, or series of verses
+which include links to the previous and next verses.
 
-returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
+returns a an (C<ARRAY>) of C<JSON:API> C<HASH> es or throws a L<Chleb::Exception>.
 
 The following C<$params> are required:
 
@@ -184,13 +184,15 @@ Numerical ordinal, short name, or long name for the sought book
 
 =item C<chapter>
 
-Numerical chapter ordinal within C<book>
+C<Mandatory>; Numerical chapter ordinal within C<book>
 
 =cut
 
 =item C<verse>
 
 Numerical verse ordinal within C<chapter>
+
+Optional; if not specified, we return the whole chapter.
 
 =cut
 
@@ -253,7 +255,7 @@ sub __lookup {
 			);
 		}
 
-		return $json[0];
+		return \@json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
 	}
@@ -892,6 +894,8 @@ sub __verseToHtml {
 		$output .= $attributes->{text};
 
 		if ($verseIndex < $verseCount-1) { # not last verse
+			my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
+			$output .= '<br /><br />' unless ($thisVerse->continues);
 			$output .= "\r\n";
 		}
 	}
@@ -920,43 +924,74 @@ sub __verseToHtml {
 
 	my $prevBookLink = '';
 	if (my $prevBook = $firstVerseObject->book->getPrev()) {
-		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1/1">prev book</a>';
+		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1">prev book</a>';
 	}
 
 	my $prevChapterLink = '';
 	if (my $prevChapter = $firstVerseObject->chapter->getPrev()) {
-		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '/1">prev chapter</a>';
+		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '">prev chapter</a>';
 	}
 
 	my $nextBookLink = '';
 	if (my $nextBook = $firstVerseObject->book->getNext()) {
-		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1/1">next book</a>';
+		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1">next book</a>';
 	}
 
 	my $nextChapterLink = '';
 	if (my $nextChapter = $firstVerseObject->chapter->getNext()) {
-		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '/1">next chapter</a>';
+		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '">next chapter</a>';
 	}
 
 	my $lastChapterLink = '';
 	my $chapterCount = $firstVerseObject->book->chapterCount;
-	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
-		if (my $lastChapter = $firstVerseObject->book->getChapterByOrdinal($chapterCount, { nonFatal => 1 })) {
-			$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '/1">last chapter</a>',
+	my @chapters = ( );
+	for (my $chapterOrdinal = 1; $chapterOrdinal <= $firstVerseObject->book->chapterCount; $chapterOrdinal++) {
+		if (my $chapter = $firstVerseObject->book->getChapterByOrdinal($chapterOrdinal, { nonFatal => 1 })) {
+			push(@chapters, $chapter);
 		} else {
 			$self->dic->logger->error("Can't get chapter $chapterCount from book " . $firstVerseObject->book->shortName
 			    . 'even though it logically exists, so LAST_CHAPTER_URL will be broken');
 		}
 	}
 
-	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1/1">%s</a>';
+	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
+		my $lastChapter = $chapters[-1];
+		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>',
+	}
+
+	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
+
+	my $browsingLeft;
+	{
+		my $chapterLinks = '';
+		foreach my $chapter (@chapters) {
+			my $classCurrent = '';
+			if ($chapter->ordinal == $firstVerseObject->chapter->ordinal) {
+				$classCurrent = 'class="current" ';
+			}
+			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s">%s %d</a><br />', $classCurrent, $chapter->getPath(),
+			    $chapter->book->shortNameRaw, $chapter->ordinal);
+		}
+		$browsingLeft = Chleb::Server::Dancer2::fetchStaticPage('browsing_left', {
+			CHAPTER_LINKS => $chapterLinks,
+		});
+	}
+
+	my $thisChapter = $json->[0]->{data}->[0]->{links}->{first};
+	$self->dic->logger->trace("Link kludge in effect (pre): ${thisChapter}");
+	my $thisChapter_KLUDGE = $thisChapter;
+	$thisChapter_KLUDGE =~ s@/1(?=\?)@@; # TODO: This is a kludge, the JSON should provide it somehow.
+	if ($thisChapter_KLUDGE eq $thisChapter) {
+		$thisChapter_KLUDGE =~ s@/1$@@; # TODO: This is a kludge, the JSON should provide it somehow.
+	}
+	$self->dic->logger->trace("Link kludge in effect (post): ${thisChapter_KLUDGE}");
 
 	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
 		PREV_BOOK_URL => $prevBookLink,
 		PREV_CHAPTER_URL => $prevChapterLink,
 		HOME_URL => __linkToHome(),
 		BOOK_URL => sprintf($bookLinkFormat, 'book index'),
-		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">this chapter</a>',
+		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
 		NEXT_CHAPTER_URL => $nextChapterLink,
 		NEXT_BOOK_URL => $nextBookLink,
 		PERMALINK_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{self} . '">permalink</a>',
@@ -986,6 +1021,7 @@ sub __verseToHtml {
 		VERSES => $output,
 		TRANSLATION => $translation,
 		SENTIMENTS => $sentiments,
+		BROWSING_LEFT => $browsingLeft,
 		BROWSING_HEAD => $browsingHead,
 	});
 }
@@ -1004,10 +1040,11 @@ sub __makeBooks {
 	my @options = ( );
 	foreach my $book (@$books) {
 		my $isSelected = ($thisBookName eq $book->shortName);
-		push(@options, sprintf('<option value="%s"%s>%s</option>',
+		push(@options, sprintf('<option value="%s"%s>%s (%d)</option>',
 			$book->shortName,
 			($isSelected ? ' selected' : ''),
 			$book->longName,
+			$book->chapterCount,
 		));
 	}
 
@@ -1018,7 +1055,6 @@ sub __makeBooks {
 	$html .= join("\r\n", @options)
 	    . '</select>
 		<input type="hidden" name="chapter" value="1">
-		<input type="hidden" name="verse" value="1">
 		<button>→</button>
 	</form>';
 

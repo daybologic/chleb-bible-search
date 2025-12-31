@@ -73,6 +73,11 @@ sub getVerseByOrdinal {
 	die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
 }
 
+sub getVerses {
+	my ($self) = @_;
+	return [ map { $self->getVerseByOrdinal($_) } 1..$self->verseCount ];
+}
+
 sub getNext {
 	my ($self) = @_;
 

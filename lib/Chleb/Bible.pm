@@ -375,6 +375,7 @@ and a numeric C<$chapterOrdinal> and a numeric C<$verseOrdinal>.  If this does n
 be thrown.
 
 nb. the verse ordinal is relative to the chapter.  Both ordinals start at C<1>, not C<0>.
+The verse ordinal is B<optional>.
 
 =cut
 

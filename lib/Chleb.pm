@@ -101,7 +101,11 @@ sub fetch {
 	for (my $bibleI = 0; $bibleI < scalar(@bible); $bibleI++) {
 		if (my $resolvedBook = $bible[$bibleI]->resolveBook($book)) {
 			my $chapter = $resolvedBook->getChapterByOrdinal($chapterOrdinal);
-			push(@verse, $chapter->getVerseByOrdinal($verseOrdinal));
+			if ($verseOrdinal) { # want a specific verse?
+				push(@verse, $chapter->getVerseByOrdinal($verseOrdinal));
+			} else { # want all of the verses
+				push(@verse, @{ $chapter->getVerses() });
+			}
 		}
 	}
 
