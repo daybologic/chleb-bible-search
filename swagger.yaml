@@ -533,9 +533,73 @@ paths:
           description: Service Unavailable
         '504':
           description: Gateway Timeout
+  /1/lookup/{book}/{chapter}:
+    get:
+      summary: Bible chapter lookup
+      operationId: getChapterVerses
+      description: Look up a specific chapter's verses
+      parameters:
+        - in: path
+          name: book
+          schema:
+            oneOf:
+              - type: string
+              - type: integer
+          required: true
+          description: Book of the bible
+        - in: path
+          name: chapter
+          schema:
+            type: integer
+          required: true
+          description: Chapter within book (ordinal)
+        - in: query
+          name: translations
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/Translation'
+          required: false
+          style: form
+          explode: false
+          description: Requested/accepted bible translations
+      security: [] # No security
+      responses:
+        '200':
+          description: Success
+          content:
+            text/html:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stats'
+        '400':
+          description: Bad request
+        '404':
+          description: Verse not found
+        '429':
+          description: Rate-limited
+        '500':
+          description: Internal Server Error
+        '502':
+          description: Bad gateway
+        '503':
+          description: Service Unavailable
+        '504':
+          description: Gateway Timeout
   /1/lookup/{book}/{chapter}/{verse}:
     get:
-      summary: Bible lookup
+      summary: Bible verse lookup
       operationId: getVerse
       description: Look up a specific verse
       parameters:
