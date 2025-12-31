@@ -75,13 +75,7 @@ sub getVerseByOrdinal {
 
 sub getVerses {
 	my ($self) = @_;
-
-	my @verse;
-	for (my $verseOrdinal = 1; $verseOrdinal <= $self->verseCount; $verseOrdinal++) {
-		push(@verse, $self->getVerseByOrdinal($verseOrdinal));
-	}
-
-	return \@verse;
+	return [ map { $self->getVerseByOrdinal($_) } 1..$self->verseCount ];
 }
 
 sub getNext {
