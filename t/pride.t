@@ -59,7 +59,7 @@ sub setUp {
 	return EXIT_SUCCESS;
 }
 
-sub __testPride_default {
+sub testPride_default {
 	my ($self) = @_;
 	plan tests => 1;
 
@@ -90,7 +90,7 @@ sub __testPride_default {
 	return EXIT_SUCCESS;
 }
 
-sub __testPride_allTranslations {
+sub testPride_allTranslations {
 	my ($self) = @_;
 	plan tests => 1;
 
