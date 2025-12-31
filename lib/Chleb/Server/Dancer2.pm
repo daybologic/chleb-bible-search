@@ -323,7 +323,7 @@ get '/1/lookup' => sub {
 	my $chapter = _param('chapter') // 1;
 	my $verse = _param('verse');
 
-	if (defined($verse)) {
+	if (defined($verse) && length($verse) > 0) {
 		redirect "/1/lookup/${book}/${chapter}/${verse}", 307;
 	}
 
