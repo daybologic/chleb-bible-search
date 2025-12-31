@@ -104,9 +104,7 @@ sub fetch {
 			if ($verseOrdinal) { # want a specific verse?
 				push(@verse, $chapter->getVerseByOrdinal($verseOrdinal));
 			} else { # want all of the verses
-				for ($verseOrdinal = 1; $verseOrdinal <= $chapter->verseCount; $verseOrdinal++) {
-					push(@verse, $chapter->getVerseByOrdinal($verseOrdinal));
-				}
+				push(@verse, @{ $chapter->getVerses() });
 			}
 		}
 	}
