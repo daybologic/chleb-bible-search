@@ -59,141 +59,232 @@ sub setUp {
 	return EXIT_SUCCESS;
 }
 
-sub __test_translation_all {
+sub test_translation_all {
 	my ($self) = @_;
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
 	my $json = $self->sut->__lookup({ accept => $mediaType, book => 'Psalms', chapter => 110, verse => 1, translations => [ 'all' ] });
-	cmp_deeply($json, {
-		data => [
-			{
-				attributes => {
-					book => 'psa',
-					chapter => 110,
-					emotion => 'hope',
-					ordinal => 1,
-					text => 'Jehovah saith unto my Lord, Sit thou at my right hand, Until I make thine enemies thy footstool.',
-					tones => ['encouragement','trust'],
-					translation => 'asv',
-				},
-				id => 'asv/psa/110/1',
-				type => 'verse',
-				links => {
-					first => '/1/lookup/psa/110/1?translations=all',
-					prev  => '/1/lookup/psa/109/31?translations=asv',
-					self  => '/1/lookup/psa/110/1?translations=asv',
-					next  => '/1/lookup/psa/110/2?translations=asv',
-					last  => '/1/lookup/psa/110/7?translations=all',
-				},
-				relationships => {
-					book => {
-						data => {
-							id => 'asv/psa',
-							type => 'book',
-						},
-						links => {},
+	cmp_deeply($json, [
+		{
+			data => [
+				{
+					attributes => {
+						book => 'psa',
+						chapter => 110,
+						emotion => 'hope',
+						ordinal => 1,
+						text => 'Jehovah saith unto my Lord, Sit thou at my right hand, Until I make thine enemies thy footstool.',
+						tones => ['encouragement','trust'],
+						translation => 'asv',
 					},
-					chapter => {
-						data => {
-							id => 'asv/psa/110',
-							type => 'chapter',
-						},
-						links => {},
-					}
-				},
-			},
-			{
-				attributes => {
-					book => 'psa',
-					chapter => 110,
-					emotion => 'hope',
-					ordinal => 1,
-					text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
-					tones => ['encouragement','trust'],
-					translation => 'kjv',
-				},
-				id => 'kjv/psa/110/1',
-				type => 'verse',
-				links => {
-					first => '/1/lookup/psa/110/1?translations=all',
-					prev  => '/1/lookup/psa/109/31?translations=kjv',
-					self  => '/1/lookup/psa/110/1?translations=kjv',
-					next  => '/1/lookup/psa/110/2?translations=kjv',
-					last  => '/1/lookup/psa/110/7?translations=all',
-				},
-				relationships => {
-					book => {
-						data => {
-							id => 'kjv/psa',
-							type => 'book',
-						},
-						links => {},
+					id => 'asv/psa/110/1',
+					type => 'verse',
+					links => {
+						first => '/1/lookup/psa/110/1?translations=all',
+						prev  => '/1/lookup/psa/109/31?translations=asv',
+						self  => '/1/lookup/psa/110/1?translations=asv',
+						next  => '/1/lookup/psa/110/2?translations=asv',
+						last  => '/1/lookup/psa/110/7?translations=all',
 					},
-					chapter => {
-						data => {
-							id => 'kjv/psa/110',
-							type => 'chapter',
+					relationships => {
+						book => {
+							data => {
+								id => 'asv/psa',
+								type => 'book',
+							},
+							links => {},
 						},
-						links => {},
-					}
-				},
-			},
-		],
-		included => [
-			{
-				attributes => {
-					book => ignore(),
-					ordinal => re(qr/^\d{1,3}$/),
-					translation => 'asv',
-					verse_count => 7,
-				},
-				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
-				type => 'chapter',
-				relationships => {
-					book => {
-						data => {
-							id => ignore(),
-							type => 'book',
-						},
+						chapter => {
+							data => {
+								id => 'asv/psa/110',
+								type => 'chapter',
+							},
+							links => {},
+						}
 					},
 				},
-			},
-			{
-				attributes => {
-					chapter_count => 150,
-					long_name => 'Psalms',
-					ordinal => re(qr/^\d{1,2}$/),
-					sample_verse_text => ignore(),
-					sample_verse_chapter_ordinal => ignore(),
-					sample_verse_ordinal_in_chapter => ignore(),
-					short_name => 'psa',
-					short_name_raw => 'Psa',
-					testament => re(qr/^\w{3}$/),
-					translation => 'asv',
-					verse_count => 2_461,
+				{
+					attributes => {
+						book => 'psa',
+						chapter => 110,
+						emotion => 'hope',
+						ordinal => 1,
+						text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
+						tones => ['encouragement','trust'],
+						translation => 'kjv',
+					},
+					id => 'kjv/psa/110/1',
+					type => 'verse',
+					links => {
+						first => '/1/lookup/psa/110/1?translations=all',
+						prev  => '/1/lookup/psa/109/31?translations=kjv',
+						self  => '/1/lookup/psa/110/1?translations=kjv',
+						next  => '/1/lookup/psa/110/2?translations=kjv',
+						last  => '/1/lookup/psa/110/7?translations=all',
+					},
+					relationships => {
+						book => {
+							data => {
+								id => 'kjv/psa',
+								type => 'book',
+							},
+							links => {},
+						},
+						chapter => {
+							data => {
+								id => 'kjv/psa/110',
+								type => 'chapter',
+							},
+							links => {},
+						}
+					},
 				},
-				id => ignore(),
-				relationships => {},
-				type => 'book'
-			},
-			{
-				attributes => {
-					msec => re(qr/^\d+$/),
+			],
+			included => [
+				{
+					attributes => {
+						book => ignore(),
+						ordinal => re(qr/^\d{1,3}$/),
+						translation => 'asv',
+						verse_count => 7,
+					},
+					id => re(qr@^\w{3}/\w+/\d{1,3}$@),
+					type => 'chapter',
+					relationships => {
+						book => {
+							data => {
+								id => ignore(),
+								type => 'book',
+							},
+						},
+					},
 				},
-				id => ignore(), # uuid
-				type => 'stats',
-				links => {},
+				{
+					attributes => {
+						chapter_count => 150,
+						long_name => 'Psalms',
+						ordinal => re(qr/^\d{1,2}$/),
+						sample_verse_text => ignore(),
+						sample_verse_chapter_ordinal => ignore(),
+						sample_verse_ordinal_in_chapter => ignore(),
+						short_name => 'psa',
+						short_name_raw => 'Psa',
+						testament => re(qr/^\w{3}$/),
+						translation => 'asv',
+						verse_count => 2_461,
+					},
+					id => ignore(),
+					relationships => {},
+					type => 'book'
+				},
+				{
+					attributes => {
+						msec => re(qr/^\d+$/),
+					},
+					id => ignore(), # uuid
+					type => 'stats',
+					links => {},
+				},
+			],
+			links => {
+				first => '/1/lookup/psa/110/1?translations=all',
+				prev  => '/1/lookup/psa/109/31?translations=all',
+				self  => '/1/lookup/psa/110/1?translations=all',
+				next  => '/1/lookup/psa/110/2?translations=all',
+				last  => '/1/lookup/psa/110/7?translations=all',
 			},
-		],
-		links => {
-			first => '/1/lookup/psa/110/1?translations=all',
-			prev  => '/1/lookup/psa/109/31?translations=all',
-			self  => '/1/lookup/psa/110/1?translations=all',
-			next  => '/1/lookup/psa/110/2?translations=all',
-			last  => '/1/lookup/psa/110/7?translations=all',
 		},
-	}, 'single random verse JSON');
+		{
+			data => [
+				{
+					attributes => {
+						book => 'psa',
+						chapter => 110,
+						emotion => 'hope',
+						ordinal => 1,
+						text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
+						tones => ['encouragement','trust'],
+						translation => 'kjv',
+					},
+					id => 'kjv/psa/110/1',
+					type => 'verse',
+					links => {
+						first => '/1/lookup/psa/110/1?translations=all',
+						prev  => '/1/lookup/psa/109/31?translations=kjv',
+						self  => '/1/lookup/psa/110/1?translations=kjv',
+						next  => '/1/lookup/psa/110/2?translations=kjv',
+						last  => '/1/lookup/psa/110/7?translations=all',
+					},
+					relationships => {
+						book => {
+							data => {
+								id => 'kjv/psa',
+								type => 'book',
+							},
+							links => {},
+						},
+						chapter => {
+							data => {
+								id => 'kjv/psa/110',
+								type => 'chapter',
+							},
+							links => {},
+						}
+					},
+				},
+			],
+			included => [
+				{
+					attributes => {
+						book => ignore(),
+						ordinal => re(qr/^\d{1,3}$/),
+						translation => 'kjv',
+						verse_count => 7,
+					},
+					id => re(qr@^\w{3}/\w+/\d{1,3}$@),
+					type => 'chapter',
+					relationships => {
+						book => {
+							data => {
+								id => ignore(),
+								type => 'book',
+							},
+						},
+					},
+				},
+				{
+					attributes => {
+						chapter_count => 150,
+						long_name => 'Psalms',
+						ordinal => re(qr/^\d{1,2}$/),
+						sample_verse_text => ignore(),
+						sample_verse_chapter_ordinal => ignore(),
+						sample_verse_ordinal_in_chapter => ignore(),
+						short_name => 'psa',
+						short_name_raw => 'Psa',
+						testament => re(qr/^\w{3}$/),
+						translation => 'kjv',
+						verse_count => 2_461,
+					},
+					id => ignore(),
+					relationships => {},
+					type => 'book'
+				},
+				{
+					attributes => {
+						msec => re(qr/^\d+$/),
+					},
+					id => ignore(), # uuid
+					type => 'stats',
+					links => {},
+				},
+			],
+			links => {
+				self  => '/1/lookup/psa/110/1?translations=all',
+			},
+		},
+	], 'single random verse JSON');
 
 	return EXIT_SUCCESS;
 }
