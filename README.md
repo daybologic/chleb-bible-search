@@ -155,6 +155,24 @@ All you need to do is install a Redis server on either localhost (for a single n
 config file to point to the shared Redis end-point.  Ensure you are pointing at the correct database number,
 which will typically be 0-15.
 
+## Contact
+
+### Donate
+
+If you find Chleb Bible Search useful and would like to support it, you can donate via
+
+BTC
+```
+bc1q4tcy4gvnruwy0vd0w62yrhyf74ugdwqgfmyvwt
+```
+
+PayPal:
+
+<a href="mailto:payments\@daybologic.co.uk">payments\@daybologic.co.uk</a>
+
+we use funds for hosting, API testing, domain registration, OpenAI and any other incidental expenses incurred by the
+project.  An annual report will be published from April 2026 onwards.
+
 ## Contributing
 
 ### Branch naming scheme
