@@ -166,6 +166,10 @@ BTC
 bc1q4tcy4gvnruwy0vd0w62yrhyf74ugdwqgfmyvwt
 ```
 
+PayPal:
+
+<a href="mailto:payments\@daybologic.co.uk">payments\@daybologic.co.uk</a>
+
 we use funds for hosting, API testing, domain registration, OpenAI and any other incidental expenses incurred by the
 project.  An annual report will be published from April 2026 onwards.
 
