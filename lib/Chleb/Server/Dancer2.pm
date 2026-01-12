@@ -404,6 +404,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 
 		$server->dic->logger->trace('1/lookup verse returned as HTML');
 		send_as html => $result;
+	} elsif (ref($result) eq 'ARRAY') {
+		$result = $result->[0];
 	}
 
 	$server->dic->logger->trace('1/lookup verse returned as JSON');
