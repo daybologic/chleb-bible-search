@@ -1,0 +1,21 @@
+Douay-Rheims Bible Text (DR)
+
+The biblical text identified by the translation identifier "dr" in this project
+is derived from the Douay-Rheims Bible, an English translation of the Latin
+Vulgate published between 1582 and 1610.
+
+The Douay-Rheims Bible is in the public domain.
+
+This project uses a machine-readable JSON transcription of the Douay-Rheims
+Bible sourced from:
+
+	https://github.com/xxruyle/Bible-DouayRheims
+
+That repository states the text is provided for free use, but may contain
+transcription or versification errors. Chleb Bible Search applies its own
+normalization and indexing and does not claim textual authority.
+
+No endorsement by the original editors or maintainers is implied.
+
+The original GitHub repository licence applies to that repository’s code
+and formatting only; the biblical text itself remains public domain.
