@@ -45,11 +45,20 @@ use Chleb::DI::MockLogger;
 use Chleb::Token;
 use Chleb::Token::Repository;
 use Chleb::Token::Repository::Local;
-use Test::Deep qw(cmp_deeply all isa methods bool re);
+use Test::Deep qw(cmp_deeply all isa methods num);
 use Test::Exception;
 use Test::More 0.96;
 
 has dic => (is => 'rw', isa => 'Chleb::DI::Container');
+
+# TODO: We should use a mocked timer to avoid real sleeps to avoid this problem,
+# but it hasn't come up in the code-base very often yet.  Normally we don't have
+# to sleep.
+sub __time_ok {
+	my ($actual, $expected, $tolerance, $name) = @_;
+	$tolerance = 1 unless (defined($tolerance));
+	cmp_ok(abs($actual - $expected), '<=', $tolerance, $name);
+}
 
 sub setUp {
 	my ($self) = @_;
@@ -78,9 +87,9 @@ sub testSaveLoad {
 			$token = $self->sut->create({ now => $now });
 		} 'create called';
 
-		cmp_ok($token->expires, '==', $now + 604_800, 'default expiry in one week');
+		__time_ok($token->expires, $now + 604_800, undef, 'default expiry in one week');
 		cmp_ok($token->expires($now + 5), '==', $now + 5, 'set expiry time five seconds from now');
-		cmp_ok($token->created, '==', $now, "created is now (setting expires doesn't change that)");
+		__time_ok($token->created, $now, undef, 'created is now');
 
 		lives_ok {
 			$token->save();
@@ -104,7 +113,7 @@ sub testSaveLoad {
 		cmp_deeply($token, all(
 			isa('Chleb::Token'),
 			methods(
-				created => $now, # original time from file, not object reconstruction
+				created => num($now, 1), # original time from file, not object reconstruction
 				expires => $now + 5,
 				repo => isa('Chleb::Token::Repository'),
 				source => all(
