@@ -66,7 +66,7 @@ sub raise {
 sub toString {
 	my ($self) = @_;
 	my $description = defined($self->description) ? $self->description : status_message($self->statusCode);
-	return sprintf('HTTP code %d: %s', $self->statusCode, ($self->description // '""'));
+	return sprintf('HTTP code %d: %s', $self->statusCode, $description);
 }
 
 __PACKAGE__->meta->make_immutable;
