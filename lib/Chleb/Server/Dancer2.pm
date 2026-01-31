@@ -56,6 +56,7 @@ use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
 use Readonly;
 use Scalar::Util qw(blessed);
+use Sys::Hostname;
 
 Readonly my $PROJECT => 'Chleb Bible Search';
 
@@ -197,6 +198,7 @@ get '/' => sub {
 
 	serveStaticPage('index', {
 		FACEBOOK_HTML => $facebookHtml,
+		HOSTNAME => hostname(),
 		MAILING_LIST_VOTD_HTML => $mailingListVoTDHtml,
 	});
 
