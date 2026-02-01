@@ -62,6 +62,7 @@ use IO::File;
 use JSON;
 use Log::Log4perl::MDC;
 use Readonly;
+use Sys::Hostname;
 use Time::Duration;
 use URI::Escape;
 use UUID::Tiny ':std';
@@ -107,9 +108,10 @@ sub title {
 	my ($self) = @_;
 
 	$self->dic->logger->info(sprintf(
-		'Started Chleb Bible Search %s (%s) built by %s@%s (%s/%s) with Perl %s at %s',
+		'Started Chleb Bible Search %s (%s) on %s, built by %s@%s (%s/%s) with Perl %s at %s',
 		$Chleb::VERSION,
 		$Chleb::Generated::Info::BUILD_CHANGESET,
+		hostname(),
 		$Chleb::Generated::Info::BUILD_USER,
 		$Chleb::Generated::Info::BUILD_HOST,
 		$Chleb::Generated::Info::BUILD_OS,
