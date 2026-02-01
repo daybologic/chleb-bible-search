@@ -65,7 +65,14 @@ sub raise {
 
 sub toString {
 	my ($self) = @_;
-	my $description = defined($self->description) ? $self->description : status_message($self->statusCode);
+
+	my $description = 'Unknown';
+	if (defined($self->description)) {
+		$description = $self->description;
+	} elsif (my $statusMessage = status_message($self->statusCode)) {
+		$description = $statusMessage;
+	}
+
 	return sprintf('HTTP code %d: %s', $self->statusCode, $description);
 }
 
