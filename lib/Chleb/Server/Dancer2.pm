@@ -396,7 +396,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 		handleException($exception);
 	}
 
-	if (ref($result) ne 'HASH') {
+	if (ref($result) eq '') {
 		my $resultHtml = $result;
 		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}:${verse}" });
 		$result .= $resultHtml;
@@ -404,6 +404,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 
 		$server->dic->logger->trace('1/lookup verse returned as HTML');
 		send_as html => $result;
+	} elsif (ref($result) eq 'ARRAY') {
+		$result = $result->[0];
 	}
 
 	$server->dic->logger->trace('1/lookup verse returned as JSON');
