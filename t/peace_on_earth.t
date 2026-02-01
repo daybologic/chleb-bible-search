@@ -61,7 +61,7 @@ sub setUp {
 sub testPeaceSearch_defaultTranslation {
 	my ($self) = @_;
 
-	$self->__checkPeaceSearch_defaultTranslation(text => 'peace on earth');
+	$self->__checkPeaceSearch_defaultTranslation(text => 'peace on earth', wholeword => 1);
 
 	return EXIT_SUCCESS;
 }
@@ -70,7 +70,7 @@ sub testPeaceSearch_defaultTranslation_viaObject {
 	my ($self) = @_;
 
 	my $secureString = Chleb::Utils::SecureString->new({ value => 'peace on earth' });
-	$self->__checkPeaceSearch_defaultTranslation(text => $secureString);
+	$self->__checkPeaceSearch_defaultTranslation(text => $secureString, wholeword => 1);
 
 	return EXIT_SUCCESS;
 }
@@ -88,6 +88,7 @@ sub __checkPeaceSearch_defaultTranslation {
 			bookShortName => undef,
 			text          => 'peace on earth',
 			translation   => 'kjv',
+			wholeword     => 1,
 		),
 	), 'query inspection') or diag(explain($query));
 
@@ -174,7 +175,7 @@ sub testPeaceSearch_asvTranslation {
 	plan tests => 6;
 
 	# it's empty because the wording 'peace on earth' does not appear in the asv, only the kjv
-	my $query = $self->sut->newSearchQuery(text => 'peace on earth', translation => 'asv')->setLimit(3);
+	my $query = $self->sut->newSearchQuery(text => 'peace on earth', translation => 'asv', wholeword => 1)->setLimit(3);
 	cmp_deeply($query, all(
 		isa('Chleb::Bible::Search::Query'),
 		methods(
@@ -197,7 +198,7 @@ sub testPeaceSearch_asvTranslation {
 
 	# we alter the query to 'peace on the earth' to pick up Matthew, but Luke does not match because it
 	# says 'peace in the earth'.
-	$query = $self->sut->newSearchQuery(text => 'peace on the earth', translation => 'asv')->setLimit(3);
+	$query = $self->sut->newSearchQuery(text => 'peace on the earth', translation => 'asv', wholeword => 1)->setLimit(3);
 	cmp_deeply($query, all(
 		isa('Chleb::Bible::Search::Query'),
 		methods(
@@ -255,7 +256,7 @@ sub testPeaceSearch_asvTranslation {
 
 	# we alter the query to 'peace in the earth' to pick up Luke, but Matthew does not match because it
 	# says 'peace on the earth'.
-	$query = $self->sut->newSearchQuery(text => 'peace in the earth', translation => 'asv')->setLimit(3);
+	$query = $self->sut->newSearchQuery(text => 'peace in the earth', translation => 'asv', wholeword => 1)->setLimit(3);
 	cmp_deeply($query, all(
 		isa('Chleb::Bible::Search::Query'),
 		methods(
@@ -320,7 +321,7 @@ sub testPeaceSearch_asvTranslationViaBible_textParam {
 
 	my $translation = 'asv';
 	$self->sut($self->sut->__getBible($translation));
-	my $query = $self->sut->newSearchQuery(text => 'peace in the earth')->setLimit(3);
+	my $query = $self->sut->newSearchQuery(text => 'peace in the earth', wholeword => 1)->setLimit(3);
 
 	cmp_deeply($query, all(
 		isa('Chleb::Bible::Search::Query'),
@@ -387,6 +388,7 @@ sub testPeaceSearch_asvTranslationViaBible_direct {
 	my $translation = 'asv';
 	$self->sut($self->sut->__getBible($translation));
 	my $query = $self->sut->newSearchQuery('peace in the earth')->setLimit(3);
+	$query->wholeword(1);
 
 	cmp_deeply($query, all(
 		isa('Chleb::Bible::Search::Query'),

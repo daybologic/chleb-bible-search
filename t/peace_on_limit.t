@@ -62,6 +62,8 @@ sub testPeaceSearch {
 	plan tests => 2;
 
 	my $query = $self->sut->newSearchQuery('peace on')->setLimit(3);
+	$query->wholeword(1);
+
 	cmp_deeply($query, all(
 		isa('Chleb::Bible::Search::Query'),
 		methods(
@@ -106,16 +108,16 @@ sub testPeaceSearch {
 		all(
 			isa('Chleb::Bible::Book'),
 			methods(
-				chapterCount => 16,
-				longName     => 'Mark',
-				ordinal      => 41,
-				shortName    => 'mark',
-				shortNameRaw => 'Mark',
+				chapterCount => 24,
+				longName     => 'Luke',
+				ordinal      => 42,
+				shortName    => 'luke',
+				shortNameRaw => 'Luke',
 				testament    => all(
 					isa('Chleb::Type::Testament'),
 					methods(value => 'new'),
 				),
-				verseCount   => 678,
+				verseCount   => 1151,
 			),
 		),
 	);
@@ -166,12 +168,12 @@ sub testPeaceSearch {
 							isa('Chleb::Bible::Chapter'),
 							methods(
 								book       => $bookExpect[2],
-								ordinal    => 9,
-								verseCount => 50,
+								ordinal    => 12,
+								verseCount => 59,
 							),
 						),
-						ordinal => 50,
-						text    => 'Salt [is] good: but if the salt have lost his saltness, wherewith will ye season it? Have salt in yourselves, and have peace one with another.',
+						ordinal => 51,
+						text    => 'Suppose ye that I am come to give peace on earth? I tell you, Nay; but rather division:',
 					),
 				),
 			],
