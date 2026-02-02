@@ -234,14 +234,22 @@ sub search {
 	my ($self, $query) = @_;
 	my @verses;
 
-	my $critereonText = $query->text;
+	my $qtext = $query->text;
+	$qtext =~ s/^\s+|\s+$//g;
 
-	my $rx;
+	my @rx;
 	if ($query->wholeword) {
-		$critereonText = quotemeta($critereonText);
-		$rx = qr/^\(?$critereonText(?:[\s.,:;()?!-]|$)/i;
+		# Exact phrase match, but allow boundaries that aren't word chars.
+		# Treat apostrophes/hyphens as "word chars" for boundary purposes.
+		my $phrase = quotemeta($qtext);
+
+		# Boundary: start/end OR a char that is NOT [\w'-]
+		$rx[0] = qr/(?<![\w'-])$phrase(?![\w'-])/i;
 	} else {
-		$rx = qr/$critereonText/i;
+		# Extract words including internal apostrophes/hyphens
+		my @words = ($qtext =~ /[\w]+(?:['-][\w]+)*/g);
+
+		@rx = map { qr/\Q$_\E/i } @words;
 	}
 
 	CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
@@ -254,21 +262,30 @@ sub search {
 			# Perhaps have a getVerseByKey in _library?
 			my $text = $self->bible->__backend->getVerseDataByKey($verseKey);
 
-			my $found;
+			my $doPush;
 			if ($query->wholeword) {
-				$found = grep { m/$rx/ } split(m/\s+/, $text);
+				$doPush = ($text =~ $rx[0]);
 			} else {
-				$found = ($text =~ m/$rx/);
+				# AND semantics: every word regex must match somewhere in the verse
+				$doPush = 1;
+				for my $re (@rx) {
+					if ($text !~ $re) {
+						$doPush = 0;
+						last;
+					}
+				}
 			}
 
-			push(@verses, Chleb::Bible::Verse->new({
-				book    => $self,
-				chapter => $chapter,
-				ordinal => $verseOrdinal,
-				text    => $text,
-			})) if ($found);
+			if ($doPush) {
+				push(@verses, Chleb::Bible::Verse->new({
+					book	=> $self,
+					chapter	=> $chapter,
+					ordinal	=> $verseOrdinal,
+					text	=> $text,
+				}));
 
-			last CHAPTER if (scalar(@verses) == $query->limit);
+				last CHAPTER if (scalar(@verses) >= $query->limit);
+			}
 		}
 	}
 
