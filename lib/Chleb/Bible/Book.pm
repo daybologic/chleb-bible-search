@@ -263,9 +263,7 @@ sub search {
 			my $text = $self->bible->__backend->getVerseDataByKey($verseKey);
 
 			my $doPush;
-			if (scalar(@rx) == 0) {
-				$doPush = 0;
-			} elsif ($query->wholeword) {
+			if ($query->wholeword) {
 				$doPush = ($text =~ $rx[0]);
 			} else {
 				# AND semantics: every word regex must match somewhere in the verse
