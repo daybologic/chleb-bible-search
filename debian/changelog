@@ -1,3 +1,24 @@
+chleb-bible-search (2.4.1) stable; urgency=high
+
+  * 🚸 replace core search algo
+  * 🚸 display machine (server) hostname
+  * ♻️ replace toString code on Exception
+  * 💚 workaround for occasional build timeouts
+  * 🧐 dump exceptions auto via overloaded toString
+  * 🧵 fix theoretical log removal race condition
+  * 🚨 missing override_dh_auto_clean PHONY rule
+  * 🩹 avoid potential error if log directory missing
+  * 🐛 deference ARRAY for JSON verse lookup
+  * 🩹 avoid EPERM in sbuild
+  * 🐛 method might return ARRAY
+  * 🩹 must pass translation
+  * 🙈 ignore ^data/*.bin.gz
+  * 🐛 convert PRIVACY.MD -> privacy.html
+  * 💸 PayPal link
+  * 💸 added BTC donation address
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Mon, 02 Feb 2026 19:54:47 +0000
+
 chleb-bible-search (2.4.0) stable; urgency=low
 
   * ✨ retrieve a whole chapter #155
