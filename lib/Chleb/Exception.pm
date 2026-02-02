@@ -33,7 +33,9 @@ use strict;
 use warnings;
 use Moose;
 
-use HTTP::Status qw(:is);
+use HTTP::Status qw(:is status_message);
+
+use overload q{""} => 'toString', fallback => 1;
 
 has description => (is => 'ro', isa => 'Str');
 
@@ -63,7 +65,15 @@ sub raise {
 
 sub toString {
 	my ($self) = @_;
-	return sprintf('HTTP code %d: %s', $self->statusCode, $self->description);
+
+	my $description = 'Unknown';
+	if (defined($self->description)) {
+		$description = $self->description;
+	} elsif (my $statusMessage = status_message($self->statusCode)) {
+		$description = $statusMessage;
+	}
+
+	return sprintf('HTTP code %d: %s', $self->statusCode, $description);
 }
 
 __PACKAGE__->meta->make_immutable;

@@ -155,6 +155,24 @@ All you need to do is install a Redis server on either localhost (for a single n
 config file to point to the shared Redis end-point.  Ensure you are pointing at the correct database number,
 which will typically be 0-15.
 
+## Contact
+
+### Donate
+
+If you find Chleb Bible Search useful and would like to support it, you can donate via
+
+BTC
+```
+bc1q4tcy4gvnruwy0vd0w62yrhyf74ugdwqgfmyvwt
+```
+
+PayPal:
+
+<a href="mailto:payments\@daybologic.co.uk">payments\@daybologic.co.uk</a>
+
+we use funds for hosting, API testing, domain registration, OpenAI and any other incidental expenses incurred by the
+project.  An annual report will be published from April 2026 onwards.
+
 ## Contributing
 
 ### Branch naming scheme
@@ -179,6 +197,7 @@ Please name your branch using this scheme:
 | rel/X.Y | released 1.0, 2.0, 2.1 etc, which contain specific tags vX.Y.Z | NO | NO |
 | refactor/&lt;description&gt; | Not features, design changes | NO | NO |
 | tests/&lt;description&gt; | Unit tests, functional tests, sanity improvements | NO | NO |
+| translation/&lt;identifier&gt; | Translation work | NO | NO |
 | &lt;user&gt;/&lt;hierarchy&gt; | Your GitHub username, followed by recognized hierarchies above | NO | YES |
 
 ### Raising issues

@@ -153,6 +153,8 @@ data/gitmoji/vendor/wrench.txt
 data/gitmoji/vendor/zap.txt
 data/Makefile
 data/static/asv.txt
+data/static/browsing_head.html
+data/static/browsing_left.html
 data/static/emotion/asv.json
 data/static/emotion/kjv.json
 data/static/facebook.html
@@ -170,6 +172,7 @@ data/static/public/robots.txt
 data/static/public/style.css
 data/static/public/terms.html
 data/static/search.html
+data/static/verse.html
 'data/tests/1/a HTML.sh'
 'data/tests/1/a JSON.sh'
 data/tests/1/a.sh
@@ -177,6 +180,7 @@ data/tests/1/a.sh
 'data/tests/1/info HTML.sh'
 'data/tests/1/info JSON.sh'
 'data/tests/1/lookup default.sh'
+'data/tests/1/lookup HTML, redirect.sh'
 'data/tests/1/lookup HTML.sh'
 'data/tests/1/lookup JSON.sh'
 'data/tests/1/ping default.sh'
@@ -310,6 +314,7 @@ MANIFEST.SKIP
 NEWS
 PRIVACY.md
 README.md
+redocly.yaml
 swagger.yaml
 t/Backend_getOrdinalByVerseKey.t
 t/Backend_getSentimentByOrdinal.t
@@ -348,6 +353,7 @@ t/TokenRepository_Local.t
 t/traverse_entire_bible.t
 t/Type_Testament.t
 t/Utils_boolean.t
+t/Utils_colorIndexFromWord.t
 t/Utils_explodeHtmlFilePath.t
 t/Utils_forceArray.t
 t/Utils_limitText.t
