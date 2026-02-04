@@ -85,10 +85,29 @@ my %abbr = (
 	'Josue' => 'Josh',
 	'Judges' => 'Judg',
 	'Ruth' => 'Ruth',
-	'1 Kings' => '1Ki',
-	'2 Kings' => '2Ki',
+
+	# recommended mappings; this might mean changing KJV and ASV too, to keep the mappings clean
+	# ie. renaming
+	# 1Ki and 2Ki to 3Ki and 4Ki
+	# and
+	# 1Sam and 2Sam to 1Ki and 2Ki
+	# in that order.
+
+	#1Sam → 1Ki
+	#2Sam → 2Ki
+	#1Kgs → 3Ki
+	#2Kgs → 4Ki
+
+	'1 Kings' => '1Sam',
+	'2 Kings' => '2Sam',
 	'3 Kings' => '3Ki',
 	'4 Kings' => '4Ki',
+
+	'1Sam' => '1Ki',
+	'2Sam' => '2Ki',
+	'1Kgs' => '3Ki',
+	'2Kgs' => '4Ki',
+
 	'1 Paralipomenon' => '1Ch',
 	'2 Paralipomenon' => '2Ch',
 	'1 Esdras' => 'Ezr',

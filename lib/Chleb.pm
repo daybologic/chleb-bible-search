@@ -393,7 +393,7 @@ sub __fixTranslationsParam {
 
 sub __allTranslationsList {
 	# TODO: Can we make this dynamic?  If we can, we can drop in custom translations dynamically
-	return ('asv', 'kjv');
+	return ('asv', 'kjv'. 'dr');
 }
 
 sub __isTestamentMatch {

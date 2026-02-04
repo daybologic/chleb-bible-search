@@ -74,15 +74,17 @@ Readonly my $BOOK_OFFSET_VERSES_TO_KEYS => ++$offsetMaster; # Relative book vers
 sub writeOutput {
 	my ($data, $translation) = @_;
 
+	my $outputPath = __outputFromTranslation($translation);
 	eval {
-		nstore($data, __outputFromTranslation($translation));
+		nstore($data, $outputPath);
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
-		print("Error writing to file: $evalError");
+		print("Error writing to '$outputPath': $evalError");
 		return EXIT_FAILURE;
 	}
 
+	printf("'$outputPath' written successfully.\n");
 	return EXIT_SUCCESS;
 }
 
@@ -133,7 +135,7 @@ sub main {
 
 	$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES] = \@bookShortNames;
 
-	my $sentiment = getSentiment($translation);
+#	my $sentiment = getSentiment($translation);
 
 	if (my $fh = IO::File->new(join('/', $DATA_DIR, __inputFromTranslation($translation)), 'r')) {
 		while (my $line = <$fh>) {
@@ -146,7 +148,8 @@ sub main {
 			$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName} = {
 				c => 0,
 				n => $bookNameMap{$bookShortName},
-				t => $bookShortNameToOrdinal{$bookShortName} > $OT_COUNT ? 'N' : 'O',
+				#t => $bookShortNameToOrdinal{$bookShortName} > $OT_COUNT ? 'N' : 'O',
+				t => 'O', # FIXME
 				v => { },
 			} unless ($data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$bookShortName});
 
@@ -175,8 +178,8 @@ sub main {
 					$data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_VERSES_TO_KEYS]->{$verseKeyRelativeBook} = $verseKey;
 					$data->[$MAIN_OFFSET_VERSES]->[++$verseOrdinalRelativeBible] = $verseKey;
 					$data->[$MAIN_OFFSET_VERSE_KEYS_TO_ABSOLUTE_ORDINALS]->{$verseKey} = $verseOrdinalRelativeBible;
-					$data->[$MAIN_OFFSET_EMOTION]->[$verseOrdinalRelativeBible] = $sentiment->[$verseOrdinalRelativeBible - 1]->{emotion};
-					$data->[$MAIN_OFFSET_TONES]->[$verseOrdinalRelativeBible] = $sentiment->[$verseOrdinalRelativeBible - 1]->{tones};
+#					$data->[$MAIN_OFFSET_EMOTION]->[$verseOrdinalRelativeBible] = $sentiment->[$verseOrdinalRelativeBible - 1]->{emotion};
+#					$data->[$MAIN_OFFSET_TONES]->[$verseOrdinalRelativeBible] = $sentiment->[$verseOrdinalRelativeBible - 1]->{tones};
 				}
 
 				# if the chapter ordinal is out of range, the first verse of that chapter won't exist

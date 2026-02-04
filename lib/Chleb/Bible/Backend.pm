@@ -137,6 +137,7 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	for (my $bookIndex = 0; $bookIndex < $bookCount; $bookIndex++) {
 		my $shortNameRaw = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_SHORT_NAMES]->[$bookIndex];
 		my $bookInfo = $self->data->[$MAIN_OFFSET_BOOKS]->[$BOOK_OFFSET_BOOK_INFO]->{$shortNameRaw};
+		die "no bookInfo for $shortNameRaw" unless ($bookInfo);
 		my $bookOrdinal = $bookIndex + 1;
 		$books[$bookIndex] = Chleb::Bible::Book->new({
 			bible      => $self->bible,
@@ -144,6 +145,7 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 			shortNameRaw => $shortNameRaw,
 			longName   => $bookInfo->{n},
 			chapterCount => $bookInfo->{c},
+			chapterCount => 1,
 			verseCount => sum(values(%{ $bookInfo->{v} })),
 			testament => Chleb::Type::Testament->createFromBackendValue($bookInfo->{t}),
 		});

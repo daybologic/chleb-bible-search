@@ -1,4 +1,4 @@
-#!/usr/bin/make -f
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (2E0EOL),
 # All rights reserved.
@@ -30,18 +30,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-all: kjv.bin.gz asv.bin.gz dr.bin.gz
+set -eu
 
-kjv.bin.gz: static/kjv.txt
-	cd ../ && ./bin/import/text-to-kjv.sh
-
-asv.bin.gz: static/asv.txt
-	cd ../ && ./bin/import/text-to-asv.sh
-
-dr.bin.gz: static/dr.txt
-	cd ../ && ./bin/import/text-to-dr.sh
-
-clean:
-	rm -vf kjv.bin.gz kjv.bin asv.bin.gz asv.bin dr.bin.gz dr.bin
-
-.PHONY: clean all
+bin/import/text-to-bin.pl dr
+gzip -f data/dr.bin
