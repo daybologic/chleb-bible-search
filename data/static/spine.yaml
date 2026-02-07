@@ -913,6 +913,10 @@ books:
         short_name_raw: "Rev"
         short_name: "rev"
         long_name: "Revelation of John"
+      dr:
+        short_name_raw: "Rev"
+        short_name: "rev"
+        long_name: "Apocalypse"
       kjv:
         short_name_raw: "Rev"
         short_name: "rev"
