@@ -32,116 +32,209 @@
 # Canonical spine + per-version display
 # book_id must be canonical and unique across all translations
 
+---
 books:
   - book_id: _Gen
     chapters: 50
     versions:
-      asv: { short_name: "Gen", long_name: "Genesis" }
-      dr: { short_name: "Gen", long_name: "Genesis" }
-      kjv: { short_name: "Gen", long_name: "Genesis" }
+      asv:
+        short_name: "Gen"
+        long_name: "Genesis"
+      dr:
+        short_name: "Gen"
+        long_name: "Genesis"
+      kjv:
+        short_name: "Gen"
+        long_name: "Genesis"
 
   - book_id: _Exo
     chapters: 40
     versions:
-      asv: { short_name: "Exo", long_name: "Exodus" }
-      dr: { short_name: "Exo", long_name: "Exodus" }
-      kjv: { short_name: "Exo", long_name: "Exodus" }
+      asv:
+        short_name: "Exo"
+        long_name: "Exodus"
+      dr:
+        short_name: "Exo"
+        long_name: "Exodus"
+      kjv:
+        short_name: "Exo"
+        long_name: "Exodus"
 
   - book_id: _Lev
     chapters: 27
     versions:
-      asv: { short_name: "Lev", long_name: "Leviticus" }
-      dr: { short_name: "Lev", long_name: "Leviticus" }
-      kjv: { short_name: "Lev", long_name: "Leviticus" }
+      asv:
+        short_name: "Lev"
+        long_name: "Leviticus"
+      dr:
+        short_name: "Lev"
+        long_name: "Leviticus"
+      kjv:
+        short_name: "Lev"
+        long_name: "Leviticus"
 
   - book_id: _Num
     chapters: 36
     versions:
-      asv: { short_name: "Num", long_name: "Numbers" }
-      dr: { short_name: "Num", long_name: "Numbers" }
-      kjv: { short_name: "Num", long_name: "Numbers" }
+      asv:
+        short_name: "Num"
+        long_name: "Numbers"
+      dr:
+        short_name: "Num"
+        long_name: "Numbers"
+      kjv:
+        short_name: "Num"
+        long_name: "Numbers"
 
   - book_id: _Deu
     chapters: 34
     versions:
-      asv: { short_name: "Deu", long_name: "Deuteronomy" }
-      dr: { short_name: "Deu", long_name: "Deuteronomy" }
-      kjv: { short_name: "Deu", long_name: "Deuteronomy" }
+      asv:
+        short_name: "Deu"
+        long_name: "Deuteronomy"
+      dr:
+        short_name: "Deu"
+        long_name: "Deuteronomy"
+      kjv:
+        short_name: "Deu"
+        long_name: "Deuteronomy"
 
   - book_id: _Josh
     chapters: 24
     versions:
-      asv: { short_name: "Josh", long_name: "Joshua" }
-      dr: { short_name: "Josh", long_name: "Josue" }
-      kjv: { short_name: "Josh", long_name: "Joshua" }
+      asv:
+        short_name: "Josh"
+        long_name: "Joshua"
+      dr:
+        short_name: "Josh"
+        long_name: "Josue"
+      kjv:
+        short_name: "Josh"
+        long_name: "Joshua"
 
   - book_id: _Judg
     chapters: 21
     versions:
-      asv: { short_name: "Judg", long_name: "Judges" }
-      dr: { short_name: "Judg", long_name: "Judges" }
-      kjv: { short_name: "Judg", long_name: "Judges" }
+      asv:
+        short_name: "Judg"
+        long_name: "Judges"
+      dr:
+        short_name: "Judg"
+        long_name: "Judges"
+      kjv:
+        short_name: "Judg"
+        long_name: "Judges"
 
   - book_id: _Ruth
     chapters: 4
     versions:
-      asv: { short_name: "Ruth", long_name: "Ruth" }
-      dr: { short_name: "Ruth", long_name: "Ruth" }
-      kjv: { short_name: "Ruth", long_name: "Ruth" }
+      asv:
+        short_name: "Ruth"
+        long_name: "Ruth"
+      dr:
+        short_name: "Ruth"
+        long_name: "Ruth"
+      kjv:
+        short_name: "Ruth"
+        long_name: "Ruth"
 
   - book_id: _1Ki
     chapters: 31
     versions:
-      asv: { short_name: "1Sam", long_name: "I Samuel" }
-      dr: { short_name: "1Ki", long_name: "I Kings" }
-      kjv: { short_name: "1Sam", long_name: "I Samuel" }
+      asv:
+        short_name: "1Sam"
+        long_name: "I Samuel"
+      dr:
+        short_name: "1Ki"
+        long_name: "I Kings"
+      kjv:
+        short_name: "1Sam"
+        long_name: "I Samuel"
 
   - book_id: _2Ki
     chapters: 24
     versions:
-      asv: { short_name: "2Sam", long_name: "II Samuel" }
-      dr: { short_name: "2Ki", long_name: "II Kings" }
-      kjv: { short_name: "2Sam", long_name: "II Samuel" }
+      asv:
+        short_name: "2Sam"
+        long_name: "II Samuel"
+      dr:
+        short_name: "2Ki"
+        long_name: "II Kings"
+      kjv:
+        short_name: "2Sam"
+        long_name: "II Samuel"
 
   - book_id: _3Ki
     chapters: 22
     versions:
-      asv: { short_name: "1Ki", long_name: "I Kings" }
-      dr: { short_name: "3Ki", long_name: "III Kings" }
-      kjv: { short_name: "1Ki", long_name: "I Kings" }
+      asv:
+        short_name: "1Ki"
+        long_name: "I Kings"
+      dr:
+        short_name: "3Ki"
+        long_name: "III Kings"
+      kjv:
+        short_name: "1Ki"
+        long_name: "I Kings"
 
   - book_id: _4Ki
     chapters: 25
     versions:
-      asv: { short_name: "2Ki", long_name: "II Kings" }
-      dr: { short_name: "4Ki", long_name: "IV Kings" }
-      kjv: { short_name: "2Ki", long_name: "II Kings" }
+      asv:
+        short_name: "2Ki"
+        long_name: "II Kings"
+      dr:
+        short_name: "4Ki"
+        long_name: "IV Kings"
+      kjv:
+        short_name: "2Ki"
+        long_name: "II Kings"
 
   - book_id: _1Chr
     chapters: 29
     versions:
-      asv: { short_name: "1Chr", long_name: "I Chronicles" }
-      kjv: { short_name: "1Chr", long_name: "I Chronicles" }
+      asv:
+        short_name: "1Chr"
+        long_name: "I Chronicles"
+      kjv:
+        short_name: "1Chr"
+        long_name: "I Chronicles"
 
   - book_id: _2Chr
     chapters: 36
     versions:
-      asv: { short_name: "2Chr", long_name: "II Chronicles" }
-      kjv: { short_name: "2Chr", long_name: "II Chronicles" }
+      asv:
+        short_name: "2Chr"
+        long_name: "II Chronicles"
+      kjv:
+        short_name: "2Chr"
+        long_name: "II Chronicles"
 
   - book_id: _1Esd
     chapters: 10
     versions:
-      kjv: { short_name: "Ezra", long_name: "Ezra" }
-      dr:  { short_name: "1Esd", long_name: "1 Esdras" }
-      asv: { short_name: "Ezra", long_name: "Ezra" }
+      kjv:
+        short_name: "Ezra"
+        long_name: "Ezra"
+      dr:
+        short_name: "1Esd"
+        long_name: "1 Esdras"
+      asv:
+        short_name: "Ezra"
+        long_name: "Ezra"
 
   - book_id: _2Esd
     chapters: 13
     versions:
-      asv: { short_name: "Neh", long_name: "Nehemiah" }
-      dr:  { short_name: "2Esd", long_name: "2 Esdras" }
-      kjv: { short_name: "Neh", long_name: "Nehemiah" }
+      asv:
+        short_name: "Neh"
+        long_name: "Nehemiah"
+      dr:
+        short_name: "2Esd"
+        long_name: "2 Esdras"
+      kjv:
+        short_name: "Neh"
+        long_name: "Nehemiah"
 
   - book_id: _3Esd
     chapters: 9
@@ -168,302 +261,508 @@ books:
   - book_id: _Est
     chapters: 10
     versions:
-      asv: { short_name: "Est", long_name: "Esther" }
-      kjv: { short_name: "Est", long_name: "Esther" }
+      asv:
+        short_name: "Est"
+        long_name: "Esther"
+      kjv:
+        short_name: "Est"
+        long_name: "Esther"
 
   - book_id: _Job
     chapters: 42
     versions:
-      asv: { short_name: "Job", long_name: "Job" }
-      dr: { short_name: "Job", long_name: "Job" }
-      kjv: { short_name: "Job", long_name: "Job" }
+      asv:
+        short_name: "Job"
+        long_name: "Job"
+      dr:
+        short_name: "Job"
+        long_name: "Job"
+      kjv:
+        short_name: "Job"
+        long_name: "Job"
 
   - book_id: _Psa
     chapters: 150
     versions:
-      asv: { short_name: "Psa", long_name: "Psalms" }
-      dr: { short_name: "Psa", long_name: "Psalms" }
-      kjv: { short_name: "Psa", long_name: "Psalms" }
+      asv:
+        short_name: "Psa"
+        long_name: "Psalms"
+      dr:
+        short_name: "Psa"
+        long_name: "Psalms"
+      kjv:
+        short_name: "Psa"
+        long_name: "Psalms"
 
   - book_id: _Prov
     chapters: 31
     versions:
-      asv: { short_name: "Prov", long_name: "Proverbs" }
-      dr: { short_name: "Prov", long_name: "Proverbs" }
-      kjv: { short_name: "Prov", long_name: "Proverbs" }
+      asv:
+        short_name: "Prov"
+        long_name: "Proverbs"
+      dr:
+        short_name: "Prov"
+        long_name: "Proverbs"
+      kjv:
+        short_name: "Prov"
+        long_name: "Proverbs"
 
   - book_id: _Eccl
     chapters: 12
     versions:
-      asv: { short_name: "Eccl", long_name: "Ecclesiastes" }
-      kjv: { short_name: "Eccl", long_name: "Ecclesiastes" }
+      asv:
+        short_name: "Eccl"
+        long_name: "Ecclesiastes"
+      kjv:
+        short_name: "Eccl"
+        long_name: "Ecclesiastes"
 
   - book_id: _Song
     chapters: 8
     versions:
-      asv: { short_name: "Song", long_name: "Song of Solomon" }
-      kjv: { short_name: "Song", long_name: "Song of Solomon" }
+      asv:
+        short_name: "Song"
+        long_name: "Song of Solomon"
+      kjv:
+        short_name: "Song"
+        long_name: "Song of Solomon"
 
   - book_id: _Isa
     chapters: 66
     versions:
-      asv: { short_name: "Isa", long_name: "Isaiah" }
-      kjv: { short_name: "Isa", long_name: "Isaiah" }
+      asv:
+        short_name: "Isa"
+        long_name: "Isaiah"
+      kjv:
+        short_name: "Isa"
+        long_name: "Isaiah"
 
   - book_id: _Jer
     chapters: 52
     versions:
-      asv: { short_name: "Jer", long_name: "Jeremiah" }
-      kjv: { short_name: "Jer", long_name: "Jeremiah" }
+      asv:
+        short_name: "Jer"
+        long_name: "Jeremiah"
+      kjv:
+        short_name: "Jer"
+        long_name: "Jeremiah"
 
   - book_id: _Lam
     chapters: 5
     versions:
-      asv: { short_name: "Lam", long_name: "Lamentations" }
-      kjv: { short_name: "Lam", long_name: "Lamentations" }
+      asv:
+        short_name: "Lam"
+        long_name: "Lamentations"
+      kjv:
+        short_name: "Lam"
+        long_name: "Lamentations"
 
   - book_id: _Ezek
     chapters: 48
     versions:
-      asv: { short_name: "Ezek", long_name: "Ezekiel" }
-      kjv: { short_name: "Ezek", long_name: "Ezekiel" }
+      asv:
+        short_name: "Ezek"
+        long_name: "Ezekiel"
+      kjv:
+        short_name: "Ezek"
+        long_name: "Ezekiel"
 
   - book_id: _Dan
     chapters: 12
     versions:
-      asv: { short_name: "Dan", long_name: "Daniel" }
-      kjv: { short_name: "Dan", long_name: "Daniel" }
+      asv:
+        short_name: "Dan"
+        long_name: "Daniel"
+      kjv:
+        short_name: "Dan"
+        long_name: "Daniel"
 
   - book_id: _Hosea
     chapters: 14
     versions:
-      asv: { short_name: "Hosea", long_name: "Hosea" }
-      kjv: { short_name: "Hosea", long_name: "Hosea" }
+      asv:
+        short_name: "Hosea"
+        long_name: "Hosea"
+      kjv:
+        short_name: "Hosea"
+        long_name: "Hosea"
 
   - book_id: _Joel
     chapters: 3
     versions:
-      asv: { short_name: "Joel", long_name: "Joel" }
-      kjv: { short_name: "Joel", long_name: "Joel" }
+      asv:
+        short_name: "Joel"
+        long_name: "Joel"
+      kjv:
+        short_name: "Joel"
+        long_name: "Joel"
 
   - book_id: _Amos
     chapters: 9
     versions:
-      asv: { short_name: "Amos", long_name: "Amos" }
-      kjv: { short_name: "Amos", long_name: "Amos" }
+      asv:
+        short_name: "Amos"
+        long_name: "Amos"
+      kjv:
+        short_name: "Amos"
+        long_name: "Amos"
 
   - book_id: _Oba
     chapters: 1
     versions:
-      asv: { short_name: "Oba", long_name: "Obadiah" }
-      kjv: { short_name: "Oba", long_name: "Obadiah" }
+      asv:
+        short_name: "Oba"
+        long_name: "Obadiah"
+      kjv:
+        short_name: "Oba"
+        long_name: "Obadiah"
 
   - book_id: _Jonah
     chapters: 4
     versions:
-      asv: { short_name: "Jonah", long_name: "Jonah" }
-      kjv: { short_name: "Jonah", long_name: "Jonah" }
+      asv:
+        short_name: "Jonah"
+        long_name: "Jonah"
+      kjv:
+        short_name: "Jonah"
+        long_name: "Jonah"
 
   - book_id: _Micah
     chapters: 7
     versions:
-      asv: { short_name: "Micah", long_name: "Micah" }
-      kjv: { short_name: "Micah", long_name: "Micah" }
+      asv:
+        short_name: "Micah"
+        long_name: "Micah"
+      kjv:
+        short_name: "Micah"
+        long_name: "Micah"
 
   - book_id: _Nahum
     chapters: 3
     versions:
-      asv: { short_name: "Nahum", long_name: "Nahum" }
-      kjv: { short_name: "Nahum", long_name: "Nahum" }
+      asv:
+        short_name: "Nahum"
+        long_name: "Nahum"
+      kjv:
+        short_name: "Nahum"
+        long_name: "Nahum"
 
   - book_id: _Hab
     chapters: 3
     versions:
-      asv: { short_name: "Hab", long_name: "Habakkuk" }
-      kjv: { short_name: "Hab", long_name: "Habakkuk" }
+      asv:
+        short_name: "Hab"
+        long_name: "Habakkuk"
+      kjv:
+        short_name: "Hab"
+        long_name: "Habakkuk"
 
   - book_id: _Zep
     chapters: 3
     versions:
-      asv: { short_name: "Zep", long_name: "Zephaniah" }
-      kjv: { short_name: "Zep", long_name: "Zephaniah" }
+      asv:
+        short_name: "Zep"
+        long_name: "Zephaniah"
+      kjv:
+        short_name: "Zep"
+        long_name: "Zephaniah"
 
   - book_id: _Hag
     chapters: 2
     versions:
-      asv: { short_name: "Hag", long_name: "Haggai" }
-      kjv: { short_name: "Hag", long_name: "Haggai" }
+      asv:
+        short_name: "Hag"
+        long_name: "Haggai"
+      kjv:
+        short_name: "Hag"
+        long_name: "Haggai"
 
   - book_id: _Zec
     chapters: 14
     versions:
-      asv: { short_name: "Zec", long_name: "Zechariah" }
-      kjv: { short_name: "Zec", long_name: "Zechariah" }
+      asv:
+        short_name: "Zec"
+        long_name: "Zechariah"
+      kjv:
+        short_name: "Zec"
+        long_name: "Zechariah"
 
   - book_id: _Mal
     chapters: 4
     versions:
-      asv: { short_name: "Mal", long_name: "Malachi" }
-      kjv: { short_name: "Mal", long_name: "Malachi" }
+      asv:
+        short_name: "Mal"
+        long_name: "Malachi"
+      kjv:
+        short_name: "Mal"
+        long_name: "Malachi"
 
   - book_id: _Mat
     chapters: 28
     versions:
-      asv: { short_name: "Mat", long_name: "Matthew" }
-      kjv: { short_name: "Mat", long_name: "Matthew" }
+      asv:
+        short_name: "Mat"
+        long_name: "Matthew"
+      kjv:
+        short_name: "Mat"
+        long_name: "Matthew"
 
   - book_id: _Mark
     chapters: 16
     versions:
-      asv: { short_name: "Mark", long_name: "Mark" }
-      kjv: { short_name: "Mark", long_name: "Mark" }
+      asv:
+        short_name: "Mark"
+        long_name: "Mark"
+      kjv:
+        short_name: "Mark"
+        long_name: "Mark"
 
   - book_id: _Luke
     chapters: 24
     versions:
-      asv: { short_name: "Luke", long_name: "Luke" }
-      kjv: { short_name: "Luke", long_name: "Luke" }
+      asv:
+        short_name: "Luke"
+        long_name: "Luke"
+      kjv:
+        short_name: "Luke"
+        long_name: "Luke"
 
   - book_id: _John
     chapters: 21
     versions:
-      asv: { short_name: "John", long_name: "John" }
-      kjv: { short_name: "John", long_name: "John" }
+      asv:
+        short_name: "John"
+        long_name: "John"
+      kjv:
+        short_name: "John"
+        long_name: "John"
 
   - book_id: _Acts
     chapters: 28
     versions:
-      asv: { short_name: "Acts", long_name: "Acts" }
-      kjv: { short_name: "Acts", long_name: "Acts" }
+      asv:
+        short_name: "Acts"
+        long_name: "Acts"
+      kjv:
+        short_name: "Acts"
+        long_name: "Acts"
 
   - book_id: _Rom
     chapters: 16
     versions:
-      asv: { short_name: "Rom", long_name: "Romans" }
-      kjv: { short_name: "Rom", long_name: "Romans" }
+      asv:
+        short_name: "Rom"
+        long_name: "Romans"
+      kjv:
+        short_name: "Rom"
+        long_name: "Romans"
 
   - book_id: _1Cor
     chapters: 16
     versions:
-      asv: { short_name: "1Cor", long_name: "I Corinthians" }
-      kjv: { short_name: "1Cor", long_name: "I Corinthians" }
+      asv:
+        short_name: "1Cor"
+        long_name: "I Corinthians"
+      kjv:
+        short_name: "1Cor"
+        long_name: "I Corinthians"
 
   - book_id: _2Cor
     chapters: 13
     versions:
-      asv: { short_name: "2Cor", long_name: "II Corinthians" }
-      kjv: { short_name: "2Cor", long_name: "II Corinthians" }
+      asv:
+        short_name: "2Cor"
+        long_name: "II Corinthians"
+      kjv:
+        short_name: "2Cor"
+        long_name: "II Corinthians"
 
   - book_id: _Gal
     chapters: 6
     versions:
-      asv: { short_name: "Gal", long_name: "Galatians" }
-      kjv: { short_name: "Gal", long_name: "Galatians" }
+      asv:
+        short_name: "Gal"
+        long_name: "Galatians"
+      kjv:
+        short_name: "Gal"
+        long_name: "Galatians"
 
   - book_id: _Eph
     chapters: 6
     versions:
-      asv: { short_name: "Eph", long_name: "Ephesians" }
-      kjv: { short_name: "Eph", long_name: "Ephesians" }
+      asv:
+        short_name: "Eph"
+        long_name: "Ephesians"
+      kjv:
+        short_name: "Eph"
+        long_name: "Ephesians"
 
   - book_id: _Phil
     chapters: 4
     versions:
-      asv: { short_name: "Phil", long_name: "Philippians" }
-      kjv: { short_name: "Phil", long_name: "Philippians" }
+      asv:
+        short_name: "Phil"
+        long_name: "Philippians"
+      kjv:
+        short_name: "Phil"
+        long_name: "Philippians"
 
   - book_id: _Col
     chapters: 4
     versions:
-      asv: { short_name: "Col", long_name: "Colossians" }
-      kjv: { short_name: "Col", long_name: "Colossians" }
+      asv:
+        short_name: "Col"
+        long_name: "Colossians"
+      kjv:
+        short_name: "Col"
+        long_name: "Colossians"
 
   - book_id: _1Th
     chapters: 5
     versions:
-      asv: { short_name: "1Th", long_name: "I Thessalonians" }
-      kjv: { short_name: "1Th", long_name: "I Thessalonians" }
+      asv:
+        short_name: "1Th"
+        long_name: "I Thessalonians"
+      kjv:
+        short_name: "1Th"
+        long_name: "I Thessalonians"
 
   - book_id: _2Th
     chapters: 3
     versions:
-      asv: { short_name: "2Th", long_name: "II Thessalonians" }
-      kjv: { short_name: "2Th", long_name: "II Thessalonians" }
+      asv:
+        short_name: "2Th"
+        long_name: "II Thessalonians"
+      kjv:
+        short_name: "2Th"
+        long_name: "II Thessalonians"
 
   - book_id: _1Tim
     chapters: 6
     versions:
-      asv: { short_name: "1Tim", long_name: "I Timothy" }
-      kjv: { short_name: "1Tim", long_name: "I Timothy" }
+      asv:
+        short_name: "1Tim"
+        long_name: "I Timothy"
+      kjv:
+        short_name: "1Tim"
+        long_name: "I Timothy"
 
   - book_id: _2Tim
     chapters: 4
     versions:
-      asv: { short_name: "2Tim", long_name: "II Timothy" }
-      kjv: { short_name: "2Tim", long_name: "II Timothy" }
+      asv:
+        short_name: "2Tim"
+        long_name: "II Timothy"
+      kjv:
+        short_name: "2Tim"
+        long_name: "II Timothy"
 
   - book_id: _Titus
     chapters: 3
     versions:
-      asv: { short_name: "Titus", long_name: "Titus" }
-      kjv: { short_name: "Titus", long_name: "Titus" }
+      asv:
+        short_name: "Titus"
+        long_name: "Titus"
+      kjv:
+        short_name: "Titus"
+        long_name: "Titus"
 
   - book_id: _Phile
     chapters: 1
     versions:
-      asv: { short_name: "Phile", long_name: "Philemon" }
-      kjv: { short_name: "Phile", long_name: "Philemon" }
+      asv:
+        short_name: "Phile"
+        long_name: "Philemon"
+      kjv:
+        short_name: "Phile"
+        long_name: "Philemon"
 
   - book_id: _Heb
     chapters: 13
     versions:
-      asv: { short_name: "Heb", long_name: "Hebrews" }
-      kjv: { short_name: "Heb", long_name: "Hebrews" }
+      asv:
+        short_name: "Heb"
+        long_name: "Hebrews"
+      kjv:
+        short_name: "Heb"
+        long_name: "Hebrews"
 
   - book_id: _James
     chapters: 5
     versions:
-      asv: { short_name: "James", long_name: "James" }
-      kjv: { short_name: "James", long_name: "James" }
+      asv:
+        short_name: "James"
+        long_name: "James"
+      kjv:
+        short_name: "James"
+        long_name: "James"
 
   - book_id: _1Pet
     chapters: 5
     versions:
-      asv: { short_name: "1Pet", long_name: "I Peter" }
-      kjv: { short_name: "1Pet", long_name: "I Peter" }
+      asv:
+        short_name: "1Pet"
+        long_name: "I Peter"
+      kjv:
+        short_name: "1Pet"
+        long_name: "I Peter"
 
   - book_id: _2Pet
     chapters: 3
     versions:
-      asv: { short_name: "2Pet", long_name: "II Peter" }
-      kjv: { short_name: "2Pet", long_name: "II Peter" }
+      asv:
+        short_name: "2Pet"
+        long_name: "II Peter"
+      kjv:
+        short_name: "2Pet"
+        long_name: "II Peter"
 
   - book_id: _1John
     chapters: 5
     versions:
-      asv: { short_name: "1John", long_name: "I John" }
-      kjv: { short_name: "1John", long_name: "I John" }
+      asv:
+        short_name: "1John"
+        long_name: "I John"
+      kjv:
+        short_name: "1John"
+        long_name: "I John"
 
   - book_id: _2John
     chapters: 1
     versions:
-      asv: { short_name: "2John", long_name: "II John" }
-      kjv: { short_name: "2John", long_name: "II John" }
+      asv:
+        short_name: "2John"
+        long_name: "II John"
+      kjv:
+        short_name: "2John"
+        long_name: "II John"
 
   - book_id: _3John
     chapters: 1
     versions:
-      asv: { short_name: "3John", long_name: "III John" }
-      kjv: { short_name: "3John", long_name: "III John" }
+      asv:
+        short_name: "3John"
+        long_name: "III John"
+      kjv:
+        short_name: "3John"
+        long_name: "III John"
 
   - book_id: _Jude
     chapters: 1
     versions:
-      asv: { short_name: "Jude", long_name: "Jude" }
-      kjv: { short_name: "Jude", long_name: "Jude" }
+      asv:
+        short_name: "Jude"
+        long_name: "Jude"
+      kjv:
+        short_name: "Jude"
+        long_name: "Jude"
 
   - book_id: _Rev
     chapters: 22
     versions:
-      asv: { short_name: "Rev", long_name: "Revelation of John" }
-      kjv: { short_name: "Rev", long_name: "Revelation of John" }
+      asv:
+        short_name: "Rev"
+        long_name: "Revelation of John"
+      kjv:
+        short_name: "Rev"
+        long_name: "Revelation of John"
