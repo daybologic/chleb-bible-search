@@ -73,22 +73,22 @@ books:
     versions:
       kjv: { short_name: Ruth, long_name: "Ruth" }
 
-  - book_id: 1Sam
+  - book_id: 1Ki
     chapters: 31
     versions:
       kjv: { short_name: 1Sam, long_name: "I Samuel" }
 
-  - book_id: 2Sam
+  - book_id: 2Ki
     chapters: 24
     versions:
       kjv: { short_name: 2Sam, long_name: "II Samuel" }
 
-  - book_id: 1Ki
+  - book_id: 3Ki
     chapters: 22
     versions:
       kjv: { short_name: 1Ki,  long_name: "I Kings" }
 
-  - book_id: 2Ki
+  - book_id: 4Ki
     chapters: 25
     versions:
       kjv: { short_name: 2Ki,  long_name: "II Kings" }
