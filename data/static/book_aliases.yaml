@@ -31,14 +31,14 @@
 
 aliases:
   kjv:
-    "1 Samuel": 1Ki
-    "I Samuel": 1Ki
-    "1Sam": 1Ki
-    "2 Samuel": 2Ki
-    "II Samuel": 2Ki
-    "2Sam": 2Ki
-    "Song of Solomon": Song
-    "Song of Songs": Song
-    "Josue": Josh
-    "Joshua": Josh
-    "Josh": Josh
+    "1 Samuel": _1Ki
+    "I Samuel": _1Ki
+    "1Sam": _1Ki
+    "2 Samuel": _2Ki
+    "II Samuel": _2Ki
+    "2Sam": _2Ki
+    "Song of Solomon": _Song
+    "Song of Songs": _Song
+    "Josue": _Josh
+    "Joshua": _Josh
+    "Josh": _Josh
