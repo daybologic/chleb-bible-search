@@ -129,17 +129,41 @@ books:
       asv: { short_name: "2Chr", long_name: "II Chronicles" }
       kjv: { short_name: "2Chr", long_name: "II Chronicles" }
 
-  - book_id: _Ezra
+  - book_id: _1Esd
     chapters: 10
     versions:
-      asv: { short_name: "Ezra", long_name: "Ezra" }
       kjv: { short_name: "Ezra", long_name: "Ezra" }
+      dr:  { short_name: "1Esd", long_name: "1 Esdras" }
+      asv: { short_name: "Ezra", long_name: "Ezra" }
 
-  - book_id: _Neh
+  - book_id: _2Esd
     chapters: 13
     versions:
       asv: { short_name: "Neh", long_name: "Nehemiah" }
+      dr:  { short_name: "2Esd", long_name: "2 Esdras" }
       kjv: { short_name: "Neh", long_name: "Nehemiah" }
+
+  - book_id: _3Esd
+    chapters: 9
+    versions:
+      asv:
+        absent: true
+      dr:
+        short_name: "3Esd"
+        long_name: "3 Esdras"
+      kjv:
+        absent: true
+
+  - book_id: _4Esd
+    chapters: 16
+    versions:
+      asv:
+        absent: true
+      dr:
+        short_name: "4Esd"
+        long_name: "4 Esdras"
+      kjv:
+        absent: true
 
   - book_id: _Est
     chapters: 10
