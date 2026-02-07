@@ -37,48 +37,56 @@ books:
     chapters: 50
     versions:
       asv: { short_name: Gen,  long_name: "Genesis" }
+      dr: { short_name: Gen,  long_name: "Genesis" }
       kjv: { short_name: Gen,  long_name: "Genesis" }
 
   - book_id: Exo
     chapters: 40
     versions:
       asv: { short_name: Exo,  long_name: "Exodus" }
+      dr: { short_name: Exo,  long_name: "Exodus" }
       kjv: { short_name: Exo,  long_name: "Exodus" }
 
   - book_id: Lev
     chapters: 27
     versions:
       asv: { short_name: Lev,  long_name: "Leviticus" }
+      dr: { short_name: Lev,  long_name: "Leviticus" }
       kjv: { short_name: Lev,  long_name: "Leviticus" }
 
   - book_id: Num
     chapters: 36
     versions:
       asv: { short_name: Num,  long_name: "Numbers" }
+      dr: { short_name: Num,  long_name: "Numbers" }
       kjv: { short_name: Num,  long_name: "Numbers" }
 
   - book_id: Deu
     chapters: 34
     versions:
       asv: { short_name: Deu,  long_name: "Deuteronomy" }
+      dr: { short_name: Deu,  long_name: "Deuteronomy" }
       kjv: { short_name: Deu,  long_name: "Deuteronomy" }
 
   - book_id: Josh
     chapters: 24
     versions:
       asv: { short_name: Josh, long_name: "Joshua" }
+      dr: { short_name: Josh, long_name: "Josue" }
       kjv: { short_name: Josh, long_name: "Joshua" }
 
   - book_id: Judg
     chapters: 21
     versions:
       asv: { short_name: Judg, long_name: "Judges" }
+      dr: { short_name: Judg, long_name: "Judges" }
       kjv: { short_name: Judg, long_name: "Judges" }
 
   - book_id: Ruth
     chapters: 4
     versions:
       asv: { short_name: Ruth, long_name: "Ruth" }
+      dr: { short_name: Ruth, long_name: "Ruth" }
       kjv: { short_name: Ruth, long_name: "Ruth" }
 
   - book_id: 1Ki
