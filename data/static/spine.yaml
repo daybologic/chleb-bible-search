@@ -151,18 +151,21 @@ books:
     chapters: 42
     versions:
       asv: { short_name: "Job", long_name: "Job" }
+      dr: { short_name: "Job", long_name: "Job" }
       kjv: { short_name: "Job", long_name: "Job" }
 
   - book_id: _Psa
     chapters: 150
     versions:
       asv: { short_name: "Psa", long_name: "Psalms" }
+      dr: { short_name: "Psa", long_name: "Psalms" }
       kjv: { short_name: "Psa", long_name: "Psalms" }
 
   - book_id: _Prov
     chapters: 31
     versions:
       asv: { short_name: "Prov", long_name: "Proverbs" }
+      dr: { short_name: "Prov", long_name: "Proverbs" }
       kjv: { short_name: "Prov", long_name: "Proverbs" }
 
   - book_id: _Eccl
