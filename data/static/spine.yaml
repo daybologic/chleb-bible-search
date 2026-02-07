@@ -39,12 +39,15 @@ books:
     versions:
       asv:
         short_name: "Gen"
+        short_name_raw: "gen"
         long_name: "Genesis"
       dr:
         short_name: "Gen"
+        short_name_raw: "gen"
         long_name: "Genesis"
       kjv:
         short_name: "Gen"
+        short_name_raw: "gen"
         long_name: "Genesis"
 
   - book_id: _Exo
@@ -52,12 +55,15 @@ books:
     versions:
       asv:
         short_name: "Exo"
+        short_name_raw: "exo"
         long_name: "Exodus"
       dr:
         short_name: "Exo"
+        short_name_raw: "exo"
         long_name: "Exodus"
       kjv:
         short_name: "Exo"
+        short_name_raw: "exo"
         long_name: "Exodus"
 
   - book_id: _Lev
@@ -65,12 +71,15 @@ books:
     versions:
       asv:
         short_name: "Lev"
+        short_name_raw: "lev"
         long_name: "Leviticus"
       dr:
         short_name: "Lev"
+        short_name_raw: "lev"
         long_name: "Leviticus"
       kjv:
         short_name: "Lev"
+        short_name_raw: "lev"
         long_name: "Leviticus"
 
   - book_id: _Num
@@ -78,12 +87,15 @@ books:
     versions:
       asv:
         short_name: "Num"
+        short_name_raw: "num"
         long_name: "Numbers"
       dr:
         short_name: "Num"
+        short_name_raw: "num"
         long_name: "Numbers"
       kjv:
         short_name: "Num"
+        short_name_raw: "num"
         long_name: "Numbers"
 
   - book_id: _Deu
@@ -91,12 +103,15 @@ books:
     versions:
       asv:
         short_name: "Deu"
+        short_name_raw: "deu"
         long_name: "Deuteronomy"
       dr:
         short_name: "Deu"
+        short_name_raw: "deu"
         long_name: "Deuteronomy"
       kjv:
         short_name: "Deu"
+        short_name_raw: "deu"
         long_name: "Deuteronomy"
 
   - book_id: _Josh
@@ -104,12 +119,15 @@ books:
     versions:
       asv:
         short_name: "Josh"
+        short_name_raw: "josh"
         long_name: "Joshua"
       dr:
         short_name: "Josh"
+        short_name_raw: "josh"
         long_name: "Josue"
       kjv:
         short_name: "Josh"
+        short_name_raw: "josh"
         long_name: "Joshua"
 
   - book_id: _Judg
@@ -117,12 +135,15 @@ books:
     versions:
       asv:
         short_name: "Judg"
+        short_name_raw: "judg"
         long_name: "Judges"
       dr:
         short_name: "Judg"
+        short_name_raw: "judg"
         long_name: "Judges"
       kjv:
         short_name: "Judg"
+        short_name_raw: "judg"
         long_name: "Judges"
 
   - book_id: _Ruth
@@ -130,12 +151,15 @@ books:
     versions:
       asv:
         short_name: "Ruth"
+        short_name_raw: "ruth"
         long_name: "Ruth"
       dr:
         short_name: "Ruth"
+        short_name_raw: "ruth"
         long_name: "Ruth"
       kjv:
         short_name: "Ruth"
+        short_name_raw: "ruth"
         long_name: "Ruth"
 
   - book_id: _1Ki
@@ -143,12 +167,15 @@ books:
     versions:
       asv:
         short_name: "1Sam"
+        short_name_raw: "1sam"
         long_name: "I Samuel"
       dr:
         short_name: "1Ki"
+        short_name_raw: "1ki"
         long_name: "I Kings"
       kjv:
         short_name: "1Sam"
+        short_name_raw: "1sam"
         long_name: "I Samuel"
 
   - book_id: _2Ki
@@ -156,12 +183,15 @@ books:
     versions:
       asv:
         short_name: "2Sam"
+        short_name_raw: "2sam"
         long_name: "II Samuel"
       dr:
         short_name: "2Ki"
+        short_name_raw: "2ki"
         long_name: "II Kings"
       kjv:
         short_name: "2Sam"
+        short_name_raw: "2sam"
         long_name: "II Samuel"
 
   - book_id: _3Ki
@@ -169,12 +199,15 @@ books:
     versions:
       asv:
         short_name: "1Ki"
+        short_name_raw: "1ki"
         long_name: "I Kings"
       dr:
         short_name: "3Ki"
+        short_name_raw: "3ki"
         long_name: "III Kings"
       kjv:
         short_name: "1Ki"
+        short_name_raw: "1ki"
         long_name: "I Kings"
 
   - book_id: _4Ki
@@ -182,12 +215,15 @@ books:
     versions:
       asv:
         short_name: "2Ki"
+        short_name_raw: "2ki"
         long_name: "II Kings"
       dr:
         short_name: "4Ki"
+        short_name_raw: "4ki"
         long_name: "IV Kings"
       kjv:
         short_name: "2Ki"
+        short_name_raw: "2ki"
         long_name: "II Kings"
 
   - book_id: _1Chr
@@ -195,9 +231,11 @@ books:
     versions:
       asv:
         short_name: "1Chr"
+        short_name_raw: "1chr"
         long_name: "I Chronicles"
       kjv:
         short_name: "1Chr"
+        short_name_raw: "1chr"
         long_name: "I Chronicles"
 
   - book_id: _2Chr
@@ -205,9 +243,11 @@ books:
     versions:
       asv:
         short_name: "2Chr"
+        short_name_raw: "2chr"
         long_name: "II Chronicles"
       kjv:
         short_name: "2Chr"
+        short_name_raw: "2chr"
         long_name: "II Chronicles"
 
   - book_id: _1Esd
@@ -215,12 +255,15 @@ books:
     versions:
       kjv:
         short_name: "Ezra"
+        short_name_raw: "ezra"
         long_name: "Ezra"
       dr:
         short_name: "1Esd"
+        short_name_raw: "1esd"
         long_name: "1 Esdras"
       asv:
         short_name: "Ezra"
+        short_name_raw: "ezra"
         long_name: "Ezra"
 
   - book_id: _2Esd
@@ -228,12 +271,15 @@ books:
     versions:
       asv:
         short_name: "Neh"
+        short_name_raw: "neh"
         long_name: "Nehemiah"
       dr:
         short_name: "2Esd"
+        short_name_raw: "2esd"
         long_name: "2 Esdras"
       kjv:
         short_name: "Neh"
+        short_name_raw: "neh"
         long_name: "Nehemiah"
 
   - book_id: _3Esd
@@ -243,6 +289,7 @@ books:
         absent: true
       dr:
         short_name: "3Esd"
+        short_name_raw: "3esd"
         long_name: "3 Esdras"
       kjv:
         absent: true
@@ -254,6 +301,7 @@ books:
         absent: true
       dr:
         short_name: "4Esd"
+        short_name_raw: "4esd"
         long_name: "4 Esdras"
       kjv:
         absent: true
@@ -263,9 +311,11 @@ books:
     versions:
       asv:
         short_name: "Est"
+        short_name_raw: "est"
         long_name: "Esther"
       kjv:
         short_name: "Est"
+        short_name_raw: "est"
         long_name: "Esther"
 
   - book_id: _Job
@@ -273,12 +323,15 @@ books:
     versions:
       asv:
         short_name: "Job"
+        short_name_raw: "job"
         long_name: "Job"
       dr:
         short_name: "Job"
+        short_name_raw: "job"
         long_name: "Job"
       kjv:
         short_name: "Job"
+        short_name_raw: "job"
         long_name: "Job"
 
   - book_id: _Psa
@@ -286,12 +339,15 @@ books:
     versions:
       asv:
         short_name: "Psa"
+        short_name_raw: "psa"
         long_name: "Psalms"
       dr:
         short_name: "Psa"
+        short_name_raw: "psa"
         long_name: "Psalms"
       kjv:
         short_name: "Psa"
+        short_name_raw: "psa"
         long_name: "Psalms"
 
   - book_id: _Prov
@@ -299,12 +355,15 @@ books:
     versions:
       asv:
         short_name: "Prov"
+        short_name_raw: "prov"
         long_name: "Proverbs"
       dr:
         short_name: "Prov"
+        short_name_raw: "prov"
         long_name: "Proverbs"
       kjv:
         short_name: "Prov"
+        short_name_raw: "prov"
         long_name: "Proverbs"
 
   - book_id: _Eccl
@@ -312,9 +371,11 @@ books:
     versions:
       asv:
         short_name: "Eccl"
+        short_name_raw: "eccl"
         long_name: "Ecclesiastes"
       kjv:
         short_name: "Eccl"
+        short_name_raw: "eccl"
         long_name: "Ecclesiastes"
 
   - book_id: _Song
@@ -322,9 +383,11 @@ books:
     versions:
       asv:
         short_name: "Song"
+        short_name_raw: "song"
         long_name: "Song of Solomon"
       kjv:
         short_name: "Song"
+        short_name_raw: "song"
         long_name: "Song of Solomon"
 
   - book_id: _Isa
@@ -332,9 +395,11 @@ books:
     versions:
       asv:
         short_name: "Isa"
+        short_name_raw: "isa"
         long_name: "Isaiah"
       kjv:
         short_name: "Isa"
+        short_name_raw: "isa"
         long_name: "Isaiah"
 
   - book_id: _Jer
@@ -342,9 +407,11 @@ books:
     versions:
       asv:
         short_name: "Jer"
+        short_name_raw: "jer"
         long_name: "Jeremiah"
       kjv:
         short_name: "Jer"
+        short_name_raw: "jer"
         long_name: "Jeremiah"
 
   - book_id: _Lam
@@ -352,9 +419,11 @@ books:
     versions:
       asv:
         short_name: "Lam"
+        short_name_raw: "lam"
         long_name: "Lamentations"
       kjv:
         short_name: "Lam"
+        short_name_raw: "lam"
         long_name: "Lamentations"
 
   - book_id: _Ezek
@@ -362,9 +431,11 @@ books:
     versions:
       asv:
         short_name: "Ezek"
+        short_name_raw: "ezek"
         long_name: "Ezekiel"
       kjv:
         short_name: "Ezek"
+        short_name_raw: "ezek"
         long_name: "Ezekiel"
 
   - book_id: _Dan
@@ -372,9 +443,11 @@ books:
     versions:
       asv:
         short_name: "Dan"
+        short_name_raw: "dan"
         long_name: "Daniel"
       kjv:
         short_name: "Dan"
+        short_name_raw: "dan"
         long_name: "Daniel"
 
   - book_id: _Hosea
@@ -382,9 +455,11 @@ books:
     versions:
       asv:
         short_name: "Hosea"
+        short_name_raw: "hosea"
         long_name: "Hosea"
       kjv:
         short_name: "Hosea"
+        short_name_raw: "hosea"
         long_name: "Hosea"
 
   - book_id: _Joel
@@ -392,9 +467,11 @@ books:
     versions:
       asv:
         short_name: "Joel"
+        short_name_raw: "joel"
         long_name: "Joel"
       kjv:
         short_name: "Joel"
+        short_name_raw: "joel"
         long_name: "Joel"
 
   - book_id: _Amos
@@ -402,9 +479,11 @@ books:
     versions:
       asv:
         short_name: "Amos"
+        short_name_raw: "amos"
         long_name: "Amos"
       kjv:
         short_name: "Amos"
+        short_name_raw: "amos"
         long_name: "Amos"
 
   - book_id: _Oba
@@ -412,9 +491,11 @@ books:
     versions:
       asv:
         short_name: "Oba"
+        short_name_raw: "oba"
         long_name: "Obadiah"
       kjv:
         short_name: "Oba"
+        short_name_raw: "oba"
         long_name: "Obadiah"
 
   - book_id: _Jonah
@@ -422,9 +503,11 @@ books:
     versions:
       asv:
         short_name: "Jonah"
+        short_name_raw: "jonah"
         long_name: "Jonah"
       kjv:
         short_name: "Jonah"
+        short_name_raw: "jonah"
         long_name: "Jonah"
 
   - book_id: _Micah
@@ -432,9 +515,11 @@ books:
     versions:
       asv:
         short_name: "Micah"
+        short_name_raw: "micah"
         long_name: "Micah"
       kjv:
         short_name: "Micah"
+        short_name_raw: "micah"
         long_name: "Micah"
 
   - book_id: _Nahum
@@ -442,9 +527,11 @@ books:
     versions:
       asv:
         short_name: "Nahum"
+        short_name_raw: "nahum"
         long_name: "Nahum"
       kjv:
         short_name: "Nahum"
+        short_name_raw: "nahum"
         long_name: "Nahum"
 
   - book_id: _Hab
@@ -452,9 +539,11 @@ books:
     versions:
       asv:
         short_name: "Hab"
+        short_name_raw: "hab"
         long_name: "Habakkuk"
       kjv:
         short_name: "Hab"
+        short_name_raw: "hab"
         long_name: "Habakkuk"
 
   - book_id: _Zep
@@ -462,9 +551,11 @@ books:
     versions:
       asv:
         short_name: "Zep"
+        short_name_raw: "zep"
         long_name: "Zephaniah"
       kjv:
         short_name: "Zep"
+        short_name_raw: "zep"
         long_name: "Zephaniah"
 
   - book_id: _Hag
@@ -472,9 +563,11 @@ books:
     versions:
       asv:
         short_name: "Hag"
+        short_name_raw: "hag"
         long_name: "Haggai"
       kjv:
         short_name: "Hag"
+        short_name_raw: "hag"
         long_name: "Haggai"
 
   - book_id: _Zec
@@ -482,9 +575,11 @@ books:
     versions:
       asv:
         short_name: "Zec"
+        short_name_raw: "zec"
         long_name: "Zechariah"
       kjv:
         short_name: "Zec"
+        short_name_raw: "zec"
         long_name: "Zechariah"
 
   - book_id: _Mal
@@ -492,9 +587,11 @@ books:
     versions:
       asv:
         short_name: "Mal"
+        short_name_raw: "mal"
         long_name: "Malachi"
       kjv:
         short_name: "Mal"
+        short_name_raw: "mal"
         long_name: "Malachi"
 
   - book_id: _Mat
@@ -502,9 +599,11 @@ books:
     versions:
       asv:
         short_name: "Mat"
+        short_name_raw: "mat"
         long_name: "Matthew"
       kjv:
         short_name: "Mat"
+        short_name_raw: "mat"
         long_name: "Matthew"
 
   - book_id: _Mark
@@ -512,9 +611,11 @@ books:
     versions:
       asv:
         short_name: "Mark"
+        short_name_raw: "mark"
         long_name: "Mark"
       kjv:
         short_name: "Mark"
+        short_name_raw: "mark"
         long_name: "Mark"
 
   - book_id: _Luke
@@ -522,9 +623,11 @@ books:
     versions:
       asv:
         short_name: "Luke"
+        short_name_raw: "luke"
         long_name: "Luke"
       kjv:
         short_name: "Luke"
+        short_name_raw: "luke"
         long_name: "Luke"
 
   - book_id: _John
@@ -532,9 +635,11 @@ books:
     versions:
       asv:
         short_name: "John"
+        short_name_raw: "john"
         long_name: "John"
       kjv:
         short_name: "John"
+        short_name_raw: "john"
         long_name: "John"
 
   - book_id: _Acts
@@ -542,9 +647,11 @@ books:
     versions:
       asv:
         short_name: "Acts"
+        short_name_raw: "acts"
         long_name: "Acts"
       kjv:
         short_name: "Acts"
+        short_name_raw: "acts"
         long_name: "Acts"
 
   - book_id: _Rom
@@ -552,9 +659,11 @@ books:
     versions:
       asv:
         short_name: "Rom"
+        short_name_raw: "rom"
         long_name: "Romans"
       kjv:
         short_name: "Rom"
+        short_name_raw: "rom"
         long_name: "Romans"
 
   - book_id: _1Cor
@@ -562,9 +671,11 @@ books:
     versions:
       asv:
         short_name: "1Cor"
+        short_name_raw: "1cor"
         long_name: "I Corinthians"
       kjv:
         short_name: "1Cor"
+        short_name_raw: "1cor"
         long_name: "I Corinthians"
 
   - book_id: _2Cor
@@ -572,9 +683,11 @@ books:
     versions:
       asv:
         short_name: "2Cor"
+        short_name_raw: "2cor"
         long_name: "II Corinthians"
       kjv:
         short_name: "2Cor"
+        short_name_raw: "2cor"
         long_name: "II Corinthians"
 
   - book_id: _Gal
@@ -582,9 +695,11 @@ books:
     versions:
       asv:
         short_name: "Gal"
+        short_name_raw: "gal"
         long_name: "Galatians"
       kjv:
         short_name: "Gal"
+        short_name_raw: "gal"
         long_name: "Galatians"
 
   - book_id: _Eph
@@ -592,9 +707,11 @@ books:
     versions:
       asv:
         short_name: "Eph"
+        short_name_raw: "eph"
         long_name: "Ephesians"
       kjv:
         short_name: "Eph"
+        short_name_raw: "eph"
         long_name: "Ephesians"
 
   - book_id: _Phil
@@ -602,9 +719,11 @@ books:
     versions:
       asv:
         short_name: "Phil"
+        short_name_raw: "phil"
         long_name: "Philippians"
       kjv:
         short_name: "Phil"
+        short_name_raw: "phil"
         long_name: "Philippians"
 
   - book_id: _Col
@@ -612,9 +731,11 @@ books:
     versions:
       asv:
         short_name: "Col"
+        short_name_raw: "col"
         long_name: "Colossians"
       kjv:
         short_name: "Col"
+        short_name_raw: "col"
         long_name: "Colossians"
 
   - book_id: _1Th
@@ -622,9 +743,11 @@ books:
     versions:
       asv:
         short_name: "1Th"
+        short_name_raw: "1th"
         long_name: "I Thessalonians"
       kjv:
         short_name: "1Th"
+        short_name_raw: "1th"
         long_name: "I Thessalonians"
 
   - book_id: _2Th
@@ -632,9 +755,11 @@ books:
     versions:
       asv:
         short_name: "2Th"
+        short_name_raw: "2th"
         long_name: "II Thessalonians"
       kjv:
         short_name: "2Th"
+        short_name_raw: "2th"
         long_name: "II Thessalonians"
 
   - book_id: _1Tim
@@ -642,9 +767,11 @@ books:
     versions:
       asv:
         short_name: "1Tim"
+        short_name_raw: "1tim"
         long_name: "I Timothy"
       kjv:
         short_name: "1Tim"
+        short_name_raw: "1tim"
         long_name: "I Timothy"
 
   - book_id: _2Tim
@@ -652,9 +779,11 @@ books:
     versions:
       asv:
         short_name: "2Tim"
+        short_name_raw: "2tim"
         long_name: "II Timothy"
       kjv:
         short_name: "2Tim"
+        short_name_raw: "2tim"
         long_name: "II Timothy"
 
   - book_id: _Titus
@@ -662,9 +791,11 @@ books:
     versions:
       asv:
         short_name: "Titus"
+        short_name_raw: "titus"
         long_name: "Titus"
       kjv:
         short_name: "Titus"
+        short_name_raw: "titus"
         long_name: "Titus"
 
   - book_id: _Phile
@@ -672,9 +803,11 @@ books:
     versions:
       asv:
         short_name: "Phile"
+        short_name_raw: "phile"
         long_name: "Philemon"
       kjv:
         short_name: "Phile"
+        short_name_raw: "phile"
         long_name: "Philemon"
 
   - book_id: _Heb
@@ -682,9 +815,11 @@ books:
     versions:
       asv:
         short_name: "Heb"
+        short_name_raw: "heb"
         long_name: "Hebrews"
       kjv:
         short_name: "Heb"
+        short_name_raw: "heb"
         long_name: "Hebrews"
 
   - book_id: _James
@@ -692,9 +827,11 @@ books:
     versions:
       asv:
         short_name: "James"
+        short_name_raw: "james"
         long_name: "James"
       kjv:
         short_name: "James"
+        short_name_raw: "james"
         long_name: "James"
 
   - book_id: _1Pet
@@ -702,9 +839,11 @@ books:
     versions:
       asv:
         short_name: "1Pet"
+        short_name_raw: "1pet"
         long_name: "I Peter"
       kjv:
         short_name: "1Pet"
+        short_name_raw: "1pet"
         long_name: "I Peter"
 
   - book_id: _2Pet
@@ -712,9 +851,11 @@ books:
     versions:
       asv:
         short_name: "2Pet"
+        short_name_raw: "2pet"
         long_name: "II Peter"
       kjv:
         short_name: "2Pet"
+        short_name_raw: "2pet"
         long_name: "II Peter"
 
   - book_id: _1John
@@ -722,9 +863,11 @@ books:
     versions:
       asv:
         short_name: "1John"
+        short_name_raw: "1john"
         long_name: "I John"
       kjv:
         short_name: "1John"
+        short_name_raw: "1john"
         long_name: "I John"
 
   - book_id: _2John
@@ -732,9 +875,11 @@ books:
     versions:
       asv:
         short_name: "2John"
+        short_name_raw: "2john"
         long_name: "II John"
       kjv:
         short_name: "2John"
+        short_name_raw: "2john"
         long_name: "II John"
 
   - book_id: _3John
@@ -742,9 +887,11 @@ books:
     versions:
       asv:
         short_name: "3John"
+        short_name_raw: "3john"
         long_name: "III John"
       kjv:
         short_name: "3John"
+        short_name_raw: "3john"
         long_name: "III John"
 
   - book_id: _Jude
@@ -752,9 +899,11 @@ books:
     versions:
       asv:
         short_name: "Jude"
+        short_name_raw: "jude"
         long_name: "Jude"
       kjv:
         short_name: "Jude"
+        short_name_raw: "jude"
         long_name: "Jude"
 
   - book_id: _Rev
@@ -762,7 +911,9 @@ books:
     versions:
       asv:
         short_name: "Rev"
+        short_name_raw: "rev"
         long_name: "Revelation of John"
       kjv:
         short_name: "Rev"
+        short_name_raw: "rev"
         long_name: "Revelation of John"
