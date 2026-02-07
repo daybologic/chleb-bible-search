@@ -93,24 +93,28 @@ books:
     chapters: 31
     versions:
       asv: { short_name: "1Sam", long_name: "I Samuel" }
+      dr: { short_name: "1Ki", long_name: "I Kings" }
       kjv: { short_name: "1Sam", long_name: "I Samuel" }
 
   - book_id: 2Ki
     chapters: 24
     versions:
       asv: { short_name: "2Sam", long_name: "II Samuel" }
+      dr: { short_name: "2Ki", long_name: "II Kings" }
       kjv: { short_name: "2Sam", long_name: "II Samuel" }
 
   - book_id: 3Ki
     chapters: 22
     versions:
       asv: { short_name: "1Ki", long_name: "I Kings" }
+      dr: { short_name: "3Ki", long_name: "III Kings" }
       kjv: { short_name: "1Ki", long_name: "I Kings" }
 
   - book_id: 4Ki
     chapters: 25
     versions:
       asv: { short_name: "2Ki", long_name: "II Kings" }
+      dr: { short_name: "4Ki", long_name: "IV Kings" }
       kjv: { short_name: "2Ki", long_name: "II Kings" }
 
   - book_id: 1Chr
