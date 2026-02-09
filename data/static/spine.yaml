@@ -1,33 +1,32 @@
 # Chleb Bible Search
-# Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (2E0EOL),
+# Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
+# modification, are permitted provided that the following conditions are met:
 #
-#  1. Redistributions of source code must retain the above copyright
-#     notice, this list of conditions and the following disclaimer.
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
 #
-#  2. Redistributions in binary form must reproduce the above copyright
-#     notice, this list of conditions and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
 #
-#  3. Neither the name of the project nor the names of its contributors
-#     may be used to endorse or promote products derived from this software
-#     without specific prior written permission.
+#     * Neither the name of the Daybo Logic nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 
 # Canonical spine + per-version display
 # book_id must be canonical and unique across all translations
@@ -41,15 +40,17 @@ books:
         short_name_raw: "Gen"
         short_name: "gen"
         long_name: "Genesis"
+        ordinal: 1
       dr:
         short_name_raw: "Gen"
         short_name: "gen"
         long_name: "Genesis"
+        ordinal: 1
       kjv:
         short_name_raw: "Gen"
         short_name: "gen"
         long_name: "Genesis"
-
+        ordinal: 1
   - book_id: _Exo
     chapters: 40
     versions:
@@ -57,15 +58,17 @@ books:
         short_name_raw: "Exo"
         short_name: "exo"
         long_name: "Exodus"
+        ordinal: 2
       dr:
         short_name_raw: "Exo"
         short_name: "exo"
         long_name: "Exodus"
+        ordinal: 2
       kjv:
         short_name_raw: "Exo"
         short_name: "exo"
         long_name: "Exodus"
-
+        ordinal: 2
   - book_id: _Lev
     chapters: 27
     versions:
@@ -73,15 +76,17 @@ books:
         short_name_raw: "Lev"
         short_name: "lev"
         long_name: "Leviticus"
+        ordinal: 3
       dr:
         short_name_raw: "Lev"
         short_name: "lev"
         long_name: "Leviticus"
+        ordinal: 3
       kjv:
         short_name_raw: "Lev"
         short_name: "lev"
         long_name: "Leviticus"
-
+        ordinal: 3
   - book_id: _Num
     chapters: 36
     versions:
@@ -89,15 +94,17 @@ books:
         short_name_raw: "Num"
         short_name: "num"
         long_name: "Numbers"
+        ordinal: 4
       dr:
         short_name_raw: "Num"
         short_name: "num"
         long_name: "Numbers"
+        ordinal: 4
       kjv:
         short_name_raw: "Num"
         short_name: "num"
         long_name: "Numbers"
-
+        ordinal: 4
   - book_id: _Deu
     chapters: 34
     versions:
@@ -105,15 +112,17 @@ books:
         short_name_raw: "Deu"
         short_name: "deu"
         long_name: "Deuteronomy"
+        ordinal: 5
       dr:
         short_name_raw: "Deu"
         short_name: "deu"
         long_name: "Deuteronomy"
+        ordinal: 5
       kjv:
         short_name_raw: "Deu"
         short_name: "deu"
         long_name: "Deuteronomy"
-
+        ordinal: 5
   - book_id: _Josh
     chapters: 24
     versions:
@@ -121,15 +130,17 @@ books:
         short_name_raw: "Josh"
         short_name: "josh"
         long_name: "Joshua"
+        ordinal: 6
       dr:
         short_name_raw: "Josh"
         short_name: "josh"
         long_name: "Josue"
+        ordinal: 6
       kjv:
         short_name_raw: "Josh"
         short_name: "josh"
         long_name: "Joshua"
-
+        ordinal: 6
   - book_id: _Judg
     chapters: 21
     versions:
@@ -137,15 +148,17 @@ books:
         short_name_raw: "Judg"
         short_name: "judg"
         long_name: "Judges"
+        ordinal: 7
       dr:
         short_name_raw: "Judg"
         short_name: "judg"
         long_name: "Judges"
+        ordinal: 7
       kjv:
         short_name_raw: "Judg"
         short_name: "judg"
         long_name: "Judges"
-
+        ordinal: 7
   - book_id: _Ruth
     chapters: 4
     versions:
@@ -153,15 +166,17 @@ books:
         short_name_raw: "Ruth"
         short_name: "ruth"
         long_name: "Ruth"
+        ordinal: 8
       dr:
         short_name_raw: "Ruth"
         short_name: "ruth"
         long_name: "Ruth"
+        ordinal: 8
       kjv:
         short_name_raw: "Ruth"
         short_name: "ruth"
         long_name: "Ruth"
-
+        ordinal: 8
   - book_id: _1Ki
     chapters: 31
     versions:
@@ -169,15 +184,17 @@ books:
         short_name_raw: "1Sam"
         short_name: "1sam"
         long_name: "I Samuel"
+        ordinal: 9
       dr:
         short_name_raw: "1Ki"
         short_name: "1ki"
         long_name: "I Kings"
+        ordinal: 9
       kjv:
         short_name_raw: "1Sam"
         short_name: "1sam"
         long_name: "I Samuel"
-
+        ordinal: 9
   - book_id: _2Ki
     chapters: 24
     versions:
@@ -185,15 +202,17 @@ books:
         short_name_raw: "2Sam"
         short_name: "2sam"
         long_name: "II Samuel"
+        ordinal: 10
       dr:
         short_name_raw: "2Ki"
         short_name: "2ki"
         long_name: "II Kings"
+        ordinal: 10
       kjv:
         short_name_raw: "2Sam"
         short_name: "2sam"
         long_name: "II Samuel"
-
+        ordinal: 10
   - book_id: _3Ki
     chapters: 22
     versions:
@@ -201,15 +220,17 @@ books:
         short_name_raw: "1Ki"
         short_name: "1ki"
         long_name: "I Kings"
+        ordinal: 11
       dr:
         short_name_raw: "3Ki"
         short_name: "3ki"
         long_name: "III Kings"
+        ordinal: 11
       kjv:
         short_name_raw: "1Ki"
         short_name: "1ki"
         long_name: "I Kings"
-
+        ordinal: 11
   - book_id: _4Ki
     chapters: 25
     versions:
@@ -217,15 +238,17 @@ books:
         short_name_raw: "2Ki"
         short_name: "2ki"
         long_name: "II Kings"
+        ordinal: 12
       dr:
         short_name_raw: "4Ki"
         short_name: "4ki"
         long_name: "IV Kings"
+        ordinal: 12
       kjv:
         short_name_raw: "2Ki"
         short_name: "2ki"
         long_name: "II Kings"
-
+        ordinal: 12
   - book_id: _1Chr
     chapters: 29
     versions:
@@ -233,11 +256,17 @@ books:
         short_name_raw: "1Chr"
         short_name: "1chr"
         long_name: "I Chronicles"
+        ordinal: 13
       kjv:
         short_name_raw: "1Chr"
         short_name: "1chr"
         long_name: "I Chronicles"
-
+        ordinal: 13
+      dr:
+        short_name_raw: "1Par"
+        short_name: "1par"
+        long_name: "I Paralipomenon"
+        ordinal: 13
   - book_id: _2Chr
     chapters: 36
     versions:
@@ -245,11 +274,17 @@ books:
         short_name_raw: "2Chr"
         short_name: "2chr"
         long_name: "II Chronicles"
+        ordinal: 14
       kjv:
         short_name_raw: "2Chr"
         short_name: "2chr"
         long_name: "II Chronicles"
-
+        ordinal: 14
+      dr:
+        short_name_raw: "2Par"
+        short_name: "2par"
+        long_name: "II Paralipomenon"
+        ordinal: 14
   - book_id: _1Esd
     chapters: 10
     versions:
@@ -257,15 +292,17 @@ books:
         short_name_raw: "Ezra"
         short_name: "ezra"
         long_name: "Ezra"
+        ordinal: 15
       dr:
         short_name_raw: "1Esd"
         short_name: "1esd"
         long_name: "1 Esdras"
+        ordinal: 15
       asv:
         short_name_raw: "Ezra"
         short_name: "ezra"
         long_name: "Ezra"
-
+        ordinal: 15
   - book_id: _2Esd
     chapters: 13
     versions:
@@ -273,15 +310,1001 @@ books:
         short_name_raw: "Neh"
         short_name: "neh"
         long_name: "Nehemiah"
+        ordinal: 16
       dr:
         short_name_raw: "2Esd"
         short_name: "2esd"
         long_name: "2 Esdras"
+        ordinal: 16
       kjv:
         short_name_raw: "Neh"
         short_name: "neh"
         long_name: "Nehemiah"
-
+        ordinal: 16
+  - book_id: _Tob
+    chapters: 14
+    versions:
+      dr:
+        short_name_raw: "Tob"
+        short_name: "tob"
+        long_name: "Tobias"
+        ordinal: 17
+      kjv:
+        absent: true
+      asv:
+        absent: true
+  - book_id: _Jdt
+    chapters: 16
+    versions:
+      dr:
+        short_name_raw: "Jdt"
+        short_name: "jdt"
+        long_name: "Judith"
+        ordinal: 18
+      kjv:
+        absent: true
+      asv:
+        absent: true
+  - book_id: _Est
+    chapters: 10
+    versions:
+      asv:
+        short_name_raw: "Est"
+        short_name: "est"
+        long_name: "Esther"
+        ordinal: 17
+      kjv:
+        short_name_raw: "Est"
+        short_name: "est"
+        long_name: "Esther"
+        ordinal: 17
+      dr:
+        short_name_raw: "Est"
+        short_name: "est"
+        long_name: "Esther"
+        ordinal: 19
+  - book_id: _Job
+    chapters: 42
+    versions:
+      asv:
+        short_name_raw: "Job"
+        short_name: "job"
+        long_name: "Job"
+        ordinal: 18
+      dr:
+        short_name_raw: "Job"
+        short_name: "job"
+        long_name: "Job"
+        ordinal: 20
+      kjv:
+        short_name_raw: "Job"
+        short_name: "job"
+        long_name: "Job"
+        ordinal: 18
+  - book_id: _Psa
+    chapters: 150
+    versions:
+      asv:
+        short_name_raw: "Psa"
+        short_name: "psa"
+        long_name: "Psalms"
+        ordinal: 19
+      dr:
+        short_name_raw: "Psa"
+        short_name: "psa"
+        long_name: "Psalms"
+        ordinal: 21
+      kjv:
+        short_name_raw: "Psa"
+        short_name: "psa"
+        long_name: "Psalms"
+        ordinal: 19
+  - book_id: _Prov
+    chapters: 31
+    versions:
+      asv:
+        short_name_raw: "Prov"
+        short_name: "prov"
+        long_name: "Proverbs"
+        ordinal: 20
+      dr:
+        short_name_raw: "Prov"
+        short_name: "prov"
+        long_name: "Proverbs"
+        ordinal: 22
+      kjv:
+        short_name_raw: "Prov"
+        short_name: "prov"
+        long_name: "Proverbs"
+        ordinal: 20
+  - book_id: _Eccl
+    chapters: 12
+    versions:
+      asv:
+        short_name_raw: "Eccl"
+        short_name: "eccl"
+        long_name: "Ecclesiastes"
+        ordinal: 21
+      kjv:
+        short_name_raw: "Eccl"
+        short_name: "eccl"
+        long_name: "Ecclesiastes"
+        ordinal: 21
+      dr:
+        short_name_raw: "Eccl"
+        short_name: "eccl"
+        long_name: "Ecclesiastes"
+        ordinal: 23
+  - book_id: _Song
+    chapters: 8
+    versions:
+      asv:
+        short_name_raw: "Song"
+        short_name: "song"
+        long_name: "Song of Solomon"
+        ordinal: 22
+      kjv:
+        short_name_raw: "Song"
+        short_name: "song"
+        long_name: "Song of Solomon"
+        ordinal: 22
+      dr:
+        short_name_raw: "Cant"
+        short_name: "cant"
+        long_name: "Canticles"
+        ordinal: 24
+  - book_id: _Wis
+    chapters: 19
+    versions:
+      dr:
+        short_name_raw: "Wis"
+        short_name: "wis"
+        long_name: "Wisdom"
+        ordinal: 25
+      kjv:
+        absent: true
+      asv:
+        absent: true
+  - book_id: _Sir
+    chapters: 51
+    versions:
+      dr:
+        short_name_raw: "Sir"
+        short_name: "sir"
+        long_name: "Ecclesiasticus"
+        ordinal: 26
+      kjv:
+        absent: true
+      asv:
+        absent: true
+  - book_id: _Isa
+    chapters: 66
+    versions:
+      asv:
+        short_name_raw: "Isa"
+        short_name: "isa"
+        long_name: "Isaiah"
+        ordinal: 23
+      kjv:
+        short_name_raw: "Isa"
+        short_name: "isa"
+        long_name: "Isaiah"
+        ordinal: 23
+      dr:
+        short_name_raw: "Isa"
+        short_name: "isa"
+        long_name: "Isaias"
+        ordinal: 27
+  - book_id: _Jer
+    chapters: 52
+    versions:
+      asv:
+        short_name_raw: "Jer"
+        short_name: "jer"
+        long_name: "Jeremiah"
+        ordinal: 24
+      kjv:
+        short_name_raw: "Jer"
+        short_name: "jer"
+        long_name: "Jeremiah"
+        ordinal: 24
+      dr:
+        short_name_raw: "Jer"
+        short_name: "jer"
+        long_name: "Jeremias"
+        ordinal: 28
+  - book_id: _Lam
+    chapters: 5
+    versions:
+      asv:
+        short_name_raw: "Lam"
+        short_name: "lam"
+        long_name: "Lamentations"
+        ordinal: 25
+      kjv:
+        short_name_raw: "Lam"
+        short_name: "lam"
+        long_name: "Lamentations"
+        ordinal: 25
+      dr:
+        short_name_raw: "Lam"
+        short_name: "lam"
+        long_name: "Lamentations"
+        ordinal: 29
+  - book_id: _Bar
+    chapters: 6
+    versions:
+      dr:
+        short_name_raw: "Bar"
+        short_name: "bar"
+        long_name: "Baruch"
+        ordinal: 30
+      kjv:
+        absent: true
+      asv:
+        absent: true
+  - book_id: _Ezek
+    chapters: 48
+    versions:
+      asv:
+        short_name_raw: "Ezek"
+        short_name: "ezek"
+        long_name: "Ezekiel"
+        ordinal: 26
+      kjv:
+        short_name_raw: "Ezek"
+        short_name: "ezek"
+        long_name: "Ezekiel"
+        ordinal: 26
+      dr:
+        short_name_raw: "Ezek"
+        short_name: "ezek"
+        long_name: "Ezechiel"
+        ordinal: 31
+  - book_id: _Dan
+    chapters: 12
+    versions:
+      asv:
+        short_name_raw: "Dan"
+        short_name: "dan"
+        long_name: "Daniel"
+        ordinal: 27
+      kjv:
+        short_name_raw: "Dan"
+        short_name: "dan"
+        long_name: "Daniel"
+        ordinal: 27
+      dr:
+        short_name_raw: "Dan"
+        short_name: "dan"
+        long_name: "Daniel"
+        ordinal: 32
+  - book_id: _Hosea
+    chapters: 14
+    versions:
+      asv:
+        short_name_raw: "Hosea"
+        short_name: "hosea"
+        long_name: "Hosea"
+        ordinal: 28
+      kjv:
+        short_name_raw: "Hosea"
+        short_name: "hosea"
+        long_name: "Hosea"
+        ordinal: 28
+      dr:
+        short_name_raw: "Osee"
+        short_name: "osee"
+        long_name: "Osee"
+        ordinal: 33
+  - book_id: _Joel
+    chapters: 3
+    versions:
+      asv:
+        short_name_raw: "Joel"
+        short_name: "joel"
+        long_name: "Joel"
+        ordinal: 29
+      kjv:
+        short_name_raw: "Joel"
+        short_name: "joel"
+        long_name: "Joel"
+        ordinal: 29
+      dr:
+        short_name_raw: "Joel"
+        short_name: "joel"
+        long_name: "Joel"
+        ordinal: 34
+  - book_id: _Amos
+    chapters: 9
+    versions:
+      asv:
+        short_name_raw: "Amos"
+        short_name: "amos"
+        long_name: "Amos"
+        ordinal: 30
+      kjv:
+        short_name_raw: "Amos"
+        short_name: "amos"
+        long_name: "Amos"
+        ordinal: 30
+      dr:
+        short_name_raw: "Amos"
+        short_name: "amos"
+        long_name: "Amos"
+        ordinal: 35
+  - book_id: _Oba
+    chapters: 1
+    versions:
+      asv:
+        short_name_raw: "Oba"
+        short_name: "oba"
+        long_name: "Obadiah"
+        ordinal: 31
+      kjv:
+        short_name_raw: "Oba"
+        short_name: "oba"
+        long_name: "Obadiah"
+        ordinal: 31
+      dr:
+        short_name_raw: "Abd"
+        short_name: "abd"
+        long_name: "Abdias"
+        ordinal: 36
+  - book_id: _Jonah
+    chapters: 4
+    versions:
+      asv:
+        short_name_raw: "Jonah"
+        short_name: "jonah"
+        long_name: "Jonah"
+        ordinal: 32
+      kjv:
+        short_name_raw: "Jonah"
+        short_name: "jonah"
+        long_name: "Jonah"
+        ordinal: 32
+      dr:
+        short_name_raw: "Jon"
+        short_name: "jon"
+        long_name: "Jonas"
+        ordinal: 37
+  - book_id: _Micah
+    chapters: 7
+    versions:
+      asv:
+        short_name_raw: "Micah"
+        short_name: "micah"
+        long_name: "Micah"
+        ordinal: 33
+      kjv:
+        short_name_raw: "Micah"
+        short_name: "micah"
+        long_name: "Micah"
+        ordinal: 33
+      dr:
+        short_name_raw: "Mic"
+        short_name: "mic"
+        long_name: "Micheas"
+        ordinal: 38
+  - book_id: _Nahum
+    chapters: 3
+    versions:
+      asv:
+        short_name_raw: "Nahum"
+        short_name: "nahum"
+        long_name: "Nahum"
+        ordinal: 34
+      kjv:
+        short_name_raw: "Nahum"
+        short_name: "nahum"
+        long_name: "Nahum"
+        ordinal: 34
+      dr:
+        short_name_raw: "Nahum"
+        short_name: "nahum"
+        long_name: "Nahum"
+        ordinal: 39
+  - book_id: _Hab
+    chapters: 3
+    versions:
+      asv:
+        short_name_raw: "Hab"
+        short_name: "hab"
+        long_name: "Habakkuk"
+        ordinal: 35
+      kjv:
+        short_name_raw: "Hab"
+        short_name: "hab"
+        long_name: "Habakkuk"
+        ordinal: 35
+      dr:
+        short_name_raw: "Hab"
+        short_name: "hab"
+        long_name: "Habakkuk"
+        ordinal: 40
+  - book_id: _Zep
+    chapters: 3
+    versions:
+      asv:
+        short_name_raw: "Zep"
+        short_name: "zep"
+        long_name: "Zephaniah"
+        ordinal: 36
+      kjv:
+        short_name_raw: "Zep"
+        short_name: "zep"
+        long_name: "Zephaniah"
+        ordinal: 36
+      dr:
+        short_name_raw: "Zep"
+        short_name: "zep"
+        long_name: "Zephaniah"
+        ordinal: 41
+  - book_id: _Hag
+    chapters: 2
+    versions:
+      asv:
+        short_name_raw: "Hag"
+        short_name: "hag"
+        long_name: "Haggai"
+        ordinal: 37
+      kjv:
+        short_name_raw: "Hag"
+        short_name: "hag"
+        long_name: "Haggai"
+        ordinal: 37
+      dr:
+        short_name_raw: "Hag"
+        short_name: "hag"
+        long_name: "Haggai"
+        ordinal: 42
+  - book_id: _Zec
+    chapters: 14
+    versions:
+      asv:
+        short_name_raw: "Zec"
+        short_name: "zec"
+        long_name: "Zechariah"
+        ordinal: 38
+      kjv:
+        short_name_raw: "Zec"
+        short_name: "zec"
+        long_name: "Zechariah"
+        ordinal: 38
+      dr:
+        short_name_raw: "Zach"
+        short_name: "zach"
+        long_name: "Zacharias"
+        ordinal: 43
+  - book_id: _Mal
+    chapters: 4
+    versions:
+      asv:
+        short_name_raw: "Mal"
+        short_name: "mal"
+        long_name: "Malachi"
+        ordinal: 39
+      kjv:
+        short_name_raw: "Mal"
+        short_name: "mal"
+        long_name: "Malachi"
+        ordinal: 39
+      dr:
+        short_name_raw: "Mal"
+        short_name: "mal"
+        long_name: "Malachi"
+        ordinal: 44
+  - book_id: _1Ma
+    chapters: 16
+    versions:
+      dr:
+        short_name_raw: "1Ma"
+        short_name: "1ma"
+        long_name: "I Machabees"
+        ordinal: 45
+      kjv:
+        absent: true
+      asv:
+        absent: true
+  - book_id: _2Ma
+    chapters: 15
+    versions:
+      dr:
+        short_name_raw: "2Ma"
+        short_name: "2ma"
+        long_name: "II Machabees"
+        ordinal: 46
+      kjv:
+        absent: true
+      asv:
+        absent: true
+  - book_id: _Mat
+    chapters: 28
+    versions:
+      asv:
+        short_name_raw: "Mat"
+        short_name: "mat"
+        long_name: "Matthew"
+        ordinal: 40
+      kjv:
+        short_name_raw: "Mat"
+        short_name: "mat"
+        long_name: "Matthew"
+        ordinal: 40
+      dr:
+        short_name_raw: "Mat"
+        short_name: "mat"
+        long_name: "Matthew"
+        ordinal: 47
+  - book_id: _Mark
+    chapters: 16
+    versions:
+      asv:
+        short_name_raw: "Mark"
+        short_name: "mark"
+        long_name: "Mark"
+        ordinal: 41
+      kjv:
+        short_name_raw: "Mark"
+        short_name: "mark"
+        long_name: "Mark"
+        ordinal: 41
+      dr:
+        short_name_raw: "Mark"
+        short_name: "mark"
+        long_name: "Mark"
+        ordinal: 48
+  - book_id: _Luke
+    chapters: 24
+    versions:
+      asv:
+        short_name_raw: "Luke"
+        short_name: "luke"
+        long_name: "Luke"
+        ordinal: 42
+      kjv:
+        short_name_raw: "Luke"
+        short_name: "luke"
+        long_name: "Luke"
+        ordinal: 42
+      dr:
+        short_name_raw: "Luke"
+        short_name: "luke"
+        long_name: "Luke"
+        ordinal: 49
+  - book_id: _John
+    chapters: 21
+    versions:
+      asv:
+        short_name_raw: "John"
+        short_name: "john"
+        long_name: "John"
+        ordinal: 43
+      kjv:
+        short_name_raw: "John"
+        short_name: "john"
+        long_name: "John"
+        ordinal: 43
+      dr:
+        short_name_raw: "John"
+        short_name: "john"
+        long_name: "John"
+        ordinal: 50
+  - book_id: _Acts
+    chapters: 28
+    versions:
+      asv:
+        short_name_raw: "Acts"
+        short_name: "acts"
+        long_name: "Acts"
+        ordinal: 44
+      kjv:
+        short_name_raw: "Acts"
+        short_name: "acts"
+        long_name: "Acts"
+        ordinal: 44
+      dr:
+        short_name_raw: "Acts"
+        short_name: "acts"
+        long_name: "Acts"
+        ordinal: 51
+  - book_id: _Rom
+    chapters: 16
+    versions:
+      asv:
+        short_name_raw: "Rom"
+        short_name: "rom"
+        long_name: "Romans"
+        ordinal: 45
+      kjv:
+        short_name_raw: "Rom"
+        short_name: "rom"
+        long_name: "Romans"
+        ordinal: 45
+      dr:
+        short_name_raw: "Rom"
+        short_name: "rom"
+        long_name: "Romans"
+        ordinal: 52
+  - book_id: _1Cor
+    chapters: 16
+    versions:
+      asv:
+        short_name_raw: "1Cor"
+        short_name: "1cor"
+        long_name: "I Corinthians"
+        ordinal: 46
+      kjv:
+        short_name_raw: "1Cor"
+        short_name: "1cor"
+        long_name: "I Corinthians"
+        ordinal: 46
+      dr:
+        short_name_raw: "1Cor"
+        short_name: "1cor"
+        long_name: "I Corinthians"
+        ordinal: 53
+  - book_id: _2Cor
+    chapters: 13
+    versions:
+      asv:
+        short_name_raw: "2Cor"
+        short_name: "2cor"
+        long_name: "II Corinthians"
+        ordinal: 47
+      kjv:
+        short_name_raw: "2Cor"
+        short_name: "2cor"
+        long_name: "II Corinthians"
+        ordinal: 47
+      dr:
+        short_name_raw: "2Cor"
+        short_name: "2cor"
+        long_name: "II Corinthians"
+        ordinal: 54
+  - book_id: _Gal
+    chapters: 6
+    versions:
+      asv:
+        short_name_raw: "Gal"
+        short_name: "gal"
+        long_name: "Galatians"
+        ordinal: 48
+      kjv:
+        short_name_raw: "Gal"
+        short_name: "gal"
+        long_name: "Galatians"
+        ordinal: 48
+      dr:
+        short_name_raw: "Gal"
+        short_name: "gal"
+        long_name: "Galatians"
+        ordinal: 55
+  - book_id: _Eph
+    chapters: 6
+    versions:
+      asv:
+        short_name_raw: "Eph"
+        short_name: "eph"
+        long_name: "Ephesians"
+        ordinal: 49
+      kjv:
+        short_name_raw: "Eph"
+        short_name: "eph"
+        long_name: "Ephesians"
+        ordinal: 49
+      dr:
+        short_name_raw: "Eph"
+        short_name: "eph"
+        long_name: "Ephesians"
+        ordinal: 56
+  - book_id: _Phil
+    chapters: 4
+    versions:
+      asv:
+        short_name_raw: "Phil"
+        short_name: "phil"
+        long_name: "Philippians"
+        ordinal: 50
+      kjv:
+        short_name_raw: "Phil"
+        short_name: "phil"
+        long_name: "Philippians"
+        ordinal: 50
+      dr:
+        short_name_raw: "Phil"
+        short_name: "phil"
+        long_name: "Philippians"
+        ordinal: 57
+  - book_id: _Col
+    chapters: 4
+    versions:
+      asv:
+        short_name_raw: "Col"
+        short_name: "col"
+        long_name: "Colossians"
+        ordinal: 51
+      kjv:
+        short_name_raw: "Col"
+        short_name: "col"
+        long_name: "Colossians"
+        ordinal: 51
+      dr:
+        short_name_raw: "Col"
+        short_name: "col"
+        long_name: "Colossians"
+        ordinal: 58
+  - book_id: _1Th
+    chapters: 5
+    versions:
+      asv:
+        short_name_raw: "1Th"
+        short_name: "1th"
+        long_name: "I Thessalonians"
+        ordinal: 52
+      kjv:
+        short_name_raw: "1Th"
+        short_name: "1th"
+        long_name: "I Thessalonians"
+        ordinal: 52
+      dr:
+        short_name_raw: "1Th"
+        short_name: "1th"
+        long_name: "I Thessalonians"
+        ordinal: 59
+  - book_id: _2Th
+    chapters: 3
+    versions:
+      asv:
+        short_name_raw: "2Th"
+        short_name: "2th"
+        long_name: "II Thessalonians"
+        ordinal: 53
+      kjv:
+        short_name_raw: "2Th"
+        short_name: "2th"
+        long_name: "II Thessalonians"
+        ordinal: 53
+      dr:
+        short_name_raw: "2Th"
+        short_name: "2th"
+        long_name: "II Thessalonians"
+        ordinal: 60
+  - book_id: _1Tim
+    chapters: 6
+    versions:
+      asv:
+        short_name_raw: "1Tim"
+        short_name: "1tim"
+        long_name: "I Timothy"
+        ordinal: 54
+      kjv:
+        short_name_raw: "1Tim"
+        short_name: "1tim"
+        long_name: "I Timothy"
+        ordinal: 54
+      dr:
+        short_name_raw: "1Tim"
+        short_name: "1tim"
+        long_name: "I Timothy"
+        ordinal: 61
+  - book_id: _2Tim
+    chapters: 4
+    versions:
+      asv:
+        short_name_raw: "2Tim"
+        short_name: "2tim"
+        long_name: "II Timothy"
+        ordinal: 55
+      kjv:
+        short_name_raw: "2Tim"
+        short_name: "2tim"
+        long_name: "II Timothy"
+        ordinal: 55
+      dr:
+        short_name_raw: "2Tim"
+        short_name: "2tim"
+        long_name: "II Timothy"
+        ordinal: 62
+  - book_id: _Titus
+    chapters: 3
+    versions:
+      asv:
+        short_name_raw: "Titus"
+        short_name: "titus"
+        long_name: "Titus"
+        ordinal: 56
+      kjv:
+        short_name_raw: "Titus"
+        short_name: "titus"
+        long_name: "Titus"
+        ordinal: 56
+      dr:
+        short_name_raw: "Titus"
+        short_name: "titus"
+        long_name: "Titus"
+        ordinal: 63
+  - book_id: _Phile
+    chapters: 1
+    versions:
+      asv:
+        short_name_raw: "Phile"
+        short_name: "phile"
+        long_name: "Philemon"
+        ordinal: 57
+      kjv:
+        short_name_raw: "Phile"
+        short_name: "phile"
+        long_name: "Philemon"
+        ordinal: 57
+      dr:
+        short_name_raw: "Phile"
+        short_name: "phile"
+        long_name: "Philemon"
+        ordinal: 64
+  - book_id: _Heb
+    chapters: 13
+    versions:
+      asv:
+        short_name_raw: "Heb"
+        short_name: "heb"
+        long_name: "Hebrews"
+        ordinal: 58
+      kjv:
+        short_name_raw: "Heb"
+        short_name: "heb"
+        long_name: "Hebrews"
+        ordinal: 58
+      dr:
+        short_name_raw: "Heb"
+        short_name: "heb"
+        long_name: "Hebrews"
+        ordinal: 65
+  - book_id: _James
+    chapters: 5
+    versions:
+      asv:
+        short_name_raw: "James"
+        short_name: "james"
+        long_name: "James"
+        ordinal: 59
+      kjv:
+        short_name_raw: "James"
+        short_name: "james"
+        long_name: "James"
+        ordinal: 59
+      dr:
+        short_name_raw: "James"
+        short_name: "james"
+        long_name: "James"
+        ordinal: 66
+  - book_id: _1Pet
+    chapters: 5
+    versions:
+      asv:
+        short_name_raw: "1Pet"
+        short_name: "1pet"
+        long_name: "I Peter"
+        ordinal: 60
+      kjv:
+        short_name_raw: "1Pet"
+        short_name: "1pet"
+        long_name: "I Peter"
+        ordinal: 60
+      dr:
+        short_name_raw: "1Pet"
+        short_name: "1pet"
+        long_name: "I Peter"
+        ordinal: 67
+  - book_id: _2Pet
+    chapters: 3
+    versions:
+      asv:
+        short_name_raw: "2Pet"
+        short_name: "2pet"
+        long_name: "II Peter"
+        ordinal: 61
+      kjv:
+        short_name_raw: "2Pet"
+        short_name: "2pet"
+        long_name: "II Peter"
+        ordinal: 61
+      dr:
+        short_name_raw: "2Pet"
+        short_name: "2pet"
+        long_name: "II Peter"
+        ordinal: 68
+  - book_id: _1John
+    chapters: 5
+    versions:
+      asv:
+        short_name_raw: "1John"
+        short_name: "1john"
+        long_name: "I John"
+        ordinal: 62
+      kjv:
+        short_name_raw: "1John"
+        short_name: "1john"
+        long_name: "I John"
+        ordinal: 62
+      dr:
+        short_name_raw: "1John"
+        short_name: "1john"
+        long_name: "I John"
+        ordinal: 69
+  - book_id: _2John
+    chapters: 1
+    versions:
+      asv:
+        short_name_raw: "2John"
+        short_name: "2john"
+        long_name: "II John"
+        ordinal: 63
+      kjv:
+        short_name_raw: "2John"
+        short_name: "2john"
+        long_name: "II John"
+        ordinal: 63
+      dr:
+        short_name_raw: "2John"
+        short_name: "2john"
+        long_name: "II John"
+        ordinal: 70
+  - book_id: _3John
+    chapters: 1
+    versions:
+      asv:
+        short_name_raw: "3John"
+        short_name: "3john"
+        long_name: "III John"
+        ordinal: 64
+      kjv:
+        short_name_raw: "3John"
+        short_name: "3john"
+        long_name: "III John"
+        ordinal: 64
+      dr:
+        short_name_raw: "3John"
+        short_name: "3john"
+        long_name: "III John"
+        ordinal: 71
+  - book_id: _Jude
+    chapters: 1
+    versions:
+      asv:
+        short_name_raw: "Jude"
+        short_name: "jude"
+        long_name: "Jude"
+        ordinal: 65
+      kjv:
+        short_name_raw: "Jude"
+        short_name: "jude"
+        long_name: "Jude"
+        ordinal: 65
+      dr:
+        short_name_raw: "Jude"
+        short_name: "jude"
+        long_name: "Jude"
+        ordinal: 72
+  - book_id: _Rev
+    chapters: 22
+    versions:
+      asv:
+        short_name_raw: "Rev"
+        short_name: "rev"
+        long_name: "Revelation of John"
+        ordinal: 66
+      dr:
+        short_name_raw: "Rev"
+        short_name: "rev"
+        long_name: "Apocalypse"
+        ordinal: 73
+      kjv:
+        short_name_raw: "Rev"
+        short_name: "rev"
+        long_name: "Revelation of John"
+        ordinal: 66
   - book_id: _3Esd
     chapters: 9
     versions:
@@ -293,7 +1316,6 @@ books:
         long_name: "3 Esdras"
       kjv:
         absent: true
-
   - book_id: _4Esd
     chapters: 16
     versions:
@@ -305,619 +1327,3 @@ books:
         long_name: "4 Esdras"
       kjv:
         absent: true
-
-  - book_id: _Est
-    chapters: 10
-    versions:
-      asv:
-        short_name_raw: "Est"
-        short_name: "est"
-        long_name: "Esther"
-      kjv:
-        short_name_raw: "Est"
-        short_name: "est"
-        long_name: "Esther"
-
-  - book_id: _Job
-    chapters: 42
-    versions:
-      asv:
-        short_name_raw: "Job"
-        short_name: "job"
-        long_name: "Job"
-      dr:
-        short_name_raw: "Job"
-        short_name: "job"
-        long_name: "Job"
-      kjv:
-        short_name_raw: "Job"
-        short_name: "job"
-        long_name: "Job"
-
-  - book_id: _Psa
-    chapters: 150
-    versions:
-      asv:
-        short_name_raw: "Psa"
-        short_name: "psa"
-        long_name: "Psalms"
-      dr:
-        short_name_raw: "Psa"
-        short_name: "psa"
-        long_name: "Psalms"
-      kjv:
-        short_name_raw: "Psa"
-        short_name: "psa"
-        long_name: "Psalms"
-
-  - book_id: _Prov
-    chapters: 31
-    versions:
-      asv:
-        short_name_raw: "Prov"
-        short_name: "prov"
-        long_name: "Proverbs"
-      dr:
-        short_name_raw: "Prov"
-        short_name: "prov"
-        long_name: "Proverbs"
-      kjv:
-        short_name_raw: "Prov"
-        short_name: "prov"
-        long_name: "Proverbs"
-
-  - book_id: _Eccl
-    chapters: 12
-    versions:
-      asv:
-        short_name_raw: "Eccl"
-        short_name: "eccl"
-        long_name: "Ecclesiastes"
-      kjv:
-        short_name_raw: "Eccl"
-        short_name: "eccl"
-        long_name: "Ecclesiastes"
-
-  - book_id: _Song
-    chapters: 8
-    versions:
-      asv:
-        short_name_raw: "Song"
-        short_name: "song"
-        long_name: "Song of Solomon"
-      kjv:
-        short_name_raw: "Song"
-        short_name: "song"
-        long_name: "Song of Solomon"
-
-  - book_id: _Isa
-    chapters: 66
-    versions:
-      asv:
-        short_name_raw: "Isa"
-        short_name: "isa"
-        long_name: "Isaiah"
-      kjv:
-        short_name_raw: "Isa"
-        short_name: "isa"
-        long_name: "Isaiah"
-
-  - book_id: _Jer
-    chapters: 52
-    versions:
-      asv:
-        short_name_raw: "Jer"
-        short_name: "jer"
-        long_name: "Jeremiah"
-      kjv:
-        short_name_raw: "Jer"
-        short_name: "jer"
-        long_name: "Jeremiah"
-
-  - book_id: _Lam
-    chapters: 5
-    versions:
-      asv:
-        short_name_raw: "Lam"
-        short_name: "lam"
-        long_name: "Lamentations"
-      kjv:
-        short_name_raw: "Lam"
-        short_name: "lam"
-        long_name: "Lamentations"
-
-  - book_id: _Ezek
-    chapters: 48
-    versions:
-      asv:
-        short_name_raw: "Ezek"
-        short_name: "ezek"
-        long_name: "Ezekiel"
-      kjv:
-        short_name_raw: "Ezek"
-        short_name: "ezek"
-        long_name: "Ezekiel"
-
-  - book_id: _Dan
-    chapters: 12
-    versions:
-      asv:
-        short_name_raw: "Dan"
-        short_name: "dan"
-        long_name: "Daniel"
-      kjv:
-        short_name_raw: "Dan"
-        short_name: "dan"
-        long_name: "Daniel"
-
-  - book_id: _Hosea
-    chapters: 14
-    versions:
-      asv:
-        short_name_raw: "Hosea"
-        short_name: "hosea"
-        long_name: "Hosea"
-      kjv:
-        short_name_raw: "Hosea"
-        short_name: "hosea"
-        long_name: "Hosea"
-
-  - book_id: _Joel
-    chapters: 3
-    versions:
-      asv:
-        short_name_raw: "Joel"
-        short_name: "joel"
-        long_name: "Joel"
-      kjv:
-        short_name_raw: "Joel"
-        short_name: "joel"
-        long_name: "Joel"
-
-  - book_id: _Amos
-    chapters: 9
-    versions:
-      asv:
-        short_name_raw: "Amos"
-        short_name: "amos"
-        long_name: "Amos"
-      kjv:
-        short_name_raw: "Amos"
-        short_name: "amos"
-        long_name: "Amos"
-
-  - book_id: _Oba
-    chapters: 1
-    versions:
-      asv:
-        short_name_raw: "Oba"
-        short_name: "oba"
-        long_name: "Obadiah"
-      kjv:
-        short_name_raw: "Oba"
-        short_name: "oba"
-        long_name: "Obadiah"
-
-  - book_id: _Jonah
-    chapters: 4
-    versions:
-      asv:
-        short_name_raw: "Jonah"
-        short_name: "jonah"
-        long_name: "Jonah"
-      kjv:
-        short_name_raw: "Jonah"
-        short_name: "jonah"
-        long_name: "Jonah"
-
-  - book_id: _Micah
-    chapters: 7
-    versions:
-      asv:
-        short_name_raw: "Micah"
-        short_name: "micah"
-        long_name: "Micah"
-      kjv:
-        short_name_raw: "Micah"
-        short_name: "micah"
-        long_name: "Micah"
-
-  - book_id: _Nahum
-    chapters: 3
-    versions:
-      asv:
-        short_name_raw: "Nahum"
-        short_name: "nahum"
-        long_name: "Nahum"
-      kjv:
-        short_name_raw: "Nahum"
-        short_name: "nahum"
-        long_name: "Nahum"
-
-  - book_id: _Hab
-    chapters: 3
-    versions:
-      asv:
-        short_name_raw: "Hab"
-        short_name: "hab"
-        long_name: "Habakkuk"
-      kjv:
-        short_name_raw: "Hab"
-        short_name: "hab"
-        long_name: "Habakkuk"
-
-  - book_id: _Zep
-    chapters: 3
-    versions:
-      asv:
-        short_name_raw: "Zep"
-        short_name: "zep"
-        long_name: "Zephaniah"
-      kjv:
-        short_name_raw: "Zep"
-        short_name: "zep"
-        long_name: "Zephaniah"
-
-  - book_id: _Hag
-    chapters: 2
-    versions:
-      asv:
-        short_name_raw: "Hag"
-        short_name: "hag"
-        long_name: "Haggai"
-      kjv:
-        short_name_raw: "Hag"
-        short_name: "hag"
-        long_name: "Haggai"
-
-  - book_id: _Zec
-    chapters: 14
-    versions:
-      asv:
-        short_name_raw: "Zec"
-        short_name: "zec"
-        long_name: "Zechariah"
-      kjv:
-        short_name_raw: "Zec"
-        short_name: "zec"
-        long_name: "Zechariah"
-
-  - book_id: _Mal
-    chapters: 4
-    versions:
-      asv:
-        short_name_raw: "Mal"
-        short_name: "mal"
-        long_name: "Malachi"
-      kjv:
-        short_name_raw: "Mal"
-        short_name: "mal"
-        long_name: "Malachi"
-
-  - book_id: _Mat
-    chapters: 28
-    versions:
-      asv:
-        short_name_raw: "Mat"
-        short_name: "mat"
-        long_name: "Matthew"
-      kjv:
-        short_name_raw: "Mat"
-        short_name: "mat"
-        long_name: "Matthew"
-
-  - book_id: _Mark
-    chapters: 16
-    versions:
-      asv:
-        short_name_raw: "Mark"
-        short_name: "mark"
-        long_name: "Mark"
-      kjv:
-        short_name_raw: "Mark"
-        short_name: "mark"
-        long_name: "Mark"
-
-  - book_id: _Luke
-    chapters: 24
-    versions:
-      asv:
-        short_name_raw: "Luke"
-        short_name: "luke"
-        long_name: "Luke"
-      kjv:
-        short_name_raw: "Luke"
-        short_name: "luke"
-        long_name: "Luke"
-
-  - book_id: _John
-    chapters: 21
-    versions:
-      asv:
-        short_name_raw: "John"
-        short_name: "john"
-        long_name: "John"
-      kjv:
-        short_name_raw: "John"
-        short_name: "john"
-        long_name: "John"
-
-  - book_id: _Acts
-    chapters: 28
-    versions:
-      asv:
-        short_name_raw: "Acts"
-        short_name: "acts"
-        long_name: "Acts"
-      kjv:
-        short_name_raw: "Acts"
-        short_name: "acts"
-        long_name: "Acts"
-
-  - book_id: _Rom
-    chapters: 16
-    versions:
-      asv:
-        short_name_raw: "Rom"
-        short_name: "rom"
-        long_name: "Romans"
-      kjv:
-        short_name_raw: "Rom"
-        short_name: "rom"
-        long_name: "Romans"
-
-  - book_id: _1Cor
-    chapters: 16
-    versions:
-      asv:
-        short_name_raw: "1Cor"
-        short_name: "1cor"
-        long_name: "I Corinthians"
-      kjv:
-        short_name_raw: "1Cor"
-        short_name: "1cor"
-        long_name: "I Corinthians"
-
-  - book_id: _2Cor
-    chapters: 13
-    versions:
-      asv:
-        short_name_raw: "2Cor"
-        short_name: "2cor"
-        long_name: "II Corinthians"
-      kjv:
-        short_name_raw: "2Cor"
-        short_name: "2cor"
-        long_name: "II Corinthians"
-
-  - book_id: _Gal
-    chapters: 6
-    versions:
-      asv:
-        short_name_raw: "Gal"
-        short_name: "gal"
-        long_name: "Galatians"
-      kjv:
-        short_name_raw: "Gal"
-        short_name: "gal"
-        long_name: "Galatians"
-
-  - book_id: _Eph
-    chapters: 6
-    versions:
-      asv:
-        short_name_raw: "Eph"
-        short_name: "eph"
-        long_name: "Ephesians"
-      kjv:
-        short_name_raw: "Eph"
-        short_name: "eph"
-        long_name: "Ephesians"
-
-  - book_id: _Phil
-    chapters: 4
-    versions:
-      asv:
-        short_name_raw: "Phil"
-        short_name: "phil"
-        long_name: "Philippians"
-      kjv:
-        short_name_raw: "Phil"
-        short_name: "phil"
-        long_name: "Philippians"
-
-  - book_id: _Col
-    chapters: 4
-    versions:
-      asv:
-        short_name_raw: "Col"
-        short_name: "col"
-        long_name: "Colossians"
-      kjv:
-        short_name_raw: "Col"
-        short_name: "col"
-        long_name: "Colossians"
-
-  - book_id: _1Th
-    chapters: 5
-    versions:
-      asv:
-        short_name_raw: "1Th"
-        short_name: "1th"
-        long_name: "I Thessalonians"
-      kjv:
-        short_name_raw: "1Th"
-        short_name: "1th"
-        long_name: "I Thessalonians"
-
-  - book_id: _2Th
-    chapters: 3
-    versions:
-      asv:
-        short_name_raw: "2Th"
-        short_name: "2th"
-        long_name: "II Thessalonians"
-      kjv:
-        short_name_raw: "2Th"
-        short_name: "2th"
-        long_name: "II Thessalonians"
-
-  - book_id: _1Tim
-    chapters: 6
-    versions:
-      asv:
-        short_name_raw: "1Tim"
-        short_name: "1tim"
-        long_name: "I Timothy"
-      kjv:
-        short_name_raw: "1Tim"
-        short_name: "1tim"
-        long_name: "I Timothy"
-
-  - book_id: _2Tim
-    chapters: 4
-    versions:
-      asv:
-        short_name_raw: "2Tim"
-        short_name: "2tim"
-        long_name: "II Timothy"
-      kjv:
-        short_name_raw: "2Tim"
-        short_name: "2tim"
-        long_name: "II Timothy"
-
-  - book_id: _Titus
-    chapters: 3
-    versions:
-      asv:
-        short_name_raw: "Titus"
-        short_name: "titus"
-        long_name: "Titus"
-      kjv:
-        short_name_raw: "Titus"
-        short_name: "titus"
-        long_name: "Titus"
-
-  - book_id: _Phile
-    chapters: 1
-    versions:
-      asv:
-        short_name_raw: "Phile"
-        short_name: "phile"
-        long_name: "Philemon"
-      kjv:
-        short_name_raw: "Phile"
-        short_name: "phile"
-        long_name: "Philemon"
-
-  - book_id: _Heb
-    chapters: 13
-    versions:
-      asv:
-        short_name_raw: "Heb"
-        short_name: "heb"
-        long_name: "Hebrews"
-      kjv:
-        short_name_raw: "Heb"
-        short_name: "heb"
-        long_name: "Hebrews"
-
-  - book_id: _James
-    chapters: 5
-    versions:
-      asv:
-        short_name_raw: "James"
-        short_name: "james"
-        long_name: "James"
-      kjv:
-        short_name_raw: "James"
-        short_name: "james"
-        long_name: "James"
-
-  - book_id: _1Pet
-    chapters: 5
-    versions:
-      asv:
-        short_name_raw: "1Pet"
-        short_name: "1pet"
-        long_name: "I Peter"
-      kjv:
-        short_name_raw: "1Pet"
-        short_name: "1pet"
-        long_name: "I Peter"
-
-  - book_id: _2Pet
-    chapters: 3
-    versions:
-      asv:
-        short_name_raw: "2Pet"
-        short_name: "2pet"
-        long_name: "II Peter"
-      kjv:
-        short_name_raw: "2Pet"
-        short_name: "2pet"
-        long_name: "II Peter"
-
-  - book_id: _1John
-    chapters: 5
-    versions:
-      asv:
-        short_name_raw: "1John"
-        short_name: "1john"
-        long_name: "I John"
-      kjv:
-        short_name_raw: "1John"
-        short_name: "1john"
-        long_name: "I John"
-
-  - book_id: _2John
-    chapters: 1
-    versions:
-      asv:
-        short_name_raw: "2John"
-        short_name: "2john"
-        long_name: "II John"
-      kjv:
-        short_name_raw: "2John"
-        short_name: "2john"
-        long_name: "II John"
-
-  - book_id: _3John
-    chapters: 1
-    versions:
-      asv:
-        short_name_raw: "3John"
-        short_name: "3john"
-        long_name: "III John"
-      kjv:
-        short_name_raw: "3John"
-        short_name: "3john"
-        long_name: "III John"
-
-  - book_id: _Jude
-    chapters: 1
-    versions:
-      asv:
-        short_name_raw: "Jude"
-        short_name: "jude"
-        long_name: "Jude"
-      kjv:
-        short_name_raw: "Jude"
-        short_name: "jude"
-        long_name: "Jude"
-
-  - book_id: _Rev
-    chapters: 22
-    versions:
-      asv:
-        short_name_raw: "Rev"
-        short_name: "rev"
-        long_name: "Revelation of John"
-      dr:
-        short_name_raw: "Rev"
-        short_name: "rev"
-        long_name: "Apocalypse"
-      kjv:
-        short_name_raw: "Rev"
-        short_name: "rev"
-        long_name: "Revelation of John"
