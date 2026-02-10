@@ -35,6 +35,7 @@
 books:
   - book_id: _Gen
     chapters: 50
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Gen"
@@ -53,6 +54,7 @@ books:
         ordinal: 1
   - book_id: _Exo
     chapters: 40
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Exo"
@@ -71,6 +73,7 @@ books:
         ordinal: 2
   - book_id: _Lev
     chapters: 27
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Lev"
@@ -89,6 +92,7 @@ books:
         ordinal: 3
   - book_id: _Num
     chapters: 36
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Num"
@@ -107,6 +111,7 @@ books:
         ordinal: 4
   - book_id: _Deu
     chapters: 34
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Deu"
@@ -125,6 +130,7 @@ books:
         ordinal: 5
   - book_id: _Josh
     chapters: 24
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Josh"
@@ -143,6 +149,7 @@ books:
         ordinal: 6
   - book_id: _Judg
     chapters: 21
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Judg"
@@ -161,6 +168,7 @@ books:
         ordinal: 7
   - book_id: _Ruth
     chapters: 4
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Ruth"
@@ -179,6 +187,7 @@ books:
         ordinal: 8
   - book_id: _1Ki
     chapters: 31
+    testament: "old"
     translations:
       asv:
         short_name_raw: "1Sam"
@@ -197,6 +206,7 @@ books:
         ordinal: 9
   - book_id: _2Ki
     chapters: 24
+    testament: "old"
     translations:
       asv:
         short_name_raw: "2Sam"
@@ -215,6 +225,7 @@ books:
         ordinal: 10
   - book_id: _3Ki
     chapters: 22
+    testament: "old"
     translations:
       asv:
         short_name_raw: "1Ki"
@@ -233,6 +244,7 @@ books:
         ordinal: 11
   - book_id: _4Ki
     chapters: 25
+    testament: "old"
     translations:
       asv:
         short_name_raw: "2Ki"
@@ -251,6 +263,7 @@ books:
         ordinal: 12
   - book_id: _1Chr
     chapters: 29
+    testament: "old"
     translations:
       asv:
         short_name_raw: "1Chr"
@@ -269,6 +282,7 @@ books:
         ordinal: 13
   - book_id: _2Chr
     chapters: 36
+    testament: "old"
     translations:
       asv:
         short_name_raw: "2Chr"
@@ -287,6 +301,7 @@ books:
         ordinal: 14
   - book_id: _1Esd
     chapters: 10
+    testament: "old"
     translations:
       kjv:
         short_name_raw: "Ezra"
@@ -305,6 +320,7 @@ books:
         ordinal: 15
   - book_id: _2Esd
     chapters: 13
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Neh"
@@ -323,6 +339,7 @@ books:
         ordinal: 16
   - book_id: _Tob
     chapters: 14
+    testament: "old"
     translations:
       dr:
         short_name_raw: "Tob"
@@ -335,6 +352,7 @@ books:
         absent: true
   - book_id: _Jdt
     chapters: 16
+    testament: "old"
     translations:
       dr:
         short_name_raw: "Jdt"
@@ -347,6 +365,7 @@ books:
         absent: true
   - book_id: _Est
     chapters: 10
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Est"
@@ -365,6 +384,7 @@ books:
         ordinal: 19
   - book_id: _Job
     chapters: 42
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Job"
@@ -383,6 +403,7 @@ books:
         ordinal: 18
   - book_id: _Psa
     chapters: 150
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Psa"
@@ -401,6 +422,7 @@ books:
         ordinal: 19
   - book_id: _Prov
     chapters: 31
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Prov"
@@ -419,6 +441,7 @@ books:
         ordinal: 20
   - book_id: _Eccl
     chapters: 12
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Eccl"
@@ -437,6 +460,7 @@ books:
         ordinal: 23
   - book_id: _Song
     chapters: 8
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Song"
@@ -455,6 +479,7 @@ books:
         ordinal: 24
   - book_id: _Wis
     chapters: 19
+    testament: "old"
     translations:
       dr:
         short_name_raw: "Wis"
@@ -467,6 +492,7 @@ books:
         absent: true
   - book_id: _Sir
     chapters: 51
+    testament: "old"
     translations:
       dr:
         short_name_raw: "Sir"
@@ -479,6 +505,7 @@ books:
         absent: true
   - book_id: _Isa
     chapters: 66
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Isa"
@@ -497,6 +524,7 @@ books:
         ordinal: 27
   - book_id: _Jer
     chapters: 52
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Jer"
@@ -515,6 +543,7 @@ books:
         ordinal: 28
   - book_id: _Lam
     chapters: 5
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Lam"
@@ -533,6 +562,7 @@ books:
         ordinal: 29
   - book_id: _Bar
     chapters: 6
+    testament: "old"
     translations:
       dr:
         short_name_raw: "Bar"
@@ -545,6 +575,7 @@ books:
         absent: true
   - book_id: _Ezek
     chapters: 48
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Ezek"
@@ -563,6 +594,7 @@ books:
         ordinal: 31
   - book_id: _Dan
     chapters: 12
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Dan"
@@ -581,6 +613,7 @@ books:
         ordinal: 32
   - book_id: _Hosea
     chapters: 14
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Hosea"
@@ -599,6 +632,7 @@ books:
         ordinal: 33
   - book_id: _Joel
     chapters: 3
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Joel"
@@ -617,6 +651,7 @@ books:
         ordinal: 34
   - book_id: _Amos
     chapters: 9
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Amos"
@@ -635,6 +670,7 @@ books:
         ordinal: 35
   - book_id: _Oba
     chapters: 1
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Oba"
@@ -653,6 +689,7 @@ books:
         ordinal: 36
   - book_id: _Jonah
     chapters: 4
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Jonah"
@@ -671,6 +708,7 @@ books:
         ordinal: 37
   - book_id: _Micah
     chapters: 7
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Micah"
@@ -689,6 +727,7 @@ books:
         ordinal: 38
   - book_id: _Nahum
     chapters: 3
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Nahum"
@@ -707,6 +746,7 @@ books:
         ordinal: 39
   - book_id: _Hab
     chapters: 3
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Hab"
@@ -725,6 +765,7 @@ books:
         ordinal: 40
   - book_id: _Zep
     chapters: 3
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Zep"
@@ -743,6 +784,7 @@ books:
         ordinal: 41
   - book_id: _Hag
     chapters: 2
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Hag"
@@ -761,6 +803,7 @@ books:
         ordinal: 42
   - book_id: _Zec
     chapters: 14
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Zec"
@@ -779,6 +822,7 @@ books:
         ordinal: 43
   - book_id: _Mal
     chapters: 4
+    testament: "old"
     translations:
       asv:
         short_name_raw: "Mal"
@@ -797,6 +841,7 @@ books:
         ordinal: 44
   - book_id: _1Ma
     chapters: 16
+    testament: "old"
     translations:
       dr:
         short_name_raw: "1Ma"
@@ -809,6 +854,7 @@ books:
         absent: true
   - book_id: _2Ma
     chapters: 15
+    testament: "old"
     translations:
       dr:
         short_name_raw: "2Ma"
@@ -821,6 +867,7 @@ books:
         absent: true
   - book_id: _Mat
     chapters: 28
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Mat"
@@ -839,6 +886,7 @@ books:
         ordinal: 47
   - book_id: _Mark
     chapters: 16
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Mark"
@@ -857,6 +905,7 @@ books:
         ordinal: 48
   - book_id: _Luke
     chapters: 24
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Luke"
@@ -875,6 +924,7 @@ books:
         ordinal: 49
   - book_id: _John
     chapters: 21
+    testament: "new"
     translations:
       asv:
         short_name_raw: "John"
@@ -893,6 +943,7 @@ books:
         ordinal: 50
   - book_id: _Acts
     chapters: 28
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Acts"
@@ -911,6 +962,7 @@ books:
         ordinal: 51
   - book_id: _Rom
     chapters: 16
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Rom"
@@ -929,6 +981,7 @@ books:
         ordinal: 52
   - book_id: _1Cor
     chapters: 16
+    testament: "new"
     translations:
       asv:
         short_name_raw: "1Cor"
@@ -947,6 +1000,7 @@ books:
         ordinal: 53
   - book_id: _2Cor
     chapters: 13
+    testament: "new"
     translations:
       asv:
         short_name_raw: "2Cor"
@@ -965,6 +1019,7 @@ books:
         ordinal: 54
   - book_id: _Gal
     chapters: 6
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Gal"
@@ -983,6 +1038,7 @@ books:
         ordinal: 55
   - book_id: _Eph
     chapters: 6
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Eph"
@@ -1001,6 +1057,7 @@ books:
         ordinal: 56
   - book_id: _Phil
     chapters: 4
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Phil"
@@ -1019,6 +1076,7 @@ books:
         ordinal: 57
   - book_id: _Col
     chapters: 4
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Col"
@@ -1037,6 +1095,7 @@ books:
         ordinal: 58
   - book_id: _1Th
     chapters: 5
+    testament: "new"
     translations:
       asv:
         short_name_raw: "1Th"
@@ -1055,6 +1114,7 @@ books:
         ordinal: 59
   - book_id: _2Th
     chapters: 3
+    testament: "new"
     translations:
       asv:
         short_name_raw: "2Th"
@@ -1073,6 +1133,7 @@ books:
         ordinal: 60
   - book_id: _1Tim
     chapters: 6
+    testament: "new"
     translations:
       asv:
         short_name_raw: "1Tim"
@@ -1091,6 +1152,7 @@ books:
         ordinal: 61
   - book_id: _2Tim
     chapters: 4
+    testament: "new"
     translations:
       asv:
         short_name_raw: "2Tim"
@@ -1109,6 +1171,7 @@ books:
         ordinal: 62
   - book_id: _Titus
     chapters: 3
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Titus"
@@ -1127,6 +1190,7 @@ books:
         ordinal: 63
   - book_id: _Phile
     chapters: 1
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Phile"
@@ -1145,6 +1209,7 @@ books:
         ordinal: 64
   - book_id: _Heb
     chapters: 13
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Heb"
@@ -1163,6 +1228,7 @@ books:
         ordinal: 65
   - book_id: _James
     chapters: 5
+    testament: "new"
     translations:
       asv:
         short_name_raw: "James"
@@ -1181,6 +1247,7 @@ books:
         ordinal: 66
   - book_id: _1Pet
     chapters: 5
+    testament: "new"
     translations:
       asv:
         short_name_raw: "1Pet"
@@ -1199,6 +1266,7 @@ books:
         ordinal: 67
   - book_id: _2Pet
     chapters: 3
+    testament: "new"
     translations:
       asv:
         short_name_raw: "2Pet"
@@ -1217,6 +1285,7 @@ books:
         ordinal: 68
   - book_id: _1John
     chapters: 5
+    testament: "new"
     translations:
       asv:
         short_name_raw: "1John"
@@ -1235,6 +1304,7 @@ books:
         ordinal: 69
   - book_id: _2John
     chapters: 1
+    testament: "new"
     translations:
       asv:
         short_name_raw: "2John"
@@ -1253,6 +1323,7 @@ books:
         ordinal: 70
   - book_id: _3John
     chapters: 1
+    testament: "new"
     translations:
       asv:
         short_name_raw: "3John"
@@ -1271,6 +1342,7 @@ books:
         ordinal: 71
   - book_id: _Jude
     chapters: 1
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Jude"
@@ -1289,6 +1361,7 @@ books:
         ordinal: 72
   - book_id: _Rev
     chapters: 22
+    testament: "new"
     translations:
       asv:
         short_name_raw: "Rev"
@@ -1307,6 +1380,7 @@ books:
         ordinal: 66
   - book_id: _3Esd
     chapters: 9
+    testament: "old"
     translations:
       asv:
         absent: true
@@ -1314,10 +1388,13 @@ books:
         short_name_raw: "3Esd"
         short_name: "3esd"
         long_name: "3 Esdras"
+        ordinal: 74
+        appendix: true
       kjv:
         absent: true
   - book_id: _4Esd
     chapters: 16
+    testament: "old"
     translations:
       asv:
         absent: true
@@ -1325,5 +1402,7 @@ books:
         short_name_raw: "4Esd"
         short_name: "4esd"
         long_name: "4 Esdras"
+        ordinal: 75
+        appendix: true
       kjv:
         absent: true
