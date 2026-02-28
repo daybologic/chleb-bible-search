@@ -25,3 +25,4 @@ externals
 *.build
 lib/Chleb/Generated/*
 .git-changeset
+.claude/
