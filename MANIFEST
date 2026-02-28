@@ -255,6 +255,7 @@ debian/source/format
 etc-defaults/main.yaml
 etc-local/main.yaml
 etc/chleb-bible-search.service
+etc/init.d/chleb-bible-search
 etc/log4perl.conf
 etc/logrotate/chleb-bible-search
 etc/main.yaml
