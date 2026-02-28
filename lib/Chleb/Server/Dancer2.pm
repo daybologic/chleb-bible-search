@@ -188,6 +188,14 @@ get '/' => sub {
 		});
 	}
 
+	my $twitterHtml = '';
+	if ($server->dic->config->get('features', 'twitter', 'false', 1)) {
+		$twitterHtml = fetchStaticPage('twitter', {
+			TWITTER_USERNAME => $server->dic->config->get('twitter', 'username', 'chlebsearch'),
+			TWITTER_URL => $server->dic->config->get('twitter', 'url', 'https://x.com/chlebsearch'),
+		});
+	}
+
 	my $mailingListVoTDHtml = '';
 	if ($server->dic->config->get('features', 'mailing_list_votd', 'true', 1)) {
 		$mailingListVoTDHtml = fetchStaticPage('mailing_list_votd', {
@@ -200,6 +208,7 @@ get '/' => sub {
 		FACEBOOK_HTML => $facebookHtml,
 		HOSTNAME => hostname(),
 		MAILING_LIST_VOTD_HTML => $mailingListVoTDHtml,
+		TWITTER_HTML => $twitterHtml,
 	});
 
 	return;
