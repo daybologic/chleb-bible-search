@@ -19,7 +19,6 @@ Build-Depends-Indep:
  libmoosex-singleton-perl,
  libreadonly-perl,
  libredis-perl,
- libredis-fast-perl,
  libtest-deep-perl,
  libtest-exception-perl,
  libtest-mockmodule-perl,
