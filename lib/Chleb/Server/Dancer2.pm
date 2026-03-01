@@ -171,9 +171,13 @@ sub __detaint {
 
 sub _param {
 	my ($name) = @_;
+
 	my $value = param($name);
-	return unless (defined($value));
-	return __detaint($value, $name);
+	if (defined($value)) {
+		$value = __detaint($value, $name);
+	}
+
+	return $value;
 }
 
 get '/' => sub {
