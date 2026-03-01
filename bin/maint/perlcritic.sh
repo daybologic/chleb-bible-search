@@ -40,7 +40,7 @@ set -eu
 PERLCRITIC_BIN="${PERLCRITIC_BIN:-perlcritic}"
 
 # Default options (override by setting PERLCRITIC_OPTS in environment if you want)
-DEFAULT_OPTS="--gentle --nocolor --profile-strictness quiet"
+DEFAULT_OPTS="--gentle --nocolor --profile-strictness quiet --quiet"
 
 # If you want to pass extra flags, do:
 #   PERLCRITIC_OPTS="--severity 3" bin/maint/perlcritic.sh lib/Foo.pm
