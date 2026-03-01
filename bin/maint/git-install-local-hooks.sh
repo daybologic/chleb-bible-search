@@ -37,7 +37,7 @@
 set -eu
 
 if [ -d .git ]; then
-	pre-commit install
+	pre-commit install --install-hooks
 	for hook in bin/git/hooks/*; do
 		cp -v "$hook" .git/hooks/
 	done
