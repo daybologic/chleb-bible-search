@@ -272,6 +272,7 @@ sub __getSymbolicName {
 	my $symbolic = '???';
 
 	foreach my $mnemonic (keys(%!)) {
+		## no critic (TestingAndDebugging::ProhibitNoStrict)
 		no strict 'refs';
 		$mnemonic = "Errno::$mnemonic";
 		$! = &$mnemonic;
