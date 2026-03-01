@@ -29,11 +29,18 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+DIR=lib/
+
+if [ ! -d "$DIR" ]; then
+	>&2 echo "Error: Directory $DIR does not exist or is inaccessible."
+	exit 1
+fi
+
 # Reject common corruption patterns in lib/
 # - markdown fences
 # - file headers like "### /path/file"
 # - line-number prefixes like "123: "
-if grep -R -n -E '^(###\s+/|```|[0-9]+:\s)' lib/ >/dev/null 2>&1; then
+if grep -R -n -E '^(###\s+/|```|[0-9]+:\s)' "$DIR" >/dev/null 2>&1; then
 	echo "Error: Detected Goose-style corruption in lib/ (headers, fences, or line numbers)."
 	exit 1
 fi
