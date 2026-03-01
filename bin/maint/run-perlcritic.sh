@@ -29,7 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repo_root=$(CDPATH= cd -- "$script_dir/../.." && pwd)
+scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repoRoot=$(CDPATH= cd -- "$scriptDir/../.." && pwd)
 
-find "${repo_root}/lib/" -name "*.pm" -type f -exec "${script_dir}/perlcritic.sh" --quiet --gentle --profile-strictness quiet --nocolor  '{}' +
+find "${repoRoot}/lib/" -name "*.pm" -type f -exec "${scriptDir}/perlcritic.sh" --quiet --gentle --profile-strictness quiet --nocolor  '{}' +
