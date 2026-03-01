@@ -172,7 +172,7 @@ sub __detaint {
 sub _param {
 	my ($name) = @_;
 	my $value = param($name);
-	return undef unless (defined($value));
+	return unless (defined($value));
 	return __detaint($value, $name);
 }
 

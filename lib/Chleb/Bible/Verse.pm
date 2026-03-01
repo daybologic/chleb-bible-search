@@ -91,7 +91,7 @@ sub getPrev {
 		return $self->chapter->getVerseByOrdinal($self->ordinal - 1, { nonFatal => 1 });
 	}
 
-	return undef;
+	return;
 }
 
 sub equals {
