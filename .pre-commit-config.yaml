@@ -6,3 +6,8 @@ repos:
         entry: bin/maint/trap-goose-corruption.sh
         language: system
         pass_filenames: false
+      - id: run-perlcritic
+        name: perlcritic
+        entry: bin/maint/run-perlcritic.sh
+        language: system
+        pass_filenames: false
