@@ -30,6 +30,22 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repoRoot=$(CDPATH= cd -- "$scriptDir/../.." && pwd)
+repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
 
-find "${repoRoot}/lib/" -name "*.pm" -type f -exec "${scriptDir}/perlcritic.sh" --quiet --gentle --profile-strictness quiet --nocolor  '{}' +
+dir="${repoRoot}/lib/"
+
+if [ ! -d "$dir" ]; then
+	>&2 echo "Error: Directory $dir does not exist or is inaccessible."
+	exit 1
+fi
+
+# Reject common corruption patterns in lib/
+# - markdown fences
+# - file headers like "### /path/file"
+# - line-number prefixes like "123: "
+if grep -R -n -E '^(###\s+/|```|[0-9]+:\s)' "$dir" >/dev/null 2>&1; then
+	echo "Error: Detected Goose-style corruption in lib/ (headers, fences, or line numbers)."
+	exit 1
+fi
+
+exit 0
