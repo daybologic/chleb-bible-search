@@ -29,10 +29,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-DIR=lib/
+scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repoRoot=$(CDPATH= cd -- "$scriptDir/../.." && pwd)
 
-if [ ! -d "$DIR" ]; then
-	>&2 echo "Error: Directory $DIR does not exist or is inaccessible."
+dir="${repoRoot}/lib/"
+
+if [ ! -d "$dir" ]; then
+	>&2 echo "Error: Directory $dir does not exist or is inaccessible."
 	exit 1
 fi
 
@@ -40,7 +43,7 @@ fi
 # - markdown fences
 # - file headers like "### /path/file"
 # - line-number prefixes like "123: "
-if grep -R -n -E '^(###\s+/|```|[0-9]+:\s)' "$DIR" >/dev/null 2>&1; then
+if grep -R -n -E '^(###\s+/|```|[0-9]+:\s)' "$dir" >/dev/null 2>&1; then
 	echo "Error: Detected Goose-style corruption in lib/ (headers, fences, or line numbers)."
 	exit 1
 fi
