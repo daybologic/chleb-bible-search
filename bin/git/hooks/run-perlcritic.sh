@@ -32,4 +32,4 @@
 scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
 
-find "${repoRoot}/lib/" -name "*.pm" -type f -exec "${scriptDir}/../../maint/perlcritic.sh" '{}' +
+find "${repoRoot}/lib/" -name "*.pm" -type f -exec "${scriptDir}/../../maint/perlcritic.sh" {} +
