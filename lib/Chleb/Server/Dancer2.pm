@@ -177,6 +177,8 @@ sub _param {
 		$value = __detaint($value, $name);
 	}
 
+	# $value be undef, we never return nothing,
+	# because the Chleb::Utils::forceArray wouldn't work properly.
 	return $value;
 }
 
