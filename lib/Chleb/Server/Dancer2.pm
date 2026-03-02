@@ -171,9 +171,15 @@ sub __detaint {
 
 sub _param {
 	my ($name) = @_;
+
 	my $value = param($name);
-	return undef unless (defined($value));
-	return __detaint($value, $name);
+	if (defined($value)) {
+		$value = __detaint($value, $name);
+	}
+
+	# $value be undef, we never return nothing,
+	# because the Chleb::Utils::forceArray wouldn't work properly.
+	return $value;
 }
 
 get '/' => sub {
