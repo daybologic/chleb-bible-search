@@ -58,6 +58,6 @@ fi
 #   1 = perlcritic error (e.g., profile/policy issue)
 #   2 = violations found
 # We don't want any of these to fail CI here.
-"$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS "$@" || true
+"$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS "$@"
 
 exit 0
