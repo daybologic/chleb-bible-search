@@ -219,7 +219,7 @@ sub getPrev {
 	return $self->bible->getBookByOrdinal($self->ordinal - 1, { nonFatal => 1 })
 	    if ($self->ordinal > 1);
 
-	return undef;
+	return;
 }
 
 =item C<search($query)>
@@ -362,7 +362,7 @@ sub getChapterByOrdinal {
 
 	if ($ordinal > $self->chapterCount) {
 		if ($args->{nonFatal}) {
-			return undef;
+			return;
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Chapter %d not found in %s', $ordinal, $self->toString()));
 		}
