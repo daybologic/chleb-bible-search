@@ -29,9 +29,10 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
+set -eu
 
-find "${repoRoot}" -mindepth 1 -maxdepth 1 -name "*.PL" -type f -exec perl -c {} \;
-find "${repoRoot}/lib/" -name "*.pm" -type f -exec perl -c {} \;
-find "${repoRoot}/bin/" -name "*.pl" -type f -exec perl -c {} \;
+for f in "$@"; do
+	perl -c -- "$f"
+done
+
+exit 0

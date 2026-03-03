@@ -15,7 +15,8 @@ repos:
         name: perl compile check
         entry: bin/git/hooks/run-perlc.sh
         language: system
-        pass_filenames: false
+        pass_filenames: true
+        files: (?i)\.p[lm]$
       - id: run-podchecker
         name: PoD check
         entry: bin/git/hooks/run-podchecker.sh
