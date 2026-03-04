@@ -50,7 +50,7 @@ fi
 
 case "$1" in
 	start|stop|restart|reload|force-reload|status)
-		systemctl $1 $SERVICE
+		systemctl "$1" "$SERVICE"
 		;;
 	*)
 		echo "Usage: $0 {start|stop|restart|reload|force-reload|status}" >&2
