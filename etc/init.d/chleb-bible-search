@@ -45,7 +45,7 @@ SERVICE=chleb-bible-search
 
 case "$1" in
 	start|stop|restart|reload|force-reload|status)
-		if [ -d /run/systemd/system ]; then
+		if command -v systemctl > /dev/null; then
 			systemctl $1 $SERVICE
 		else
 			log_failure_msg "systemd is required to manage $SERVICE"
