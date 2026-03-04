@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,33 +29,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Git SCM hook installation.
-# Perhaps this feels a bit intrusive for some veteran Git developers,
-# but it's better if the project can control the hook execution.
+set -euo pipefail
 
-# turn on errors and unbound variable trap
-set -eu
+scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
 
-if [ -d '.git' ]; then
-	if [ ! -d '.git/hooks/' ]; then
-		>&2 echo 'ERROR: Directory .git/hooks/ does not exist'
-		exit 1
-	fi
-
-	pre-commit install --install-hooks
-	for hook in bin/git/hooks/post-*; do
-		hookTarget=$(basename $hook)
-		hookTarget=".git/hooks/$hookTarget"
-		if ! cmp -s "$hook" "$hookTarget"; then
-			cp -v "$hook" "$hookTarget"
-		fi
-
-		if [ ! -x "$hookTarget" ]; then
-			chmod +x "$hookTarget"
-		fi
-	done
-else
-	>&2 echo "WARN: .git not found" >&2
-fi
-
-exit 0
+while IFS= read -r -d '' f; do
+	"${scriptDir}/../../maint/podchecker.sh" "$f" || true
+done < <(find "$repoRoot/lib" -name '*.pm' -type f -print0)

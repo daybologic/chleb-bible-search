@@ -29,33 +29,17 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Git SCM hook installation.
-# Perhaps this feels a bit intrusive for some veteran Git developers,
-# but it's better if the project can control the hook execution.
-
-# turn on errors and unbound variable trap
 set -eu
 
-if [ -d '.git' ]; then
-	if [ ! -d '.git/hooks/' ]; then
-		>&2 echo 'ERROR: Directory .git/hooks/ does not exist'
-		exit 1
-	fi
+if [ $# -eq 0 ]; then
+	>&2 echo "No arguments supplied"
+	exit 1
+fi
 
-	pre-commit install --install-hooks
-	for hook in bin/git/hooks/post-*; do
-		hookTarget=$(basename $hook)
-		hookTarget=".git/hooks/$hookTarget"
-		if ! cmp -s "$hook" "$hookTarget"; then
-			cp -v "$hook" "$hookTarget"
-		fi
+file="$1"
 
-		if [ ! -x "$hookTarget" ]; then
-			chmod +x "$hookTarget"
-		fi
-	done
-else
-	>&2 echo "WARN: .git not found" >&2
+if grep -q "^=head1" "$file"; then
+	podchecker "$1"
 fi
 
 exit 0

@@ -29,33 +29,35 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Git SCM hook installation.
-# Perhaps this feels a bit intrusive for some veteran Git developers,
-# but it's better if the project can control the hook execution.
-
-# turn on errors and unbound variable trap
 set -eu
 
-if [ -d '.git' ]; then
-	if [ ! -d '.git/hooks/' ]; then
-		>&2 echo 'ERROR: Directory .git/hooks/ does not exist'
-		exit 1
-	fi
+# perlcritic wrapper: advisory mode (never fails the build)
+# - Accepts multiple file arguments (works with: find ... -exec ... {} +)
+# - Calls the real perlcritic
+# - Always exits 0, but preserves perlcritic output to stdout/stderr.
 
-	pre-commit install --install-hooks
-	for hook in bin/git/hooks/post-*; do
-		hookTarget=$(basename $hook)
-		hookTarget=".git/hooks/$hookTarget"
-		if ! cmp -s "$hook" "$hookTarget"; then
-			cp -v "$hook" "$hookTarget"
-		fi
+# Locate perlcritic
+PERLCRITIC_BIN="${PERLCRITIC_BIN:-perlcritic}"
 
-		if [ ! -x "$hookTarget" ]; then
-			chmod +x "$hookTarget"
-		fi
-	done
-else
-	>&2 echo "WARN: .git not found" >&2
+# Default options (override by setting PERLCRITIC_OPTS in environment if you want)
+DEFAULT_OPTS="--gentle --nocolor --profile-strictness quiet --quiet"
+
+# If you want to pass extra flags, do:
+#   PERLCRITIC_OPTS="--severity 3" bin/maint/perlcritic.sh lib/Foo.pm
+PERLCRITIC_OPTS="${PERLCRITIC_OPTS:-}"
+
+# Nothing to do
+if [ "$#" -eq 0 ]; then
+	exit 0
 fi
+
+# Run perlcritic over all files passed in one invocation.
+# We intentionally ignore exit status to make it "information-only".
+# perlcritic exits:
+#   0 = no violations
+#   1 = perlcritic error (e.g., profile/policy issue)
+#   2 = violations found
+# We don't want any of these to fail CI here.
+"$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS "$@"
 
 exit 0

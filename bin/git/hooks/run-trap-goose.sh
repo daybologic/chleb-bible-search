@@ -29,33 +29,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# Git SCM hook installation.
-# Perhaps this feels a bit intrusive for some veteran Git developers,
-# but it's better if the project can control the hook execution.
+scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
 
-# turn on errors and unbound variable trap
-set -eu
+dir="${repoRoot}/lib/"
 
-if [ -d '.git' ]; then
-	if [ ! -d '.git/hooks/' ]; then
-		>&2 echo 'ERROR: Directory .git/hooks/ does not exist'
-		exit 1
-	fi
+if [ ! -d "$dir" ]; then
+	>&2 echo "Error: Directory $dir does not exist or is inaccessible."
+	exit 1
+fi
 
-	pre-commit install --install-hooks
-	for hook in bin/git/hooks/post-*; do
-		hookTarget=$(basename $hook)
-		hookTarget=".git/hooks/$hookTarget"
-		if ! cmp -s "$hook" "$hookTarget"; then
-			cp -v "$hook" "$hookTarget"
-		fi
-
-		if [ ! -x "$hookTarget" ]; then
-			chmod +x "$hookTarget"
-		fi
-	done
-else
-	>&2 echo "WARN: .git not found" >&2
+# Reject common corruption patterns in lib/
+# - markdown fences
+# - file headers like "### /path/file"
+# - line-number prefixes like "123: "
+if grep -R -n -E '^(###\s+/|```|[0-9]+:\s)' "$dir" >/dev/null 2>&1; then
+	echo "Error: Detected Goose-style corruption in lib/ (headers, fences, or line numbers)."
+	exit 1
 fi
 
 exit 0
