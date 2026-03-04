@@ -44,7 +44,7 @@
 SERVICE=chleb-bible-search
 
 if ! command -v systemctl > /dev/null; then
-	echo "systemd is required to manage $SERVICE" >&2
+	>&2 echo "Error: systemd is not installed. It is required to manage $SERVICE. Please install systemd and try again."
 	exit 1
 fi
 
@@ -53,7 +53,7 @@ case "$1" in
 		systemctl "$1" "$SERVICE"
 		;;
 	*)
-		echo "Usage: $0 {start|stop|restart|reload|force-reload|status}" >&2
+		>&2 echo "Usage: $0 {start|stop|restart|reload|force-reload|status}"
 		exit 1
 		;;
 esac
