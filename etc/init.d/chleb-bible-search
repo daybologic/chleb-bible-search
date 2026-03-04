@@ -43,14 +43,14 @@
 
 SERVICE=chleb-bible-search
 
+if ! command -v systemctl > /dev/null; then
+	echo "systemd is required to manage $SERVICE" >&2
+	exit 1
+fi
+
 case "$1" in
 	start|stop|restart|reload|force-reload|status)
-		if command -v systemctl > /dev/null; then
-			systemctl $1 $SERVICE
-		else
-			log_failure_msg "systemd is required to manage $SERVICE"
-			exit 1
-		fi
+		systemctl $1 $SERVICE
 		;;
 	*)
 		echo "Usage: $0 {start|stop|restart|reload|force-reload|status}" >&2
