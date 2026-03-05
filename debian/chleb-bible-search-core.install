@@ -1,4 +1,5 @@
 etc/chleb-bible-search.service /usr/lib/systemd/system/
+etc/init.d/chleb-bible-search /etc/init.d/
 etc/nginx/*.example /etc/nginx/sites-available/
 debian/etc/*.conf /etc/chleb-bible-search/
 debian/etc/*.yaml /etc/chleb-bible-search/

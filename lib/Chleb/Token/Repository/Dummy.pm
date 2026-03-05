@@ -49,7 +49,7 @@ sub create {
 }
 
 sub load {
-	return undef;
+	return;
 }
 
 sub save {

@@ -26,6 +26,7 @@ Build-Depends-Indep:
  libtime-duration-perl,
  libuuid-tiny-perl,
  libyaml-libyaml-perl,
+ pre-commit,
 Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 

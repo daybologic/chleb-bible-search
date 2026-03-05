@@ -1,3 +1,4 @@
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,49 +29,35 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-server:
-  admin_email: example@example.org
-  admin_name: Unknown
-  children: 30
-  domain: chleb-api.example.org
-votd_exclude:
-  terms:
-    - fornication
-    - circumcision
-    - circumcised
-    - harlots
-  refs:
-    - Lev 20:13
-    - Gen 19:8
-    - Psa 137:9
-    - Judges 19:22-29
-    - Kefir 50:1
-    - Rev 1000:11
-    - Deu 22:21
-features:
-  facebook: on
-  sessions: off
-  twitter: on
-  version: on
-Dancer2:
-  public_dir: /usr/share/chleb-bible-search/public
-session_tokens:
-  backend_local:
-    dir: /var/lib/chleb-bible-search/sessions
-    dynamic_mkdir: true
-  backend_redis:
-    db: 1
-    host: localhost:6379
-  load_order:
-    - Local
-#   - Redis
-  save_order:
-#   - Redis
-    - Local
-  ttl: 10800
-facebook:
-  groupname: Chleb Bible Search (1268737414574145)
-  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
-twitter:
-  username: ChlebSearch
-  url: https://x.com/ChlebSearch
+set -eu
+
+# perlcritic wrapper: advisory mode (never fails the build)
+# - Accepts multiple file arguments (works with: find ... -exec ... {} +)
+# - Calls the real perlcritic
+# - Always exits 0, but preserves perlcritic output to stdout/stderr.
+
+# Locate perlcritic
+PERLCRITIC_BIN="${PERLCRITIC_BIN:-perlcritic}"
+
+# Default options (override by setting PERLCRITIC_OPTS in environment if you want)
+DEFAULT_OPTS="--gentle --nocolor --profile-strictness quiet --quiet"
+
+# If you want to pass extra flags, do:
+#   PERLCRITIC_OPTS="--severity 3" bin/maint/perlcritic.sh lib/Foo.pm
+PERLCRITIC_OPTS="${PERLCRITIC_OPTS:-}"
+
+# Nothing to do
+if [ "$#" -eq 0 ]; then
+	exit 0
+fi
+
+# Run perlcritic over all files passed in one invocation.
+# We intentionally ignore exit status to make it "information-only".
+# perlcritic exits:
+#   0 = no violations
+#   1 = perlcritic error (e.g., profile/policy issue)
+#   2 = violations found
+# We don't want any of these to fail CI here.
+"$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS "$@"
+
+exit 0

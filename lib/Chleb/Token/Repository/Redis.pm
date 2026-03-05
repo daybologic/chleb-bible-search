@@ -159,7 +159,7 @@ sub load {
 		$self->dic->logger->error($evalError);
 		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "error getting session '$value' token via " . __PACKAGE__);
 	} elsif (!$data) {
-		return undef; # not found
+		return; # not found
 	}
 
 	my $token;

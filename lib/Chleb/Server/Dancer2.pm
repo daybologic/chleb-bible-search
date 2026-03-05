@@ -171,9 +171,15 @@ sub __detaint {
 
 sub _param {
 	my ($name) = @_;
+
 	my $value = param($name);
-	return undef unless (defined($value));
-	return __detaint($value, $name);
+	if (defined($value)) {
+		$value = __detaint($value, $name);
+	}
+
+	# $value be undef, we never return nothing,
+	# because the Chleb::Utils::forceArray wouldn't work properly.
+	return $value;
 }
 
 get '/' => sub {
@@ -185,6 +191,14 @@ get '/' => sub {
 		$facebookHtml = fetchStaticPage('facebook', {
 			FACEBOOK_GROUPNAME => $server->dic->config->get('facebook', 'groupname', 'Chleb Bible Search (1268737414574145)'),
 			FACEBOOK_URL => $server->dic->config->get('facebook', 'url', 'https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr'),
+		});
+	}
+
+	my $twitterHtml = '';
+	if ($server->dic->config->get('features', 'twitter', 'false', 1)) {
+		$twitterHtml = fetchStaticPage('twitter', {
+			TWITTER_USERNAME => $server->dic->config->get('twitter', 'username', 'ChlebSearch'),
+			TWITTER_URL => $server->dic->config->get('twitter', 'url', 'https://x.com/ChlebSearch'),
 		});
 	}
 
@@ -200,6 +214,7 @@ get '/' => sub {
 		FACEBOOK_HTML => $facebookHtml,
 		HOSTNAME => hostname(),
 		MAILING_LIST_VOTD_HTML => $mailingListVoTDHtml,
+		TWITTER_HTML => $twitterHtml,
 	});
 
 	return;

@@ -1,3 +1,4 @@
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,49 +29,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-server:
-  admin_email: example@example.org
-  admin_name: Unknown
-  children: 30
-  domain: chleb-api.example.org
-votd_exclude:
-  terms:
-    - fornication
-    - circumcision
-    - circumcised
-    - harlots
-  refs:
-    - Lev 20:13
-    - Gen 19:8
-    - Psa 137:9
-    - Judges 19:22-29
-    - Kefir 50:1
-    - Rev 1000:11
-    - Deu 22:21
-features:
-  facebook: on
-  sessions: off
-  twitter: on
-  version: on
-Dancer2:
-  public_dir: /usr/share/chleb-bible-search/public
-session_tokens:
-  backend_local:
-    dir: /var/lib/chleb-bible-search/sessions
-    dynamic_mkdir: true
-  backend_redis:
-    db: 1
-    host: localhost:6379
-  load_order:
-    - Local
-#   - Redis
-  save_order:
-#   - Redis
-    - Local
-  ttl: 10800
-facebook:
-  groupname: Chleb Bible Search (1268737414574145)
-  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
-twitter:
-  username: ChlebSearch
-  url: https://x.com/ChlebSearch
+scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
+
+dir="${repoRoot}/lib/"
+
+if [ ! -d "$dir" ]; then
+	>&2 echo "Error: Directory $dir does not exist or is inaccessible."
+	exit 1
+fi
+
+# Reject common corruption patterns in lib/
+# - markdown fences
+# - file headers like "### /path/file"
+# - line-number prefixes like "123: "
+if grep -R -n -E '^(###\s+/|```|[0-9]+:\s)' "$dir" >/dev/null 2>&1; then
+	echo "Error: Detected Goose-style corruption in lib/ (headers, fences, or line numbers)."
+	exit 1
+fi
+
+exit 0

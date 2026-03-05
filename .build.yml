@@ -60,6 +60,7 @@ packages:
   - libwww-perl
   - libyaml-libyaml-perl
   - perl
+  - pre-commit
 
 sources:
   - https://git.sr.ht/~m6kvm/chleb-bible-search
