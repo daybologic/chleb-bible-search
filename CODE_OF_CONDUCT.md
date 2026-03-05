@@ -1,13 +1,21 @@
 # Contributor Covenant Code of Conduct
 
+## About This Project
+
+Chleb Bible Search is a tool for exploring the Bible, and as such its
+community includes people of many faiths, denominations, and traditions, as
+well as people with no religious belief at all.  All are equally welcome as
+contributors.  Sectarian disputes and hostility toward people for holding —
+or not holding — religious convictions have no place here.
+
 ## Our Pledge
 
 We as members, contributors, and leaders pledge to make participation in our
 community a harassment-free experience for everyone, regardless of age, body
 size, visible or invisible disability, ethnicity, sex characteristics, gender
 identity and expression, level of experience, education, socio-economic status,
-nationality, personal appearance, race, religion, or sexual identity
-and orientation.
+nationality, personal appearance, race, religion or denomination, religious
+conviction or lack thereof, or sexual identity and orientation.
 
 We pledge to act and interact in ways that contribute to an open, welcoming,
 diverse, inclusive, and healthy community.
@@ -33,6 +41,10 @@ Examples of unacceptable behavior include:
 * Public or private harassment
 * Publishing others' private information, such as a physical or email
   address, without their explicit permission
+* Sectarian behaviour: disparaging, dismissing, or attacking contributors on
+  the basis of their religious denomination, tradition, or doctrinal position
+* Bigotry toward contributors on the basis of their faith or religious
+  convictions, or on the basis of having no religious belief
 * Other conduct which could reasonably be considered inappropriate in a
   professional setting
 
