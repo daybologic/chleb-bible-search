@@ -50,7 +50,7 @@ votd_exclude:
 features:
   facebook: on
   sessions: off
-  twitter: off
+  twitter: on
   version: on
 Dancer2:
   public_dir: data/static/public
