@@ -36,10 +36,10 @@ our $REDIS_CLASS;
 BEGIN {
 	if (eval { require Redis::Fast; 1 }) {
 		$REDIS_CLASS = 'Redis::Fast';
-	} else {
-		require Redis;
+	} elsif (eval { require Redis; 1 }) {
 		$REDIS_CLASS = 'Redis';
 	}
+	# else undef: neither is installed; error deferred to __makeDo
 }
 
 =head1 CONSTANTS
@@ -259,6 +259,10 @@ sub __makeDo {
 	if ($uri !~ m/:/) {
 		$uri = "${uri}:${REDIS_PORT}";
 	}
+
+	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR,
+	    'Redis backend is unavailable: neither Redis nor Redis::Fast is installed')
+	    unless ($REDIS_CLASS);
 
 	$self->dic->logger->debug("Redis backend using $REDIS_CLASS");
 	my $redis = $self->__buildRedis($uri);
