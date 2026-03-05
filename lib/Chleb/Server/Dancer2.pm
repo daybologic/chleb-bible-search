@@ -191,8 +191,8 @@ get '/' => sub {
 	my $twitterHtml = '';
 	if ($server->dic->config->get('features', 'twitter', 'false', 1)) {
 		$twitterHtml = fetchStaticPage('twitter', {
-			TWITTER_USERNAME => $server->dic->config->get('twitter', 'username', 'chlebsearch'),
-			TWITTER_URL => $server->dic->config->get('twitter', 'url', 'https://x.com/chlebsearch'),
+			TWITTER_USERNAME => $server->dic->config->get('twitter', 'username', 'ChlebSearch'),
+			TWITTER_URL => $server->dic->config->get('twitter', 'url', 'https://x.com/ChlebSearch'),
 		});
 	}
 
