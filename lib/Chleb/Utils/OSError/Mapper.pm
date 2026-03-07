@@ -45,6 +45,7 @@ Map system errors to public HTTP errors
 
 extends 'Chleb::Bible::Base';
 
+use English qw(-no_match_vars);
 use Errno;
 use HTTP::Status 6.39 qw(:constants status_constant_name status_message);
 use POSIX qw(strerror);
@@ -271,14 +272,12 @@ sub __getSymbolicName {
 
 	my $symbolic = '???';
 
-	foreach my $mnemonic (keys(%!)) {
-		## no critic (TestingAndDebugging::ProhibitNoStrict)
-		no strict 'refs';
+	foreach my $mnemonic (keys(%OS_ERROR)) {
 		$mnemonic = "Errno::$mnemonic";
-		$! = &$mnemonic;
+		local $OS_ERROR = Errno->can($mnemonic)->();
 		$mnemonic =~ s/^Errno:://;
-		my $value = $!{$mnemonic};
-		if ($value == $error) {
+		my $value = $OS_ERROR{$mnemonic};
+		if ($value eq $error) {
 			$symbolic = $mnemonic;
 			last;
 		}
