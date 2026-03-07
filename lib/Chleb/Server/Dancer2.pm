@@ -96,9 +96,7 @@ sub handleException {
 	}
 
 	$server->dic->logger->error("Internal Server Error: $exception");
-	send_error($exception, 500);
-
-	return;
+	return send_error($exception, 500);
 }
 
 sub fetchStaticPage {
@@ -140,17 +138,19 @@ sub fetchStaticPage {
 	}
 
 	my $error = $ERRNO;
-	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
+	return send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
 }
 
 sub serveStaticPage {
 	my ($name, $templateParams) = @_;
 	send_as html => fetchStaticPage($name, $templateParams);
+	return;
 }
 
-sub __configGetPublicDir {
+sub __configSetPublicDir {
 	die('Moose server must be initialized') unless ($server);
-	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public'),
+	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public');
+	return;
 }
 
 sub __detaint {
@@ -566,7 +566,7 @@ get '/1/info' => sub {
 sub run {
 	my ($self) = @_;
 	$server = Chleb::Server::Moose->new();
-	__configGetPublicDir();
+	__configSetPublicDir();
 	return $self->dance;
 }
 

@@ -44,17 +44,19 @@ use HTTP::Status qw(:constants);
 sub repo {
 	my ($self, $name) = @_;
 
-	if (defined($name)) {
-		if ($name eq 'Dummy') {
-			return Chleb::Token::Repository::Dummy->new(repo => $self);
-		} elsif ($name eq 'Local') {
-			return Chleb::Token::Repository::Local->new(repo => $self);
-		} elsif ($name eq 'Redis') {
-			return Chleb::Token::Repository::Redis->new(repo => $self);
-		}
+	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be specified')
+	    unless (defined($name));
+
+	# TODO: Could we use UNIVERSAL require here?
+	if ($name eq 'Dummy') {
+		return Chleb::Token::Repository::Dummy->new(repo => $self);
+	} elsif ($name eq 'Local') {
+		return Chleb::Token::Repository::Local->new(repo => $self);
+	} elsif ($name eq 'Redis') {
+		return Chleb::Token::Repository::Redis->new(repo => $self);
 	}
 
-	...
+	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "'${name}' is not a known token repository backend");
 }
 
 sub create {

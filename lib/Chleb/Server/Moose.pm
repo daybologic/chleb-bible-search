@@ -127,9 +127,6 @@ sub title {
 		$self->dic->config->get('server', 'admin_email', 'example@example.org'),
 	));
 
-	# nb. this doesn't work, but perhaps it will be fixed in Plack in the future.
-	$0 = 'chleb-bible-search [server]';
-
 	return;
 }
 
@@ -958,7 +955,7 @@ sub __verseToHtml {
 
 	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
 		my $lastChapter = $chapters[-1];
-		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>',
+		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>';
 	}
 
 	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
@@ -1108,7 +1105,7 @@ sub __searchResultsToHtml {
 }
 
 sub __linkToHome { # add a link to home (root)
-	my $output .= "<p>\r\n";
+	my $output = "<p>\r\n";
 	$output .= sprintf("\t<a class=\"vn-link vn-home\" href=\"%s\">%s</a>\r\n", '/', 'home');
 	$output .= "</p>\r\n";
 	return $output;
