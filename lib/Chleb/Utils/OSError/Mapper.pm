@@ -212,7 +212,7 @@ locale is not English.
 
 =cut
 
-sub map {
+sub map { ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my ($self, $error) = @_;
 	$error //= 0;
 
