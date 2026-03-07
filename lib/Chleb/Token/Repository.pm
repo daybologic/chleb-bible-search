@@ -38,7 +38,6 @@ extends 'Chleb::Bible::Base';
 use Chleb::Exception;
 use Chleb::Token::Repository::Dummy;
 use Chleb::Token::Repository::Local;
-use Chleb::Token::Repository::Redis;
 use HTTP::Status qw(:constants);
 
 sub repo {
@@ -50,6 +49,7 @@ sub repo {
 		} elsif ($name eq 'Local') {
 			return Chleb::Token::Repository::Local->new(repo => $self);
 		} elsif ($name eq 'Redis') {
+			require Chleb::Token::Repository::Redis;
 			return Chleb::Token::Repository::Redis->new(repo => $self);
 		}
 	}
