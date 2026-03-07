@@ -41,7 +41,7 @@ sub BUILD {
 	return;
 }
 
-sub log {
+sub log { ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my ($self, $msg) = @_;
 	push(@{ $self->__messages }, $msg);
 	return unless ($ENV{TEST_VERBOSE});
@@ -74,7 +74,7 @@ sub error {
 	return $self->log($msg);
 }
 
-sub warn {
+sub warn { ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my ($self, $msg) = @_;
 	return $self->log($msg);
 }
