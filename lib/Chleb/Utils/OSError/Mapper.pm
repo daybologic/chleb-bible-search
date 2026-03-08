@@ -277,7 +277,7 @@ sub __getSymbolicName {
 		local $OS_ERROR = Errno->can($mnemonic)->();
 		$mnemonic =~ s/^Errno:://;
 		my $value = $OS_ERROR{$mnemonic};
-		if ($value eq $error) {
+		if ($value == $error) {
 			$symbolic = $mnemonic;
 			last;
 		}
