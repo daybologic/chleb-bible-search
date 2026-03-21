@@ -48,12 +48,15 @@ sub repo {
 	    unless (defined($name));
 
 	# TODO: Could we use UNIVERSAL require here?
-	if ($name eq 'Dummy') {
-		return Chleb::Token::Repository::Dummy->new(repo => $self);
-	} elsif ($name eq 'Local') {
-		return Chleb::Token::Repository::Local->new(repo => $self);
-	} elsif ($name eq 'Redis') {
-		return Chleb::Token::Repository::Redis->new(repo => $self);
+	my %repositories = (
+		'Dummy' => 'Chleb::Token::Repository::Dummy',
+		'Local' => 'Chleb::Token::Repository::Local',
+		'Redis' => 'Chleb::Token::Repository::Redis',
+	);
+
+	if (exists $repositories{$name}) {
+		my $class = $repositories{$name};
+		return $class->new(repo => $self);
 	}
 
 	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "'${name}' is not a known token repository backend");
