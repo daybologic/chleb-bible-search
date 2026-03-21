@@ -34,6 +34,7 @@ package main;
 use strict;
 use warnings;
 
+use DBI;
 use Data::Dumper;
 use English qw(-no_match_vars);
 use IO::File;
@@ -99,6 +100,52 @@ sub __emotionFromTranslation {
 sub __outputFromTranslation {
 	my ($translation) = @_;
 	return join('/', $DATA_DIR, sprintf('%s.bin', $translation));
+}
+
+sub main2 {
+	my ($translation) = @ARGV;
+	my $dbFile = "${translation}.sqlite";
+
+	my $dbh = DBI->connect(
+		"dbi:SQLite:dbname=$dbFile",
+		q{},
+		q{},
+		{
+			RaiseError => 1,
+			AutoCommit => 0,
+		}
+	);
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS verse (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	translation CHAR(8) NOT NULL,
+	book TEXT NOT NULL,
+	chapter INTEGER NOT NULL,
+	ordinal INTEGER NOT NULL,
+	text TEXT NOT NULL,
+	UNIQUE (translation, book, chapter, ordinal)
+)
+SQL
+
+	$dbh->commit();
+
+	my $sth = $dbh->prepare(<<'SQL');
+	INSERT INTO verse (translation, book, chapter, ordinal, text)
+	VALUES (?, ?, ?, ?, ?)
+SQL
+
+	$sth->execute($translation, 'John', 3, 16, 'For God so loved the world...');
+	$sth->execute($translation, 'Genesis', 1, 1, 'In the beginning God created the heaven and the earth.');
+	$sth->execute($translation, 'Psalm', 23, 1, 'The LORD is my shepherd; I shall not want.');
+
+	print "Database '$dbFile' is ready, and sample verses have been inserted.\n";
+
+	$sth->finish();
+	$dbh->commit();
+	$dbh->disconnect();
+
+	exit 0;
 }
 
 sub main {
@@ -205,4 +252,4 @@ sub getSentiment {
 	return $data;
 }
 
-exit(main()) unless (caller());
+exit(main2()) unless (caller());
