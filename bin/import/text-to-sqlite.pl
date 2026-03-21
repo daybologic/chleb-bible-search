@@ -115,21 +115,36 @@ SQL
 
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS translation (
-	id CHAR(8) PRIMARY KEY,
+	code CHAR(8) PRIMARY KEY,
 	year INTEGER NOT NULL,
 	language CHAR(2) NOT NULL
 )
 SQL
 
 	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS book (
+	id CHAR(36) PRIMARY KEY,
+	code CHAR(8) NOT NULL,
+	translation_code CHAR(8) NOT NULL,
+	ordinal INTEGER NOT NULL
+)
+SQL
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS chapter (
+	id CHAR(36) PRIMARY KEY,
+	translation_code CHAR(8) NOT NULL,
+	book_code CHAR(8) NOT NULL,
+	ordinal INTEGER NOT NULL
+)
+SQL
+
+	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS verse (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	translation CHAR(8) NOT NULL,
-	book TEXT NOT NULL,
-	chapter INTEGER NOT NULL,
+	id CHAR(36) PRIMARY KEY,
+	chapter_id CHAR(36) NOT NULL,
 	ordinal INTEGER NOT NULL,
-	text TEXT NOT NULL,
-	UNIQUE (translation, book, chapter, ordinal)
+	text TEXT NOT NULL
 )
 SQL
 
@@ -154,27 +169,39 @@ sub main2 {
 
 my $sth = $dbh->prepare(<<'SQL');
 	INSERT INTO master (sig, version, built)
-	VALUES (?, ?, ?)
+	VALUES(?, ?, ?)
 SQL
 	$sth->execute($FILE_SIG, $FILE_VERSION, 'NOW()');
 	$dbh->commit();
 
 $sth = $dbh->prepare(<<'SQL');
-	INSERT INTO translation (id, year, language)
-	VALUES (?, ?, ?)
+	INSERT INTO translation (code, year, language)
+	VALUES(?, ?, ?)
 SQL
-
 	$sth->execute($translation, 1066, 'en');
 	$dbh->commit();
 
 $sth = $dbh->prepare(<<'SQL');
-	INSERT INTO verse (translation, book, chapter, ordinal, text)
-	VALUES (?, ?, ?, ?, ?)
+	INSERT INTO book (code, translation_code)
+	VALUES(?, ?)
+SQL
+	$sth->execute('Gen', $translation);
+
+$sth = $dbh->prepare(<<'SQL');
+	INSERT INTO chapter (id, book_id, ordinal)
+	VALUES(?, ?, ?)
+SQL
+	$sth->execute('f9f8dece-253d-11f1-a839-ffa8ae726ac3', '01e9ca62-253e-11f1-a83a-174fbcaa35a9', 1);
+
+$sth = $dbh->prepare(<<'SQL');
+	INSERT INTO verse (translation_code, book, chapter, ordinal, text)
+	VALUES(?, ?, ?, ?, ?)
 SQL
 
-	$sth->execute($translation, 'John', 3, 16, 'For God so loved the world...');
-	$sth->execute($translation, 'Genesis', 1, 1, 'In the beginning God created the heaven and the earth.');
-	$sth->execute($translation, 'Psalm', 23, 1, 'The LORD is my shepherd; I shall not want.');
+	# 1 -- FIMXE: shall be book_id
+	$sth->execute($translation, 1, 3, 16, 'For God so loved the world...');
+	$sth->execute($translation, 1, 1, 1, 'In the beginning God created the heaven and the earth.');
+	$sth->execute($translation, 1, 23, 1, 'The LORD is my shepherd; I shall not want.');
 
 	print "Database '$dbFile' is ready, and sample verses have been inserted.\n";
 
