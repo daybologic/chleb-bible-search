@@ -48,8 +48,8 @@ Readonly my $OT_COUNT => 39;
 Readonly my $DATA_DIR   => 'data';
 Readonly my $BOOK_INPUT => 'static/kjv.cvs';
 
-Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
-Readonly my $FILE_VERSION => 12;
+Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
+Readonly my $FILE_VERSION => 13;
 
 my $offsetMaster = -1;
 Readonly my $MAIN_OFFSET_SIG     => ++$offsetMaster; # string
@@ -102,6 +102,40 @@ sub __outputFromTranslation {
 	return join('/', $DATA_DIR, sprintf('%s.bin', $translation));
 }
 
+sub __createTables {
+	my ($dbh) = @_;
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS master (
+	sig CHAR(36) NOT NULL,
+	version INTEGER NOT NULL,
+	built DATETIME NOT NULL
+)
+SQL
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS translation (
+	id CHAR(8) PRIMARY KEY,
+	year INTEGER NOT NULL,
+	language CHAR(2) NOT NULL
+)
+SQL
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS verse (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	translation CHAR(8) NOT NULL,
+	book TEXT NOT NULL,
+	chapter INTEGER NOT NULL,
+	ordinal INTEGER NOT NULL,
+	text TEXT NOT NULL,
+	UNIQUE (translation, book, chapter, ordinal)
+)
+SQL
+
+	return;
+}
+
 sub main2 {
 	my ($translation) = @ARGV;
 	my $dbFile = "${translation}.sqlite";
@@ -116,21 +150,24 @@ sub main2 {
 		}
 	);
 
-	$dbh->do(<<'SQL');
-CREATE TABLE IF NOT EXISTS verse (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	translation CHAR(8) NOT NULL,
-	book TEXT NOT NULL,
-	chapter INTEGER NOT NULL,
-	ordinal INTEGER NOT NULL,
-	text TEXT NOT NULL,
-	UNIQUE (translation, book, chapter, ordinal)
-)
-SQL
+	__createTables($dbh);
 
+my $sth = $dbh->prepare(<<'SQL');
+	INSERT INTO master (sig, version, built)
+	VALUES (?, ?, ?)
+SQL
+	$sth->execute($FILE_SIG, $FILE_VERSION, 'NOW()');
 	$dbh->commit();
 
-	my $sth = $dbh->prepare(<<'SQL');
+$sth = $dbh->prepare(<<'SQL');
+	INSERT INTO translation (id, year, language)
+	VALUES (?, ?, ?)
+SQL
+
+	$sth->execute($translation, 1066, 'en');
+	$dbh->commit();
+
+$sth = $dbh->prepare(<<'SQL');
 	INSERT INTO verse (translation, book, chapter, ordinal, text)
 	VALUES (?, ?, ?, ?, ?)
 SQL
