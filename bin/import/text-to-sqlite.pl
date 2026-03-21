@@ -151,6 +151,20 @@ SQL
 	return;
 }
 
+sub __writeMaster {
+	my ($dbh) = @_;
+
+my $sth = $dbh->prepare(<<'SQL');
+		INSERT INTO master (sig, version, built)
+		VALUES(?, ?, ?)
+SQL
+
+		$sth->execute($FILE_SIG, $FILE_VERSION, 'NOW()'); # FIXME, 'NOW()' is verbatim.  Look up proper idiom
+		$dbh->commit();
+
+	return;
+}
+
 sub main2 {
 	my ($translation) = @ARGV;
 	my $dbFile = "${translation}.sqlite";
@@ -166,15 +180,9 @@ sub main2 {
 	);
 
 	__createTables($dbh);
+	__writeMaster($dbh);
 
 my $sth = $dbh->prepare(<<'SQL');
-	INSERT INTO master (sig, version, built)
-	VALUES(?, ?, ?)
-SQL
-	$sth->execute($FILE_SIG, $FILE_VERSION, 'NOW()');
-	$dbh->commit();
-
-$sth = $dbh->prepare(<<'SQL');
 	INSERT INTO translation (code, year, language)
 	VALUES(?, ?, ?)
 SQL
