@@ -154,13 +154,27 @@ SQL
 sub __writeMaster {
 	my ($dbh) = @_;
 
-my $sth = $dbh->prepare(<<'SQL');
+	my $sth = $dbh->prepare(<<'SQL');
 		INSERT INTO master (sig, version, built)
 		VALUES(?, ?, ?)
 SQL
 
-		$sth->execute($FILE_SIG, $FILE_VERSION, 'NOW()'); # FIXME, 'NOW()' is verbatim.  Look up proper idiom
-		$dbh->commit();
+	$sth->execute($FILE_SIG, $FILE_VERSION, 'NOW()'); # FIXME, 'NOW()' is verbatim.  Look up proper idiom
+	$dbh->commit();
+
+	return;
+}
+
+sub __writeTranslation {
+	my ($dbh, $translation) = @_;
+
+	my $sth = $dbh->prepare(<<'SQL');
+		INSERT INTO translation (code, year, language)
+		VALUES(?, ?, ?)
+SQL
+
+	$sth->execute($translation, 1066, 'en'); # FIXME: OK we know this is the wrong year
+	$dbh->commit();
 
 	return;
 }
@@ -181,15 +195,9 @@ sub main2 {
 
 	__createTables($dbh);
 	__writeMaster($dbh);
+	__writeTranslation($dbh, $translation);
 
 my $sth = $dbh->prepare(<<'SQL');
-	INSERT INTO translation (code, year, language)
-	VALUES(?, ?, ?)
-SQL
-	$sth->execute($translation, 1066, 'en');
-	$dbh->commit();
-
-$sth = $dbh->prepare(<<'SQL');
 	INSERT INTO book (code, translation_code)
 	VALUES(?, ?)
 SQL
