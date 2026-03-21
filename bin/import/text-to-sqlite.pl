@@ -181,6 +181,12 @@ SQL
 
 sub main2 {
 	my ($translation) = @ARGV;
+
+	unless ($translation) {
+		printf(STDERR "You must specify the translation!\n");
+		return EXIT_FAILURE;
+	}
+
 	my $dbFile = "${translation}.sqlite";
 
 	my $dbh = DBI->connect(
@@ -215,9 +221,9 @@ $sth = $dbh->prepare(<<'SQL');
 SQL
 
 	# 1 -- FIMXE: shall be book_id
-	$sth->execute($translation, 1, 3, 16, 'For God so loved the world...');
-	$sth->execute($translation, 1, 1, 1, 'In the beginning God created the heaven and the earth.');
-	$sth->execute($translation, 1, 23, 1, 'The LORD is my shepherd; I shall not want.');
+	#$sth->execute($translation, 1, 3, 16, 'For God so loved the world...');
+	#$sth->execute($translation, 1, 1, 1, 'In the beginning God created the heaven and the earth.');
+	#$sth->execute($translation, 1, 23, 1, 'The LORD is my shepherd; I shall not want.');
 
 	print "Database '$dbFile' is ready, and sample verses have been inserted.\n";
 
