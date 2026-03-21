@@ -35,3 +35,5 @@ set -eu
 translation=kjv
 bin/import/text-to-bin.pl $translation
 gzip -f "data/${translation}.bin"
+# FIXME (uncomment)
+#bin/import/text-to-sqlite.pl $translation
