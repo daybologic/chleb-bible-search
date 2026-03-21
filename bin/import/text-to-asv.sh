@@ -32,5 +32,6 @@
 
 set -eu
 
-bin/import/text-to-bin.pl asv
-gzip -f data/asv.bin
+translation=asv
+bin/import/text-to-bin.pl $translation
+gzip -f "data/${translation}.bin"

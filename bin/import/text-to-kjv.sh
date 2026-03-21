@@ -32,5 +32,6 @@
 
 set -eu
 
-bin/import/text-to-bin.pl kjv
-gzip -f data/kjv.bin
+translation=kjv
+bin/import/text-to-bin.pl $translation
+gzip -f "data/${translation}.bin"
