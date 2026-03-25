@@ -40,6 +40,9 @@ all: \
 asv.bin.gz asv.sqlite.gz &: static/asv.txt
 	cd ../ && ./bin/import/text-to-asv.sh
 
+core.sqlite.gz : static/kjv.txt
+	cd ../ && ./bin/import/text-to-core.sh
+
 kjv.bin.gz kjv.sqlite.gz &: static/kjv.txt
 	cd ../ && ./bin/import/text-to-kjv.sh
 

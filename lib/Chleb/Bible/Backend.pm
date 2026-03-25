@@ -46,8 +46,8 @@ use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 use Storable;
 
-Readonly my $FILE_SIG     => '3aa67e06-237c-11ef-8c58-f73e3250b3f3';
-Readonly my $FILE_VERSION => 12;
+Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
+Readonly my $FILE_VERSION => 13;
 
 Readonly my $OT_COUNT => 39;
 
@@ -277,7 +277,7 @@ sub __makeCacheDir {
 
 sub __bibleFileName {
 	my ($self, %flags) = @_;
-	my $fileName = join('.', $self->bible->translation, 'bin');
+	my $fileName = join('.', $self->bible->translation, 'sqlite'); # TODO: need better logic to know which translations match which combined SQLite databases
 	$fileName .= '.gz' if ($flags{compressed});
 	return $fileName;
 }
