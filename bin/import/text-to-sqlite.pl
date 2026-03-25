@@ -38,6 +38,7 @@ use Data::Dumper;
 use DBI;
 use English qw(-no_match_vars);
 use IO::File;
+use Getopt::Long qw(:config no_ignore_case);
 use JSON;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
@@ -294,19 +295,25 @@ sub __translationFileName {
 }
 
 sub main2 {
-	my ($translation) = @ARGV;
+	my $translation;
+	my $name;
 
-	if (scalar(@ARGV) > 1) {
-		printf(STDERR "Specify one translation at a time, or 'all' for the combined file\n");
-		return EXIT_FAILURE;
-	}
+	return EXIT_FAILURE unless (GetOptions(
+		'translation|t=s' => \$translation,
+		'name|n=s' => \$name,
+	));
 
 	unless ($translation) {
 		printf(STDERR "You must specify the translation!\n");
 		return EXIT_FAILURE;
 	}
 
-	my $translationFileName = __translationFileName($translation);
+	unless ($name) {
+		printf(STDERR "You must specify the name!\n");
+		return EXIT_FAILURE;
+	}
+
+	my $translationFileName = __translationFileName($name);
 	my $fileHandle = __connect($translationFileName);
 
 	%bookKeys = ( );
@@ -315,8 +322,8 @@ sub main2 {
 	__createTables($fileHandle);
 	__writeMaster($fileHandle);
 
-	if ($translation eq 'all') {
-		my @translations = ('asv', 'kjv'); # TODO can we make this list dynamic somehow?
+	if ($translation eq 'core') {
+		my @translations = ('asv', 'kjv'); # TODO can we make this list dynamic somehow?  all might need to be an even bigger superset, or we might need to tag inputs from dirs
 		__writeTranslations($fileHandle, \@translations);
 		foreach my $translation2 (@translations) {
 			__processVerses($fileHandle, $translation2);

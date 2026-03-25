@@ -32,6 +32,8 @@
 
 set -eu
 
-translation=all
-bin/import/text-to-sqlite.pl $translation
-gzip -f "data/${translation}.sqlite"
+translation=core
+name=$translation
+
+bin/import/text-to-sqlite.pl -t $translation -n $name
+gzip -f "data/${name}.sqlite"
