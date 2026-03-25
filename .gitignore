@@ -21,6 +21,8 @@ data/static/public/terms.html
 data/*-verses.txt
 data/*.bin
 data/*.bin.gz
+data/*.sqlite
+data/*.sqlite.gz
 data/sessions
 externals
 *.build
