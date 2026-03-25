@@ -196,7 +196,7 @@ SQL
 
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS book (
-	id CHAR(36) PRIMARY KEY,
+	id INTEGER PRIMARY KEY,
 	code CHAR(8) NOT NULL,
 	translation CHAR(8) NOT NULL,
 	testament CHAR(1) NOT NULL CHECK (testament IN ('O', 'N')),
@@ -207,8 +207,8 @@ SQL
 
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS chapter (
-	id CHAR(36) PRIMARY KEY,
-	book_id CHAR(64) NOT NULL,
+	id INTEGER PRIMARY KEY,
+	book_id INTEGER NOT NULL,
 	translation CHAR(8) NOT NULL,
 	book_code CHAR(8) NOT NULL,
 	ordinal INTEGER NOT NULL,
@@ -218,9 +218,9 @@ SQL
 
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS verse (
-	id CHAR(36) PRIMARY KEY,
-	book_id CHAR(36) NOT NULL,
-	chapter_id CHAR(36) NOT NULL,
+	id INTEGER PRIMARY KEY,
+	book_id INTEGER NOT NULL,
+	chapter_id INTEGER NOT NULL,
 	ordinal_relative_to_book INTEGER NOT NULL,
 	ordinal_relative_to_chapter INTEGER NOT NULL,
 	text TEXT NOT NULL
@@ -261,8 +261,13 @@ SQL
 	return;
 }
 
+my %idCounters = ( );
 sub __uuid {
-	# TODO: Should we use v5 UUIDs which are generated from the IDs?
+	my ($domain) = @_;
+
+	$idCounters{$domain} = 0 unless(defined($idCounters{$domain}));
+	return ++$idCounters{$domain};
+
 	if (my $sub = UUID::Tiny->can('UUID_V7')) {
 		return create_uuid_as_string($sub->());
 	}
@@ -362,7 +367,7 @@ SQL
 	unless ($bookKeys{$bookKey}) {
 		my $ordinal = $BOOK_ORDINAL{$bookShortName} or die("Missing ordinal for '$bookShortName'");
 		my $testament = $ordinal > $OT_COUNT ? 'N' : 'O';
-		my $id = __uuid();
+		my $id = __uuid('book');
 
 		my $chapterCount = 0; # FIXME: How can I know without two passes?
 		$sthBook->execute($id, $bookShortName, $translation, $testament, $ordinal, $chapterCount);
@@ -383,7 +388,7 @@ SQL
 	my $bookKey = join(':', $translation, $bookShortName);
 	my $chapterKey = join(':', $bookKey, $chapterOrdinal);
 	unless ($chapterKeys{$chapterKey}) {
-		my $id = __uuid();
+		my $id = __uuid('chapter');
 		my $bookId = $bookKeys{$bookKey};
 
 		my $verseCount = 0; # FIXME: How can I know without two passes?
@@ -404,7 +409,7 @@ SQL
 
 	my $bookKey = join(':', $translation, $bookShortName);
 	my $chapterKey = join(':', $bookKey, $chapterOrdinal);
-	my $id = __uuid();
+	my $id = __uuid('verse');
 	my $bookId = $bookKeys{$bookKey};
 	my $chapterId = $chapterKeys{$chapterKey};
 
