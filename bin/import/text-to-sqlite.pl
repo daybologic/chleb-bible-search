@@ -34,14 +34,15 @@ package main;
 use strict;
 use warnings;
 
-use DBI;
 use Data::Dumper;
+use DBI;
 use English qw(-no_match_vars);
 use IO::File;
 use JSON;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
 use Storable qw(nstore);
+use UUID::Tiny ':std';
 
 Readonly my $OT_COUNT => 39;
 
@@ -66,11 +67,83 @@ Readonly my $BOOK_OFFSET_SHORT_NAMES    => ++$offsetMaster; # array of book name
 Readonly my $BOOK_OFFSET_BOOK_INFO      => ++$offsetMaster; # hash of book info keyed by short book name
 Readonly my $BOOK_OFFSET_VERSES_TO_KEYS => ++$offsetMaster; # Relative book verse offsets to keys ($MAIN_OFFSET_DATA) ie. 'Gen:1533' -> 'Gen:50:26'
 
+Readonly my %BOOK_ORDINAL => (
+	Gen   => 1,
+	Exo   => 2,
+	Lev   => 3,
+	Num   => 4,
+	Deu   => 5,
+	Josh  => 6,
+	Judg  => 7,
+	Ruth  => 8,
+	'1Sam' => 9,
+	'2Sam' => 10,
+	'1Ki'  => 11,
+	'2Ki'  => 12,
+	'1Chr' => 13,
+	'2Chr' => 14,
+	Ezra  => 15,
+	Neh   => 16,
+	Est   => 17,
+	Job   => 18,
+	Psa   => 19,
+	Prov  => 20,
+	Eccl  => 21,
+	Song  => 22,
+	Isa   => 23,
+	Jer   => 24,
+	Lam   => 25,
+	Ezek  => 26,
+	Dan   => 27,
+	Hosea => 28,
+	Joel  => 29,
+	Amos  => 30,
+	Oba   => 31,
+	Jonah => 32,
+	Micah => 33,
+	Nahum => 34,
+	Hab   => 35,
+	Zep   => 36,
+	Hag   => 37,
+	Zec   => 38,
+	Mal   => 39,
+	Mat   => 40,
+	Mark  => 41,
+	Luke  => 42,
+	John  => 43,
+	Acts  => 44,
+	Rom   => 45,
+	'1Cor' => 46,
+	'2Cor' => 47,
+	Gal   => 48,
+	Eph   => 49,
+	Phil  => 50,
+	Col   => 51,
+	'1Th'  => 52,
+	'2Th'  => 53,
+	'1Tim' => 54,
+	'2Tim' => 55,
+	Titus => 56,
+	Phile => 57,
+	Heb   => 58,
+	James => 59,
+	'1Pet' => 60,
+	'2Pet' => 61,
+	'1John' => 62,
+	'2John' => 63,
+	'3John' => 64,
+	Jude  => 65,
+	Rev   => 66,
+);
+
 # nb. book info structure is as follows:
 # c - chapterCount
 # n - bookLongName
 # t - testamentEnum ('N', 'O')
 # v - verse count map (keys are the chapter number, there is no zero, and values are the verse counts)
+
+my %bookKeys = ( );
+my %chapterKeys = ( );
 
 sub writeOutput {
 	my ($data, $translation) = @_;
@@ -109,7 +182,7 @@ sub __createTables {
 CREATE TABLE IF NOT EXISTS master (
 	sig CHAR(36) NOT NULL,
 	version INTEGER NOT NULL,
-	built DATETIME NOT NULL
+	built_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 )
 SQL
 
@@ -125,25 +198,31 @@ SQL
 CREATE TABLE IF NOT EXISTS book (
 	id CHAR(36) PRIMARY KEY,
 	code CHAR(8) NOT NULL,
-	translation_code CHAR(8) NOT NULL,
-	ordinal INTEGER NOT NULL
+	translation CHAR(8) NOT NULL,
+	testament CHAR(1) NOT NULL CHECK (testament IN ('O', 'N')),
+	ordinal INTEGER NOT NULL,
+	chapter_count INTEGER NOT NULL
 )
 SQL
 
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS chapter (
 	id CHAR(36) PRIMARY KEY,
-	translation_code CHAR(8) NOT NULL,
+	book_id CHAR(64) NOT NULL,
+	translation CHAR(8) NOT NULL,
 	book_code CHAR(8) NOT NULL,
-	ordinal INTEGER NOT NULL
+	ordinal INTEGER NOT NULL,
+	verse_count INTEGER NOT NULL
 )
 SQL
 
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS verse (
 	id CHAR(36) PRIMARY KEY,
+	book_id CHAR(36) NOT NULL,
 	chapter_id CHAR(36) NOT NULL,
-	ordinal INTEGER NOT NULL,
+	ordinal_relative_to_book INTEGER NOT NULL,
+	ordinal_relative_to_chapter INTEGER NOT NULL,
 	text TEXT NOT NULL
 )
 SQL
@@ -152,45 +231,49 @@ SQL
 }
 
 sub __writeMaster {
-	my ($dbh) = @_;
+	my ($fileHandle) = @_;
 
-	my $sth = $dbh->prepare(<<'SQL');
-		INSERT INTO master (sig, version, built)
-		VALUES(?, ?, ?)
+	my $sth = $fileHandle->prepare(<<'SQL');
+		INSERT INTO master (sig, version)
+		VALUES(?, ?)
 SQL
 
-	$sth->execute($FILE_SIG, $FILE_VERSION, 'NOW()'); # FIXME, 'NOW()' is verbatim.  Look up proper idiom
-	$dbh->commit();
+	$sth->execute($FILE_SIG, $FILE_VERSION);
+	$fileHandle->commit();
 
 	return;
 }
 
-sub __writeTranslation {
-	my ($dbh, $translation) = @_;
+sub __writeTranslations {
+	my ($fileHandle, $translations) = @_;
 
-	my $sth = $dbh->prepare(<<'SQL');
+	my $sth = $fileHandle->prepare(<<'SQL');
 		INSERT INTO translation (code, year, language)
 		VALUES(?, ?, ?)
 SQL
 
-	$sth->execute($translation, 1066, 'en'); # FIXME: OK we know this is the wrong year
-	$dbh->commit();
+	foreach my $translation (@$translations) {
+		$sth->execute($translation, 1066, 'en'); # FIXME: OK we know this is the wrong year
+	}
+
+	$fileHandle->commit();
 
 	return;
 }
 
-sub main2 {
-	my ($translation) = @ARGV;
-
-	unless ($translation) {
-		printf(STDERR "You must specify the translation!\n");
-		return EXIT_FAILURE;
+sub __uuid {
+	# TODO: Should we use v5 UUIDs which are generated from the IDs?
+	if (my $sub = UUID::Tiny->can('UUID_V7')) {
+		return create_uuid_as_string($sub->());
 	}
 
-	my $dbFile = "${translation}.sqlite";
+	return create_uuid_as_string(UUID_V1);
+}
 
-	my $dbh = DBI->connect(
-		"dbi:SQLite:dbname=$dbFile",
+sub __connect {
+	my ($fileName) = @_;
+	return DBI->connect(
+		"dbi:SQLite:dbname=${fileName}",
 		q{},
 		q{},
 		{
@@ -198,40 +281,163 @@ sub main2 {
 			AutoCommit => 0,
 		}
 	);
+}
 
-	__createTables($dbh);
-	__writeMaster($dbh);
-	__writeTranslation($dbh, $translation);
+sub main2 {
+	my (@translations) = @ARGV;
 
-my $sth = $dbh->prepare(<<'SQL');
-	INSERT INTO book (code, translation_code)
-	VALUES(?, ?)
-SQL
-	$sth->execute('Gen', $translation);
+	unless (scalar(@translations) > 0) {
+		printf(STDERR "You must specify the translation!\n");
+		return EXIT_FAILURE;
+	}
 
-$sth = $dbh->prepare(<<'SQL');
-	INSERT INTO chapter (id, book_id, ordinal)
-	VALUES(?, ?, ?)
-SQL
-	$sth->execute('f9f8dece-253d-11f1-a839-ffa8ae726ac3', '01e9ca62-253e-11f1-a83a-174fbcaa35a9', 1);
+	my %fileHandles = ( );
+	my $combinedFileName = 'combined.sqlite';
+	$fileHandles{all} = __connect($combinedFileName);
 
-$sth = $dbh->prepare(<<'SQL');
-	INSERT INTO verse (translation_code, book, chapter, ordinal, text)
-	VALUES(?, ?, ?, ?, ?)
-SQL
+	foreach my $translation (@translations) {
+		my $translationFileName = "${translation}.sqlite";
+		$fileHandles{$translation} = __connect($translationFileName);
+	}
+
+	while (my ($translation, $fileHandle) = each(%fileHandles)) {
+		%bookKeys = ( );
+		%chapterKeys = ( );
+
+		__createTables($fileHandle);
+		__writeMaster($fileHandle);
+
+		if ($translation eq 'all') {
+			__writeTranslations($fileHandle, \@translations);
+			foreach my $translation2 (@translations) {
+				__processVerses($fileHandle, $translation2);
+			}
+		} else {
+			__writeTranslations($fileHandle, [$translation]);
+			__processVerses($fileHandle, $translation);
+		}
+
+		$fileHandle->disconnect();
+	}
+
+#my $sth = $dbh->prepare(<<'SQL');
+#	INSERT INTO book (code, translation)
+#	VALUES(?, ?)
+#SQL
+#	$sth->execute('Gen', $translation);
+#
+#$sth = $dbh->prepare(<<'SQL');
+#	INSERT INTO chapter (id, book_id, ordinal)
+#	VALUES(?, ?, ?)
+#SQL
+#	$sth->execute('f9f8dece-253d-11f1-a839-ffa8ae726ac3', '01e9ca62-253e-11f1-a83a-174fbcaa35a9', 1);
+#
+#$sth = $dbh->prepare(<<'SQL');
+#	INSERT INTO verse (translation, book, chapter, ordinal, text)
+#	VALUES(?, ?, ?, ?, ?)
+#SQL
 
 	# 1 -- FIMXE: shall be book_id
 	#$sth->execute($translation, 1, 3, 16, 'For God so loved the world...');
 	#$sth->execute($translation, 1, 1, 1, 'In the beginning God created the heaven and the earth.');
 	#$sth->execute($translation, 1, 23, 1, 'The LORD is my shepherd; I shall not want.');
 
-	print "Database '$dbFile' is ready, and sample verses have been inserted.\n";
+	#print "Database '${combinbedFileName}' is ready, and sample verses have been inserted.\n";
 
-	$sth->finish();
-	$dbh->commit();
-	$dbh->disconnect();
+	#$sth->finish();
+	#$dbh->commit();
 
 	exit 0;
+}
+
+sub __writeBook {
+	my ($fileHandle, $translation, $bookShortName) = @_;
+
+my $sthBook = $fileHandle->prepare(<<'SQL');
+	INSERT INTO book (id, code, translation, testament, ordinal, chapter_count)
+	VALUES(?, ?, ?, ?, ?, ?)
+SQL
+
+	my $bookKey = join(':', $translation, $bookShortName);
+	unless ($bookKeys{$bookKey}) {
+		my $ordinal = $BOOK_ORDINAL{$bookShortName} or die("Missing ordinal for '$bookShortName'");
+		my $testament = $ordinal > $OT_COUNT ? 'N' : 'O';
+		my $id = __uuid();
+
+		my $chapterCount = 0; # FIXME: How can I know without two passes?
+		$sthBook->execute($id, $bookShortName, $translation, $testament, $ordinal, $chapterCount);
+		$bookKeys{$bookKey} = $id;
+	}
+
+	return;
+}
+
+sub __writeChapter {
+	my ($fileHandle, $translation, $bookShortName, $chapterOrdinal) = @_;
+
+my $sthChapter = $fileHandle->prepare(<<'SQL');
+	INSERT INTO chapter (id, book_id, translation, book_code, ordinal, verse_count)
+	VALUES(?, ?, ?, ?, ?, ?)
+SQL
+
+	my $bookKey = join(':', $translation, $bookShortName);
+	my $chapterKey = join(':', $bookKey, $chapterOrdinal);
+	unless ($chapterKeys{$chapterKey}) {
+		my $id = __uuid();
+		my $bookId = $bookKeys{$bookKey};
+
+		my $verseCount = 0; # FIXME: How can I know without two passes?
+		$sthChapter->execute($id, $bookId, $translation, $bookShortName, $chapterOrdinal, $verseCount);
+		$chapterKeys{$chapterKey} = $id;
+	}
+
+	return;
+}
+
+sub __writeVerse {
+	my ($fileHandle, $translation, $bookShortName, $chapterOrdinal, $verseNumber, $verseKey, $verseText) = @_;
+
+my $sthVerse = $fileHandle->prepare(<<'SQL');
+	INSERT INTO verse (id, book_id, chapter_id, ordinal_relative_to_book, ordinal_relative_to_chapter, text)
+	VALUES(?, ?, ?, ?, ?, ?)
+SQL
+
+	my $bookKey = join(':', $translation, $bookShortName);
+	my $chapterKey = join(':', $bookKey, $chapterOrdinal);
+	my $id = __uuid();
+	my $bookId = $bookKeys{$bookKey};
+	my $chapterId = $chapterKeys{$chapterKey};
+
+	$sthVerse->execute($id, $bookId, $chapterId, 0, 0, $verseText);
+
+	return;
+}
+
+sub __processVerses {
+	my ($fileHandle, $translation) = @_;
+
+	# Note sure what's going on here
+#sqlite> SELECT * FROM verse WHERE chapter_id = 'bfd8d622-281c-11f1-b0b0-9d640151739d';
+#sqlite> SELECT * FROM verse WHERE chapter_id = 'bfd8d622-281c-11f1-b0b0-9d640151739d' OR book_id = 'bfdc7f2a-281c-11f1-b0b0-fa1696cc239c';
+#sqlite> SELECT * FROM verse limit 5;
+#be1d9a79-281c-11f1-b0b0-853a728ca900|be1c66e5-281c-11f1-b0b0-bdfe4027e8d8|be1d8b46-281c-11f1-b0b0-8ff270ee0434|0|0|Adam, Sheth, Enosh,
+
+	if (my $fh = IO::File->new(join('/', $DATA_DIR, __inputFromTranslation($translation)), 'r')) {
+		while (my $line = <$fh>) {
+			my @verseData = split(m/::/, $line, 2);
+			my ($verseKey, $verseText) = @verseData;
+			my ($translation, $bookShortName, $chapterOrdinal, $verseNumber)
+			    = split(m/:/, $verseKey, 4);
+
+			__writeBook($fileHandle, $translation, $bookShortName);
+			__writeChapter($fileHandle, $translation, $bookShortName, $chapterOrdinal);
+			__writeVerse($fileHandle, $translation, $bookShortName, $chapterOrdinal, $verseNumber, $verseKey, $verseText);
+		}
+	}
+
+	$fileHandle->commit();
+
+	return;
 }
 
 sub main {
