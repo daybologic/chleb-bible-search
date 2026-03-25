@@ -32,8 +32,6 @@
 
 set -eu
 
-translation=asv
-bin/import/text-to-bin.pl $translation
-gzip -f "data/${translation}.bin"
+translation=all
 bin/import/text-to-sqlite.pl $translation
 gzip -f "data/${translation}.sqlite"

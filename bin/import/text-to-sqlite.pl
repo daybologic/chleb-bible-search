@@ -288,42 +288,45 @@ sub __connect {
 	);
 }
 
-sub main2 {
-	my (@translations) = @ARGV;
+sub __translationFileName {
+	my ($translation) = @_;
+	return join('/', $DATA_DIR, "${translation}.sqlite");
+}
 
-	unless (scalar(@translations) > 0) {
+sub main2 {
+	my ($translation) = @ARGV;
+
+	if (scalar(@ARGV) > 1) {
+		printf(STDERR "Specify one translation at a time, or 'all' for the combined file\n");
+		return EXIT_FAILURE;
+	}
+
+	unless ($translation) {
 		printf(STDERR "You must specify the translation!\n");
 		return EXIT_FAILURE;
 	}
 
-	my %fileHandles = ( );
-	my $combinedFileName = 'combined.sqlite';
-	$fileHandles{all} = __connect($combinedFileName);
+	my $translationFileName = __translationFileName($translation);
+	my $fileHandle = __connect($translationFileName);
 
-	foreach my $translation (@translations) {
-		my $translationFileName = "${translation}.sqlite";
-		$fileHandles{$translation} = __connect($translationFileName);
-	}
+	%bookKeys = ( );
+	%chapterKeys = ( );
 
-	while (my ($translation, $fileHandle) = each(%fileHandles)) {
-		%bookKeys = ( );
-		%chapterKeys = ( );
+	__createTables($fileHandle);
+	__writeMaster($fileHandle);
 
-		__createTables($fileHandle);
-		__writeMaster($fileHandle);
-
-		if ($translation eq 'all') {
-			__writeTranslations($fileHandle, \@translations);
-			foreach my $translation2 (@translations) {
-				__processVerses($fileHandle, $translation2);
-			}
-		} else {
-			__writeTranslations($fileHandle, [$translation]);
-			__processVerses($fileHandle, $translation);
+	if ($translation eq 'all') {
+		my @translations = ('asv', 'kjv'); # TODO can we make this list dynamic somehow?
+		__writeTranslations($fileHandle, \@translations);
+		foreach my $translation2 (@translations) {
+			__processVerses($fileHandle, $translation2);
 		}
-
-		$fileHandle->disconnect();
+	} else {
+		__writeTranslations($fileHandle, [$translation]);
+		__processVerses($fileHandle, $translation);
 	}
+
+	$fileHandle->disconnect();
 
 #my $sth = $dbh->prepare(<<'SQL');
 #	INSERT INTO book (code, translation)
@@ -352,7 +355,7 @@ sub main2 {
 	#$sth->finish();
 	#$dbh->commit();
 
-	exit 0;
+	return EXIT_SUCCESS;
 }
 
 sub __writeBook {
