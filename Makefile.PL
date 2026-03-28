@@ -67,6 +67,7 @@ push @exeFiles, glob q('bin/core/*.sh');
 push @exeFiles, glob q('bin/core/*.pl');
 
 WriteMakefile(
+	INSTALLVENDORSCRIPT => '/opt/chleb-bible-search',
 	NAME         => 'Chleb',
 	VERSION_FROM => 'lib/Chleb/Generated/Info.pm', # finds $VERSION
 	AUTHOR       => 'Rev. Duncan Ross Palmer, 2E0EOL (2e0eol@gmail.com)',
