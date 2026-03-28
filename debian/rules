@@ -44,6 +44,7 @@ override_dh_install:
 	install -dm 755 debian/chleb-bible-search/opt/chleb-bible-search/lib
 	cp -Rp /usr/share/perl5 debian/chleb-bible-search/opt/chleb-bible-search/lib
 	cp -Rp /usr/lib/${DEB_TARGET_MULTIARCH}/perl5/*/. debian/chleb-bible-search/opt/chleb-bible-search/lib/perl5
+	dh_install
 
 override_dh_auto_clean:
 	rm -f log/*.log 2>/dev/null || true
