@@ -13,7 +13,7 @@ jobs:
   ai-notes:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: AI PR Review + Summary + Release Notes
         uses: coderabbitai/ai-pr-reviewer@v1
