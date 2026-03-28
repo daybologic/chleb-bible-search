@@ -63,7 +63,7 @@ Readonly my $PROJECT => 'Chleb Bible Search';
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
-set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
+set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API;
 set static_handler => 1;
 
 sub _cookie {
