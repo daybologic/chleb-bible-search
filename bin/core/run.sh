@@ -47,4 +47,5 @@ if [ -f "$CONFIG_PATH" ]; then
 	fi
 fi
 
+export PERL5LIB='/usr/share/chleb-bible-search/perl5'
 exec $PLACK --no-default-middleware -s FCGI --listen $SOCKET --nproc $nProc -a $APP
