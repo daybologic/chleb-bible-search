@@ -14,6 +14,7 @@ Build-Depends-Indep:
  libhttp-message-perl (>= 6.44-1),
  libjson-perl,
  libdancer2-perl,
+ liblog-dispatch-filerotate-perl,
  liblog-log4perl-perl,
  libmoose-perl,
  libmoosex-singleton-perl,
