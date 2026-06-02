@@ -2,9 +2,9 @@ name: Perl CI
 
 on:
   push:
-    branches: [ "develop", "master", "rel/2.2" ]
+    branches: [ "master", "feature/164-12-factor-stream-log" ]
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "master" ]
 
 jobs:
   build:
