@@ -1,9 +1,0 @@
-# .github/workflows/pr-ai-notes.yml
-- name: AI PR Review + Summary + Release Notes
-  uses: actions/github-script@v7
-  env:
-    OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  with:
-    script: |
-      console.log('AI review action not available');
