@@ -73,7 +73,7 @@ has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, init_
 
 has source => (is => 'ro', isa => 'Chleb::Token::Repository::Base', required => 1, init_arg => '_source');
 
-has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate');
+has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate', writer => '_setValue');
 
 has shortValue => (is => 'ro', isa => 'Str', init_arg => undef, lazy => 1, builder => '_makeShortValue');
 
