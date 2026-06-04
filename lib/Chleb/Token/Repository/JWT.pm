@@ -44,12 +44,83 @@ use JSON::PP;
 use MIME::Base64 qw(decode_base64url encode_base64url);
 use Readonly;
 
+=head1 NAME
+
+Chleb::Token::Repository::JWT
+
+=head1 CONFIG
+
+	session_tokens:
+	  backend_jwt:
+	    secret: replace-with-a-long-random-secret
+	  load_order:
+	    - JWT
+	  save_order:
+	    - JWT
+
+=head1 DESCRIPTION
+
+Stateless JWT-backed session token repository.
+
+Tokens are encoded as HS256 JSON Web Tokens.  The signed payload contains the
+same token metadata used by the stateful repositories, except for the token
+value itself.  Because the token is self-contained, saving re-signs the token
+and stores the new JWT value on the L<Chleb::Token> object instead of writing
+to external storage.
+
+=head1 CONSTANTS
+
+=over
+
+=item C<$ALGORITHM>
+
+The JWT algorithm identifier.  This backend supports C<HS256>.
+
+=item C<$TYPE>
+
+The JWT type header value.  This backend emits C<JWT>.
+
+=back
+
+=cut
+
 Readonly my $ALGORITHM => 'HS256';
 Readonly my $TYPE => 'JWT';
 
+=head1 ATTRIBUTES
+
+=over
+
+=item C<__json>
+
+Private L<JSON::PP> encoder/decoder used for deterministic JWT header and
+payload serialization.
+
+=cut
+
 has __json => (is => 'ro', isa => 'JSON::PP', lazy => 1, builder => '__makeJson');
 
+=item C<__secret>
+
+Private HMAC secret loaded from C<session_tokens.backend_jwt.secret>.
+
+=cut
+
 has __secret => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeSecret');
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<create()>
+
+Creates a new L<Chleb::Token> using this JWT repository as the source and signs
+it immediately, so C<value> is a usable JWT before the caller saves it again
+with request-specific metadata.
+
+=cut
 
 sub create {
 	my ($self) = @_;
@@ -64,6 +135,15 @@ sub create {
 	$self->save($token);
 	return $token;
 }
+
+=item C<load($value)>
+
+Verifies and decodes a JWT string or C<Dancer2::Core::Cookie>, rebuilds the
+L<Chleb::Token>, checks the token data version and expiry time, and returns the
+token.  Invalid, tampered, stale, or expired values are raised as
+L<Chleb::Exception> instances in the same style as the other repositories.
+
+=cut
 
 sub load {
 	my ($self, $value) = @_;
@@ -113,6 +193,13 @@ sub load {
 	return $token;
 }
 
+=item C<save($token)>
+
+Signs the current token metadata into a JWT and writes that JWT back to the
+token's internal value.  No external state is written.
+
+=cut
+
 sub save {
 	my ($self, $token) = @_;
 
@@ -124,12 +211,31 @@ sub save {
 	return;
 }
 
+=item C<_valueValidate($value)>
+
+Validates that C<$value> has the three-segment base64url JWT shape expected by
+this repository.
+
+=cut
+
 sub _valueValidate {
 	my ($self, $value) = @_;
 	return 1 if (defined($value) && $value =~ m/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
 
 	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be JWT');
 }
+
+=back
+
+=head1 PRIVATE METHODS
+
+=over
+
+=item C<__encode($payload)>
+
+Encodes a payload hash reference as a signed JWT string.
+
+=cut
 
 sub __encode {
 	my ($self, $payload) = @_;
@@ -145,6 +251,13 @@ sub __encode {
 
 	return join('.', $signingInput, $self->__signature($signingInput));
 }
+
+=item C<__decode($value)>
+
+Verifies a JWT signature and decodes the JSON payload.  The JWT header must use
+the supported algorithm and, when present, the expected type.
+
+=cut
 
 sub __decode {
 	my ($self, $value) = @_;
@@ -165,10 +278,23 @@ sub __decode {
 	return $payload;
 }
 
+=item C<__signature($signingInput)>
+
+Returns the base64url-encoded HS256 signature for the supplied JWT signing
+input.
+
+=cut
+
 sub __signature {
 	my ($self, $signingInput) = @_;
 	return $self->__base64urlEncode(hmac_sha256($signingInput, $self->__secret));
 }
+
+=item C<__base64urlEncode($data)>
+
+Encodes raw data using unpadded base64url encoding.
+
+=cut
 
 sub __base64urlEncode {
 	my ($self, $data) = @_;
@@ -177,6 +303,12 @@ sub __base64urlEncode {
 	return $encoded;
 }
 
+=item C<__base64urlDecode($data)>
+
+Decodes unpadded base64url data.
+
+=cut
+
 sub __base64urlDecode {
 	my ($self, $data) = @_;
 	my $padding = length($data) % 4;
@@ -184,10 +316,22 @@ sub __base64urlDecode {
 	return decode_base64url($data);
 }
 
+=item C<__makeJson()>
+
+Builds the JSON encoder/decoder used by L</__json>.
+
+=cut
+
 sub __makeJson {
 	my ($self) = @_;
 	return JSON::PP->new->canonical->utf8->allow_nonref;
 }
+
+=item C<__makeSecret()>
+
+Loads and validates the JWT signing secret from configuration.
+
+=cut
 
 sub __makeSecret {
 	my ($self) = @_;
@@ -199,6 +343,12 @@ sub __makeSecret {
 
 	return $secret;
 }
+
+=item C<__secureCompare($left, $right)>
+
+Compares two strings without returning early after the first differing byte.
+
+=cut
 
 sub __secureCompare {
 	my ($left, $right) = @_;
@@ -212,5 +362,9 @@ sub __secureCompare {
 
 	return $diff == 0;
 }
+
+=back
+
+=cut
 
 1;
