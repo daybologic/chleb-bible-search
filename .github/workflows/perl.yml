@@ -2,9 +2,9 @@ name: Perl CI
 
 on:
   push:
-    branches: [ "develop", "master", "rel/2.2" ]
+    branches: [ "master", "feature/164-12-factor-stream-log" ]
   pull_request:
-    branches: [ "develop" ]
+    branches: [ "master" ]
 
 jobs:
   build:
@@ -28,12 +28,6 @@ jobs:
 
     - name: make
       run: make
-
-    - name: local setup
-      run: |
-        ln -sf `pwd`/.github/etc/log4perl.conf etc/log4perl.conf
-        mkdir -p build/var/log
-        touch build/var/log/default.log
 
     - name: make test
       run: make test
