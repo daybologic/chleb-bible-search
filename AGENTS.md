@@ -7,7 +7,7 @@ Guidance for coding agents working in this repository.
 Chleb Bible Search is a self-hostable Perl microservice for querying and
 searching the Bible. It exposes a JSON:API-compliant HTTP API, currently with
 v1 and v2 endpoints for search, verse lookup, random verse, and verse of the
-day. The core library can also be used without the HTTP server.
+day. The core library can also be used without an HTTP server.
 
 ## Common Commands
 
@@ -23,7 +23,7 @@ make test
 # Run a single unit test
 perl -I lib t/<test-name>.t
 
-# Run functional HTTP integration tests
+# Run functional HTTP integration tests (this requires a web server to be installed)
 make http-test
 
 # Generate coverage report
