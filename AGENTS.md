@@ -107,7 +107,9 @@ Key files and directories:
 
 - Follow the branch naming scheme documented in `README.md`.
 - Use Gitmoji for commit summary lines. Put the relevant emoji at the start of
-  the summary, for example `📝 add AGENTS guidance` for documentation.
+  the summary, for example `📝 add AGENTS guidance` for documentation. Do not
+  add a category prefix such as `docs:` or `config:` after the emoji.
+- Add `Co-Authored-By: Codex <noreply@openai.com>` to commits made by Codex.
 - Keep commit messages focused on the change being made.
 
 ## Agent Notes
