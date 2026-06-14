@@ -39,7 +39,6 @@ installJwtSecret() {
 	placeholder='replace-on-first-install'
 
 	[ "$1" = 'configure' ] || return 0
-	[ -z "$2" ] || return 0
 	[ -f "$configPath" ] || return 0
 	grep -q "^    secret: '$placeholder'\$" "$configPath" || return 0
 
