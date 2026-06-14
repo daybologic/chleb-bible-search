@@ -150,7 +150,9 @@ sub TO_JSON {
 sub TO_JWT {
 	my ($self) = @_;
 
-	my %claims = map { $_ => $self->$_ } grep { $_ ne 'value' } @{ TO_JSON() };
+	my %claims = map { $_ => $self->$_ } grep {
+		$_ ne 'userAgent' && $_ ne 'value'
+	} @{ TO_JSON() };
 	$claims{iat} = delete($claims{created});
 	$claims{exp} = delete($claims{expires});
 
@@ -168,7 +170,6 @@ sub fromJWTClaims {
 		expires   => $claims->{exp},
 		ipAddress => $claims->{ipAddress} // '',
 		now       => $claims->{iat},
-		userAgent => $claims->{userAgent} // '',
 	});
 }
 

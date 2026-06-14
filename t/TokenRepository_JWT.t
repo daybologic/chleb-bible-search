@@ -88,7 +88,7 @@ sub testRepositoryFactory {
 
 sub testSaveLoad {
 	my ($self) = @_;
-	plan tests => 10;
+	plan tests => 11;
 
 	my $now = time();
 	my $token = $self->sut->create();
@@ -109,6 +109,7 @@ sub testSaveLoad {
 	cmp_deeply($payload->{exp}, num($now + 1800, 1), 'JWT contains expiration claim');
 	ok(!exists($payload->{created}), 'JWT omits private created claim');
 	ok(!exists($payload->{expires}), 'JWT omits private expires claim');
+	ok(!exists($payload->{userAgent}), 'JWT omits user agent');
 
 	my $loaded = $self->sut->load($token->value);
 	cmp_deeply($loaded, all(
@@ -119,7 +120,7 @@ sub testSaveLoad {
 			ipAddress => '127.0.0.1',
 			repo => isa('Chleb::Token::Repository'),
 			source => isa('Chleb::Token::Repository::JWT'),
-			userAgent => 'Unit Test',
+			userAgent => '',
 			value => $token->value,
 		),
 	), 'token loaded from JWT');
