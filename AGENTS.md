@@ -69,9 +69,16 @@ Key files and directories:
 - `lib/Chleb/Token/`: session token support with Local, Redis, and Dummy
   repositories.
 - `bin/core/app.psgi`: PSGI entry point for the HTTP server.
-- `etc/main.yaml`: primary configuration, including feature flags, VOTD
-  exclusions, session token backend selection, and Dancer2 settings.
-- `etc/log4perl.conf`: Log4perl configuration.
+- `etc/main.yaml`: configuration used for development work, including feature
+  flags, VOTD exclusions, session token backend selection, and Dancer2
+  settings.
+- `debian/etc/main.yaml`: default configuration installed for Debian GNU/Linux
+  packages. Keep it aligned with intended Debian deployment defaults rather
+  than treating it as the development configuration.
+- `etc/log4perl.conf`: Log4perl configuration used for development work.
+- `debian/etc/log4perl.conf`: default Log4perl configuration installed for
+  Debian GNU/Linux packages. Keep it aligned with intended Debian deployment
+  defaults rather than treating it as the development logging configuration.
 - `swagger.yaml`: OpenAPI specification.
 
 ## Coding Conventions
