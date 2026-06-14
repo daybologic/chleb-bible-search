@@ -43,11 +43,14 @@ use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Token::Repository;
 use Chleb::Token::Repository::JWT;
+use Digest::SHA qw(hmac_sha256);
 use English qw(-no_match_vars);
 use File::Path qw(make_path);
 use File::Temp qw(tempdir);
+use JSON::PP;
+use MIME::Base64 qw(decode_base64url encode_base64url);
 use POSIX qw(EXIT_SUCCESS);
-use Test::Deep qw(all cmp_deeply isa methods num re);
+use Test::Deep qw(all cmp_deeply isa methods num);
 use Test::More 0.96;
 
 has dic => (is => 'rw', isa => 'Chleb::DI::Container');
@@ -85,7 +88,7 @@ sub testRepositoryFactory {
 
 sub testSaveLoad {
 	my ($self) = @_;
-	plan tests => 6;
+	plan tests => 10;
 
 	my $now = time();
 	my $token = $self->sut->create();
@@ -99,6 +102,13 @@ sub testSaveLoad {
 	like($token->value, qr/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/, 'saved value is a JWT');
 	isnt($token->value, $firstValue, 'save re-signs changed token data');
 	cmp_ok(length($token->value), '<', 700, 'JWT does not recursively embed previous values');
+
+	my (undef, $encodedPayload) = split(m/\./, $token->value, 3);
+	my $payload = JSON::PP->new->decode(decode_base64url($encodedPayload));
+	cmp_deeply($payload->{iat}, num($now, 1), 'JWT contains issued-at claim');
+	cmp_deeply($payload->{exp}, num($now + 1800, 1), 'JWT contains expiration claim');
+	ok(!exists($payload->{created}), 'JWT omits private created claim');
+	ok(!exists($payload->{expires}), 'JWT omits private expires claim');
 
 	my $loaded = $self->sut->load($token->value);
 	cmp_deeply($loaded, all(
@@ -185,6 +195,50 @@ sub testLoadInvalidFormat {
 	), 'non-JWT value is rejected');
 
 	return EXIT_SUCCESS;
+}
+
+sub testLoadLegacyClaims {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $token = $self->sut->create();
+	my (undef, $encodedPayload) = split(m/\./, $token->value, 3);
+	my $payload = JSON::PP->new->decode(decode_base64url($encodedPayload));
+	$payload->{created} = delete($payload->{iat});
+	$payload->{expires} = delete($payload->{exp});
+
+	eval {
+		$self->sut->load(__makeJWT($payload));
+	};
+
+	cmp_deeply($EVAL_ERROR, all(
+		isa('Chleb::Exception'),
+		methods(
+			description => 'sessionToken unrecognized via Chleb::Token::Repository::JWT',
+			location    => undef,
+			statusCode  => 401,
+		),
+	), 'legacy time claims are rejected');
+
+	return EXIT_SUCCESS;
+}
+
+sub __makeJWT {
+	my ($payload) = @_;
+
+	my $json = JSON::PP->new->canonical->utf8;
+	my $signingInput = join('.', map {
+		my $encoded = encode_base64url($json->encode($_));
+		$encoded =~ s/=+\z//;
+		$encoded;
+	} ({
+		alg => 'HS256',
+		typ => 'JWT',
+	}, $payload));
+
+	my $signature = encode_base64url(hmac_sha256($signingInput, 'unit-test-secret'));
+	$signature =~ s/=+\z//;
+	return join('.', $signingInput, $signature);
 }
 
 package main;

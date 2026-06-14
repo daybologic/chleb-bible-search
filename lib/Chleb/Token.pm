@@ -147,4 +147,29 @@ sub TO_JSON {
 	return \%json;
 }
 
+sub TO_JWT {
+	my ($self) = @_;
+
+	my %claims = map { $_ => $self->$_ } grep { $_ ne 'value' } @{ TO_JSON() };
+	$claims{iat} = delete($claims{created});
+	$claims{exp} = delete($claims{expires});
+
+	return \%claims;
+}
+
+sub fromJWTClaims {
+	my ($class, $claims, $args) = @_;
+
+	return $class->new({
+		%{$args},
+		_major    => $claims->{major},
+		_minor    => $claims->{minor},
+		_version  => $claims->{version},
+		expires   => $claims->{exp},
+		ipAddress => $claims->{ipAddress} // '',
+		now       => $claims->{iat},
+		userAgent => $claims->{userAgent} // '',
+	});
+}
+
 1;

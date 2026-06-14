@@ -64,9 +64,10 @@ Stateless JWT-backed session token repository.
 
 Tokens are encoded as HS256 JSON Web Tokens.  The signed payload contains the
 same token metadata used by the stateful repositories, except for the token
-value itself.  Because the token is self-contained, saving re-signs the token
-and stores the new JWT value on the L<Chleb::Token> object instead of writing
-to external storage.
+value itself.  The internal C<created> and C<expires> fields are represented by
+the registered JWT C<iat> and C<exp> claims.  Because the token is
+self-contained, saving re-signs the token and stores the new JWT value on the
+L<Chleb::Token> object instead of writing to external storage.
 
 =head1 CONSTANTS
 
@@ -162,18 +163,11 @@ sub load {
 
 	my $token;
 	eval {
-		$token = Chleb::Token->new({
+		$token = Chleb::Token->fromJWTClaims($data, {
 			dic       => $self->dic,
 			_repo     => $self->repo,
 			_source   => $self,
 			_value    => $value,
-			_major    => $data->{major},
-			_minor    => $data->{minor},
-			_version  => $data->{version},
-			expires   => $data->{expires},
-			ipAddress => $data->{ipAddress} // '',
-			now       => $data->{created},
-			userAgent => $data->{userAgent} // '',
 		});
 	};
 
@@ -203,8 +197,7 @@ token's internal value.  No external state is written.
 sub save {
 	my ($self, $token) = @_;
 
-	my %payload = map { $_ => $token->$_ } grep { $_ ne 'value' } @{ Chleb::Token::TO_JSON() };
-	$token->_setValue($self->__encode(\%payload));
+	$token->_setValue($self->__encode($token->TO_JWT()));
 	$token->dirty(0);
 	$token->isNew(0);
 
@@ -272,8 +265,8 @@ sub __decode {
 	die('JWT type mismatch') unless (!defined($header->{typ}) || $header->{typ} eq $TYPE);
 
 	my $payload = $self->__json->decode($self->__base64urlDecode($encodedPayload));
-	die('JWT missing created') unless (defined($payload->{created}));
-	die('JWT missing expires') unless (defined($payload->{expires}));
+	die('JWT missing iat') unless (defined($payload->{iat}));
+	die('JWT missing exp') unless (defined($payload->{exp}));
 
 	return $payload;
 }
