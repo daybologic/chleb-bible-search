@@ -170,6 +170,7 @@ data/static/public/images/bible.png
 data/static/public/images/favicon.png
 data/static/public/privacy.html
 data/static/public/robots.txt
+data/static/public/settings.html
 data/static/public/style.css
 data/static/public/terms.html
 data/static/search.html
@@ -203,6 +204,7 @@ data/tests/1/a.sh
 'data/tests/1/search JSON \'fire\'.sh'
 'data/tests/1/search JSON (no criteria).sh'
 'data/tests/1/session JWT round-trip.sh'
+'data/tests/1/settings HTML.sh'
 data/tests/1/template.sh
 'data/tests/1/uptime default.sh'
 'data/tests/1/uptime HTML.sh'
