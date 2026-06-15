@@ -76,6 +76,21 @@ sub _request {
 	return request(@args);
 }
 
+sub __lookupTranslations {
+	my ($paramPresent, $paramValue, $preferredTranslation) = @_;
+
+	if ($paramPresent) {
+		return Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray($paramValue));
+	}
+
+	if (blessed($preferredTranslation) && $preferredTranslation->can('value')) {
+		$preferredTranslation = $preferredTranslation->value;
+	}
+
+	return [] unless (defined($preferredTranslation) && $preferredTranslation =~ m/\A(?:asv|kjv)\z/);
+	return [ $preferredTranslation ];
+}
+
 sub handleException {
 	my ($exception) = @_;
 
@@ -346,12 +361,19 @@ get '/1/lookup' => sub {
 	my $book = _param('book') // '';
 	my $chapter = _param('chapter') // 1;
 	my $verse = _param('verse');
+	my $queryParams = request()->params('query');
+	my $translations = __lookupTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
+	my $translationQuery = Chleb::Utils::queryParamsHelper({ translations => $translations });
 
 	if (defined($verse) && length($verse) > 0) {
-		redirect "/1/lookup/${book}/${chapter}/${verse}", 307;
+		redirect "/1/lookup/${book}/${chapter}/${verse}${translationQuery}", 307;
 	}
 
-	redirect "/1/lookup/${book}/${chapter}", 307;
+	redirect "/1/lookup/${book}/${chapter}${translationQuery}", 307;
 };
 
 get '/1/lookup/:book/:chapter' => sub {
@@ -360,9 +382,13 @@ get '/1/lookup/:book/:chapter' => sub {
 
 	my $book = param('book') // '';
 	my $chapter = param('chapter') // '';
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-
 	my $dancerRequest = request();
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __lookupTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
@@ -400,9 +426,13 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $book = _param('book') // '';
 	my $chapter = _param('chapter') // '';
 	my $verse = _param('verse') // '';
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
-
 	my $dancerRequest = request();
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __lookupTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {

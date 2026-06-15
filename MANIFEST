@@ -185,6 +185,7 @@ data/tests/1/a.sh
 'data/tests/1/lookup HTML, redirect.sh'
 'data/tests/1/lookup HTML.sh'
 'data/tests/1/lookup JSON.sh'
+'data/tests/1/lookup preferred translation JSON.sh'
 'data/tests/1/ping default.sh'
 'data/tests/1/ping HTML.sh'
 'data/tests/1/ping JSON.sh'
@@ -343,6 +344,7 @@ t/peace_on_limit.t
 t/pride.t
 t/random.t
 t/Server_linkToVerse.t
+t/Server_Dancer2_lookupTranslations.t
 t/Server_lookup.t
 t/Server_MediaType.t
 t/Server_MediaType_acceptToContentType.t
