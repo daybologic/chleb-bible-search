@@ -1,0 +1,105 @@
+<!-- Chleb Bible Search -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Settings - Chleb Bible Search</title>
+	<link rel="icon" href="/images/favicon.png" type="image/png">
+	<link href="/style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+	<main class="settings-page">
+		<section class="settings-card" aria-labelledby="settings-title">
+			<div class="settings-heading">
+				<p class="subtitle">Chleb Bible Search</p>
+				<h1 id="settings-title">Settings</h1>
+				<p>Choose how Bible passages should be displayed.</p>
+			</div>
+
+			<form id="settings-form">
+				<fieldset class="translation-options">
+					<legend>Preferred translation</legend>
+					<p class="settings-help">This preference is saved in your browser.</p>
+
+					<label class="translation-option">
+						<input type="radio" name="preferredTranslation" value="default">
+						<span>
+							<strong>Default</strong>
+							<small>Use the service's default translation.</small>
+						</span>
+					</label>
+
+					<label class="translation-option">
+						<input type="radio" name="preferredTranslation" value="asv">
+						<span>
+							<strong>ASV</strong>
+							<small>American Standard Version</small>
+						</span>
+					</label>
+
+					<label class="translation-option">
+						<input type="radio" name="preferredTranslation" value="kjv">
+						<span>
+							<strong>KJV</strong>
+							<small>King James Version</small>
+						</span>
+					</label>
+				</fieldset>
+
+				<div class="settings-actions">
+					<button type="submit">Save settings</button>
+					<a href="/">Return home</a>
+				</div>
+
+				<p id="settings-status" class="settings-status" role="status" aria-live="polite"></p>
+			</form>
+		</section>
+	</main>
+
+	<script>
+		(function () {
+			'use strict';
+
+			var cookieName = 'preferredTranslation';
+			var allowedTranslations = [ 'default', 'asv', 'kjv' ];
+			var form = document.getElementById('settings-form');
+			var status = document.getElementById('settings-status');
+
+			function readPreference() {
+				var prefix = cookieName + '=';
+				var cookies = document.cookie.split(';');
+
+				for (var i = 0; i < cookies.length; i++) {
+					var cookie = cookies[i].trim();
+					if (cookie.indexOf(prefix) === 0) {
+						var value = decodeURIComponent(cookie.substring(prefix.length));
+						return allowedTranslations.indexOf(value) === -1 ? 'default' : value;
+					}
+				}
+
+				return 'default';
+			}
+
+			function selectPreference(value) {
+				var input = form.querySelector('input[value="' + value + '"]');
+				if (input) {
+					input.checked = true;
+				}
+			}
+
+			selectPreference(readPreference());
+
+			form.addEventListener('submit', function (event) {
+				event.preventDefault();
+
+				var selected = form.querySelector('input[name="preferredTranslation"]:checked');
+				var value = selected ? selected.value : 'default';
+				document.cookie = cookieName + '=' + encodeURIComponent(value)
+					+ '; Max-Age=31536000; Path=/; SameSite=Lax';
+				status.textContent = 'Preferred translation saved.';
+			});
+		}());
+	</script>
+</body>
+</html>

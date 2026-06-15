@@ -76,6 +76,40 @@ sub _request {
 	return request(@args);
 }
 
+=head2 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation)
+
+Resolves the translation filters for a request which supports preferred
+translations.
+
+When C<$paramPresent> is true, C<$paramValue> is parsed as the explicit
+C<translations> request parameter and always takes precedence over the
+preferred translation cookie.  This includes an explicitly supplied empty
+parameter, which resolves to no translation filter rather than falling back to
+the cookie.
+
+When the request parameter is absent, C<$preferredTranslation> may be either a
+cookie object with a C<value()> method or its scalar value.  The supported
+C<asv> and C<kjv> preferences are returned as a single-item array reference.
+The C<default> preference, missing values, and unsupported values return an
+empty array reference so that normal lookup translation selection applies.
+
+=cut
+
+sub __preferredTranslations {
+	my ($paramPresent, $paramValue, $preferredTranslation) = @_;
+
+	if ($paramPresent) {
+		return Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray($paramValue));
+	}
+
+	if (blessed($preferredTranslation) && $preferredTranslation->can('value')) {
+		$preferredTranslation = $preferredTranslation->value;
+	}
+
+	return [] unless (defined($preferredTranslation) && $preferredTranslation =~ m/\A(?:asv|kjv)\z/);
+	return [ $preferredTranslation ];
+}
+
 sub handleException {
 	my ($exception) = @_;
 
@@ -220,16 +254,28 @@ get '/' => sub {
 	return;
 };
 
+get '/settings' => sub {
+	$server->logRequest();
+	$server->handleSessionToken();
+	serveStaticPage('public/settings');
+	return;
+};
+
 get '/:version/random' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
 	my $version = int(_param('version') || 1);
 	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
 
 	my $dancerRequest = request();
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
@@ -270,12 +316,20 @@ get '/1/votd' => sub {
 	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
 	my $when = _param('when');
 	my $testament = _param('testament');
+	my $dancerRequest = request();
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
 		$result = $server->__votd({
 			parental    => $parental,
 			redirect    => $redirect,
+			translations => $translations,
 			when        => $when,
 			testament   => $testament,
 			form        => 0,
@@ -295,10 +349,15 @@ get '/2/votd' => sub {
 
 	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
 	my $when = _param('when');
 	my $testament = _param('testament');
 	my $dancerRequest = request();
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
@@ -339,12 +398,19 @@ get '/1/lookup' => sub {
 	my $book = _param('book') // '';
 	my $chapter = _param('chapter') // 1;
 	my $verse = _param('verse');
+	my $queryParams = request()->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
+	my $translationQuery = Chleb::Utils::queryParamsHelper({ translations => $translations });
 
 	if (defined($verse) && length($verse) > 0) {
-		redirect "/1/lookup/${book}/${chapter}/${verse}", 307;
+		redirect "/1/lookup/${book}/${chapter}/${verse}${translationQuery}", 307;
 	}
 
-	redirect "/1/lookup/${book}/${chapter}", 307;
+	redirect "/1/lookup/${book}/${chapter}${translationQuery}", 307;
 };
 
 get '/1/lookup/:book/:chapter' => sub {
@@ -353,9 +419,13 @@ get '/1/lookup/:book/:chapter' => sub {
 
 	my $book = param('book') // '';
 	my $chapter = param('chapter') // '';
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-
 	my $dancerRequest = request();
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
@@ -393,9 +463,13 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $book = _param('book') // '';
 	my $chapter = _param('chapter') // '';
 	my $verse = _param('verse') // '';
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
-
 	my $dancerRequest = request();
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
