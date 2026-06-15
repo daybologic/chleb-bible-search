@@ -76,6 +76,24 @@ sub _request {
 	return request(@args);
 }
 
+=head2 __lookupTranslations($paramPresent, $paramValue, $preferredTranslation)
+
+Resolves the translation filters for a version 1 lookup request.
+
+When C<$paramPresent> is true, C<$paramValue> is parsed as the explicit
+C<translations> request parameter and always takes precedence over the
+preferred translation cookie.  This includes an explicitly supplied empty
+parameter, which resolves to no translation filter rather than falling back to
+the cookie.
+
+When the request parameter is absent, C<$preferredTranslation> may be either a
+cookie object with a C<value()> method or its scalar value.  The supported
+C<asv> and C<kjv> preferences are returned as a single-item array reference.
+The C<default> preference, missing values, and unsupported values return an
+empty array reference so that normal lookup translation selection applies.
+
+=cut
+
 sub __lookupTranslations {
 	my ($paramPresent, $paramValue, $preferredTranslation) = @_;
 
