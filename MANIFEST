@@ -370,6 +370,7 @@ t/Utils_forceArray.t
 t/Utils_limitText.t
 t/Utils_OSError_Mapper.t
 t/Utils_parseIntoType.t
+t/Utils_queryParamsHelper.t
 t/Utils_removeArrayEmptyItems.t
 t/Utils_SecureString.t
 t/verse.t

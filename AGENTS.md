@@ -88,6 +88,8 @@ Key files and directories:
 - Prefer existing Moose attributes, lazy builders, type constraints, and
   coercions over ad hoc object state.
 - Use `Chleb::Exception` for custom exceptions and HTTP status mapping.
+- In Perl conditionals, write explicit string length comparisons such as
+  `length($value) > 0` rather than relying on `length($value)` as a boolean.
 - Keep changes scoped to the library, server layer, config, or packaging area
   implied by the task.
 
