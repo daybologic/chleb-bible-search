@@ -31,7 +31,7 @@
 
 set -euo pipefail
 
-page=$(http --check-status --body --pretty=none GET chleb-api.example.org/settings.html)
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/settings)
 
 grep -q '<title>Settings - Chleb Bible Search</title>' <<< "$page"
 grep -q 'name="preferredTranslation" value="default"' <<< "$page"

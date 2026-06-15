@@ -220,6 +220,13 @@ get '/' => sub {
 	return;
 };
 
+get '/settings' => sub {
+	$server->logRequest();
+	$server->handleSessionToken();
+	serveStaticPage('public/settings');
+	return;
+};
+
 get '/:version/random' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
