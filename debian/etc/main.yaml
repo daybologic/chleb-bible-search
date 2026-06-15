@@ -49,24 +49,29 @@ votd_exclude:
     - Deu 22:21
 features:
   facebook: on
-  sessions: off
+  sessions: on
   twitter: on
   version: on
 Dancer2:
   public_dir: /usr/share/chleb-bible-search/public
 session_tokens:
-  backend_local:
-    dir: /var/lib/chleb-bible-search/sessions
-    dynamic_mkdir: true
-  backend_redis:
-    db: 1
-    host: localhost:6379
+  backend_jwt:
+    secret: 'replace-on-first-install'
+#  backend_local:
+#    dir: /var/lib/chleb-bible-search/sessions
+#    dynamic_mkdir: true
+#  backend_redis:
+#    db: 1
+#    host: localhost:6379
   load_order:
-    - Local
+#   - Local
 #   - Redis
+    - JWT
   save_order:
+#   - Dummy
+#   - Local
 #   - Redis
-    - Local
+    - JWT
   ttl: 10800
 facebook:
   groupname: Chleb Bible Search (1268737414574145)

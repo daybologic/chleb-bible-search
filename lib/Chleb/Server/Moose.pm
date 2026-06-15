@@ -1344,15 +1344,15 @@ sub handleSessionToken {
 		$sessionToken->ipAddress($ipAddress);
 		$sessionToken->userAgent($userAgent);
 
-		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
-		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
-
 		eval {
 			$tokenRepo->save($sessionToken); # save via all configured backends
 		};
 		if (my $exception = $EVAL_ERROR) {
 			Chleb::Server::Dancer2::handleException($exception);
 		}
+
+		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 
 		return;
 	}

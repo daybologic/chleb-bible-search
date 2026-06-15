@@ -202,6 +202,7 @@ data/tests/1/a.sh
 'data/tests/1/search JSON \'fire\', form.sh'
 'data/tests/1/search JSON \'fire\'.sh'
 'data/tests/1/search JSON (no criteria).sh'
+'data/tests/1/session JWT round-trip.sh'
 data/tests/1/template.sh
 'data/tests/1/uptime default.sh'
 'data/tests/1/uptime HTML.sh'
@@ -298,6 +299,7 @@ lib/Chleb/Token/Repository/Base.pm
 lib/Chleb/Token/Repository/DB/Dynamo.pm
 lib/Chleb/Token/Repository/DB/Maria.pm
 lib/Chleb/Token/Repository/Dummy.pm
+lib/Chleb/Token/Repository/JWT.pm
 lib/Chleb/Token/Repository/Local.pm
 lib/Chleb/Token/Repository/Redis.pm
 lib/Chleb/Type/Testament.pm
@@ -351,6 +353,7 @@ t/Server_version.t
 t/Server_versionFilter.t
 t/Server_votd.t
 t/Token.t
+t/TokenRepository_JWT.t
 t/TokenRepository_Local.t
 t/traverse_entire_bible.t
 t/Type_Testament.t

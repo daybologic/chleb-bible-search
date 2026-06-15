@@ -73,7 +73,7 @@ has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, init_
 
 has source => (is => 'ro', isa => 'Chleb::Token::Repository::Base', required => 1, init_arg => '_source');
 
-has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate');
+has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate', writer => '_setValue');
 
 has shortValue => (is => 'ro', isa => 'Str', init_arg => undef, lazy => 1, builder => '_makeShortValue');
 
@@ -145,6 +145,32 @@ sub TO_JSON {
 	return \@fields unless ($self);
 	my %json = map { $_ => $self->$_ } @fields;
 	return \%json;
+}
+
+sub TO_JWT {
+	my ($self) = @_;
+
+	my %claims = map { $_ => $self->$_ } grep {
+		$_ ne 'userAgent' && $_ ne 'value'
+	} @{ TO_JSON() };
+	$claims{iat} = delete($claims{created});
+	$claims{exp} = delete($claims{expires});
+
+	return \%claims;
+}
+
+sub fromJWTClaims {
+	my ($class, $claims, $args) = @_;
+
+	return $class->new({
+		%{$args},
+		_major    => $claims->{major},
+		_minor    => $claims->{minor},
+		_version  => $claims->{version},
+		expires   => $claims->{exp},
+		ipAddress => $claims->{ipAddress} // '',
+		now       => $claims->{iat},
+	});
 }
 
 1;

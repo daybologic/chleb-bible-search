@@ -69,9 +69,16 @@ Key files and directories:
 - `lib/Chleb/Token/`: session token support with Local, Redis, and Dummy
   repositories.
 - `bin/core/app.psgi`: PSGI entry point for the HTTP server.
-- `etc/main.yaml`: primary configuration, including feature flags, VOTD
-  exclusions, session token backend selection, and Dancer2 settings.
-- `etc/log4perl.conf`: Log4perl configuration.
+- `etc/main.yaml`: configuration used for development work, including feature
+  flags, VOTD exclusions, session token backend selection, and Dancer2
+  settings.
+- `debian/etc/main.yaml`: default configuration installed for Debian GNU/Linux
+  packages. Keep it aligned with intended Debian deployment defaults rather
+  than treating it as the development configuration.
+- `etc/log4perl.conf`: Log4perl configuration used for development work.
+- `debian/etc/log4perl.conf`: default Log4perl configuration installed for
+  Debian GNU/Linux packages. Keep it aligned with intended Debian deployment
+  defaults rather than treating it as the development logging configuration.
 - `swagger.yaml`: OpenAPI specification.
 
 ## Coding Conventions
@@ -100,7 +107,9 @@ Key files and directories:
 
 - Follow the branch naming scheme documented in `README.md`.
 - Use Gitmoji for commit summary lines. Put the relevant emoji at the start of
-  the summary, for example `📝 add AGENTS guidance` for documentation.
+  the summary, for example `📝 add AGENTS guidance` for documentation. Do not
+  add a category prefix such as `docs:` or `config:` after the emoji.
+- Add `Co-Authored-By: Codex <noreply@openai.com>` to commits made by Codex.
 - Keep commit messages focused on the change being made.
 
 ## Agent Notes
