@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,43 +29,32 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package Server_Dancer2_lookupTranslationsTests;
-use strict;
-use warnings;
-use Moose;
+set -euo pipefail
 
-use lib 'externals/libtest-module-runnable-perl/lib';
+checkEndpoint() {
+	local endpoint="$1"
+	local cookieResult
+	local explicitResult
 
-extends 'Test::Module::Runnable';
+	cookieResult=$(http --check-status --body --pretty=none GET \
+		"chleb-api.example.org/2/$endpoint" \
+		Accept:application/json \
+		Cookie:preferredTranslation=asv)
 
-use Chleb::Server::Dancer2;
-use POSIX qw(EXIT_SUCCESS);
-use Test::More 0.96;
+	jq -e '.data | length > 0 and all(.[]; .attributes.translation == "asv")' \
+		<<< "$cookieResult" >/dev/null
 
-sub testCookiePreference {
-	my ($self) = @_;
-	plan tests => 4;
+	explicitResult=$(http --check-status --body --pretty=none GET \
+		"chleb-api.example.org/2/$endpoint" \
+		Accept:application/json \
+		Cookie:preferredTranslation=asv \
+		translations==kjv)
 
-	is_deeply(Chleb::Server::Dancer2::__lookupTranslations(0, undef, 'asv'), [ 'asv' ], 'ASV cookie is used');
-	is_deeply(Chleb::Server::Dancer2::__lookupTranslations(0, undef, 'kjv'), [ 'kjv' ], 'KJV cookie is used');
-	is_deeply(Chleb::Server::Dancer2::__lookupTranslations(0, undef, 'default'), [], 'default cookie uses normal lookup');
-	is_deeply(Chleb::Server::Dancer2::__lookupTranslations(0, undef, 'invalid'), [], 'invalid cookie is ignored');
-
-	return EXIT_SUCCESS;
+	jq -e '.data | length > 0 and all(.[]; .attributes.translation == "kjv")' \
+		<<< "$explicitResult" >/dev/null
 }
 
-sub testExplicitPreference {
-	my ($self) = @_;
-	plan tests => 3;
+checkEndpoint random
+checkEndpoint votd
 
-	is_deeply(Chleb::Server::Dancer2::__lookupTranslations(1, 'kjv', 'asv'), [ 'kjv' ], 'explicit translation overrides cookie');
-	is_deeply(Chleb::Server::Dancer2::__lookupTranslations(1, 'asv,kjv', 'kjv'), [ 'asv', 'kjv' ], 'explicit translation list is preserved');
-	is_deeply(Chleb::Server::Dancer2::__lookupTranslations(1, '', 'asv'), [], 'explicit empty translation suppresses cookie');
-
-	return EXIT_SUCCESS;
-}
-
-package main;
-use strict;
-use warnings;
-exit(Server_Dancer2_lookupTranslationsTests->new->run);
+exit 0

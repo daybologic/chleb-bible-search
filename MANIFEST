@@ -189,6 +189,7 @@ data/tests/1/a.sh
 'data/tests/1/ping default.sh'
 'data/tests/1/ping HTML.sh'
 'data/tests/1/ping JSON.sh'
+'data/tests/1/preferred translation JSON.sh'
 'data/tests/1/random default, redirect.sh'
 'data/tests/1/random default.sh'
 'data/tests/1/random HTML, redirect.sh'
@@ -225,6 +226,7 @@ data/tests/1/template.sh
 'data/tests/2/random HTML.sh'
 'data/tests/2/random JSON, redirect.sh'
 'data/tests/2/random JSON.sh'
+'data/tests/2/preferred translation JSON.sh'
 'data/tests/2/votd default, redirect.sh'
 'data/tests/2/votd default.sh'
 'data/tests/2/votd HTML, redirect.sh'
@@ -344,7 +346,7 @@ t/peace_on_limit.t
 t/pride.t
 t/random.t
 t/Server_linkToVerse.t
-t/Server_Dancer2_lookupTranslations.t
+t/Server_Dancer2_preferredTranslations.t
 t/Server_lookup.t
 t/Server_MediaType.t
 t/Server_MediaType_acceptToContentType.t
