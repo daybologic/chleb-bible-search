@@ -206,6 +206,7 @@ data/tests/1/a.sh
 'data/tests/1/search JSON \'fire\', form.sh'
 'data/tests/1/search JSON \'fire\'.sh'
 'data/tests/1/search JSON (no criteria).sh'
+'data/tests/1/search previous limit JSON.sh'
 'data/tests/1/search preferred wholeword JSON.sh'
 'data/tests/1/session JWT round-trip.sh'
 'data/tests/1/settings HTML.sh'
@@ -348,6 +349,7 @@ t/peace_on_limit.t
 t/pride.t
 t/random.t
 t/Server_linkToVerse.t
+t/Server_Dancer2_previousSearchLimit.t
 t/Server_Dancer2_preferredTranslations.t
 t/Server_Dancer2_preferredWholeword.t
 t/Server_lookup.t

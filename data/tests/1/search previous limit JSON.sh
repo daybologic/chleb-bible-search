@@ -34,28 +34,29 @@ set -euo pipefail
 cookieResult=$(http --check-status --body --pretty=none GET \
 	chleb-api.example.org/1/search \
 	Accept:application/json \
-	Cookie:wholeword=true \
+	Cookie:previousSearchLimit=7 \
 	term==fire)
 
-jq -e '.links.self == "/1/search?term=fire&wholeword=1&limit=50"' \
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=7"' \
 	<<< "$cookieResult" >/dev/null
 
 explicitResult=$(http --check-status --body --pretty=none GET \
 	chleb-api.example.org/1/search \
 	Accept:application/json \
-	Cookie:wholeword=true \
+	Cookie:previousSearchLimit=7 \
 	term==fire \
-	wholeword==false)
+	limit==3)
 
-jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=50"' \
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=3"' \
 	<<< "$explicitResult" >/dev/null
 
 searchPage=$(http --check-status --body --pretty=none GET \
 	chleb-api.example.org/1/search \
-	Accept:text/html)
+	Accept:text/html \
+	Cookie:previousSearchLimit=7)
 
-grep -q 'name="wholeword" value="true"' <<< "$searchPage"
-grep -q "var wholewordCookieName = 'wholeword';" <<< "$searchPage"
-grep -q "writeCookie(wholewordCookieName, wholeword.checked ? 'true' : 'false');" <<< "$searchPage"
+grep -q 'id="limit" name="limit".* value="7"' <<< "$searchPage"
+grep -q "var previousSearchLimitCookieName = 'previousSearchLimit';" <<< "$searchPage"
+grep -q "writeCookie(previousSearchLimitCookieName, limit.value);" <<< "$searchPage"
 
 exit 0
