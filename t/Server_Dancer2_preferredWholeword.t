@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,14 +29,43 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+package Server_Dancer2_preferredWholewordTests;
+use strict;
+use warnings;
+use Moose;
 
-page=$(http --check-status --body --pretty=none GET chleb-api.example.org/settings)
+use lib 'externals/libtest-module-runnable-perl/lib';
 
-grep -q '<title>Settings - Chleb Bible Search</title>' <<< "$page"
-grep -q 'name="preferredTranslation" value="default"' <<< "$page"
-grep -q 'name="preferredTranslation" value="asv"' <<< "$page"
-grep -q 'name="preferredTranslation" value="kjv"' <<< "$page"
-grep -q 'name="wholeword" value="true"' <<< "$page"
+extends 'Test::Module::Runnable';
 
-exit 0
+use Chleb::Server::Dancer2;
+use POSIX qw(EXIT_SUCCESS);
+use Test::More 0.96;
+
+sub testCookiePreference {
+	my ($self) = @_;
+	plan tests => 4;
+
+	is(Chleb::Server::Dancer2::__preferredWholeword(0, undef, 'true'), 1, 'true cookie enables whole-word search');
+	is(Chleb::Server::Dancer2::__preferredWholeword(0, undef, 'false'), 0, 'false cookie disables whole-word search');
+	is(Chleb::Server::Dancer2::__preferredWholeword(0, undef, undef), 0, 'missing cookie disables whole-word search');
+	is(Chleb::Server::Dancer2::__preferredWholeword(0, undef, 'invalid'), 0, 'invalid cookie is ignored');
+
+	return EXIT_SUCCESS;
+}
+
+sub testExplicitPreference {
+	my ($self) = @_;
+	plan tests => 3;
+
+	is(Chleb::Server::Dancer2::__preferredWholeword(1, 'true', 'false'), 1, 'explicit true overrides false cookie');
+	is(Chleb::Server::Dancer2::__preferredWholeword(1, 'false', 'true'), 0, 'explicit false overrides true cookie');
+	is(Chleb::Server::Dancer2::__preferredWholeword(1, '', 'true'), 0, 'explicit empty value suppresses cookie');
+
+	return EXIT_SUCCESS;
+}
+
+package main;
+use strict;
+use warnings;
+exit(Server_Dancer2_preferredWholewordTests->new->run);

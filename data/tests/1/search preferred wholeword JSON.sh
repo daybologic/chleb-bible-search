@@ -31,12 +31,31 @@
 
 set -euo pipefail
 
-page=$(http --check-status --body --pretty=none GET chleb-api.example.org/settings)
+cookieResult=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/search \
+	Accept:application/json \
+	Cookie:wholeword=true \
+	term==fire)
 
-grep -q '<title>Settings - Chleb Bible Search</title>' <<< "$page"
-grep -q 'name="preferredTranslation" value="default"' <<< "$page"
-grep -q 'name="preferredTranslation" value="asv"' <<< "$page"
-grep -q 'name="preferredTranslation" value="kjv"' <<< "$page"
-grep -q 'name="wholeword" value="true"' <<< "$page"
+jq -e '.links.self == "/1/search?term=fire&wholeword=1&limit=50"' \
+	<<< "$cookieResult" >/dev/null
+
+explicitResult=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/search \
+	Accept:application/json \
+	Cookie:wholeword=true \
+	term==fire \
+	wholeword==false)
+
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=50"' \
+	<<< "$explicitResult" >/dev/null
+
+searchPage=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/search \
+	Accept:text/html)
+
+grep -q 'name="wholeword" value="true"' <<< "$searchPage"
+grep -q "var cookieName = 'wholeword';" <<< "$searchPage"
+grep -q "writeCookie(cookieName, wholeword.checked ? 'true' : 'false');" <<< "$searchPage"
 
 exit 0

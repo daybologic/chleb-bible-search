@@ -16,8 +16,9 @@
 				<label for="term">Term(s)</label>
 				<input type="text" id="term" name="term" placeholder="e.g. love, grace, salvation" value="__SEARCH_TERM__">
 				<label>
-					<input type="checkbox" id="wholeword" name="wholeword" __SEARCH_WHOLEWORD__> Exact match
+					<input type="checkbox" id="wholeword" name="wholeword" value="true" __SEARCH_WHOLEWORD__> Exact match
 				</label>
+				<input type="hidden" id="wholeword_present" name="wholeword_present" value="true">
 			</div>
 
 			<!-- FIXME: Restore book, testament, translation options -->
@@ -32,5 +33,42 @@
 			<button type="submit">Search</button>
 		</form>
 		__SEARCH_RESULTS__
+		<script>
+			(function () {
+				'use strict';
+
+				var cookieName = 'wholeword';
+				var form = document.querySelector('.search-form');
+				var wholeword = document.getElementById('wholeword');
+				var params = new URLSearchParams(window.location.search);
+
+				function readCookie(name) {
+					var prefix = name + '=';
+					var cookies = document.cookie.split(';');
+
+					for (var i = 0; i < cookies.length; i++) {
+						var cookie = cookies[i].trim();
+						if (cookie.indexOf(prefix) === 0) {
+							return decodeURIComponent(cookie.substring(prefix.length));
+						}
+					}
+
+					return '';
+				}
+
+				function writeCookie(name, value) {
+					document.cookie = name + '=' + encodeURIComponent(value)
+						+ '; Max-Age=31536000; Path=/; SameSite=Lax';
+				}
+
+				if (!params.has('wholeword') && !params.has('wholeword_present')) {
+					wholeword.checked = readCookie(cookieName) === 'true';
+				}
+
+				form.addEventListener('submit', function () {
+					writeCookie(cookieName, wholeword.checked ? 'true' : 'false');
+				});
+			}());
+		</script>
 	</body>
 </html>

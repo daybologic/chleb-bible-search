@@ -31,12 +31,9 @@
 
 set -euo pipefail
 
-page=$(http --check-status --body --pretty=none GET chleb-api.example.org/settings)
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/ Accept:text/html)
 
-grep -q '<title>Settings - Chleb Bible Search</title>' <<< "$page"
-grep -q 'name="preferredTranslation" value="default"' <<< "$page"
-grep -q 'name="preferredTranslation" value="asv"' <<< "$page"
-grep -q 'name="preferredTranslation" value="kjv"' <<< "$page"
-grep -q 'name="wholeword" value="true"' <<< "$page"
+grep -q '<a href="/1/search?form=true">Search for verses</a>' <<< "$page"
+! grep -q '/1/search?wholeword=' <<< "$page"
 
 exit 0
