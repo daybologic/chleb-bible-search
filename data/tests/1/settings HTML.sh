@@ -37,6 +37,7 @@ grep -q '<title>Settings - Chleb Bible Search</title>' <<< "$page"
 grep -q 'name="preferredTranslation" value="default"' <<< "$page"
 grep -q 'name="preferredTranslation" value="asv"' <<< "$page"
 grep -q 'name="preferredTranslation" value="kjv"' <<< "$page"
-grep -q 'name="wholeword" value="true"' <<< "$page"
+! grep -q 'Search defaults' <<< "$page"
+! grep -q 'name="wholeword"' <<< "$page"
 
 exit 0
