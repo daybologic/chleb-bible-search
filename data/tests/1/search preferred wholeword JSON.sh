@@ -55,7 +55,7 @@ searchPage=$(http --check-status --body --pretty=none GET \
 	Accept:text/html)
 
 grep -q 'name="wholeword" value="true"' <<< "$searchPage"
-grep -q "var cookieName = 'wholeword';" <<< "$searchPage"
-grep -q "writeCookie(cookieName, wholeword.checked ? 'true' : 'false');" <<< "$searchPage"
+grep -q "var wholewordCookieName = 'wholeword';" <<< "$searchPage"
+grep -q "writeCookie(wholewordCookieName, wholeword.checked ? 'true' : 'false');" <<< "$searchPage"
 
 exit 0

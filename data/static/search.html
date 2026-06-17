@@ -37,9 +37,11 @@
 			(function () {
 				'use strict';
 
-				var cookieName = 'wholeword';
+				var wholewordCookieName = 'wholeword';
+				var previousSearchLimitCookieName = 'previousSearchLimit';
 				var form = document.querySelector('.search-form');
 				var wholeword = document.getElementById('wholeword');
+				var limit = document.getElementById('limit');
 				var params = new URLSearchParams(window.location.search);
 
 				function readCookie(name) {
@@ -62,11 +64,21 @@
 				}
 
 				if (!params.has('wholeword') && !params.has('wholeword_present')) {
-					wholeword.checked = readCookie(cookieName) === 'true';
+					wholeword.checked = readCookie(wholewordCookieName) === 'true';
+				}
+
+				if (!params.has('limit')) {
+					var previousSearchLimit = readCookie(previousSearchLimitCookieName);
+					if (/^[0-9]+$/.test(previousSearchLimit) && parseInt(previousSearchLimit, 10) > 0) {
+						limit.value = previousSearchLimit;
+					}
 				}
 
 				form.addEventListener('submit', function () {
-					writeCookie(cookieName, wholeword.checked ? 'true' : 'false');
+					writeCookie(wholewordCookieName, wholeword.checked ? 'true' : 'false');
+					if (/^[0-9]+$/.test(limit.value) && parseInt(limit.value, 10) > 0) {
+						writeCookie(previousSearchLimitCookieName, limit.value);
+					}
 				});
 			}());
 		</script>

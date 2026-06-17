@@ -146,6 +146,38 @@ sub __preferredWholeword {
 	return $EVAL_ERROR ? 0 : $preferredWholeword;
 }
 
+=head2 __previousSearchLimit($paramPresent, $paramValue, $previousSearchLimit)
+
+Resolves the search limit for the search form and endpoint.
+
+When C<$paramPresent> is true, C<$paramValue> is parsed as the explicit
+C<limit> request parameter and always takes precedence over the cookie.  When
+the request parameter is absent, C<$previousSearchLimit> may be either a cookie
+object with a C<value()> method or its scalar value.  Positive integer cookie
+values are honoured; missing or unsupported values fall back to the default
+search result limit.
+
+=cut
+
+sub __previousSearchLimit {
+	my ($paramPresent, $paramValue, $previousSearchLimit) = @_;
+
+	if ($paramPresent) {
+		return defined($paramValue) && $paramValue =~ m/\A[0-9]+\z/ && int($paramValue) > 0
+			? int($paramValue)
+			: $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	}
+
+	if (blessed($previousSearchLimit) && $previousSearchLimit->can('value')) {
+		$previousSearchLimit = $previousSearchLimit->value;
+	}
+
+	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
+		unless (defined($previousSearchLimit) && $previousSearchLimit =~ m/\A[0-9]+\z/ && int($previousSearchLimit) > 0);
+
+	return int($previousSearchLimit);
+}
+
 sub handleException {
 	my ($exception) = @_;
 
@@ -546,7 +578,11 @@ get '/1/search' => sub {
 	my $dancerRequest = request();
 	my $queryParams = $dancerRequest->params('query');
 	$queryParams = {} unless ($queryParams);
-	my $limit = _param('limit') ? int(_param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	my $limit = __previousSearchLimit(
+		exists($queryParams->{limit}),
+		_param('limit'),
+		_cookie('previousSearchLimit'),
+	);
 	my $term = _param('term') // '';
 	my $wholeword = __preferredWholeword(
 		exists($queryParams->{wholeword}) || exists($queryParams->{wholeword_present}),
