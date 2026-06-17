@@ -110,6 +110,42 @@ sub __preferredTranslations {
 	return [ $preferredTranslation ];
 }
 
+=head2 __preferredWholeword($paramPresent, $paramValue, $wholeword)
+
+Resolves the whole-word search preference.
+
+When C<$paramPresent> is true, C<$paramValue> is parsed as the explicit
+C<wholeword> request parameter and always takes precedence over the cookie.
+This includes an explicitly empty value, which resolves to false rather than
+falling back to the cookie.
+
+When the request parameter is absent, C<$wholeword> may be either a cookie
+object with a C<value()> method or its scalar value.  Valid boolean cookie
+values are honoured, and unsupported cookie values are ignored.
+
+=cut
+
+sub __preferredWholeword {
+	my ($paramPresent, $paramValue, $wholeword) = @_;
+
+	if ($paramPresent) {
+		return Chleb::Utils::boolean('wholeword', $paramValue, 0);
+	}
+
+	if (blessed($wholeword) && $wholeword->can('value')) {
+		$wholeword = $wholeword->value;
+	}
+
+	return 0 unless (defined($wholeword) && length($wholeword) > 0);
+
+	my $preferredWholeword = 0;
+	eval {
+		$preferredWholeword = Chleb::Utils::boolean('wholeword', $wholeword, 0);
+	};
+
+	return $EVAL_ERROR ? 0 : $preferredWholeword;
+}
+
 sub handleException {
 	my ($exception) = @_;
 
@@ -507,12 +543,17 @@ get '/1/search' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
+	my $dancerRequest = request();
+	my $queryParams = $dancerRequest->params('query');
+	$queryParams = {} unless ($queryParams);
 	my $limit = _param('limit') ? int(_param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 	my $term = _param('term') // '';
-	my $wholeword = _param('wholeword');
+	my $wholeword = __preferredWholeword(
+		exists($queryParams->{wholeword}) || exists($queryParams->{wholeword_present}),
+		_param('wholeword'),
+		_cookie('wholeword'),
+	);
 	my $form = Chleb::Utils::boolean('form', _param('form'), 0);
-
-	my $dancerRequest = request();
 
 	my $result = '';
 	my $resultHash;
@@ -550,7 +591,7 @@ get '/1/search' => sub {
 			SEARCH_LIMIT_VALUE => $limit,
 			SEARCH_RESULTS => $result,
 			SEARCH_TERM => $term,
-			SEARCH_WHOLEWORD => Chleb::Utils::boolean('wholeword', $wholeword, 0) ? 'checked' : '',
+			SEARCH_WHOLEWORD => $wholeword ? 'checked' : '',
 			TITLE => $title,
 		);
 

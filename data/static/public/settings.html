@@ -47,6 +47,19 @@
 					</label>
 				</fieldset>
 
+				<fieldset class="translation-options">
+					<legend>Search defaults</legend>
+					<p class="settings-help">These preferences are saved in your browser.</p>
+
+					<label class="translation-option">
+						<input type="checkbox" id="wholeword" name="wholeword" value="true">
+						<span>
+							<strong>Whole word search</strong>
+							<small>Search for exact words by default.</small>
+						</span>
+					</label>
+				</fieldset>
+
 				<div class="settings-actions">
 					<button type="submit">Save settings</button>
 					<a href="/">Return home</a>
@@ -61,24 +74,35 @@
 		(function () {
 			'use strict';
 
-			var cookieName = 'preferredTranslation';
+			var preferredTranslationCookieName = 'preferredTranslation';
+			var wholewordCookieName = 'wholeword';
 			var allowedTranslations = [ 'default', 'asv', 'kjv' ];
 			var form = document.getElementById('settings-form');
 			var status = document.getElementById('settings-status');
+			var wholeword = document.getElementById('wholeword');
 
-			function readPreference() {
-				var prefix = cookieName + '=';
+			function readCookie(name) {
+				var prefix = name + '=';
 				var cookies = document.cookie.split(';');
 
 				for (var i = 0; i < cookies.length; i++) {
 					var cookie = cookies[i].trim();
 					if (cookie.indexOf(prefix) === 0) {
-						var value = decodeURIComponent(cookie.substring(prefix.length));
-						return allowedTranslations.indexOf(value) === -1 ? 'default' : value;
+						return decodeURIComponent(cookie.substring(prefix.length));
 					}
 				}
 
-				return 'default';
+				return '';
+			}
+
+			function writeCookie(name, value) {
+				document.cookie = name + '=' + encodeURIComponent(value)
+					+ '; Max-Age=31536000; Path=/; SameSite=Lax';
+			}
+
+			function readPreference() {
+				var value = readCookie(preferredTranslationCookieName);
+				return allowedTranslations.indexOf(value) === -1 ? 'default' : value;
 			}
 
 			function selectPreference(value) {
@@ -89,15 +113,16 @@
 			}
 
 			selectPreference(readPreference());
+			wholeword.checked = readCookie(wholewordCookieName) === 'true';
 
 			form.addEventListener('submit', function (event) {
 				event.preventDefault();
 
 				var selected = form.querySelector('input[name="preferredTranslation"]:checked');
 				var value = selected ? selected.value : 'default';
-				document.cookie = cookieName + '=' + encodeURIComponent(value)
-					+ '; Max-Age=31536000; Path=/; SameSite=Lax';
-				status.textContent = 'Preferred translation saved.';
+				writeCookie(preferredTranslationCookieName, value);
+				writeCookie(wholewordCookieName, wholeword.checked ? 'true' : 'false');
+				status.textContent = 'Settings saved.';
 			});
 		}());
 	</script>
