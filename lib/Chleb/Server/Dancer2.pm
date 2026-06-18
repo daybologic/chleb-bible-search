@@ -701,10 +701,9 @@ get '/1/info' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Bible info" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
+		$result = fetchStaticPage('info', {
+			INFO_TABLES => $result,
+		});
 
 		$server->dic->logger->trace('1/info returned as HTML');
 		send_as html => $result;
