@@ -240,6 +240,11 @@ span.code {
 	font-family: monospace;
 }
 
+.info-bible-image {
+	display: block;
+	margin: 0 0 1em;
+}
+
 table.info-table {
 	background-color: #e8d4f2;
 	border: 2px solid #8a6a99;

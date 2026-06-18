@@ -1164,7 +1164,8 @@ sub __infoToHtml {
 
 	my %bookCache = ( );
 
-	my $text = '<a href="/">home</a><br />' . "\r\n";
+	my $text = '<img class="info-bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' . "\r\n";
+	$text .= '<a href="/">home</a><br />' . "\r\n";
 
 	$text .= "<table class=\"info-table\">\r\n";
 
