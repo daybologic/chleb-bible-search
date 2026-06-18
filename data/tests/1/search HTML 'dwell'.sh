@@ -33,6 +33,7 @@ set -euo pipefail
 
 page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/search Accept:text/html term==dwell wholeword==true)
 
+grep -q '<link href="/style.css?v=' <<< "$page"
 grep -q '<table class="info-table">' <<< "$page"
 grep -q '<th>Result</th>' <<< "$page"
 grep -q '<th>Verse</th>' <<< "$page"

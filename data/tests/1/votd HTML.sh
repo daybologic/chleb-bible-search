@@ -31,4 +31,6 @@
 
 set -euo pipefail
 
-http --check-status GET chleb-api.example.org/1/votd Accept:text/html
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/votd Accept:text/html)
+
+grep -q '<link href="/style.css?v=' <<< "$page"
