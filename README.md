@@ -198,6 +198,7 @@ Please name your branch using this scheme:
 | refactor/&lt;description&gt; | Not features, design changes | NO | NO |
 | tests/&lt;description&gt; | Unit tests, functional tests, sanity improvements | NO | NO |
 | translation/&lt;identifier&gt; | Translation work | NO | NO |
+| ui/&lt;description&gt; | User interface changes | NO | NO |
 | &lt;user&gt;/&lt;hierarchy&gt; | Your GitHub username, followed by recognized hierarchies above | NO | YES |
 
 ### Raising issues
