@@ -240,6 +240,29 @@ span.code {
 	font-family: monospace;
 }
 
+table.info-table {
+	background-color: #e8d4f2;
+	border: 2px solid #8a6a99;
+	border-collapse: separate;
+	border-spacing: 2px;
+	margin: 1em 0;
+	text-align: left;
+	width: 100%;
+}
+
+table.info-table th,
+table.info-table td {
+	border: 2px solid #8a6a99;
+	padding: 2px;
+	vertical-align: top;
+}
+
+table.info-table th {
+	background-color: #d7b7e6;
+	color: #2f4f4f;
+	font-weight: bold;
+}
+
 .justify {
 	text-align: justify;
 }

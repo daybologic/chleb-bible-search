@@ -31,4 +31,13 @@
 
 set -euo pipefail
 
-http --check-status GET chleb-api.example.org/1/info Accept:text/html
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/info Accept:text/html)
+style=$(http --check-status --body --pretty=none GET chleb-api.example.org/style.css)
+
+grep -q '<link href="/style.css?v=' <<< "$page"
+grep -q '<table class="info-table">' <<< "$page"
+grep -q '<th>Book</th>' <<< "$page"
+grep -q 'table.info-table {' <<< "$style"
+grep -q 'background-color: #e8d4f2;' <<< "$style"
+grep -q 'border: 2px solid #8a6a99;' <<< "$style"
+grep -q 'border-spacing: 2px;' <<< "$style"

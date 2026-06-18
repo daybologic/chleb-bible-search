@@ -1154,7 +1154,7 @@ sub __infoToHtml {
 
 	my $text = '<a href="/">home</a><br />' . "\r\n";
 
-	$text .= "<table>\r\n";
+	$text .= "<table class=\"info-table\">\r\n";
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book", 0, 1);
@@ -1215,7 +1215,7 @@ sub __infoToHtml {
 
 	$text .= "</table><br/>\r\n";
 
-	$text .= "<table>\r\n";
+	$text .= "<table class=\"info-table\">\r\n";
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book", 0, 1);
