@@ -312,12 +312,16 @@ get '/' => sub {
 		});
 	}
 
-	serveStaticPage('index', {
+	my $result = fetchStaticPage('generic_head', { TITLE => 'Chleb Bible Search Service' });
+	$result .= fetchStaticPage('index', {
 		FACEBOOK_HTML => $facebookHtml,
 		HOSTNAME => hostname(),
 		MAILING_LIST_VOTD_HTML => $mailingListVoTDHtml,
 		TWITTER_HTML => $twitterHtml,
 	});
+	$result .= fetchStaticPage('generic_tail');
+
+	send_as html => $result;
 
 	return;
 };
@@ -325,7 +329,10 @@ get '/' => sub {
 get '/settings' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	serveStaticPage('public/settings');
+	my $result = fetchStaticPage('generic_head', { TITLE => 'Settings - Chleb Bible Search' });
+	$result .= fetchStaticPage('public/settings');
+	$result .= fetchStaticPage('generic_tail');
+	send_as html => $result;
 	return;
 };
 
@@ -631,7 +638,9 @@ get '/1/search' => sub {
 			TITLE => $title,
 		);
 
-		my $searchPage = fetchStaticPage('search', \%templateParams);
+		my $searchPage = fetchStaticPage('generic_head', { TITLE => $title });
+		$searchPage .= fetchStaticPage('search', \%templateParams);
+		$searchPage .= fetchStaticPage('generic_tail');
 		send_as html => $searchPage;
 
 		return;
@@ -701,9 +710,12 @@ get '/1/info' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		$result = fetchStaticPage('info', {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Bible info" });
+		$resultHtml .= fetchStaticPage('info', {
 			INFO_TABLES => $result,
 		});
+		$resultHtml .= fetchStaticPage('generic_tail');
+		$result = $resultHtml;
 
 		$server->dic->logger->trace('1/info returned as HTML');
 		send_as html => $result;

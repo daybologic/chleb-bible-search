@@ -35,6 +35,7 @@ page=$(http --check-status --body --pretty=none GET chleb-api.example.org/settin
 
 grep -q '<link href="/style.css?v=' <<< "$page"
 grep -q '<title>Settings - Chleb Bible Search</title>' <<< "$page"
+grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
 grep -q 'name="preferredTranslation" value="default"' <<< "$page"
 grep -q 'name="preferredTranslation" value="asv"' <<< "$page"
 grep -q 'name="preferredTranslation" value="kjv"' <<< "$page"
