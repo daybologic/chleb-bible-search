@@ -37,6 +37,8 @@ style=$(http --check-status --body --pretty=none GET chleb-api.example.org/style
 grep -q '<link href="/style.css?v=' <<< "$page"
 grep -q '<table class="info-table">' <<< "$page"
 grep -q '<th>Book</th>' <<< "$page"
+grep -q '<a href="/1/lookup/gen/1/1">Genesis</a>' <<< "$page"
+(( "$(grep -o '<a href="/1/lookup/gen/1/1">Genesis</a>' <<< "$page" | wc -l)" > 1 ))
 grep -q 'table.info-table {' <<< "$style"
 grep -q 'background-color: #e8d4f2;' <<< "$style"
 grep -q 'border: 2px solid #8a6a99;' <<< "$style"

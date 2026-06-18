@@ -1150,7 +1150,7 @@ sub __infoToHtml {
 		return sprintf("<t${tag}>${formatter}</t${tag}>\r\n", $datum);
 	};
 
-	my %bookNameCache = ( );
+	my %bookCache = ( );
 
 	my $text = '<a href="/">home</a><br />' . "\r\n";
 
@@ -1188,7 +1188,10 @@ sub __infoToHtml {
 
 		my $attributes = $included->{attributes};
 
-		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
+		$bookCache{ $attributes->{short_name} } = {
+			longName => $attributes->{long_name},
+			shortName => $attributes->{short_name},
+		};
 
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($linkToBook->(
@@ -1230,7 +1233,10 @@ sub __infoToHtml {
 		my $attributes = $included->{attributes};
 
 		$text .= "<tr>\r\n";
-		$text .= $printCell->($bookNameCache{ $attributes->{book} });
+		$text .= $printCell->($linkToBook->(
+			$bookCache{ $attributes->{book} }->{longName},
+			$bookCache{ $attributes->{book} }->{shortName},
+		));
 		$text .= $printCell->($linkToChapter->(
 			$attributes->{ordinal},
 			$attributes->{book},
