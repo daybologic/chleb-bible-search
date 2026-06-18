@@ -31,4 +31,10 @@
 
 set -euo pipefail
 
-http --check-status GET chleb-api.example.org/2/votd Accept:text/html
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html)
+
+grep -q '<div class="verse-nav-primary">' <<< "$page"
+grep -q '<div class="verse-nav-group verse-nav-core">' <<< "$page"
+grep -q '<div class="verse-nav-group verse-nav-verse">' <<< "$page"
+grep -q '<details class="verse-nav-more">' <<< "$page"
+grep -q '<summary>More navigation</summary>' <<< "$page"
