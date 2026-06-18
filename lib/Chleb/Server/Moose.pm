@@ -1080,6 +1080,12 @@ sub __searchResultsToHtml {
 
 
 	my $text = __linkToHome();
+	$text .= "<table class=\"info-table\">\r\n";
+	$text .= "<tr>\r\n";
+	$text .= "<th>Result</th>\r\n";
+	$text .= "<th>Verse</th>\r\n";
+	$text .= "<th>Text</th>\r\n";
+	$text .= "</tr>\r\n";
 
 	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
 		my $verse = $json->{data}->[$resultI];
@@ -1094,12 +1100,14 @@ sub __searchResultsToHtml {
 			{ includeBookName => 1 },
 		);
 
-		$text .= sprintf("<p>[%s]<br />\r\n%s %s %s\r\n\r\n</p>",
-			$attributes->{title},
-			$linkToVerse,
-			$attributes->{text},
-		);
+		$text .= "<tr>\r\n";
+		$text .= sprintf("<td>%s</td>\r\n", $attributes->{title});
+		$text .= sprintf("<td>%s</td>\r\n", $linkToVerse);
+		$text .= sprintf("<td>%s</td>\r\n", $attributes->{text});
+		$text .= "</tr>\r\n";
 	}
+
+	$text .= "</table>\r\n";
 
 	return $text;
 }
