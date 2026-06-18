@@ -49,6 +49,7 @@
 
 				<div class="settings-actions">
 					<button type="submit">Save settings</button>
+					<button type="button" id="settings-back">Back</button>
 					<a href="/">Return home</a>
 				</div>
 
@@ -65,6 +66,7 @@
 			var allowedTranslations = [ 'default', 'asv', 'kjv' ];
 			var form = document.getElementById('settings-form');
 			var status = document.getElementById('settings-status');
+			var back = document.getElementById('settings-back');
 
 			function readCookie(name) {
 				var prefix = name + '=';
@@ -106,6 +108,14 @@
 				var value = selected ? selected.value : 'default';
 				writeCookie(preferredTranslationCookieName, value);
 				status.textContent = 'Settings saved.';
+			});
+
+			back.addEventListener('click', function () {
+				if (window.history.length > 1) {
+					window.history.back();
+				} else {
+					window.location.href = '/';
+				}
 			});
 		}());
 	</script>

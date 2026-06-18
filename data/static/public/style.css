@@ -600,6 +600,11 @@ button:hover {
 	font-weight: 600;
 }
 
+.vn-settings-icon {
+	font-size: 1.05em;
+	line-height: 1;
+}
+
 @media (max-width: 650px) {
 	.verse-nav {
 		padding: 0.65rem;
@@ -634,6 +639,10 @@ button:hover {
 
 	.verse-nav select {
 		max-width: none;
+	}
+
+	.vn-settings-text {
+		display: none;
 	}
 }
 
