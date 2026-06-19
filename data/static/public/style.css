@@ -390,16 +390,24 @@ select {
 }
 
 button {
+	box-sizing: border-box;
+	display: inline-block;
 	padding: 0.7em 1.5em;
 	background: #333;
 	color: white;
 	border: none;
 	border-radius: 8px;
 	cursor: pointer;
+	font: inherit;
+	line-height: normal;
+	text-align: center;
+	text-decoration: none;
 }
 
 button:hover {
 	background: #555;
+	color: white;
+	text-decoration: none;
 }
 
 .settings-page {

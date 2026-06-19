@@ -40,7 +40,7 @@
 				<div class="settings-actions">
 					<button type="submit">Save settings</button>
 					<button type="button" id="settings-back">Back</button>
-					<a href="/">Return home</a>
+					<button type="button" id="settings-home">Home</button>
 				</div>
 
 				<p id="settings-status" class="settings-status" role="status" aria-live="polite"></p>
@@ -57,6 +57,7 @@
 			var form = document.getElementById('settings-form');
 			var status = document.getElementById('settings-status');
 			var back = document.getElementById('settings-back');
+			var home = document.getElementById('settings-home');
 
 			function readCookie(name) {
 				var prefix = name + '=';
@@ -106,6 +107,10 @@
 				} else {
 					window.location.href = '/';
 				}
+			});
+
+			home.addEventListener('click', function () {
+				window.location.href = '/';
 			});
 		}());
 	</script>
