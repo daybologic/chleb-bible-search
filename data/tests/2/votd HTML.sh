@@ -34,6 +34,7 @@ set -euo pipefail
 page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html)
 
 grep -q '<link href="/style.css?v=' <<< "$page"
+! grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
 grep -q '<div class="verse-nav-primary">' <<< "$page"
 grep -q '<div class="verse-nav-group verse-nav-core">' <<< "$page"
 grep -q '<div class="verse-nav-group verse-nav-verse">' <<< "$page"

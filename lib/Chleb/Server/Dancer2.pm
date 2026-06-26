@@ -370,11 +370,6 @@ get '/:version/random' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: random verse lookup" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace("${version}/random returned as HTML");
 		send_as html => $result;
 	}
@@ -453,11 +448,6 @@ get '/2/votd' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Verse of The Day" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace('2/votd returned as HTML');
 		send_as html => $result;
 	}
@@ -518,11 +508,6 @@ get '/1/lookup/:book/:chapter' => sub {
 	}
 
 	if (ref($result) ne 'HASH' && ref($result) ne 'ARRAY') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace('1/lookup chapter returned as HTML');
 		send_as html => $result;
 	}
@@ -563,11 +548,6 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	}
 
 	if (ref($result) eq '') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}:${verse}" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace('1/lookup verse returned as HTML');
 		send_as html => $result;
 	} elsif (ref($result) eq 'ARRAY') {
