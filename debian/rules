@@ -41,9 +41,9 @@ override_dh_auto_install:
 	dh_auto_install --destdir=debian/chleb-bible-search-core
 
 override_dh_install:
-	install -dm 755 debian/chleb-bible-search/usr/share/chleb-bible-search
-	cp -Rp /usr/share/perl5 debian/chleb-bible-search/usr/share/chleb-bible-search
-	cp -Rp /usr/lib/${DEB_TARGET_MULTIARCH}/perl5/*/. debian/chleb-bible-search/usr/share/chleb-bible-search/perl5
+	install -dm 755 debian/chleb-bible-search-core/usr/share/chleb-bible-search
+	cp -Rp /usr/share/perl5 debian/chleb-bible-search-core/usr/share/chleb-bible-search
+	cp -Rp /usr/lib/${DEB_TARGET_MULTIARCH}/perl5/*/. debian/chleb-bible-search-core/usr/share/chleb-bible-search/perl5
 	dh_install
 
 override_dh_auto_clean:

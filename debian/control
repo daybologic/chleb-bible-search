@@ -40,7 +40,7 @@ Description: Chleb Bible Search - Bible Query Service (meta-package)
  linguistic data for interpreting search queries.
 
 Package: chleb-bible-search-core
-Architecture: all
+Architecture: any
 Depends: ${shlibs:Depends},
  ${misc:Depends},
  bash (>= 5.2.15-2),
