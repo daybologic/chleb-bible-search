@@ -77,7 +77,7 @@ sub testEmpty {
 
 sub testResultsTable {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 7;
 
 	my %json = (
 		data => [
@@ -103,11 +103,15 @@ sub testResultsTable {
 	);
 
 	my $html = Chleb::Server::Moose::__searchResultsToHtml(\%json);
+	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, 'home link is present by default');
 	like($html, qr{<table class="info-table">}, 'search results use info table');
 	like($html, qr{<th>Result</th>}, 'result header is present');
 	like($html, qr{<th>Verse</th>}, 'verse header is present');
 	like($html, qr{<a href="/1/lookup/gen/1/1">Gen \[1:1\]</a>}, 'verse link is present');
 	like($html, qr{<td>In the beginning God created the heaven and the earth\.</td>}, 'verse text is in a table cell');
+
+	my $htmlWithoutHome = Chleb::Server::Moose::__searchResultsToHtml(\%json, { includeHome => 0 });
+	unlike($htmlWithoutHome, qr{<a class="vn-link vn-home" href="/">home</a>}, 'home link can be suppressed');
 
 	return EXIT_SUCCESS;
 }

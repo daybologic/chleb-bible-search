@@ -627,7 +627,7 @@ sub __search {
 
 		return (\%hash, \%hash);
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		my $html = __searchResultsToHtml(\%hash);
+		my $html = __searchResultsToHtml(\%hash, { includeHome => !$search->{form} });
 		return ($html, \%hash);
 	}
 
@@ -1065,7 +1065,8 @@ sub __makeBooks {
 }
 
 sub __searchResultsToHtml {
-	my ($json) = @_;
+	my ($json, $options) = @_;
+	$options ||= {};
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
 		return Chleb::Server::Dancer2::fetchStaticPage('no_results');
@@ -1083,7 +1084,8 @@ sub __searchResultsToHtml {
 	}
 
 
-	my $text = __linkToHome();
+	my $text = '';
+	$text .= __linkToHome() if (!exists($options->{includeHome}) || $options->{includeHome});
 	$text .= "<table class=\"info-table\">\r\n";
 	$text .= "<tr>\r\n";
 	$text .= "<th>Result</th>\r\n";
