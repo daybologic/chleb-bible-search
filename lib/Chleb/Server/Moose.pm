@@ -1412,6 +1412,8 @@ sub __infoToHtml {
 Throw a 400 error if C<$version> is outwith C<$minimum> and C<$maximum> values,
 otherwise, C<$version> is returned.
 
+=back
+
 =cut
 
 sub __versionFilter {
@@ -1423,8 +1425,6 @@ sub __versionFilter {
 
 	return $version;
 }
-
-=back
 
 sub __removeUptime {
 	my ($self) = @_;
