@@ -88,6 +88,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Uptime'
+            text/html:
+              schema:
+                type: string
         '429':
           description: Rate-limited
   /1/ping:
@@ -108,6 +111,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Pong'
+            text/html:
+              schema:
+                type: string
         '429':
           description: Rate-limited
   /1/version:
@@ -128,6 +134,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Version'
+            text/html:
+              schema:
+                type: string
         '403':
           description: Forbidden
         '429':

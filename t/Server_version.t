@@ -42,6 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::MediaType;
 use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
@@ -76,6 +77,26 @@ sub testDefaults {
 		included => [ ],
 		links => { },
 	}, '__version') or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtml {
+	my ($self) = @_;
+
+	my $html = $self->sut->__version({
+		accept => Chleb::Server::MediaType->parseAcceptHeader('text/html'),
+	});
+	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__version HTML has home link');
+	like($html, qr{<table class="info-table">}, '__version HTML has info table');
+	like($html, qr{<th>Version</th>}, '__version HTML has version header');
+	like($html, qr{<td>2\.4\.1</td>}, '__version HTML has version value');
+	like($html, qr{<th>Administrator</th>}, '__version HTML has administrator header');
+	like($html, qr{<td>Unknown</td>}, '__version HTML has administrator value');
+	like($html, qr{<th>Admin email</th>}, '__version HTML has admin email header');
+	like($html, qr{<td>example\@example\.org</td>}, '__version HTML has admin email value');
+	like($html, qr{<th>Server host</th>}, '__version HTML has server host header');
+	like($html, qr{<td>localhost</td>}, '__version HTML has server host value');
 
 	return EXIT_SUCCESS;
 }

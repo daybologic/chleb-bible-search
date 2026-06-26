@@ -312,12 +312,16 @@ get '/' => sub {
 		});
 	}
 
-	serveStaticPage('index', {
+	my $result = fetchStaticPage('generic_head', { TITLE => 'Chleb Bible Search Service' });
+	$result .= fetchStaticPage('index', {
 		FACEBOOK_HTML => $facebookHtml,
 		HOSTNAME => hostname(),
 		MAILING_LIST_VOTD_HTML => $mailingListVoTDHtml,
 		TWITTER_HTML => $twitterHtml,
 	});
+	$result .= fetchStaticPage('generic_tail');
+
+	send_as html => $result;
 
 	return;
 };
@@ -325,7 +329,10 @@ get '/' => sub {
 get '/settings' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	serveStaticPage('public/settings');
+	my $result = fetchStaticPage('generic_head', { TITLE => 'Settings - Chleb Bible Search' });
+	$result .= fetchStaticPage('public/settings');
+	$result .= fetchStaticPage('generic_tail');
+	send_as html => $result;
 	return;
 };
 
@@ -363,11 +370,6 @@ get '/:version/random' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: random verse lookup" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace("${version}/random returned as HTML");
 		send_as html => $result;
 	}
@@ -446,11 +448,6 @@ get '/2/votd' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Verse of The Day" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace('2/votd returned as HTML');
 		send_as html => $result;
 	}
@@ -511,11 +508,6 @@ get '/1/lookup/:book/:chapter' => sub {
 	}
 
 	if (ref($result) ne 'HASH' && ref($result) ne 'ARRAY') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace('1/lookup chapter returned as HTML');
 		send_as html => $result;
 	}
@@ -556,11 +548,6 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	}
 
 	if (ref($result) eq '') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}:${verse}" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace('1/lookup verse returned as HTML');
 		send_as html => $result;
 	} elsif (ref($result) eq 'ARRAY') {
@@ -631,7 +618,9 @@ get '/1/search' => sub {
 			TITLE => $title,
 		);
 
-		my $searchPage = fetchStaticPage('search', \%templateParams);
+		my $searchPage = fetchStaticPage('generic_head', { TITLE => $title });
+		$searchPage .= fetchStaticPage('search', \%templateParams);
+		$searchPage .= fetchStaticPage('generic_tail');
 		send_as html => $searchPage;
 
 		return;
@@ -660,18 +649,60 @@ get '/1/search' => sub {
 get '/1/ping' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	return $server->__ping();
+	my $dancerRequest = request();
+
+	my $ping;
+	eval {
+		$ping = $server->__ping({
+			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	if (ref($ping) eq 'HASH') {
+		return $ping;
+	} elsif (ref($ping) eq '') {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Ping" });
+		$resultHtml .= $ping;
+		$resultHtml .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/ping returned as HTML');
+		send_as html => $resultHtml;
+	} else {
+		send_error('Unknown error', 500);
+	}
 };
 
 get '/1/version' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
+	my $dancerRequest = request();
 
-	my $version = $server->__version();
+	my $version;
+	eval {
+		$version = $server->__version({
+			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
 	if (ref($version) eq 'HASH') {
 		return $version;
-	} elsif ($version == 403) {
+	} elsif (ref($version) eq '' && $version eq '403') {
 		send_error('Disabled by server administrator', $version);
+	} elsif (ref($version) eq '') {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Server version" });
+		$resultHtml .= $version;
+		$resultHtml .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/version returned as HTML');
+		send_as html => $resultHtml;
 	} else {
 		send_error('Unknown error', 500);
 	}
@@ -680,7 +711,30 @@ get '/1/version' => sub {
 get '/1/uptime' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	return $server->__uptime();
+	my $dancerRequest = request();
+
+	my $result;
+	eval {
+		$result = $server->__uptime({
+			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	if (ref($result) ne 'HASH') {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Service uptime" });
+		$resultHtml .= $result;
+		$resultHtml .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/uptime returned as HTML');
+		send_as html => $resultHtml;
+	}
+
+	$server->dic->logger->trace('1/uptime returned as JSON');
+	return $result;
 };
 
 get '/1/info' => sub {
@@ -701,10 +755,12 @@ get '/1/info' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Bible info" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Bible info" });
+		$resultHtml .= fetchStaticPage('info', {
+			INFO_TABLES => $result,
+		});
+		$resultHtml .= fetchStaticPage('generic_tail');
+		$result = $resultHtml;
 
 		$server->dic->logger->trace('1/info returned as HTML');
 		send_as html => $result;

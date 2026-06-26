@@ -1,14 +1,4 @@
-<!-- Chleb Bible Search -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Settings - Chleb Bible Search</title>
-	<link rel="icon" href="/images/favicon.png" type="image/png">
-	<link href="/style.css" rel="stylesheet" type="text/css">
-</head>
-<body>
+<!-- Chleb Template -->
 	<main class="settings-page">
 		<section class="settings-card" aria-labelledby="settings-title">
 			<div class="settings-heading">
@@ -49,7 +39,8 @@
 
 				<div class="settings-actions">
 					<button type="submit">Save settings</button>
-					<a href="/">Return home</a>
+					<button type="button" id="settings-back">Back</button>
+					<button type="button" id="settings-home">Home</button>
 				</div>
 
 				<p id="settings-status" class="settings-status" role="status" aria-live="polite"></p>
@@ -65,6 +56,8 @@
 			var allowedTranslations = [ 'default', 'asv', 'kjv' ];
 			var form = document.getElementById('settings-form');
 			var status = document.getElementById('settings-status');
+			var back = document.getElementById('settings-back');
+			var home = document.getElementById('settings-home');
 
 			function readCookie(name) {
 				var prefix = name + '=';
@@ -107,7 +100,17 @@
 				writeCookie(preferredTranslationCookieName, value);
 				status.textContent = 'Settings saved.';
 			});
+
+			back.addEventListener('click', function () {
+				if (window.history.length > 1) {
+					window.history.back();
+				} else {
+					window.location.href = '/';
+				}
+			});
+
+			home.addEventListener('click', function () {
+				window.location.href = '/';
+			});
 		}());
 	</script>
-</body>
-</html>

@@ -1,14 +1,4 @@
-<!-- Chleb Bible Search -->
-<!DOCTYPE html>
-
 <!-- Chleb Template -->
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<link href="/style.css" rel="stylesheet" type="text/css">
-	<title>__TITLE__</title>
-</head>
-	<body>
 		<form class="search-form" method="GET" action="/1/search">
 			<h2>Search Criteria</h2>
 
@@ -31,6 +21,7 @@
 			<input type="hidden" id="form" name="form" value="true">
 
 			<button type="submit">Search</button>
+			<button type="button" id="search-home">Home</button>
 		</form>
 		__SEARCH_RESULTS__
 		<script>
@@ -40,6 +31,7 @@
 				var wholewordCookieName = 'wholeword';
 				var previousSearchLimitCookieName = 'previousSearchLimit';
 				var form = document.querySelector('.search-form');
+				var home = document.getElementById('search-home');
 				var wholeword = document.getElementById('wholeword');
 				var limit = document.getElementById('limit');
 				var params = new URLSearchParams(window.location.search);
@@ -80,7 +72,9 @@
 						writeCookie(previousSearchLimitCookieName, limit.value);
 					}
 				});
+
+				home.addEventListener('click', function () {
+					window.location.href = '/';
+				});
 			}());
 		</script>
-	</body>
-</html>
