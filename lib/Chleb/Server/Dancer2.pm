@@ -649,7 +649,31 @@ get '/1/search' => sub {
 get '/1/ping' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	return $server->__ping();
+	my $dancerRequest = request();
+
+	my $ping;
+	eval {
+		$ping = $server->__ping({
+			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	if (ref($ping) eq 'HASH') {
+		return $ping;
+	} elsif (ref($ping) eq '') {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Ping" });
+		$resultHtml .= $ping;
+		$resultHtml .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/ping returned as HTML');
+		send_as html => $resultHtml;
+	} else {
+		send_error('Unknown error', 500);
+	}
 };
 
 get '/1/version' => sub {

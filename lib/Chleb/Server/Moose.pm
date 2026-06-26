@@ -433,18 +433,49 @@ L<https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search>.
 =cut
 
 sub __ping {
-	my ($self) = @_;
+	my ($self, $params) = @_;
+	$params ||= {};
 	my %hash = __makeJsonApi();
+
+	my %attributes = (
+		message => 'Ahoy-hoy!',
+	);
 
 	push(@{ $hash{data} }, {
 		type => 'pong',
 		id => uuid_to_string(create_uuid()),
-		attributes => {
-			message => 'Ahoy-hoy!',
-		},
+		attributes => \%attributes,
 	});
 
-	return \%hash;
+	my $contentType = Chleb::Server::MediaType::acceptToContentType(
+		$params->{accept},
+		$Chleb::Server::MediaType::CONTENT_TYPE_JSON,
+	);
+
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) {
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) {
+		return __pingToHtml(\%attributes);
+	}
+
+	die Chleb::Exception->raise(
+		HTTP_NOT_ACCEPTABLE,
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+	);
+}
+
+sub __pingToHtml {
+	my ($attributes) = @_;
+
+	my $html = __linkToHome();
+	$html .= "<table class=\"info-table\">\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Message</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{message});
+	$html .= "</tr>\r\n";
+	$html .= "</table>\r\n";
+
+	return $html;
 }
 
 =item C<__version()>
