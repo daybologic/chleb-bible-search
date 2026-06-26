@@ -127,9 +127,6 @@ sub title {
 		$self->dic->config->get('server', 'admin_email', 'example@example.org'),
 	));
 
-	# nb. this doesn't work, but perhaps it will be fixed in Plack in the future.
-	$0 = 'chleb-bible-search [server]';
-
 	return;
 }
 
@@ -262,7 +259,10 @@ sub __lookup {
 		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+	die Chleb::Exception->raise(
+		HTTP_NOT_ACCEPTABLE,
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+	);
 }
 
 =item C<__random($params)>
@@ -433,18 +433,49 @@ L<https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search>.
 =cut
 
 sub __ping {
-	my ($self) = @_;
+	my ($self, $params) = @_;
+	$params ||= {};
 	my %hash = __makeJsonApi();
+
+	my %attributes = (
+		message => 'Ahoy-hoy!',
+	);
 
 	push(@{ $hash{data} }, {
 		type => 'pong',
 		id => uuid_to_string(create_uuid()),
-		attributes => {
-			message => 'Ahoy-hoy!',
-		},
+		attributes => \%attributes,
 	});
 
-	return \%hash;
+	my $contentType = Chleb::Server::MediaType::acceptToContentType(
+		$params->{accept},
+		$Chleb::Server::MediaType::CONTENT_TYPE_JSON,
+	);
+
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) {
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) {
+		return __pingToHtml(\%attributes);
+	}
+
+	die Chleb::Exception->raise(
+		HTTP_NOT_ACCEPTABLE,
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+	);
+}
+
+sub __pingToHtml {
+	my ($attributes) = @_;
+
+	my $html = __linkToHome();
+	$html .= "<table class=\"info-table\">\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Message</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{message});
+	$html .= "</tr>\r\n";
+	$html .= "</table>\r\n";
+
+	return $html;
 }
 
 =item C<__version()>
@@ -459,7 +490,8 @@ disabled by the server administrator, or potentially, for any other reason.
 =cut
 
 sub __version {
-	my ($self) = @_;
+	my ($self, $params) = @_;
+	$params ||= {};
 	my %hash = __makeJsonApi();
 
 	my $version = $Chleb::VERSION;
@@ -479,7 +511,47 @@ sub __version {
 		attributes => \%attributes,
 	});
 
-	return \%hash;
+	my $contentType = Chleb::Server::MediaType::acceptToContentType(
+		$params->{accept},
+		$Chleb::Server::MediaType::CONTENT_TYPE_JSON,
+	);
+
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __versionToHtml(\%attributes);
+	}
+
+	die Chleb::Exception->raise(
+		HTTP_NOT_ACCEPTABLE,
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+	);
+}
+
+sub __versionToHtml {
+	my ($attributes) = @_;
+
+	my $html = __linkToHome();
+	$html .= "<table class=\"info-table\">\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Version</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{version});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Administrator</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{admin_name});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Admin email</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{admin_email});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Server host</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{server_host});
+	$html .= "</tr>\r\n";
+	$html .= "</table>\r\n";
+
+	return $html;
 }
 
 =item C<__uptime()>
@@ -489,21 +561,52 @@ Returns a C<JSON:API> structure suitable for returning the server uptime.
 =cut
 
 sub __uptime {
-	my ($self) = @_;
+	my ($self, $params) = @_;
+	$params ||= {};
 	my %hash = __makeJsonApi();
 
 	my $uptime = $self->__getUptime();
+	my $uptimeText = duration_exact($uptime);
 
 	push(@{ $hash{data} }, {
 		type => 'uptime',
 		id => uuid_to_string(create_uuid()),
 		attributes => {
 			uptime => $uptime,
-			text => duration_exact($uptime),
+			text => $uptimeText,
 		},
 	});
 
-	return \%hash;
+	my $contentType = Chleb::Server::MediaType::acceptToContentType(
+		$params->{accept},
+		$Chleb::Server::MediaType::CONTENT_TYPE_JSON,
+	);
+
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __uptimeToHtml($uptime, $uptimeText);
+	}
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+}
+
+sub __uptimeToHtml {
+	my ($uptime, $uptimeText) = @_;
+
+	my $html = __linkToHome();
+	$html .= "<table class=\"info-table\">\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Uptime</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $uptimeText);
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Seconds</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $uptime);
+	$html .= "</tr>\r\n";
+	$html .= "</table>\r\n";
+
+	return $html;
 }
 
 =item C<__search($search)>
@@ -630,7 +733,7 @@ sub __search {
 
 		return (\%hash, \%hash);
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		my $html = __searchResultsToHtml(\%hash);
+		my $html = __searchResultsToHtml(\%hash, { includeHome => !$search->{form} });
 		return ($html, \%hash);
 	}
 
@@ -734,16 +837,22 @@ Return the number of seconds the server has been running.
 
 sub __getUptime {
 	my ($self) = @_;
+	my $uptimeFilePath = $self->__uptimeFilePath();
 	my $startTime = time();
-	if (my $fh = IO::File->new($UPTIME_FILE_PATH, 'r')) {
+	if (my $fh = IO::File->new($uptimeFilePath, 'r')) {
 		$startTime = <$fh>;
 		chomp($startTime);
 		$startTime = int($startTime); # don't trust the file too much
-	} elsif ($fh = IO::File->new($UPTIME_FILE_PATH, 'w')) {
+	} elsif ($fh = IO::File->new($uptimeFilePath, 'w')) {
 		print($fh "$startTime\n");
 	}
 
 	return time() - $startTime;
+}
+
+sub __uptimeFilePath {
+	my ($self) = @_;
+	return $self->dic->config->get('server', 'uptime_file', $UPTIME_FILE_PATH);
 }
 
 =back
@@ -958,7 +1067,7 @@ sub __verseToHtml {
 
 	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
 		my $lastChapter = $chapters[-1];
-		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>',
+		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>';
 	}
 
 	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
@@ -987,6 +1096,9 @@ sub __verseToHtml {
 		$thisChapter_KLUDGE =~ s@/1$@@; # TODO: This is a kludge, the JSON should provide it somehow.
 	}
 	$self->dic->logger->trace("Link kludge in effect (post): ${thisChapter_KLUDGE}");
+	my $settingsLink = '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-label="Settings">'
+	    . '<span class="vn-settings-icon" aria-hidden="true">⚙</span>'
+	    . '<span class="vn-settings-text"> Settings</span></a>';
 
 	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
 		PREV_BOOK_URL => $prevBookLink,
@@ -997,6 +1109,7 @@ sub __verseToHtml {
 		NEXT_CHAPTER_URL => $nextChapterLink,
 		NEXT_BOOK_URL => $nextBookLink,
 		PERMALINK_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{self} . '">permalink</a>',
+		SETTINGS_URL => $settingsLink,
 		FIRST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">first verse</a>',
 		FIRST_CHAPTER_URL => sprintf($bookLinkFormat, 'first chapter'),
 		LAST_CHAPTER_URL => $lastChapterLink,
@@ -1064,7 +1177,8 @@ sub __makeBooks {
 }
 
 sub __searchResultsToHtml {
-	my ($json) = @_;
+	my ($json, $options) = @_;
+	$options ||= {};
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
 		return Chleb::Server::Dancer2::fetchStaticPage('no_results');
@@ -1082,7 +1196,14 @@ sub __searchResultsToHtml {
 	}
 
 
-	my $text = __linkToHome();
+	my $text = '';
+	$text .= __linkToHome() if (!exists($options->{includeHome}) || $options->{includeHome});
+	$text .= "<table class=\"info-table\">\r\n";
+	$text .= "<tr>\r\n";
+	$text .= "<th>Result</th>\r\n";
+	$text .= "<th>Verse</th>\r\n";
+	$text .= "<th>Text</th>\r\n";
+	$text .= "</tr>\r\n";
 
 	for (my $resultI = 0; $resultI < scalar(@{ $json->{data} }); $resultI++) {
 		my $verse = $json->{data}->[$resultI];
@@ -1097,18 +1218,20 @@ sub __searchResultsToHtml {
 			{ includeBookName => 1 },
 		);
 
-		$text .= sprintf("<p>[%s]<br />\r\n%s %s %s\r\n\r\n</p>",
-			$attributes->{title},
-			$linkToVerse,
-			$attributes->{text},
-		);
+		$text .= "<tr>\r\n";
+		$text .= sprintf("<td>%s</td>\r\n", $attributes->{title});
+		$text .= sprintf("<td>%s</td>\r\n", $linkToVerse);
+		$text .= sprintf("<td>%s</td>\r\n", $attributes->{text});
+		$text .= "</tr>\r\n";
 	}
+
+	$text .= "</table>\r\n";
 
 	return $text;
 }
 
 sub __linkToHome { # add a link to home (root)
-	my $output .= "<p>\r\n";
+	my $output = "<p>\r\n";
 	$output .= sprintf("\t<a class=\"vn-link vn-home\" href=\"%s\">%s</a>\r\n", '/', 'home');
 	$output .= "</p>\r\n";
 	return $output;
@@ -1153,11 +1276,9 @@ sub __infoToHtml {
 		return sprintf("<t${tag}>${formatter}</t${tag}>\r\n", $datum);
 	};
 
-	my %bookNameCache = ( );
+	my %bookCache = ( );
 
-	my $text = '<a href="/">home</a><br />' . "\r\n";
-
-	$text .= "<table>\r\n";
+	my $text = "<table class=\"info-table\">\r\n";
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book", 0, 1);
@@ -1191,7 +1312,10 @@ sub __infoToHtml {
 
 		my $attributes = $included->{attributes};
 
-		$bookNameCache{ $attributes->{short_name} } = $attributes->{long_name};
+		$bookCache{ $attributes->{short_name} } = {
+			longName => $attributes->{long_name},
+			shortName => $attributes->{short_name},
+		};
 
 		$text .= "<tr>\r\n";
 		$text .= $printCell->($linkToBook->(
@@ -1218,7 +1342,7 @@ sub __infoToHtml {
 
 	$text .= "</table><br/>\r\n";
 
-	$text .= "<table>\r\n";
+	$text .= "<table class=\"info-table\">\r\n";
 
 	$text .= "<tr>\r\n";
 	$text .= $printCell->("Book", 0, 1);
@@ -1233,7 +1357,10 @@ sub __infoToHtml {
 		my $attributes = $included->{attributes};
 
 		$text .= "<tr>\r\n";
-		$text .= $printCell->($bookNameCache{ $attributes->{book} });
+		$text .= $printCell->($linkToBook->(
+			$bookCache{ $attributes->{book} }->{longName},
+			$bookCache{ $attributes->{book} }->{shortName},
+		));
 		$text .= $printCell->($linkToChapter->(
 			$attributes->{ordinal},
 			$attributes->{book},
@@ -1272,9 +1399,10 @@ sub __versionFilter {
 
 sub __removeUptime {
 	my ($self) = @_;
+	my $uptimeFilePath = $self->__uptimeFilePath();
 
-	my $logMessage = "Removing '$UPTIME_FILE_PATH' -- ";
-	my $result = unlink($UPTIME_FILE_PATH);
+	my $logMessage = "Removing '$uptimeFilePath' -- ";
+	my $result = unlink($uptimeFilePath);
 	$logMessage .= sprintf('%d file(s) removed', int($result));
 
 	$self->dic->logger->debug($logMessage);
@@ -1347,15 +1475,15 @@ sub handleSessionToken {
 		$sessionToken->ipAddress($ipAddress);
 		$sessionToken->userAgent($userAgent);
 
-		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
-		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
-
 		eval {
 			$tokenRepo->save($sessionToken); # save via all configured backends
 		};
 		if (my $exception = $EVAL_ERROR) {
 			Chleb::Server::Dancer2::handleException($exception);
 		}
+
+		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 
 		return;
 	}

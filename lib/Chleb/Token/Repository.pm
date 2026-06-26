@@ -37,6 +37,7 @@ extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
 use Chleb::Token::Repository::Dummy;
+use Chleb::Token::Repository::JWT;
 use Chleb::Token::Repository::Local;
 use Chleb::Token::Repository::Redis;
 use HTTP::Status qw(:constants);
@@ -44,17 +45,23 @@ use HTTP::Status qw(:constants);
 sub repo {
 	my ($self, $name) = @_;
 
-	if (defined($name)) {
-		if ($name eq 'Dummy') {
-			return Chleb::Token::Repository::Dummy->new(repo => $self);
-		} elsif ($name eq 'Local') {
-			return Chleb::Token::Repository::Local->new(repo => $self);
-		} elsif ($name eq 'Redis') {
-			return Chleb::Token::Repository::Redis->new(repo => $self);
-		}
+	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be specified')
+	    unless (defined($name));
+
+	# TODO: Could we use UNIVERSAL require here?
+	my %repositories = (
+		'Dummy' => 'Chleb::Token::Repository::Dummy',
+		'JWT' => 'Chleb::Token::Repository::JWT',
+		'Local' => 'Chleb::Token::Repository::Local',
+		'Redis' => 'Chleb::Token::Repository::Redis',
+	);
+
+	if (exists $repositories{$name}) {
+		my $class = $repositories{$name};
+		return $class->new(repo => $self);
 	}
 
-	...
+	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "'${name}' is not a known token repository backend");
 }
 
 sub create {

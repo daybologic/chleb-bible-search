@@ -95,7 +95,7 @@ sub load {
 		my $errNum = $ERRNO;
 		my $errStr = strerror($errNum);
 		if ($evalError =~ m/: $errStr/) {
-			return undef; # not found
+			return; # not found
 		}
 
 		$self->dic->logger->error($evalError);

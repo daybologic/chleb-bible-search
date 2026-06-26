@@ -187,7 +187,7 @@ sub getBookByShortName {
 		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
 	}
 
-	return undef;
+	return;
 }
 
 =item C<getBookByLongName($longName, [$args])>
@@ -226,7 +226,7 @@ sub getBookByLongName {
 		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
 	}
 
-	return undef;
+	return;
 }
 
 =item C<getBookByOrdinal($ordinal, [$args])>
@@ -251,7 +251,7 @@ sub getBookByOrdinal {
 
 	if ($ordinal > $self->bookCount) {
 		if ($args->{nonFatal}) {
-			return undef;
+			return;
 		} else {
 			die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Book ordinal %d out of range, there are %d books in the bible',
 			    $ordinal, $self->bookCount));

@@ -1,8 +1,8 @@
 etc/chleb-bible-search.service /usr/lib/systemd/system/
+etc/init.d/chleb-bible-search /etc/init.d/
 etc/nginx/*.example /etc/nginx/sites-available/
 debian/etc/*.conf /etc/chleb-bible-search/
 debian/etc/*.yaml /etc/chleb-bible-search/
-etc/logrotate/chleb-bible-search /etc/logrotate.d/
 data/static/*.html /usr/share/chleb-bible-search/
 data/static/public/* /usr/share/chleb-bible-search/public/
 debian/etc/cron.monthly/chleb-bible-search /etc/cron.monthly/

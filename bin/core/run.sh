@@ -38,6 +38,17 @@ APP='/usr/share/chleb-bible-search/app.psgi'
 SOCKET='/var/run/chleb-bible-search/sock'
 PLACK='/usr/bin/plackup'
 
+if [ -e "$(pwd)/.git" ] && [ -f 'bin/core/app.psgi' ]; then
+	$PLACK \
+		-I lib \
+		--no-default-middleware \
+		-r \
+		-R lib,data/static,etc,bin/core \
+		-p 5000 \
+		-a bin/core/app.psgi
+	exit $?
+fi
+
 nProc=$DEFAULT_NPROC
 if [ -f "$CONFIG_PATH" ]; then
 	json=$($YAML_SCRIPT < $CONFIG_PATH)
@@ -47,4 +58,5 @@ if [ -f "$CONFIG_PATH" ]; then
 	fi
 fi
 
+export PERL5LIB='/usr/share/chleb-bible-search/perl5'
 exec $PLACK --no-default-middleware -s FCGI --listen $SOCKET --nproc $nProc -a $APP

@@ -69,7 +69,7 @@ sub getVerseByOrdinal {
 		});
 	}
 
-	return undef if ($args->{nonFatal});
+	return if ($args->{nonFatal});
 	die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
 }
 
@@ -102,7 +102,7 @@ sub getPrev {
 		return $self->book->getChapterByOrdinal($self->ordinal - 1, { nonFatal => 1 });
 	}
 
-	return undef;
+	return;
 }
 
 sub getPath {

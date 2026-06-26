@@ -28,7 +28,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-#server:
+server:
+  uptime_file: cache/startup.txt
 #  admin_email: example@example.org
 #  admin_name: Unknown
 #  children: 30
@@ -49,23 +50,33 @@ votd_exclude:
     - Deu 22:21
 features:
   facebook: on
-  sessions: off
+  sessions: on
+  twitter: on
   version: on
 Dancer2:
   public_dir: data/static/public
 session_tokens:
-  backend_local:
-    dir: data/sessions
-    dynamic_mkdir: true
-  backend_redis:
-    db: 1
-    host: localhost:6379
+  backend_jwt:
+    secret: replace-with-a-long-random-secret
+#  backend_local:
+#    dir: data/sessions
+#    dynamic_mkdir: true
+#  backend_redis:
+#    db: 1
+#    host: localhost:6379
   load_order:
-    - Local
+#   - Local
 #   - Redis
+    - JWT
   save_order:
-    - Dummy
+#   - Dummy
+#   - Local
+#   - Redis
+    - JWT
   ttl: 1800
 facebook:
   groupname: Chleb Bible Search (1268737414574145)
   url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
+twitter:
+  username: ChlebSearch
+  url: https://x.com/ChlebSearch
