@@ -655,12 +655,30 @@ get '/1/ping' => sub {
 get '/1/version' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
+	my $dancerRequest = request();
 
-	my $version = $server->__version();
+	my $version;
+	eval {
+		$version = $server->__version({
+			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
 	if (ref($version) eq 'HASH') {
 		return $version;
-	} elsif ($version == 403) {
+	} elsif (ref($version) eq '' && $version eq '403') {
 		send_error('Disabled by server administrator', $version);
+	} elsif (ref($version) eq '') {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Server version" });
+		$resultHtml .= $version;
+		$resultHtml .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/version returned as HTML');
+		send_as html => $resultHtml;
 	} else {
 		send_error('Unknown error', 500);
 	}

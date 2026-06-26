@@ -459,7 +459,8 @@ disabled by the server administrator, or potentially, for any other reason.
 =cut
 
 sub __version {
-	my ($self) = @_;
+	my ($self, $params) = @_;
+	$params ||= {};
 	my %hash = __makeJsonApi();
 
 	my $version = $Chleb::VERSION;
@@ -479,7 +480,47 @@ sub __version {
 		attributes => \%attributes,
 	});
 
-	return \%hash;
+	my $contentType = Chleb::Server::MediaType::acceptToContentType(
+		$params->{accept},
+		$Chleb::Server::MediaType::CONTENT_TYPE_JSON,
+	);
+
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __versionToHtml(\%attributes);
+	}
+
+	die Chleb::Exception->raise(
+		HTTP_NOT_ACCEPTABLE,
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+	);
+}
+
+sub __versionToHtml {
+	my ($attributes) = @_;
+
+	my $html = __linkToHome();
+	$html .= "<table class=\"info-table\">\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Version</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{version});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Administrator</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{admin_name});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Admin email</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{admin_email});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Server host</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{server_host});
+	$html .= "</tr>\r\n";
+	$html .= "</table>\r\n";
+
+	return $html;
 }
 
 =item C<__uptime()>

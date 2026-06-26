@@ -131,6 +131,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Version'
+            text/html:
+              schema:
+                type: string
         '403':
           description: Forbidden
         '429':
