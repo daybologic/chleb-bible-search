@@ -355,6 +355,20 @@ sub test_translation_all {
 	return EXIT_SUCCESS;
 }
 
+sub test_json_api_media_type {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['kjv'], version => 1 });
+
+	is(ref($json), 'HASH', 'random JSON:API media type returns JSON structure');
+	is($json->{data}->[0]->{type}, 'verse', 'random JSON:API media type returns verse data');
+	is($json->{links}->{self}, '/1/random?translations=kjv', 'random JSON:API media type keeps self link');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;

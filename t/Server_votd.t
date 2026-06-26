@@ -64,7 +64,8 @@ sub test {
 	plan tests => 1;
 
 	my $when = '2024-08-23T11:49:09+0100';
-	my $json = $self->sut->__votd({ when => $when });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ accept => $mediaType, when => $when });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -158,6 +159,21 @@ sub test {
 			self => '/1/votd',
 		},
 	}, "single verse JSON for $when") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testJsonApiMediaType {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $when = '2024-08-23T11:49:09+0100';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
+	my $json = $self->sut->__votd({ accept => $mediaType, when => $when });
+
+	is(ref($json), 'HASH', 'votd JSON:API media type returns JSON structure');
+	is($json->{data}->[0]->{type}, 'verse', 'votd JSON:API media type returns verse data');
+	is($json->{links}->{self}, '/1/votd', 'votd JSON:API media type keeps self link');
 
 	return EXIT_SUCCESS;
 }

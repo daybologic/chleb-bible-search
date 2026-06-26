@@ -199,6 +199,15 @@ Optional; if not specified, we return the whole chapter.
 
 =cut
 
+sub __isJsonContentType {
+	my ($contentType) = @_;
+
+	return (
+		$contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON
+		|| $contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API
+	);
+}
+
 sub __lookup {
 	my ($self, $params) = @_;
 
@@ -246,7 +255,7 @@ sub __lookup {
 		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
-	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+	if (__isJsonContentType($contentType)) {
 		if ($params->{form}) {
 			die Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
@@ -310,7 +319,7 @@ sub __random {
 		}
 
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
-		return $json[0] if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON); # application/json
+		return $json[0] if (__isJsonContentType($contentType));
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 			return $self->__verseToHtml($verse, \@json, $FUNCTION_RANDOM);
@@ -331,14 +340,21 @@ sub __random {
 		return $self->__verseToHtml($verse, [$json], $FUNCTION_RANDOM);
 	}
 
-	if ($params->{form}) {
-		die Chleb::Exception->raise(
-			HTTP_BAD_REQUEST,
-			"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-		);
+	if (__isJsonContentType($contentType)) {
+		if ($params->{form}) {
+			die Chleb::Exception->raise(
+				HTTP_BAD_REQUEST,
+				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
+			);
+		}
+
+		return $json;
 	}
 
-	return $json;
+	die Chleb::Exception->raise(
+		HTTP_NOT_ACCEPTABLE,
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+	);
 
 }
 
@@ -388,7 +404,7 @@ sub __votd {
 
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 
-		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		if (__isJsonContentType($contentType)) {
 			if ($params->{form}) {
 				die Chleb::Exception->raise(
 					HTTP_BAD_REQUEST,
@@ -414,14 +430,25 @@ sub __votd {
 	my $json = __verseToJsonApi($verse, $params);
 	$json->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
 
-	if ($params->{form}) {
-		die Chleb::Exception->raise(
-			HTTP_BAD_REQUEST,
-			"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-		);
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return $self->__verseToHtml($verse, [$json], $FUNCTION_VOTD);
 	}
 
-	return $json;
+	if (__isJsonContentType($contentType)) {
+		if ($params->{form}) {
+			die Chleb::Exception->raise(
+				HTTP_BAD_REQUEST,
+				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
+			);
+		}
+
+		return $json;
+	}
+
+	die Chleb::Exception->raise(
+		HTTP_NOT_ACCEPTABLE,
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+	);
 }
 
 =item C<__ping()>
@@ -452,7 +479,7 @@ sub __ping {
 		$Chleb::Server::MediaType::CONTENT_TYPE_JSON,
 	);
 
-	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) {
+	if (__isJsonContentType($contentType)) {
 		return \%hash;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) {
 		return __pingToHtml(\%attributes);
@@ -516,7 +543,7 @@ sub __version {
 		$Chleb::Server::MediaType::CONTENT_TYPE_JSON,
 	);
 
-	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+	if (__isJsonContentType($contentType)) {
 		return \%hash;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		return __versionToHtml(\%attributes);
@@ -582,7 +609,7 @@ sub __uptime {
 		$Chleb::Server::MediaType::CONTENT_TYPE_JSON,
 	);
 
-	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+	if (__isJsonContentType($contentType)) {
 		return \%hash;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		return __uptimeToHtml($uptime, $uptimeText);
@@ -723,7 +750,7 @@ sub __search {
 	my $safeLimit = uri_escape($limit);
 	$hash{links}->{self} = "/1/search?term=$safeTerm&wholeword=$safeWholeword&limit=$safeLimit";
 
-	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+	if (__isJsonContentType($contentType)) {
 		if ($search->{form}) {
 			die Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
@@ -820,7 +847,7 @@ sub __info {
 		links => { },
 	});
 
-	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+	if (__isJsonContentType($contentType)) {
 		return \%hash;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		return __infoToHtml(\%hash);
