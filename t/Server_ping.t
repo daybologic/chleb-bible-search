@@ -78,6 +78,27 @@ sub testPing {
 	return EXIT_SUCCESS;
 }
 
+sub testPingJsonApiMediaType {
+	my ($self) = @_;
+
+	my $json = $self->sut->__ping({
+		accept => Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json'),
+	});
+	cmp_deeply($json, {
+		data => [{
+			attributes => {
+				message => 'Ahoy-hoy!',
+			},
+			id => ignore(),
+			type => 'pong',
+		}],
+		included => [ ],
+		links => { },
+	}, '__ping JSON:API media type') or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
 sub testHtml {
 	my ($self) = @_;
 

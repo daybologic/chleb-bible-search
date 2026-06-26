@@ -76,6 +76,20 @@ sub _request {
 	return request(@args);
 }
 
+sub __setJsonResponseContentType {
+	my ($accept, $default) = @_;
+
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($accept, $default);
+	if (
+		$contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON
+		|| $contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API
+	) {
+		content_type $contentType;
+	}
+
+	return;
+}
+
 =head2 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation)
 
 Resolves the translation filters for a request which supports preferred
@@ -345,6 +359,7 @@ get '/:version/random' => sub {
 	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
 
 	my $dancerRequest = request();
+	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
@@ -354,8 +369,9 @@ get '/:version/random' => sub {
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__random({
-			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept => $accept,
 			translations => $translations,
 			testament => _param('testament'),
 			version => $version,
@@ -375,6 +391,7 @@ get '/:version/random' => sub {
 	}
 
 	$server->dic->logger->trace("${version}/random returned as JSON");
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -387,6 +404,7 @@ get '/1/votd' => sub {
 	my $when = _param('when');
 	my $testament = _param('testament');
 	my $dancerRequest = request();
+	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
@@ -396,7 +414,9 @@ get '/1/votd' => sub {
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__votd({
+			accept       => $accept,
 			parental    => $parental,
 			redirect    => $redirect,
 			translations => $translations,
@@ -410,6 +430,7 @@ get '/1/votd' => sub {
 		handleException($exception);
 	}
 
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -422,6 +443,7 @@ get '/2/votd' => sub {
 	my $when = _param('when');
 	my $testament = _param('testament');
 	my $dancerRequest = request();
+	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
@@ -431,8 +453,9 @@ get '/2/votd' => sub {
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__votd({
-			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept       => $accept,
 			version      => 2,
 			when         => $when,
 			parental     => $parental,
@@ -453,6 +476,7 @@ get '/2/votd' => sub {
 	}
 
 	$server->dic->logger->trace('2/votd returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -485,6 +509,7 @@ get '/1/lookup/:book/:chapter' => sub {
 	my $book = param('book') // '';
 	my $chapter = param('chapter') // '';
 	my $dancerRequest = request();
+	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
@@ -494,8 +519,9 @@ get '/1/lookup/:book/:chapter' => sub {
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
-			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept       => $accept,
 			book         => $book,
 			chapter      => $chapter,
 			translations => $translations,
@@ -513,6 +539,7 @@ get '/1/lookup/:book/:chapter' => sub {
 	}
 
 	$server->dic->logger->trace('1/lookup chapter returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -524,6 +551,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $chapter = _param('chapter') // '';
 	my $verse = _param('verse') // '';
 	my $dancerRequest = request();
+	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
@@ -533,8 +561,9 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
-			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept       => $accept,
 			book         => $book,
 			chapter      => $chapter,
 			translations => $translations,
@@ -555,6 +584,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	}
 
 	$server->dic->logger->trace('1/lookup verse returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -563,6 +593,7 @@ get '/1/search' => sub {
 	$server->handleSessionToken();
 
 	my $dancerRequest = request();
+	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	$queryParams = {} unless ($queryParams);
 	my $limit = __previousSearchLimit(
@@ -582,8 +613,9 @@ get '/1/search' => sub {
 	my $resultHash;
 	if ($term) {
 		eval {
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 			($result, $resultHash) = $server->__search({
-				accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+				accept    => $accept,
 				form      => $form,
 				limit     => $limit,
 				term      => $term,
@@ -643,6 +675,7 @@ get '/1/search' => sub {
 	}
 
 	$server->dic->logger->trace('1/search returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -650,11 +683,13 @@ get '/1/ping' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 	my $dancerRequest = request();
+	my $accept;
 
 	my $ping;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$ping = $server->__ping({
-			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept => $accept,
 		});
 	};
 
@@ -663,6 +698,7 @@ get '/1/ping' => sub {
 	}
 
 	if (ref($ping) eq 'HASH') {
+		__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
 		return $ping;
 	} elsif (ref($ping) eq '') {
 		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Ping" });
@@ -680,11 +716,13 @@ get '/1/version' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 	my $dancerRequest = request();
+	my $accept;
 
 	my $version;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$version = $server->__version({
-			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept => $accept,
 		});
 	};
 
@@ -693,6 +731,7 @@ get '/1/version' => sub {
 	}
 
 	if (ref($version) eq 'HASH') {
+		__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
 		return $version;
 	} elsif (ref($version) eq '' && $version eq '403') {
 		send_error('Disabled by server administrator', $version);
@@ -712,11 +751,13 @@ get '/1/uptime' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 	my $dancerRequest = request();
+	my $accept;
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__uptime({
-			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept => $accept,
 		});
 	};
 
@@ -734,6 +775,7 @@ get '/1/uptime' => sub {
 	}
 
 	$server->dic->logger->trace('1/uptime returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
 	return $result;
 };
 
@@ -742,11 +784,13 @@ get '/1/info' => sub {
 	$server->handleSessionToken();
 
 	my $dancerRequest = request();
+	my $accept;
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__info({
-			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept => $accept,
 		});
 	};
 
@@ -767,6 +811,7 @@ get '/1/info' => sub {
 	}
 
 	$server->dic->logger->trace('1/info returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
