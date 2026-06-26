@@ -33,6 +33,7 @@ server:
   admin_name: Unknown
   children: 30
   domain: chleb-api.example.org
+  uptime_file: /var/run/chleb-bible-search/startup.txt
 votd_exclude:
   terms:
     - fornication

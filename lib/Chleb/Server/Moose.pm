@@ -764,16 +764,22 @@ Return the number of seconds the server has been running.
 
 sub __getUptime {
 	my ($self) = @_;
+	my $uptimeFilePath = $self->__uptimeFilePath();
 	my $startTime = time();
-	if (my $fh = IO::File->new($UPTIME_FILE_PATH, 'r')) {
+	if (my $fh = IO::File->new($uptimeFilePath, 'r')) {
 		$startTime = <$fh>;
 		chomp($startTime);
 		$startTime = int($startTime); # don't trust the file too much
-	} elsif ($fh = IO::File->new($UPTIME_FILE_PATH, 'w')) {
+	} elsif ($fh = IO::File->new($uptimeFilePath, 'w')) {
 		print($fh "$startTime\n");
 	}
 
 	return time() - $startTime;
+}
+
+sub __uptimeFilePath {
+	my ($self) = @_;
+	return $self->dic->config->get('server', 'uptime_file', $UPTIME_FILE_PATH);
 }
 
 =back
@@ -1320,9 +1326,10 @@ sub __versionFilter {
 
 sub __removeUptime {
 	my ($self) = @_;
+	my $uptimeFilePath = $self->__uptimeFilePath();
 
-	my $logMessage = "Removing '$UPTIME_FILE_PATH' -- ";
-	my $result = unlink($UPTIME_FILE_PATH);
+	my $logMessage = "Removing '$uptimeFilePath' -- ";
+	my $result = unlink($uptimeFilePath);
 	$logMessage .= sprintf('%d file(s) removed', int($result));
 
 	$self->dic->logger->debug($logMessage);
