@@ -76,6 +76,19 @@ sub _request {
 	return request(@args);
 }
 
+=head2 __setJsonResponseContentType($accept, $default)
+
+Sets the response content type when the client accepts one of the supported
+JSON media types.
+
+C<$accept> is the request C<Accept> header value.  C<$default> is the fallback
+media type used when the header does not select a supported type.  The Dancer2
+response content type is updated only when negotiation resolves to either
+C<application/json> or the JSON:API media type, leaving HTML responses to the
+route handlers that serve them.
+
+=cut
+
 sub __setJsonResponseContentType {
 	my ($accept, $default) = @_;
 
