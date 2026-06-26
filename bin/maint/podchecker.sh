@@ -38,7 +38,12 @@ fi
 
 file="$1"
 
-if grep -q "^=head1" "$file"; then
+if grep -n "^=head[2-6]" "$file"; then
+	>&2 echo "PoD headings must use =head1 only: $file"
+	exit 1
+fi
+
+if grep -q "^=head[1-6]" "$file"; then
 	podchecker "$1"
 fi
 

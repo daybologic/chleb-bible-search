@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,11 +29,54 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+package main;
+use strict;
+use warnings;
 
-scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
+use File::Find;
+use File::Temp qw(tempfile);
+use POSIX qw(EXIT_SUCCESS);
+use Test::More 0.96;
 
-while IFS= read -r -d '' f; do
-	"${scriptDir}/../../maint/podchecker.sh" "$f"
-done < <(find "$repoRoot/lib" -name '*.pm' -type f -print0)
+my @files;
+find(
+	{
+		no_chdir => 1,
+		wanted => sub {
+			return unless (-f $File::Find::name);
+			return unless ($File::Find::name =~ m/[.]pm\z/);
+			push(@files, $File::Find::name);
+		},
+	},
+	'lib',
+);
+
+@files = sort(@files);
+
+plan tests => scalar(@files) + 2;
+
+sub __runPodcheckerQuietly {
+	my ($file) = @_;
+
+	return system('/bin/sh', '-c', 'bin/maint/podchecker.sh "$1" >/dev/null 2>&1', 'sh', $file);
+}
+
+foreach my $file (@files) {
+	is(system('bin/maint/podchecker.sh', $file), EXIT_SUCCESS, "podchecker $file");
+}
+
+{
+	my ($fh, $file) = tempfile();
+	print($fh "=head1 NAME\n\nvalid\n\n=cut\n");
+	close($fh);
+	is(__runPodcheckerQuietly($file), EXIT_SUCCESS, 'podchecker accepts =head1');
+}
+
+{
+	my ($fh, $file) = tempfile();
+	print($fh "=head2 NAME\n\ninvalid\n\n=cut\n");
+	close($fh);
+	isnt(__runPodcheckerQuietly($file), EXIT_SUCCESS, 'podchecker rejects lower-level headings');
+}
+
+exit(EXIT_SUCCESS);

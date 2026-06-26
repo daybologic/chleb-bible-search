@@ -60,6 +60,8 @@ HTTP Request → Chleb::Server::Dancer2 (routing)
 - All major classes extend `Chleb::Bible::Base` using **Moose**.
 - Attributes use lazy initialization, type constraints, and coercion throughout.
 - Custom exceptions via `Chleb::Exception` with HTTP status code mapping.
+- Perl PoD must use only `=head1` headings; do not use `=head2` or lower
+  heading levels.
 
 ### Testing Conventions
 

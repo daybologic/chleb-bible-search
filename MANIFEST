@@ -344,6 +344,7 @@ t/Exception.t
 t/info.t
 t/lib/Test/Chleb/DummyType.pm
 t/lib/Test/Module/Runnable/Local.pm
+t/podchecker.t
 t/peace_on_earth.t
 t/peace_on_limit.t
 t/pride.t
