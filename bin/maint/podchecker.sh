@@ -38,7 +38,7 @@ fi
 
 file="$1"
 
-if grep -q "^=head1" "$file"; then
+if grep -q "^=head[1-6]" "$file"; then
 	podchecker "$1"
 fi
 

@@ -373,7 +373,7 @@ sub explodeHtmlFilePath {
 
 =item C<colorIndexFromWord($word)>
 
-Map a word to an integer 0–63 for color selection
+Map a word to an integer 0-63 for color selection
 
 =cut
 

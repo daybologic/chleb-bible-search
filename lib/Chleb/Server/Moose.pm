@@ -1424,6 +1424,8 @@ sub __versionFilter {
 	return $version;
 }
 
+=back
+
 sub __removeUptime {
 	my ($self) = @_;
 	my $uptimeFilePath = $self->__uptimeFilePath();

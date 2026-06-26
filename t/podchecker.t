@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,11 +29,33 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+package main;
+use strict;
+use warnings;
 
-scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
+use File::Find;
+use POSIX qw(EXIT_SUCCESS);
+use Test::More 0.96;
 
-while IFS= read -r -d '' f; do
-	"${scriptDir}/../../maint/podchecker.sh" "$f"
-done < <(find "$repoRoot/lib" -name '*.pm' -type f -print0)
+my @files;
+find(
+	{
+		no_chdir => 1,
+		wanted => sub {
+			return unless (-f $File::Find::name);
+			return unless ($File::Find::name =~ m/[.]pm\z/);
+			push(@files, $File::Find::name);
+		},
+	},
+	'lib',
+);
+
+@files = sort(@files);
+
+plan tests => scalar(@files);
+
+foreach my $file (@files) {
+	is(system('bin/maint/podchecker.sh', $file), EXIT_SUCCESS, "podchecker $file");
+}
+
+exit(EXIT_SUCCESS);
