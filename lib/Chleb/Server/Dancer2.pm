@@ -76,7 +76,7 @@ sub _request {
 	return request(@args);
 }
 
-=head2 __setJsonResponseContentType($accept, $default)
+=head1 __setJsonResponseContentType($accept, $default)
 
 Sets the response content type when the client accepts one of the supported
 JSON media types.
@@ -103,7 +103,7 @@ sub __setJsonResponseContentType {
 	return;
 }
 
-=head2 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation)
+=head1 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation)
 
 Resolves the translation filters for a request which supports preferred
 translations.
@@ -137,7 +137,7 @@ sub __preferredTranslations {
 	return [ $preferredTranslation ];
 }
 
-=head2 __preferredWholeword($paramPresent, $paramValue, $wholeword)
+=head1 __preferredWholeword($paramPresent, $paramValue, $wholeword)
 
 Resolves the whole-word search preference.
 
@@ -173,7 +173,7 @@ sub __preferredWholeword {
 	return $EVAL_ERROR ? 0 : $preferredWholeword;
 }
 
-=head2 __previousSearchLimit($paramPresent, $paramValue, $previousSearchLimit)
+=head1 __previousSearchLimit($paramPresent, $paramValue, $previousSearchLimit)
 
 Resolves the search limit for the search form and endpoint.
 

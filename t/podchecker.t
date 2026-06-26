@@ -34,6 +34,7 @@ use strict;
 use warnings;
 
 use File::Find;
+use File::Temp qw(tempfile);
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
 
@@ -52,10 +53,30 @@ find(
 
 @files = sort(@files);
 
-plan tests => scalar(@files);
+plan tests => scalar(@files) + 2;
+
+sub __runPodcheckerQuietly {
+	my ($file) = @_;
+
+	return system('/bin/sh', '-c', 'bin/maint/podchecker.sh "$1" >/dev/null 2>&1', 'sh', $file);
+}
 
 foreach my $file (@files) {
 	is(system('bin/maint/podchecker.sh', $file), EXIT_SUCCESS, "podchecker $file");
+}
+
+{
+	my ($fh, $file) = tempfile();
+	print($fh "=head1 NAME\n\nvalid\n\n=cut\n");
+	close($fh);
+	is(__runPodcheckerQuietly($file), EXIT_SUCCESS, 'podchecker accepts =head1');
+}
+
+{
+	my ($fh, $file) = tempfile();
+	print($fh "=head2 NAME\n\ninvalid\n\n=cut\n");
+	close($fh);
+	isnt(__runPodcheckerQuietly($file), EXIT_SUCCESS, 'podchecker rejects lower-level headings');
 }
 
 exit(EXIT_SUCCESS);

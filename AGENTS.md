@@ -90,6 +90,8 @@ Key files and directories:
 - Use `Chleb::Exception` for custom exceptions and HTTP status mapping.
 - In Perl conditionals, write explicit string length comparisons such as
   `length($value) > 0` rather than relying on `length($value)` as a boolean.
+- In Perl PoD, use only `=head1` headings. Do not add `=head2` or lower
+  heading levels.
 - Keep changes scoped to the library, server layer, config, or packaging area
   implied by the task.
 

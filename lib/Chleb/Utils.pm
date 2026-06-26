@@ -50,7 +50,7 @@ Readonly my $MAX_TEXT_LENGTH => 120;
 
 =back
 
-=head2 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.
+=head1 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.
 
 =over
 
