@@ -34,6 +34,24 @@ set -e
 [ -z "$SERVER_USER" ] && SERVER_USER=chleb
 [ -z "$SERVER_NAME" ] && SERVER_NAME="Chleb Bible Search"
 
+installJwtSecret() {
+	configPath='/etc/chleb-bible-search/main.yaml'
+	placeholder='replace-on-first-install'
+
+	[ "$1" = 'configure' ] || return 0
+	[ -f "$configPath" ] || return 0
+	grep -q "^    secret: '$placeholder'\$" "$configPath" || return 0
+
+	secret=$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')
+	if [ "${#secret}" -ne 64 ]; then
+		echo 'Unable to generate JWT session secret' >&2
+		exit 1
+	fi
+
+	sed -i "s/^    secret: '$placeholder'\$/    secret: '$secret'/" "$configPath"
+	echo 'Generated JWT session secret'
+}
+
 if ! getent passwd | grep -q "^$SERVER_USER:"; then
 	echo -n "Adding system user $SERVER_USER.."
 	adduser --quiet \
@@ -47,7 +65,6 @@ fi
 
 usermod -c "$SERVER_NAME" $SERVER_USER
 chown $SERVER_USER \
-	/var/log/chleb-bible-search \
 	/var/cache/chleb-bible-search \
 	/var/run/chleb-bible-search \
 	/var/lib/chleb-bible-search \
@@ -55,9 +72,7 @@ chown $SERVER_USER \
 
 chmod 0755 /var/run/chleb-bible-search
 
-if [ -f /var/log/chleb-bible-search/default.log ]; then
-	chown $SERVER_USER /var/log/chleb-bible-search/default.log
-fi
+installJwtSecret "$@"
 
 echo 'clearing bible translation cache'
 rm -f /var/cache/chleb-bible-search/*.bin

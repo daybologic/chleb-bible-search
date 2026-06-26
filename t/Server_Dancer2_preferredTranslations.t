@@ -29,73 +29,43 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package PingServerTests;
+package Server_Dancer2_preferredTranslationsTests;
 use strict;
 use warnings;
-use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable::Local';
+extends 'Test::Module::Runnable';
 
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb::DI::Container;
-use Chleb::DI::MockLogger;
-use Chleb::Server::MediaType;
-use Chleb::Server::Moose;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Chleb::Server::Dancer2;
+use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
 
-sub setUp {
-	my ($self, %params) = @_;
-
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
-
-	$self->sut(Chleb::Server::Moose->new());
-
-	return EXIT_SUCCESS;
-}
-
-sub testPing {
+sub testCookiePreference {
 	my ($self) = @_;
+	plan tests => 4;
 
-	my $json = $self->sut->__ping();
-	cmp_deeply($json, {
-		data => [{
-			attributes => {
-				message => 'Ahoy-hoy!',
-			},
-			id => ignore(),
-			type => 'pong',
-		}],
-		included => [ ],
-		links => { },
-	}, '__ping') or diag(explain($json));
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv'), [ 'asv' ], 'ASV cookie is used');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'kjv'), [ 'kjv' ], 'KJV cookie is used');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'default'), [], 'default cookie uses normal lookup');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'invalid'), [], 'invalid cookie is ignored');
 
 	return EXIT_SUCCESS;
 }
 
-sub testHtml {
+sub testExplicitPreference {
 	my ($self) = @_;
+	plan tests => 3;
 
-	my $html = $self->sut->__ping({
-		accept => Chleb::Server::MediaType->parseAcceptHeader('text/html'),
-	});
-	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__ping HTML has home link');
-	like($html, qr{<table class="info-table">}, '__ping HTML has info table');
-	like($html, qr{<th>Message</th>}, '__ping HTML has message header');
-	like($html, qr{<td>Ahoy-hoy!</td>}, '__ping HTML has message value');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(1, 'kjv', 'asv'), [ 'kjv' ], 'explicit translation overrides cookie');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(1, 'asv,kjv', 'kjv'), [ 'asv', 'kjv' ], 'explicit translation list is preserved');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(1, '', 'asv'), [], 'explicit empty translation suppresses cookie');
 
 	return EXIT_SUCCESS;
 }
-
-__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;
 use warnings;
-
-exit(PingServerTests->new->run());
+exit(Server_Dancer2_preferredTranslationsTests->new->run);

@@ -1,14 +1,4 @@
-<!-- Chleb Bible Search -->
-<!DOCTYPE html>
-
 <!-- Chleb Template -->
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<link href="/style.css" rel="stylesheet" type="text/css">
-	<title>__TITLE__</title>
-</head>
-	<body>
 		<form class="search-form" method="GET" action="/1/search">
 			<h2>Search Criteria</h2>
 
@@ -16,8 +6,9 @@
 				<label for="term">Term(s)</label>
 				<input type="text" id="term" name="term" placeholder="e.g. love, grace, salvation" value="__SEARCH_TERM__">
 				<label>
-					<input type="checkbox" id="wholeword" name="wholeword" __SEARCH_WHOLEWORD__> Exact match
+					<input type="checkbox" id="wholeword" name="wholeword" value="true" __SEARCH_WHOLEWORD__> Exact match
 				</label>
+				<input type="hidden" id="wholeword_present" name="wholeword_present" value="true">
 			</div>
 
 			<!-- FIXME: Restore book, testament, translation options -->
@@ -30,7 +21,60 @@
 			<input type="hidden" id="form" name="form" value="true">
 
 			<button type="submit">Search</button>
+			<button type="button" id="search-home">Home</button>
 		</form>
 		__SEARCH_RESULTS__
-	</body>
-</html>
+		<script>
+			(function () {
+				'use strict';
+
+				var wholewordCookieName = 'wholeword';
+				var previousSearchLimitCookieName = 'previousSearchLimit';
+				var form = document.querySelector('.search-form');
+				var home = document.getElementById('search-home');
+				var wholeword = document.getElementById('wholeword');
+				var limit = document.getElementById('limit');
+				var params = new URLSearchParams(window.location.search);
+
+				function readCookie(name) {
+					var prefix = name + '=';
+					var cookies = document.cookie.split(';');
+
+					for (var i = 0; i < cookies.length; i++) {
+						var cookie = cookies[i].trim();
+						if (cookie.indexOf(prefix) === 0) {
+							return decodeURIComponent(cookie.substring(prefix.length));
+						}
+					}
+
+					return '';
+				}
+
+				function writeCookie(name, value) {
+					document.cookie = name + '=' + encodeURIComponent(value)
+						+ '; Max-Age=31536000; Path=/; SameSite=Lax';
+				}
+
+				if (!params.has('wholeword') && !params.has('wholeword_present')) {
+					wholeword.checked = readCookie(wholewordCookieName) === 'true';
+				}
+
+				if (!params.has('limit')) {
+					var previousSearchLimit = readCookie(previousSearchLimitCookieName);
+					if (/^[0-9]+$/.test(previousSearchLimit) && parseInt(previousSearchLimit, 10) > 0) {
+						limit.value = previousSearchLimit;
+					}
+				}
+
+				form.addEventListener('submit', function () {
+					writeCookie(wholewordCookieName, wholeword.checked ? 'true' : 'false');
+					if (/^[0-9]+$/.test(limit.value) && parseInt(limit.value, 10) > 0) {
+						writeCookie(previousSearchLimitCookieName, limit.value);
+					}
+				});
+
+				home.addEventListener('click', function () {
+					window.location.href = '/';
+				});
+			}());
+		</script>

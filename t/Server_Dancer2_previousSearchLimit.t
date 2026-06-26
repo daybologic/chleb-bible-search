@@ -29,73 +29,44 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package PingServerTests;
+package Server_Dancer2_previousSearchLimitTests;
 use strict;
 use warnings;
-use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable::Local';
+extends 'Test::Module::Runnable';
 
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb::DI::Container;
-use Chleb::DI::MockLogger;
-use Chleb::Server::MediaType;
-use Chleb::Server::Moose;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Chleb::Bible::Search::Query;
+use Chleb::Server::Dancer2;
+use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
 
-sub setUp {
-	my ($self, %params) = @_;
-
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
-
-	$self->sut(Chleb::Server::Moose->new());
-
-	return EXIT_SUCCESS;
-}
-
-sub testPing {
+sub testCookiePreference {
 	my ($self) = @_;
+	plan tests => 4;
 
-	my $json = $self->sut->__ping();
-	cmp_deeply($json, {
-		data => [{
-			attributes => {
-				message => 'Ahoy-hoy!',
-			},
-			id => ignore(),
-			type => 'pong',
-		}],
-		included => [ ],
-		links => { },
-	}, '__ping') or diag(explain($json));
+	is(Chleb::Server::Dancer2::__previousSearchLimit(0, undef, '7'), 7, 'integer cookie is used');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(0, undef, undef), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'missing cookie uses default');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(0, undef, 'invalid'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'invalid cookie uses default');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(0, undef, '0'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'zero cookie uses default');
 
 	return EXIT_SUCCESS;
 }
 
-sub testHtml {
+sub testExplicitPreference {
 	my ($self) = @_;
+	plan tests => 3;
 
-	my $html = $self->sut->__ping({
-		accept => Chleb::Server::MediaType->parseAcceptHeader('text/html'),
-	});
-	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__ping HTML has home link');
-	like($html, qr{<table class="info-table">}, '__ping HTML has info table');
-	like($html, qr{<th>Message</th>}, '__ping HTML has message header');
-	like($html, qr{<td>Ahoy-hoy!</td>}, '__ping HTML has message value');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(1, '3', '7'), 3, 'explicit limit overrides cookie');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(1, '', '7'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit empty limit suppresses cookie');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(1, 'invalid', '7'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit invalid limit suppresses cookie');
 
 	return EXIT_SUCCESS;
 }
-
-__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;
 use warnings;
-
-exit(PingServerTests->new->run());
+exit(Server_Dancer2_previousSearchLimitTests->new->run);

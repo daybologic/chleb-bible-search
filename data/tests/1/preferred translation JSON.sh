@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,73 +29,32 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package PingServerTests;
-use strict;
-use warnings;
-use lib 't/lib';
-use Moose;
+set -euo pipefail
 
-use lib 'externals/libtest-module-runnable-perl/lib';
+checkEndpoint() {
+	local endpoint="$1"
+	local cookieResult
+	local explicitResult
 
-extends 'Test::Module::Runnable::Local';
+	cookieResult=$(http --check-status --body --pretty=none GET \
+		"chleb-api.example.org/1/$endpoint" \
+		Accept:application/json \
+		Cookie:preferredTranslation=asv)
 
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb::DI::Container;
-use Chleb::DI::MockLogger;
-use Chleb::Server::MediaType;
-use Chleb::Server::Moose;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
-use Test::More 0.96;
+	jq -e '.data | length > 0 and all(.[]; .attributes.translation == "asv")' \
+		<<< "$cookieResult" >/dev/null
 
-sub setUp {
-	my ($self, %params) = @_;
+	explicitResult=$(http --check-status --body --pretty=none GET \
+		"chleb-api.example.org/1/$endpoint" \
+		Accept:application/json \
+		Cookie:preferredTranslation=asv \
+		translations==kjv)
 
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
-
-	$self->sut(Chleb::Server::Moose->new());
-
-	return EXIT_SUCCESS;
+	jq -e '.data | length > 0 and all(.[]; .attributes.translation == "kjv")' \
+		<<< "$explicitResult" >/dev/null
 }
 
-sub testPing {
-	my ($self) = @_;
+checkEndpoint random
+checkEndpoint votd
 
-	my $json = $self->sut->__ping();
-	cmp_deeply($json, {
-		data => [{
-			attributes => {
-				message => 'Ahoy-hoy!',
-			},
-			id => ignore(),
-			type => 'pong',
-		}],
-		included => [ ],
-		links => { },
-	}, '__ping') or diag(explain($json));
-
-	return EXIT_SUCCESS;
-}
-
-sub testHtml {
-	my ($self) = @_;
-
-	my $html = $self->sut->__ping({
-		accept => Chleb::Server::MediaType->parseAcceptHeader('text/html'),
-	});
-	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__ping HTML has home link');
-	like($html, qr{<table class="info-table">}, '__ping HTML has info table');
-	like($html, qr{<th>Message</th>}, '__ping HTML has message header');
-	like($html, qr{<td>Ahoy-hoy!</td>}, '__ping HTML has message value');
-
-	return EXIT_SUCCESS;
-}
-
-__PACKAGE__->meta->make_immutable;
-
-package main;
-use strict;
-use warnings;
-
-exit(PingServerTests->new->run());
+exit 0

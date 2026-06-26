@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,73 +29,34 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package PingServerTests;
-use strict;
-use warnings;
-use lib 't/lib';
-use Moose;
+set -euo pipefail
 
-use lib 'externals/libtest-module-runnable-perl/lib';
+cookieResult=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/search \
+	Accept:application/json \
+	Cookie:previousSearchLimit=7 \
+	term==fire)
 
-extends 'Test::Module::Runnable::Local';
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=7"' \
+	<<< "$cookieResult" >/dev/null
 
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb::DI::Container;
-use Chleb::DI::MockLogger;
-use Chleb::Server::MediaType;
-use Chleb::Server::Moose;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
-use Test::More 0.96;
+explicitResult=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/search \
+	Accept:application/json \
+	Cookie:previousSearchLimit=7 \
+	term==fire \
+	limit==3)
 
-sub setUp {
-	my ($self, %params) = @_;
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=3"' \
+	<<< "$explicitResult" >/dev/null
 
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
+searchPage=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/search \
+	Accept:text/html \
+	Cookie:previousSearchLimit=7)
 
-	$self->sut(Chleb::Server::Moose->new());
+grep -q 'id="limit" name="limit".* value="7"' <<< "$searchPage"
+grep -q "var previousSearchLimitCookieName = 'previousSearchLimit';" <<< "$searchPage"
+grep -q "writeCookie(previousSearchLimitCookieName, limit.value);" <<< "$searchPage"
 
-	return EXIT_SUCCESS;
-}
-
-sub testPing {
-	my ($self) = @_;
-
-	my $json = $self->sut->__ping();
-	cmp_deeply($json, {
-		data => [{
-			attributes => {
-				message => 'Ahoy-hoy!',
-			},
-			id => ignore(),
-			type => 'pong',
-		}],
-		included => [ ],
-		links => { },
-	}, '__ping') or diag(explain($json));
-
-	return EXIT_SUCCESS;
-}
-
-sub testHtml {
-	my ($self) = @_;
-
-	my $html = $self->sut->__ping({
-		accept => Chleb::Server::MediaType->parseAcceptHeader('text/html'),
-	});
-	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__ping HTML has home link');
-	like($html, qr{<table class="info-table">}, '__ping HTML has info table');
-	like($html, qr{<th>Message</th>}, '__ping HTML has message header');
-	like($html, qr{<td>Ahoy-hoy!</td>}, '__ping HTML has message value');
-
-	return EXIT_SUCCESS;
-}
-
-__PACKAGE__->meta->make_immutable;
-
-package main;
-use strict;
-use warnings;
-
-exit(PingServerTests->new->run());
+exit 0

@@ -29,73 +29,43 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package PingServerTests;
+package Utils_queryParamsHelperTests;
 use strict;
 use warnings;
-use lib 't/lib';
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable::Local';
+extends 'Test::Module::Runnable';
 
-use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
-use Chleb::DI::Container;
-use Chleb::DI::MockLogger;
-use Chleb::Server::MediaType;
-use Chleb::Server::Moose;
-use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Chleb::Utils;
+use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
 
-sub setUp {
-	my ($self, %params) = @_;
-
-	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
-		return EXIT_FAILURE;
-	}
-
-	$self->sut(Chleb::Server::Moose->new());
-
-	return EXIT_SUCCESS;
-}
-
-sub testPing {
+sub testEmptyValues {
 	my ($self) = @_;
+	plan tests => 4;
 
-	my $json = $self->sut->__ping();
-	cmp_deeply($json, {
-		data => [{
-			attributes => {
-				message => 'Ahoy-hoy!',
-			},
-			id => ignore(),
-			type => 'pong',
-		}],
-		included => [ ],
-		links => { },
-	}, '__ping') or diag(explain($json));
+	is(Chleb::Utils::queryParamsHelper({ translations => [] }), '', 'empty ARRAY values are omitted');
+	is(Chleb::Utils::queryParamsHelper({ translations => [''] }), '', 'empty ARRAY content is omitted');
+	is(Chleb::Utils::queryParamsHelper({ translations => undef }), '', 'undef values are omitted');
+	is(Chleb::Utils::queryParamsHelper({ translations => '' }), '', 'empty scalar values are omitted');
 
 	return EXIT_SUCCESS;
 }
 
-sub testHtml {
+sub testEffectiveValues {
 	my ($self) = @_;
+	plan tests => 3;
 
-	my $html = $self->sut->__ping({
-		accept => Chleb::Server::MediaType->parseAcceptHeader('text/html'),
-	});
-	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__ping HTML has home link');
-	like($html, qr{<table class="info-table">}, '__ping HTML has info table');
-	like($html, qr{<th>Message</th>}, '__ping HTML has message header');
-	like($html, qr{<td>Ahoy-hoy!</td>}, '__ping HTML has message value');
+	is(Chleb::Utils::queryParamsHelper({ translations => ['asv'] }), '?translations=asv', 'single translation');
+	is(Chleb::Utils::queryParamsHelper({ translations => ['asv', 'kjv'] }), '?translations=all', 'all translations shortcut');
+	like(Chleb::Utils::queryParamsHelper({ testament => 'old', translations => ['kjv'] }), qr/\A\?(?:testament=old&translations=kjv|translations=kjv&testament=old)\z/, 'multiple values are joined correctly');
 
 	return EXIT_SUCCESS;
 }
-
-__PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;
 use warnings;
-
-exit(PingServerTests->new->run());
+exit(Utils_queryParamsHelperTests->new->run);

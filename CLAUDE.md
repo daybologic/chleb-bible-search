@@ -72,3 +72,12 @@ HTTP Request → Chleb::Server::Dancer2 (routing)
 - **`etc/main.yaml`** — Primary config: feature flags (`facebook`, `sessions`), VOTD exclusions (terms/refs), session token backend selection, and Dancer2 settings.
 - **`etc/log4perl.conf`** — Log4perl logging configuration.
 - **`swagger.yaml`** — OpenAPI specification for the API.
+
+### Contribution Conventions
+
+- Use Gitmoji for commit summary lines.
+- Only use commit emojis that exist under `data/gitmoji/`. Check that
+  directory before choosing an emoji; do not invent or substitute another
+  emoji because it looks suitable.
+- Put the emoji at the start of the summary line, followed by a short summary.
+- Do not add a category prefix such as `docs:` or `config:` after the emoji.

@@ -31,4 +31,7 @@
 
 set -euo pipefail
 
-http --check-status GET chleb-api.example.org/1/search Accept:text/html
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/search Accept:text/html form==true)
+
+grep -q '<button type="button" id="search-home">Home</button>' <<< "$page"
+grep -q "window.location.href = '/';" <<< "$page"

@@ -170,6 +170,7 @@ data/static/public/images/bible.png
 data/static/public/images/favicon.png
 data/static/public/privacy.html
 data/static/public/robots.txt
+data/static/public/settings.html
 data/static/public/style.css
 data/static/public/terms.html
 data/static/search.html
@@ -180,13 +181,16 @@ data/tests/1/a.sh
 'data/tests/1/info default.sh'
 'data/tests/1/info HTML.sh'
 'data/tests/1/info JSON.sh'
+'data/tests/1/index HTML.sh'
 'data/tests/1/lookup default.sh'
 'data/tests/1/lookup HTML, redirect.sh'
 'data/tests/1/lookup HTML.sh'
 'data/tests/1/lookup JSON.sh'
+'data/tests/1/lookup preferred translation JSON.sh'
 'data/tests/1/ping default.sh'
 'data/tests/1/ping HTML.sh'
 'data/tests/1/ping JSON.sh'
+'data/tests/1/preferred translation JSON.sh'
 'data/tests/1/random default, redirect.sh'
 'data/tests/1/random default.sh'
 'data/tests/1/random HTML, redirect.sh'
@@ -202,6 +206,10 @@ data/tests/1/a.sh
 'data/tests/1/search JSON \'fire\', form.sh'
 'data/tests/1/search JSON \'fire\'.sh'
 'data/tests/1/search JSON (no criteria).sh'
+'data/tests/1/search previous limit JSON.sh'
+'data/tests/1/search preferred wholeword JSON.sh'
+'data/tests/1/session JWT round-trip.sh'
+'data/tests/1/settings HTML.sh'
 data/tests/1/template.sh
 'data/tests/1/uptime default.sh'
 'data/tests/1/uptime HTML.sh'
@@ -221,6 +229,7 @@ data/tests/1/template.sh
 'data/tests/2/random HTML.sh'
 'data/tests/2/random JSON, redirect.sh'
 'data/tests/2/random JSON.sh'
+'data/tests/2/preferred translation JSON.sh'
 'data/tests/2/votd default, redirect.sh'
 'data/tests/2/votd default.sh'
 'data/tests/2/votd HTML, redirect.sh'
@@ -298,6 +307,7 @@ lib/Chleb/Token/Repository/Base.pm
 lib/Chleb/Token/Repository/DB/Dynamo.pm
 lib/Chleb/Token/Repository/DB/Maria.pm
 lib/Chleb/Token/Repository/Dummy.pm
+lib/Chleb/Token/Repository/JWT.pm
 lib/Chleb/Token/Repository/Local.pm
 lib/Chleb/Token/Repository/Redis.pm
 lib/Chleb/Type/Testament.pm
@@ -339,6 +349,9 @@ t/peace_on_limit.t
 t/pride.t
 t/random.t
 t/Server_linkToVerse.t
+t/Server_Dancer2_previousSearchLimit.t
+t/Server_Dancer2_preferredTranslations.t
+t/Server_Dancer2_preferredWholeword.t
 t/Server_lookup.t
 t/Server_MediaType.t
 t/Server_MediaType_acceptToContentType.t
@@ -351,6 +364,7 @@ t/Server_version.t
 t/Server_versionFilter.t
 t/Server_votd.t
 t/Token.t
+t/TokenRepository_JWT.t
 t/TokenRepository_Local.t
 t/traverse_entire_bible.t
 t/Type_Testament.t
@@ -361,6 +375,7 @@ t/Utils_forceArray.t
 t/Utils_limitText.t
 t/Utils_OSError_Mapper.t
 t/Utils_parseIntoType.t
+t/Utils_queryParamsHelper.t
 t/Utils_removeArrayEmptyItems.t
 t/Utils_SecureString.t
 t/verse.t
