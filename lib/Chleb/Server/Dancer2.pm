@@ -669,7 +669,30 @@ get '/1/version' => sub {
 get '/1/uptime' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	return $server->__uptime();
+	my $dancerRequest = request();
+
+	my $result;
+	eval {
+		$result = $server->__uptime({
+			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	if (ref($result) ne 'HASH') {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Service uptime" });
+		$resultHtml .= $result;
+		$resultHtml .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/uptime returned as HTML');
+		send_as html => $resultHtml;
+	}
+
+	$server->dic->logger->trace('1/uptime returned as JSON');
+	return $result;
 };
 
 get '/1/info' => sub {

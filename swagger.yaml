@@ -88,6 +88,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Uptime'
+            text/html:
+              schema:
+                type: string
         '429':
           description: Rate-limited
   /1/ping:

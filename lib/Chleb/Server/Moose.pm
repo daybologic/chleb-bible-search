@@ -259,7 +259,10 @@ sub __lookup {
 		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+	die Chleb::Exception->raise(
+		HTTP_NOT_ACCEPTABLE,
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+	);
 }
 
 =item C<__random($params)>
@@ -486,21 +489,51 @@ Returns a C<JSON:API> structure suitable for returning the server uptime.
 =cut
 
 sub __uptime {
-	my ($self) = @_;
+	my ($self, $params) = @_;
+	$params ||= {};
 	my %hash = __makeJsonApi();
 
 	my $uptime = $self->__getUptime();
+	my $uptimeText = duration_exact($uptime);
 
 	push(@{ $hash{data} }, {
 		type => 'uptime',
 		id => uuid_to_string(create_uuid()),
 		attributes => {
 			uptime => $uptime,
-			text => duration_exact($uptime),
+			text => $uptimeText,
 		},
 	});
 
-	return \%hash;
+	my $contentType = Chleb::Server::MediaType::acceptToContentType(
+		$params->{accept},
+		$Chleb::Server::MediaType::CONTENT_TYPE_JSON,
+	);
+
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON) { # application/json
+		return \%hash;
+	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
+		return __uptimeToHtml($uptime, $uptimeText);
+	}
+
+	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+}
+
+sub __uptimeToHtml {
+	my ($uptime, $uptimeText) = @_;
+
+	my $html = "<table class=\"info-table\">\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Uptime</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $uptimeText);
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Seconds</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $uptime);
+	$html .= "</tr>\r\n";
+	$html .= "</table>\r\n";
+
+	return $html;
 }
 
 =item C<__search($search)>

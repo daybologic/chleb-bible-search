@@ -42,6 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::MediaType;
 use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
@@ -102,6 +103,24 @@ sub testUptimeDynamic {
 		included => [ ],
 		links => { },
 	}, '__uptime: ' . $json->{data}->[0]->{attributes}->{text}) or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testUptimeHtml {
+	my ($self) = @_;
+
+	my $uptime = 3661;
+	$self->mock(ref($self->sut), '__getUptime', [$uptime]);
+
+	my $html = $self->sut->__uptime({
+		accept => Chleb::Server::MediaType->parseAcceptHeader('text/html'),
+	});
+	like($html, qr{<table class="info-table">}, '__uptime HTML has info table');
+	like($html, qr{<th>Uptime</th>}, '__uptime HTML has uptime header');
+	like($html, qr{<td>1 hour, 1 minute, and 1 second</td>}, '__uptime HTML has text uptime');
+	like($html, qr{<th>Seconds</th>}, '__uptime HTML has seconds header');
+	like($html, qr{<td>3661</td>}, '__uptime HTML has numeric uptime');
 
 	return EXIT_SUCCESS;
 }
