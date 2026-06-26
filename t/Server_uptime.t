@@ -118,6 +118,7 @@ sub testUptimeHtml {
 	my $html = $self->sut->__uptime({
 		accept => Chleb::Server::MediaType->parseAcceptHeader('text/html'),
 	});
+	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__uptime HTML has home link');
 	like($html, qr{<table class="info-table">}, '__uptime HTML has info table');
 	like($html, qr{<th>Uptime</th>}, '__uptime HTML has uptime header');
 	like($html, qr{<td>1 hour, 1 minute, and 1 second</td>}, '__uptime HTML has text uptime');

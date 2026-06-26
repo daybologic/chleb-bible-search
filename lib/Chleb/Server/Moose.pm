@@ -522,7 +522,8 @@ sub __uptime {
 sub __uptimeToHtml {
 	my ($uptime, $uptimeText) = @_;
 
-	my $html = "<table class=\"info-table\">\r\n";
+	my $html = __linkToHome();
+	$html .= "<table class=\"info-table\">\r\n";
 	$html .= "<tr>\r\n";
 	$html .= "<th>Uptime</th>\r\n";
 	$html .= sprintf("<td>%s</td>\r\n", $uptimeText);
