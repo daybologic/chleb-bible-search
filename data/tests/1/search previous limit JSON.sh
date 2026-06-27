@@ -37,7 +37,7 @@ cookieResult=$(http --check-status --body --pretty=none GET \
 	Cookie:previousSearchLimit=7 \
 	term==fire)
 
-jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=7"' \
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=7&page=1&per_page=50"' \
 	<<< "$cookieResult" >/dev/null
 
 explicitResult=$(http --check-status --body --pretty=none GET \
@@ -47,7 +47,7 @@ explicitResult=$(http --check-status --body --pretty=none GET \
 	term==fire \
 	limit==3)
 
-jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=3"' \
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=3&page=1&per_page=50"' \
 	<<< "$explicitResult" >/dev/null
 
 searchPage=$(http --check-status --body --pretty=none GET \

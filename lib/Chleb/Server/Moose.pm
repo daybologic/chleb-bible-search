@@ -69,6 +69,7 @@ use UUID::Tiny ':std';
 
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+Readonly our $SEARCH_RESULTS_MAX_PAGE_SIZE => 2_000;
 
 Readonly my $FUNCTION_RANDOM => 1;
 Readonly my $FUNCTION_VOTD => 2;
@@ -639,7 +640,7 @@ sub __uptimeToHtml {
 =item C<__search($search)>
 
 Perform a search with various parameters and return a C<JSON:API> structure,
-fully-populated with all results.  TODO: In the future we must support pagination.
+fully-populated with the requested page of results.
 
 The following C<$params> (C<HASH>) are supported:
 
@@ -647,7 +648,15 @@ The following C<$params> (C<HASH>) are supported:
 
 =item C<limit>
 
-A limit for the number of results, whose default is C<50>.
+A cap for the total number of search results to consider.
+
+=item C<page>
+
+The requested page number, whose default is C<1>.
+
+=item C<per_page>
+
+A limit for the number of results per page, whose default is C<50>.
 
 =item C<wholeword>
 
@@ -664,8 +673,10 @@ The text the user is searching for (critereon).
 sub __search {
 	my ($self, $search) = @_;
 
-	my $limit = int($search->{limit});
-	$limit ||= $SEARCH_RESULTS_LIMIT;
+	my $limit = __searchLimit($search->{limit});
+	my $page = __searchPage($search->{page});
+	my $perPage = __searchPerPage($search->{per_page});
+	my $offset = ($page - 1) * $perPage;
 
 	my $wholeword = Chleb::Utils::boolean('wholeword', $search->{wholeword}, 0);
 
@@ -673,14 +684,20 @@ sub __search {
 
 	my $query = $self->__library->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
 	my $results = $query->run();
+	my $totalCount = $results->count;
+	my @pageVerses = @{ $results->verses };
+	splice(@pageVerses, 0, $offset);
+	splice(@pageVerses, $perPage);
+	my $pageCount = scalar(@pageVerses);
+	my $totalPages = $totalCount > 0 ? int(($totalCount + $perPage - 1) / $perPage) : 1;
 
 	my %hash = __makeJsonApi();
 
-	for (my $i = 0; $i < $results->count; $i++) {
-		my $verse = $results->verses->[$i];
+	for (my $i = 0; $i < $pageCount; $i++) {
+		my $verse = $pageVerses[$i];
 
 		my %attributes = ( %{ $verse->TO_JSON() } );
-		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $i+1, $results->count, $query->text);
+		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $offset + $i + 1, $totalCount, $query->text);
 
 		push(@{ $hash{included} }, {
 			type => $verse->chapter->type,
@@ -731,7 +748,11 @@ sub __search {
 			type => 'results_summary',
 			id => uuid_to_string(create_uuid()),
 			attributes => {
-				count => $results->count,
+				count       => $pageCount,
+				page        => $page,
+				per_page    => $perPage,
+				total_count => $totalCount,
+				total_pages => $totalPages,
 			},
 			links => { },
 		},
@@ -745,10 +766,18 @@ sub __search {
 		},
 	);
 
-	my $safeTerm = uri_escape($query->text);
-	my $safeWholeword = uri_escape($wholeword);
-	my $safeLimit = uri_escape($limit);
-	$hash{links}->{self} = "/1/search?term=$safeTerm&wholeword=$safeWholeword&limit=$safeLimit";
+	$hash{links} = {
+		%{ $hash{links} },
+			%{ __searchPaginationLinks({
+				form        => $search->{form},
+				limit       => $limit,
+				page        => $page,
+				per_page    => $perPage,
+				term        => $query->text,
+			total_pages => $totalPages,
+			wholeword   => $wholeword,
+		}) },
+	};
 
 	if (__isJsonContentType($contentType)) {
 		if ($search->{form}) {
@@ -765,6 +794,65 @@ sub __search {
 	}
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+}
+
+sub __searchLimit {
+	my ($limit) = @_;
+
+	return $SEARCH_RESULTS_LIMIT unless (defined($limit) && $limit =~ m/\A[0-9]+\z/);
+	$limit = int($limit);
+	return $SEARCH_RESULTS_LIMIT if ($limit < 1);
+	return $limit;
+}
+
+sub __searchPage {
+	my ($page) = @_;
+
+	return 1 unless (defined($page) && $page =~ m/\A-?[0-9]+\z/);
+	$page = int($page);
+	return $page < 1 ? 1 : $page;
+}
+
+sub __searchPerPage {
+	my ($perPage) = @_;
+
+	return $SEARCH_RESULTS_LIMIT unless (defined($perPage) && $perPage =~ m/\A[0-9]+\z/);
+	$perPage = int($perPage);
+	return $SEARCH_RESULTS_LIMIT if ($perPage < 1);
+	return $SEARCH_RESULTS_MAX_PAGE_SIZE if ($perPage > $SEARCH_RESULTS_MAX_PAGE_SIZE);
+	return $perPage;
+}
+
+sub __searchPaginationLinks {
+	my ($params) = @_;
+
+	my $page = $params->{page};
+	my $totalPages = $params->{total_pages};
+	my %links = (
+		first => __searchPageLink($params, 1),
+		last  => __searchPageLink($params, $totalPages),
+		self  => __searchPageLink($params, $page),
+	);
+
+	$links{prev} = __searchPageLink($params, $page - 1) if ($page > 1);
+	$links{next} = __searchPageLink($params, $page + 1) if ($page < $totalPages);
+
+	return \%links;
+}
+
+sub __searchPageLink {
+	my ($params, $page) = @_;
+
+	my @parts = (
+		'term=' . uri_escape($params->{term}),
+		'wholeword=' . uri_escape($params->{wholeword}),
+		'limit=' . uri_escape($params->{limit}),
+		'page=' . uri_escape($page),
+		'per_page=' . uri_escape($params->{per_page}),
+	);
+	push(@parts, 'form=true') if ($params->{form});
+
+	return '/1/search?' . join('&', @parts);
 }
 
 =item C<__info($params)>
@@ -1253,8 +1341,46 @@ sub __searchResultsToHtml {
 	}
 
 	$text .= "</table>\r\n";
+	$text .= __searchPaginationToHtml($json);
 
 	return $text;
+}
+
+sub __searchPaginationToHtml {
+	my ($json) = @_;
+
+	my $summary;
+	foreach my $includedItem (@{ $json->{included} }) {
+		if ($includedItem->{type} eq 'results_summary') {
+			$summary = $includedItem->{attributes};
+			last;
+		}
+	}
+
+	return '' unless ($summary && $summary->{total_pages} > 1);
+
+	my $page = $summary->{page};
+	my $totalPages = $summary->{total_pages};
+	my $html = "<nav class=\"pagination\" aria-label=\"Search result pages\">\r\n";
+	$html .= sprintf("\t<a href=\"%s\">Previous</a>\r\n", $json->{links}->{prev}) if ($json->{links}->{prev});
+	for (my $i = 1; $i <= $totalPages; $i++) {
+		my $link = __replaceSearchLinkPage($json->{links}->{self}, $i);
+		if ($i == $page) {
+			$html .= sprintf("\t<strong>%d</strong>\r\n", $i);
+		} else {
+			$html .= sprintf("\t<a href=\"%s\">%d</a>\r\n", $link, $i);
+		}
+	}
+	$html .= sprintf("\t<a href=\"%s\">Next</a>\r\n", $json->{links}->{next}) if ($json->{links}->{next});
+	$html .= "</nav>\r\n";
+
+	return $html;
+}
+
+sub __replaceSearchLinkPage {
+	my ($link, $page) = @_;
+	$link =~ s/([?&]page=)[^&]*/$1$page/;
+	return $link;
 }
 
 sub __linkToHome { # add a link to home (root)

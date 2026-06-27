@@ -18,6 +18,7 @@
 				<input type="number" id="limit" name="limit" placeholder="__SEARCH_LIMIT_DEFAULT__" min="1" max="__SEARCH_LIMIT_MAX__" value="__SEARCH_LIMIT_VALUE__">
 			</div>
 
+			<input type="hidden" id="page" name="page" value="1">
 			<input type="hidden" id="form" name="form" value="true">
 
 			<button type="submit">Search</button>
@@ -59,7 +60,7 @@
 					wholeword.checked = readCookie(wholewordCookieName) === 'true';
 				}
 
-				if (!params.has('limit')) {
+				if (!params.has('limit') && !params.has('per_page')) {
 					var previousSearchLimit = readCookie(previousSearchLimitCookieName);
 					if (/^[0-9]+$/.test(previousSearchLimit) && parseInt(previousSearchLimit, 10) > 0) {
 						limit.value = previousSearchLimit;

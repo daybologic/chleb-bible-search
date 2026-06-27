@@ -621,6 +621,8 @@ get '/1/search' => sub {
 		_cookie('wholeword'),
 	);
 	my $form = Chleb::Utils::boolean('form', _param('form'), 0);
+	my $page = _param('page');
+	my $perPage = _param('per_page');
 
 	my $result = '';
 	my $resultHash;
@@ -631,6 +633,8 @@ get '/1/search' => sub {
 				accept    => $accept,
 				form      => $form,
 				limit     => $limit,
+				page      => $page,
+				per_page  => $perPage,
 				term      => $term,
 				wholeword => $wholeword,
 			});
