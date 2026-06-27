@@ -205,6 +205,47 @@ sub __previousSearchLimit {
 	return int($previousSearchLimit);
 }
 
+=head1 __previousSearchPerPage($paramPresent, $paramValue, $previousSearchPerPage)
+
+Resolves the preferred search page size for the search form and endpoint.
+
+When C<$paramPresent> is true, C<$paramValue> is parsed as the explicit
+C<per_page> request parameter and always takes precedence over the cookie.
+When the request parameter is absent, C<$previousSearchPerPage> may be either a
+cookie object with a C<value()> method or its scalar value.  Positive integer
+cookie values are honoured; missing or unsupported values fall back to the
+default search page size.  Values above the maximum page size are reduced to
+that maximum.
+
+=cut
+
+sub __previousSearchPerPage {
+	my ($paramPresent, $paramValue, $previousSearchPerPage) = @_;
+
+	if ($paramPresent) {
+		if (defined($paramValue) && $paramValue =~ m/\A[0-9]+\z/ && int($paramValue) > 0) {
+			return $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE
+				if (int($paramValue) > $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE);
+
+			return int($paramValue);
+		}
+
+		return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	}
+
+	if (blessed($previousSearchPerPage) && $previousSearchPerPage->can('value')) {
+		$previousSearchPerPage = $previousSearchPerPage->value;
+	}
+
+	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
+		unless (defined($previousSearchPerPage) && $previousSearchPerPage =~ m/\A[0-9]+\z/ && int($previousSearchPerPage) > 0);
+
+	return $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE
+		if (int($previousSearchPerPage) > $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE);
+
+	return int($previousSearchPerPage);
+}
+
 sub handleException {
 	my ($exception) = @_;
 
@@ -622,7 +663,11 @@ get '/1/search' => sub {
 	);
 	my $form = Chleb::Utils::boolean('form', _param('form'), 0);
 	my $page = _param('page');
-	my $perPage = _param('per_page');
+	my $perPage = __previousSearchPerPage(
+		exists($queryParams->{per_page}),
+		_param('per_page'),
+		_cookie('previousSearchPerPage'),
+	);
 
 	my $result = '';
 	my $resultHash;
@@ -661,6 +706,9 @@ get '/1/search' => sub {
 			SEARCH_LIMIT_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
 			SEARCH_LIMIT_MAX => 2_000, # What's reasonable?  It isn't enforced by the backend anyway
 			SEARCH_LIMIT_VALUE => $limit,
+			SEARCH_PER_PAGE_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
+			SEARCH_PER_PAGE_MAX => $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE,
+			SEARCH_PER_PAGE_VALUE => $perPage,
 			SEARCH_RESULTS => $result,
 			SEARCH_TERM => $term,
 			SEARCH_WHOLEWORD => $wholeword ? 'checked' : '',
