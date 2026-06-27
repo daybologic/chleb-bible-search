@@ -798,6 +798,16 @@ sub __search {
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
 }
 
+=item C<__searchLimit($limit)>
+
+Normalises the total search result cap.
+
+C<$limit> is a user supplied value from the C<limit> query parameter.  Positive
+integer values are returned as integers.  Missing, non-numeric, and values below
+C<1> fall back to the default search result limit.
+
+=cut
+
 sub __searchLimit {
 	my ($limit) = @_;
 
@@ -807,6 +817,16 @@ sub __searchLimit {
 	return $limit;
 }
 
+=item C<__searchPage($page)>
+
+Normalises a requested search result page number.
+
+C<$page> is a user supplied value from the C<page> query parameter.  Positive
+integer values are returned as integers.  Missing, non-numeric, and values below
+C<1> resolve to the first page.
+
+=cut
+
 sub __searchPage {
 	my ($page) = @_;
 
@@ -814,6 +834,17 @@ sub __searchPage {
 	$page = int($page);
 	return $page < 1 ? 1 : $page;
 }
+
+=item C<__searchPerPage($perPage)>
+
+Normalises the search result page size.
+
+C<$perPage> is a user supplied value from the C<per_page> query parameter.
+Positive integer values are returned as integers, capped at
+C<$SEARCH_RESULTS_MAX_PAGE_SIZE>.  Missing, non-numeric, and values below C<1>
+fall back to the default search result limit.
+
+=cut
 
 sub __searchPerPage {
 	my ($perPage) = @_;
@@ -824,6 +855,18 @@ sub __searchPerPage {
 	return $SEARCH_RESULTS_MAX_PAGE_SIZE if ($perPage > $SEARCH_RESULTS_MAX_PAGE_SIZE);
 	return $perPage;
 }
+
+=item C<__searchPaginationLinks($params)>
+
+Builds stateless pagination links for a search result page.
+
+C<$params> is a C<HASH> reference containing the current search term, wholeword
+flag, total limit, page size, current page, total pages, and optional form mode.
+The returned C<HASH> reference always contains C<first>, C<last>, and C<self>
+links.  C<prev> and C<next> are included only when the current page has a
+previous or next page.
+
+=cut
 
 sub __searchPaginationLinks {
 	my ($params) = @_;
@@ -841,6 +884,17 @@ sub __searchPaginationLinks {
 
 	return \%links;
 }
+
+=item C<__searchPageLink($params, $page)>
+
+Builds a single search page URL.
+
+C<$params> is the same C<HASH> reference passed to
+L</__searchPaginationLinks($params)>.  C<$page> is the page number to place in
+the generated URL.  The URL preserves the search term, wholeword flag, total
+limit, page size, and form mode so each page request remains stateless.
+
+=cut
 
 sub __searchPageLink {
 	my ($params, $page) = @_;
@@ -1348,6 +1402,18 @@ sub __searchResultsToHtml {
 	return $text;
 }
 
+=item C<__searchPaginationToHtml($json)>
+
+Renders search pagination links as an HTML navigation block.
+
+C<$json> is the same C<JSON:API> style response hash used by the search results
+HTML renderer.  The function reads pagination
+metadata from the C<results_summary> included item and uses the response links
+to render C<Previous>, C<Next>, and page-number links.  When there is only one
+logical page, an empty string is returned.
+
+=cut
+
 sub __searchPaginationToHtml {
 	my ($json) = @_;
 
@@ -1378,6 +1444,16 @@ sub __searchPaginationToHtml {
 
 	return $html;
 }
+
+=item C<__replaceSearchLinkPage($link, $page)>
+
+Rewrites the C<page> query parameter in a search pagination URL.
+
+C<$link> is an existing search page link and C<$page> is the replacement page
+number.  The function returns the updated URL and leaves all other query
+parameters unchanged.
+
+=cut
 
 sub __replaceSearchLinkPage {
 	my ($link, $page) = @_;

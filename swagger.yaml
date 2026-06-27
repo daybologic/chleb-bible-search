@@ -438,9 +438,27 @@ paths:
           name: limit
           schema:
             type: integer
-            default: 5
+            default: 50
+            minimum: 1
           required: false
-          description: Maximum number of results
+          description: Maximum number of total search results to consider before pagination
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          required: false
+          description: Requested result page. Values below 1 are treated as page 1.
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 2000
+          required: false
+          description: Number of search results to return on this page
         - in: query
           name: wholeword
           schema:
@@ -477,7 +495,13 @@ paths:
                   included:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Stats'
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/SearchResultsSummary'
+                        - $ref: '#/components/schemas/Stats'
+                  links:
+                    $ref: '#/components/schemas/JsonApiLinks'
         '400':
           description: Bad request
         '429':
@@ -906,3 +930,59 @@ components:
               type: integer
               description: ms for core request resolution, without overhead, for debugging core algorithm degradation and loading only
               example: 189
+    SearchResultsSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["results_summary"]
+        attributes:
+          type: object
+          properties:
+            count:
+              type: integer
+              description: Number of results returned on this page
+              example: 50
+            page:
+              type: integer
+              description: Current page number after normalisation
+              example: 2
+            per_page:
+              type: integer
+              description: Number of results requested per page after normalisation
+              example: 50
+            total_count:
+              type: integer
+              description: Total number of results considered after applying the search limit
+              example: 153
+            total_pages:
+              type: integer
+              description: Total number of pages available for the current search
+              example: 4
+        links:
+          type: object
+    JsonApiLinks:
+      type: object
+      properties:
+        first:
+          type: string
+          description: URL for the first page of search results
+          example: /1/search?term=peter&wholeword=1&limit=153&page=1&per_page=50
+        last:
+          type: string
+          description: URL for the last page of search results
+          example: /1/search?term=peter&wholeword=1&limit=153&page=4&per_page=50
+        self:
+          type: string
+          description: URL for the current page of search results
+          example: /1/search?term=peter&wholeword=1&limit=153&page=2&per_page=50
+        prev:
+          type: string
+          description: URL for the previous page of search results, omitted on the first page
+          example: /1/search?term=peter&wholeword=1&limit=153&page=1&per_page=50
+        next:
+          type: string
+          description: URL for the next page of search results, omitted on the last page
+          example: /1/search?term=peter&wholeword=1&limit=153&page=3&per_page=50
