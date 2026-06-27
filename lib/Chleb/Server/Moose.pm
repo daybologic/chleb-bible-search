@@ -766,18 +766,20 @@ sub __search {
 		},
 	);
 
-	$hash{links} = {
-		%{ $hash{links} },
-			%{ __searchPaginationLinks({
-				form        => $search->{form},
-				limit       => $limit,
-				page        => $page,
-				per_page    => $perPage,
-				term        => $query->text,
-			total_pages => $totalPages,
-			wholeword   => $wholeword,
-		}) },
-	};
+	my %paginationParams = (
+		form        => $search->{form},
+		limit       => $limit,
+		page        => $page,
+		per_page    => $perPage,
+		term        => $query->text,
+		total_pages => $totalPages,
+		wholeword   => $wholeword,
+	);
+
+	my $paginationLinks = __searchPaginationLinks(\%paginationParams);
+	foreach my $name (keys(%$paginationLinks)) {
+		$hash{links}->{$name} = $paginationLinks->{$name};
+	}
 
 	if (__isJsonContentType($contentType)) {
 		if ($search->{form}) {
