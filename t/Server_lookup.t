@@ -43,6 +43,7 @@ use English qw(-no_match_vars);
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::Dancer2;
 use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
@@ -309,6 +310,35 @@ sub test_not_found {
 	} else {
 		fail('No exception raised, as was expected');
 	}
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlListsTranslationsSeparately {
+	my ($self) = @_;
+	plan tests => 8;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'Matthew',
+		chapter => 22,
+		verse => 14,
+		translations => [ 'kjv', 'asv' ],
+	});
+
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+	my @cards = split(m{<div class="card">}, $html);
+	shift(@cards);
+
+	is(scalar(@cards), 2, 'each translation has its own card');
+	is_deeply(\@translations, [ 'asv', 'kjv' ], 'each translation has its own label');
+	like($cards[0], qr{<div class="translation">asv</div>}s, 'ASV label is in the first card');
+	like($cards[0], qr{<blockquote>\s*For many are called, but few chosen\.\s*</blockquote>}s, 'ASV text is in the first card');
+	like($cards[0], qr{<span class="tag tag-color-\d+">neutral</span> <span class="tag tag-color-\d+">instruction</span>}s, 'ASV sentiments are in the first card');
+	like($cards[1], qr{<div class="translation">kjv</div>}s, 'KJV label is in the second card');
+	like($cards[1], qr{<blockquote>\s*For many are called, but few \[are\] chosen\.\s*</blockquote>}s, 'KJV text is in the second card');
+	like($cards[1], qr{<span class="tag tag-color-\d+">neutral</span>\s*</blockquote>}s, 'KJV sentiments are in the second card');
 
 	return EXIT_SUCCESS;
 }

@@ -44,11 +44,15 @@ use Test::More 0.96;
 
 sub testCookiePreference {
 	my ($self) = @_;
-	plan tests => 4;
+	plan tests => 8;
 
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv'), [ 'asv' ], 'ASV cookie is used');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'kjv'), [ 'kjv' ], 'KJV cookie is used');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv,kjv'), [ 'asv', 'kjv' ], 'combined cookie is used');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv,kjv,asv'), [ 'asv', 'kjv' ], 'duplicate cookie values are ignored');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'all'), [ 'all' ], 'all cookie is used');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'default'), [], 'default cookie uses normal lookup');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'all,kjv'), [ 'all' ], 'all cookie overrides other translations');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'invalid'), [], 'invalid cookie is ignored');
 
 	return EXIT_SUCCESS;

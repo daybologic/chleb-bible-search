@@ -52,6 +52,22 @@ checkEndpoint() {
 
 	jq -e '.data | length > 0 and all(.[]; .attributes.translation == "kjv")' \
 		<<< "$explicitResult" >/dev/null
+
+	multiCookieResult=$(http --check-status --body --pretty=none GET \
+		"chleb-api.example.org/1/$endpoint" \
+		Accept:application/json \
+		Cookie:preferredTranslation=asv,kjv)
+
+	jq -e '.data | length > 0 and all(.[]; .attributes.translation == "asv" or .attributes.translation == "kjv")' \
+		<<< "$multiCookieResult" >/dev/null
+
+	allCookieResult=$(http --check-status --body --pretty=none GET \
+		"chleb-api.example.org/1/$endpoint" \
+		Accept:application/json \
+		Cookie:preferredTranslation=all)
+
+	jq -e '.data | length > 0 and all(.[]; .attributes.translation == "asv" or .attributes.translation == "kjv")' \
+		<<< "$allCookieResult" >/dev/null
 }
 
 checkEndpoint random

@@ -13,7 +13,7 @@
 					<p class="settings-help">This preference is saved in your browser.</p>
 
 					<label class="translation-option">
-						<input type="radio" name="preferredTranslation" value="default">
+						<input type="checkbox" name="preferredTranslation" value="default">
 						<span>
 							<strong>Default</strong>
 							<small>Use the service's default translation.</small>
@@ -21,7 +21,15 @@
 					</label>
 
 					<label class="translation-option">
-						<input type="radio" name="preferredTranslation" value="asv">
+						<input type="checkbox" name="preferredTranslation" value="all">
+						<span>
+							<strong>All</strong>
+							<small>Show every available translation.</small>
+						</span>
+					</label>
+
+					<label class="translation-option">
+						<input type="checkbox" name="preferredTranslation" value="asv">
 						<span>
 							<strong>ASV</strong>
 							<small>American Standard Version</small>
@@ -29,7 +37,7 @@
 					</label>
 
 					<label class="translation-option">
-						<input type="radio" name="preferredTranslation" value="kjv">
+						<input type="checkbox" name="preferredTranslation" value="kjv">
 						<span>
 							<strong>KJV</strong>
 							<small>King James Version</small>
@@ -53,7 +61,7 @@
 			'use strict';
 
 			var preferredTranslationCookieName = 'preferredTranslation';
-			var allowedTranslations = [ 'default', 'asv', 'kjv' ];
+			var allowedTranslations = [ 'default', 'all', 'asv', 'kjv' ];
 			var form = document.getElementById('settings-form');
 			var status = document.getElementById('settings-status');
 			var back = document.getElementById('settings-back');
@@ -80,24 +88,70 @@
 
 			function readPreference() {
 				var value = readCookie(preferredTranslationCookieName);
-				return allowedTranslations.indexOf(value) === -1 ? 'default' : value;
+				var values = value.split(',').filter(function (translation) {
+					return allowedTranslations.indexOf(translation) !== -1;
+				});
+
+				if (values.indexOf('default') !== -1 || values.length === 0) {
+					return [ 'default' ];
+				}
+
+				if (values.indexOf('all') !== -1) {
+					return [ 'all' ];
+				}
+
+				return values;
 			}
 
-			function selectPreference(value) {
-				var input = form.querySelector('input[value="' + value + '"]');
-				if (input) {
-					input.checked = true;
+			function translationInputs() {
+				return form.querySelectorAll('input[name="preferredTranslation"]');
+			}
+
+			function selectPreference(values) {
+				var inputs = translationInputs();
+				for (var i = 0; i < inputs.length; i++) {
+					inputs[i].checked = values.indexOf(inputs[i].value) !== -1;
 				}
 			}
 
 			selectPreference(readPreference());
 
+			form.addEventListener('change', function (event) {
+				if (event.target.name !== 'preferredTranslation' || !event.target.checked) {
+					return;
+				}
+
+				var inputs = translationInputs();
+				for (var i = 0; i < inputs.length; i++) {
+					if (
+						(event.target.value === 'default' || event.target.value === 'all')
+						&& inputs[i] !== event.target
+					) {
+						inputs[i].checked = false;
+					} else if (
+						(event.target.value !== 'default' && event.target.value !== 'all')
+						&& (inputs[i].value === 'default' || inputs[i].value === 'all')
+					) {
+						inputs[i].checked = false;
+					}
+				}
+			});
+
 			form.addEventListener('submit', function (event) {
 				event.preventDefault();
 
-				var selected = form.querySelector('input[name="preferredTranslation"]:checked');
-				var value = selected ? selected.value : 'default';
-				writeCookie(preferredTranslationCookieName, value);
+				var selected = form.querySelectorAll('input[name="preferredTranslation"]:checked');
+				var values = [];
+				for (var i = 0; i < selected.length; i++) {
+					values.push(selected[i].value);
+				}
+
+				if (values.length === 0) {
+					values = [ 'default' ];
+					selectPreference(values);
+				}
+
+				writeCookie(preferredTranslationCookieName, values.join(','));
 				status.textContent = 'Settings saved.';
 			});
 
