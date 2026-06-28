@@ -33,11 +33,8 @@ package Chleb::Server::Dampen;
 use strict;
 use warnings;
 use Moose;
-use utf8;
 
 extends 'Chleb::Bible::Base';
-
-=encoding utf8
 
 =head1 NAME
 
@@ -53,17 +50,17 @@ Three tiers of protection are provided:
 
 =item *
 
-C<dampen> — one request per second per IP address for clients without a session cookie.
+C<dampen> - one request per second per IP address for clients without a session cookie.
 
 =item *
 
-C<dampenSession> — sliding window rate limit for session cookie holders, configurable
+C<dampenSession> - sliding window rate limit for session cookie holders, configurable
 via C<rate_limit.session_window_seconds> and C<rate_limit.session_max_requests> in
 C<main.yaml>.
 
 =item *
 
-C<dampenChurn> — detects clients that repeatedly discard their session cookie to bypass
+C<dampenChurn> - detects clients that repeatedly discard their session cookie to bypass
 the session-based limit, keyed by IP address.  Configurable via
 C<rate_limit.session_churn_window_seconds> and C<rate_limit.session_churn_limit>.
 
