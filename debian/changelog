@@ -1,3 +1,27 @@
+chleb-bible-search (2.5.0) stable; urgency=high
+
+  * 📝 add CLAUDE.md for Codex guidance and repository-specific working rules
+  * 📝 add AGENTS.md guidance, including commit style and test expectations
+  * 📝 add Contributor Covenant Code of Conduct
+  * 💚 add pre-commit checks for Perl syntax, perlcritic, PoD, and hook safety
+  * ✅ add and enforce PoD checker coverage in the unit test suite
+  * ✅ require top-level `=head1` PoD headings only
+  * ✨ add JWT token repository support for session handling
+  * 🔧 enable JWT-backed sessions for development and Debian deployments
+  * 🍪 add preferred translation settings and remember translation/search preferences
+  * ✨ add stateless search pagination and remember search page size
+  * 💄 improve translated lookup rendering, search results, info tables, and verse navigation
+  * ✨ add HTML modes for ping, version, uptime, and related route presentation
+  * 🐛 support `application/vnd.api+json` while preserving `application/json`
+  * 📦 move vendored Perl dependencies into the core package
+  * 🔧 switch logging to stream/journal output and remove logrotate dependency
+  * 🚸 improve systemd, SysV init, and local dev-server support
+  * 🧪 expand functional HTTP coverage across settings, cookies, lookup, search, random, VOTD, and sessions
+  * 💚 update CI, Dependabot, and pre-commit wiring for the new workflow
+  * 📝 update release documentation, OpenAPI metadata, and Debian packaging versioning
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 28 Jun 2026 14:23:13 +0100
+
 chleb-bible-search (2.4.1) stable; urgency=high
 
   * 🚸 replace core search algo
