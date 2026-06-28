@@ -42,6 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Generated::Info;
 use Chleb::Server::MediaType;
 use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
@@ -68,6 +69,12 @@ sub testDefaults {
 			attributes => {
 				admin_email => 'example@example.org',
 				admin_name => 'Unknown',
+				build_host => $Chleb::Generated::Info::BUILD_HOST,
+				build_platform => $Chleb::Generated::Info::BUILD_OS . '/' . $Chleb::Generated::Info::BUILD_ARCH,
+				build_time => $Chleb::Generated::Info::BUILD_TIME,
+				build_user => $Chleb::Generated::Info::BUILD_USER . '@' . $Chleb::Generated::Info::BUILD_HOST,
+				changeset => $Chleb::Generated::Info::BUILD_CHANGESET,
+				perl_version => $Chleb::Generated::Info::BUILD_PERL_VERSION,
 				server_host => 'localhost',
 				version => '2.4.1',
 			},
@@ -91,6 +98,18 @@ sub testHtml {
 	like($html, qr{<table class="info-table">}, '__version HTML has info table');
 	like($html, qr{<th>Version</th>}, '__version HTML has version header');
 	like($html, qr{<td>2\.4\.1</td>}, '__version HTML has version value');
+	like($html, qr{<th>Git changeset</th>}, '__version HTML has changeset header');
+	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_CHANGESET\E</td>}, '__version HTML has changeset value');
+	like($html, qr{<th>Build time</th>}, '__version HTML has build time header');
+	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_TIME\E</td>}, '__version HTML has build time value');
+	like($html, qr{<th>Build host</th>}, '__version HTML has build host header');
+	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_HOST\E</td>}, '__version HTML has build host value');
+	like($html, qr{<th>Built by</th>}, '__version HTML has build user header');
+	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_USER\E\@\Q$Chleb::Generated::Info::BUILD_HOST\E</td>}, '__version HTML has build user value');
+	like($html, qr{<th>Build platform</th>}, '__version HTML has build platform header');
+	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_OS\E/\Q$Chleb::Generated::Info::BUILD_ARCH\E</td>}, '__version HTML has build platform value');
+	like($html, qr{<th>Perl version</th>}, '__version HTML has Perl version header');
+	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_PERL_VERSION\E</td>}, '__version HTML has Perl version value');
 	like($html, qr{<th>Administrator</th>}, '__version HTML has administrator header');
 	like($html, qr{<td>Unknown</td>}, '__version HTML has administrator value');
 	like($html, qr{<th>Admin email</th>}, '__version HTML has admin email header');

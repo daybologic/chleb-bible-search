@@ -530,6 +530,12 @@ sub __version {
 		version => $version,
 		admin_email => $self->dic->config->get('server', 'admin_email', 'example@example.org'),
 		admin_name => $self->dic->config->get('server', 'admin_name', 'Unknown'),
+		build_host => $Chleb::Generated::Info::BUILD_HOST,
+		build_platform => $Chleb::Generated::Info::BUILD_OS . '/' . $Chleb::Generated::Info::BUILD_ARCH,
+		build_time => $Chleb::Generated::Info::BUILD_TIME,
+		build_user => $Chleb::Generated::Info::BUILD_USER . '@' . $Chleb::Generated::Info::BUILD_HOST,
+		changeset => $Chleb::Generated::Info::BUILD_CHANGESET,
+		perl_version => $Chleb::Generated::Info::BUILD_PERL_VERSION,
 		server_host => $self->dic->config->get('server', 'domain', 'localhost'),
 	);
 
@@ -564,6 +570,30 @@ sub __versionToHtml {
 	$html .= "<tr>\r\n";
 	$html .= "<th>Version</th>\r\n";
 	$html .= sprintf("<td>%s</td>\r\n", $attributes->{version});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Git changeset</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{changeset});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Build time</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{build_time});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Build host</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{build_host});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Built by</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{build_user});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Build platform</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{build_platform});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Perl version</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{perl_version});
 	$html .= "</tr>\r\n";
 	$html .= "<tr>\r\n";
 	$html .= "<th>Administrator</th>\r\n";
