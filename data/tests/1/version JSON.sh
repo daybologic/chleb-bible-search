@@ -42,10 +42,13 @@ jq -e '.data | length == 1 and (.[0].attributes.build_time | test("^[0-9]{4}-[0-
 jq -e '.data | length == 1 and (.[0].attributes.build_host | type == "string" and length > 0)' \
 	<<< "$version" >/dev/null
 
-jq -e '.data | length == 1 and (.[0].attributes.build_user | test("^[^@]+@[^@]+$"))' \
+jq -e '.data | length == 1 and (.[0].attributes.build_os | type == "string" and length > 0)' \
 	<<< "$version" >/dev/null
 
-jq -e '.data | length == 1 and (.[0].attributes.build_platform | test("^.+/.+$"))' \
+jq -e '.data | length == 1 and (.[0].attributes.build_arch | type == "string" and length > 0)' \
+	<<< "$version" >/dev/null
+
+jq -e '.data | length == 1 and (.[0].attributes.build_user | type == "string" and length > 0)' \
 	<<< "$version" >/dev/null
 
 jq -e '.data | length == 1 and (.[0].attributes.perl_version | test("^v[0-9]+\\.[0-9]+\\.[0-9]+( \\([0-9.]+\\))?$"))' \

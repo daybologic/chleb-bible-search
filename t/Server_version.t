@@ -69,10 +69,11 @@ sub testDefaults {
 			attributes => {
 				admin_email => 'example@example.org',
 				admin_name => 'Unknown',
+				build_arch => $Chleb::Generated::Info::BUILD_ARCH,
 				build_host => $Chleb::Generated::Info::BUILD_HOST,
-				build_platform => $Chleb::Generated::Info::BUILD_OS . '/' . $Chleb::Generated::Info::BUILD_ARCH,
+				build_os => $Chleb::Generated::Info::BUILD_OS,
 				build_time => $Chleb::Generated::Info::BUILD_TIME,
-				build_user => $Chleb::Generated::Info::BUILD_USER . '@' . $Chleb::Generated::Info::BUILD_HOST,
+				build_user => $Chleb::Generated::Info::BUILD_USER,
 				changeset => $Chleb::Generated::Info::BUILD_CHANGESET,
 				perl_version => $Chleb::Generated::Info::BUILD_PERL_VERSION,
 				server_host => 'localhost',
@@ -104,10 +105,12 @@ sub testHtml {
 	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_TIME\E</td>}, '__version HTML has build time value');
 	like($html, qr{<th>Build host</th>}, '__version HTML has build host header');
 	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_HOST\E</td>}, '__version HTML has build host value');
-	like($html, qr{<th>Built by</th>}, '__version HTML has build user header');
-	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_USER\E\@\Q$Chleb::Generated::Info::BUILD_HOST\E</td>}, '__version HTML has build user value');
-	like($html, qr{<th>Build platform</th>}, '__version HTML has build platform header');
-	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_OS\E/\Q$Chleb::Generated::Info::BUILD_ARCH\E</td>}, '__version HTML has build platform value');
+	like($html, qr{<th>Build OS</th>}, '__version HTML has build OS header');
+	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_OS\E</td>}, '__version HTML has build OS value');
+	like($html, qr{<th>Build architecture</th>}, '__version HTML has build architecture header');
+	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_ARCH\E</td>}, '__version HTML has build architecture value');
+	like($html, qr{<th>Build user</th>}, '__version HTML has build user header');
+	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_USER\E</td>}, '__version HTML has build user value');
 	like($html, qr{<th>Perl version</th>}, '__version HTML has Perl version header');
 	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_PERL_VERSION\E</td>}, '__version HTML has Perl version value');
 	like($html, qr{<th>Administrator</th>}, '__version HTML has administrator header');

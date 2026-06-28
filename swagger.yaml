@@ -841,14 +841,18 @@ components:
               type: string
               description: Hostname where this build was created
               example: grable.daybologic.co.uk
+            build_os:
+              type: string
+              description: Operating system where this build was created
+              example: GNU/Linux
+            build_arch:
+              type: string
+              description: Architecture where this build was created
+              example: x86_64
             build_user:
               type: string
-              description: User and host which created this build
-              example: palmer@grable.daybologic.co.uk
-            build_platform:
-              type: string
-              description: Operating system and architecture where this build was created
-              example: GNU/Linux/x86_64
+              description: User which created this build
+              example: palmer
             perl_version:
               type: string
               description: Perl version used when this build was created
