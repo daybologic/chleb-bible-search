@@ -27,3 +27,4 @@ repos:
         entry: bin/maint/swagger-check.sh
         language: system
         pass_filenames: false
+        files: ^swagger\.yaml$
