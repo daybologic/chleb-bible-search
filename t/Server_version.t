@@ -69,7 +69,7 @@ sub testDefaults {
 				admin_email => 'example@example.org',
 				admin_name => 'Unknown',
 				server_host => 'localhost',
-				version => '2.4.1',
+				version => '2.5.0',
 			},
 			id => ignore(),
 			type => 'version',
@@ -90,7 +90,7 @@ sub testHtml {
 	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__version HTML has home link');
 	like($html, qr{<table class="info-table">}, '__version HTML has info table');
 	like($html, qr{<th>Version</th>}, '__version HTML has version header');
-	like($html, qr{<td>2\.4\.1</td>}, '__version HTML has version value');
+	like($html, qr{<td>2\.5\.0</td>}, '__version HTML has version value');
 	like($html, qr{<th>Administrator</th>}, '__version HTML has administrator header');
 	like($html, qr{<td>Unknown</td>}, '__version HTML has administrator value');
 	like($html, qr{<th>Admin email</th>}, '__version HTML has admin email header');
