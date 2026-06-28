@@ -48,4 +48,20 @@ explicitResult=$(http --check-status --body --pretty=none GET \
 jq -e '.data | length == 1 and .[0].attributes.translation == "kjv"' \
 	<<< "$explicitResult" >/dev/null
 
+multiCookieResult=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/lookup/john/3/16 \
+	Accept:application/json \
+	Cookie:preferredTranslation=asv,kjv)
+
+jq -e '.data | length == 2 and ([.[].attributes.translation] | sort == ["asv", "kjv"])' \
+	<<< "$multiCookieResult" >/dev/null
+
+allCookieResult=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/lookup/john/3/16 \
+	Accept:application/json \
+	Cookie:preferredTranslation=all)
+
+jq -e '.data | length == 2 and ([.[].attributes.translation] | sort == ["asv", "kjv"])' \
+	<<< "$allCookieResult" >/dev/null
+
 exit 0
