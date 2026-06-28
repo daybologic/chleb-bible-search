@@ -18,6 +18,12 @@
 				<input type="number" id="limit" name="limit" placeholder="__SEARCH_LIMIT_DEFAULT__" min="1" max="__SEARCH_LIMIT_MAX__" value="__SEARCH_LIMIT_VALUE__">
 			</div>
 
+			<div class="form-group">
+				<label for="per_page">Per page</label>
+				<input type="number" id="per_page" name="per_page" placeholder="__SEARCH_PER_PAGE_DEFAULT__" min="1" max="__SEARCH_PER_PAGE_MAX__" value="__SEARCH_PER_PAGE_VALUE__">
+			</div>
+
+			<input type="hidden" id="page" name="page" value="1">
 			<input type="hidden" id="form" name="form" value="true">
 
 			<button type="submit">Search</button>
@@ -30,10 +36,12 @@
 
 				var wholewordCookieName = 'wholeword';
 				var previousSearchLimitCookieName = 'previousSearchLimit';
+				var previousSearchPerPageCookieName = 'previousSearchPerPage';
 				var form = document.querySelector('.search-form');
 				var home = document.getElementById('search-home');
 				var wholeword = document.getElementById('wholeword');
 				var limit = document.getElementById('limit');
+				var perPage = document.getElementById('per_page');
 				var params = new URLSearchParams(window.location.search);
 
 				function readCookie(name) {
@@ -66,10 +74,20 @@
 					}
 				}
 
+				if (!params.has('per_page')) {
+					var previousSearchPerPage = readCookie(previousSearchPerPageCookieName);
+					if (/^[0-9]+$/.test(previousSearchPerPage) && parseInt(previousSearchPerPage, 10) > 0) {
+						perPage.value = previousSearchPerPage;
+					}
+				}
+
 				form.addEventListener('submit', function () {
 					writeCookie(wholewordCookieName, wholeword.checked ? 'true' : 'false');
 					if (/^[0-9]+$/.test(limit.value) && parseInt(limit.value, 10) > 0) {
 						writeCookie(previousSearchLimitCookieName, limit.value);
+					}
+					if (/^[0-9]+$/.test(perPage.value) && parseInt(perPage.value, 10) > 0) {
+						writeCookie(previousSearchPerPageCookieName, perPage.value);
 					}
 				});
 

@@ -34,29 +34,33 @@ set -euo pipefail
 cookieResult=$(http --check-status --body --pretty=none GET \
 	chleb-api.example.org/1/search \
 	Accept:application/json \
-	Cookie:previousSearchLimit=7 \
+	Cookie:'previousSearchLimit=7; previousSearchPerPage=3' \
 	term==fire)
 
-jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=7"' \
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=7&page=1&per_page=3"' \
 	<<< "$cookieResult" >/dev/null
 
 explicitResult=$(http --check-status --body --pretty=none GET \
 	chleb-api.example.org/1/search \
 	Accept:application/json \
-	Cookie:previousSearchLimit=7 \
+	Cookie:'previousSearchLimit=7; previousSearchPerPage=3' \
 	term==fire \
 	limit==3)
 
-jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=3"' \
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=3&page=1&per_page=3"' \
 	<<< "$explicitResult" >/dev/null
 
 searchPage=$(http --check-status --body --pretty=none GET \
 	chleb-api.example.org/1/search \
 	Accept:text/html \
-	Cookie:previousSearchLimit=7)
+	Cookie:'previousSearchLimit=7; previousSearchPerPage=3')
 
 grep -q 'id="limit" name="limit".* value="7"' <<< "$searchPage"
+grep -q '<label for="per_page">Per page</label>' <<< "$searchPage"
+grep -q 'id="per_page" name="per_page".* value="3"' <<< "$searchPage"
 grep -q "var previousSearchLimitCookieName = 'previousSearchLimit';" <<< "$searchPage"
+grep -q "var previousSearchPerPageCookieName = 'previousSearchPerPage';" <<< "$searchPage"
 grep -q "writeCookie(previousSearchLimitCookieName, limit.value);" <<< "$searchPage"
+grep -q "writeCookie(previousSearchPerPageCookieName, perPage.value);" <<< "$searchPage"
 
 exit 0

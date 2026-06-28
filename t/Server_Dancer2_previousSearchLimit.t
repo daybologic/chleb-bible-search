@@ -40,6 +40,7 @@ extends 'Test::Module::Runnable';
 
 use Chleb::Bible::Search::Query;
 use Chleb::Server::Dancer2;
+use Chleb::Server::Moose;
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
 
@@ -62,6 +63,39 @@ sub testExplicitPreference {
 	is(Chleb::Server::Dancer2::__previousSearchLimit(1, '3', '7'), 3, 'explicit limit overrides cookie');
 	is(Chleb::Server::Dancer2::__previousSearchLimit(1, '', '7'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit empty limit suppresses cookie');
 	is(Chleb::Server::Dancer2::__previousSearchLimit(1, 'invalid', '7'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit invalid limit suppresses cookie');
+
+	return EXIT_SUCCESS;
+}
+
+sub testPerPageCookiePreference {
+	my ($self) = @_;
+	plan tests => 5;
+
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, '11'), 11, 'integer cookie is used');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, undef), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'missing cookie uses default');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, 'invalid'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'invalid cookie uses default');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, '0'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'zero cookie uses default');
+	is(
+		Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE + 1),
+		$Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE,
+		'large cookie uses maximum page size',
+	);
+
+	return EXIT_SUCCESS;
+}
+
+sub testPerPageExplicitPreference {
+	my ($self) = @_;
+	plan tests => 4;
+
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(1, '5', '11'), 5, 'explicit per page overrides cookie');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(1, '', '11'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit empty per page suppresses cookie');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(1, 'invalid', '11'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit invalid per page suppresses cookie');
+	is(
+		Chleb::Server::Dancer2::__previousSearchPerPage(1, $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE + 1, '11'),
+		$Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE,
+		'large explicit per page uses maximum page size',
+	);
 
 	return EXIT_SUCCESS;
 }
