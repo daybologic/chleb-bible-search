@@ -53,6 +53,7 @@ use Chleb::Bible::Search::Query;
 use Chleb::DI::Container;
 use Chleb::Exception;
 use Chleb::Generated::Info;
+use Chleb::Server::Dampen;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
@@ -1643,78 +1644,24 @@ sub __removeUptime {
 	return;
 }
 
-# FIXME: Will leak memory over time, switch to a disk-based cache, or memcached
-# additionally, this is a per-process store right now, which is probably not effective enough.
-has __dampenTime      => (isa => 'HashRef[Str]',          is => 'rw', lazy => 1, default => sub {{}});
-has __sessionWindows  => (isa => 'HashRef[ArrayRef[Int]]', is => 'rw', lazy => 1, default => sub {{}});
-has __sessionsByIp    => (isa => 'HashRef[ArrayRef]',      is => 'rw', lazy => 1, default => sub {{}});
 has __warnedSessionToken => (is => 'rw', isa => 'Bool', default => 0);
 
-sub dampen {
-	my ($self) = @_;
-	my $ipAddress = Chleb::Server::Dancer2::_request()->address();
-	my $currentTime = time();
+=over
 
-	my $previousTime = $self->__dampenTime->{$ipAddress};
-	if ($previousTime && $previousTime == $currentTime) {
-		$self->dic->logger->warn(sprintf('Saw %s already this second, denying request', $ipAddress));
-		return 1;
-	}
+=item C<__damper>
 
-	$self->__dampenTime->{$ipAddress} = $currentTime;
-	return 0;
-}
+Instance of L<Chleb::Server::Dampen> that handles all rate-limiting logic.
 
-sub __dampenSession {
-	my ($self, $tokenValue) = @_;
+=back
 
-	my $windowSecs = $self->dic->config->get('rate_limit', 'session_window_seconds', 60);
-	my $maxRequests = $self->dic->config->get('rate_limit', 'session_max_requests',  100);
-	my $currentTime = time();
-	my $cutoff      = $currentTime - $windowSecs;
+=cut
 
-	my $timestamps = $self->__sessionWindows->{$tokenValue} //= [];
-	@{$timestamps} = grep { $_ > $cutoff } @{$timestamps};
-
-	if (scalar(@{$timestamps}) >= $maxRequests) {
-		$self->dic->logger->warn(sprintf(
-			'Session %s exceeded %d requests in %ds window, denying',
-			substr($tokenValue, 0, 8), $maxRequests, $windowSecs,
-		));
-		return 1;
-	}
-
-	push @{$timestamps}, $currentTime;
-	return 0;
-}
-
-sub __dampenChurn {
-	my ($self, $ipAddress, $tokenValue) = @_;
-
-	my $churnWindow = $self->dic->config->get('rate_limit', 'session_churn_window_seconds', 300);
-	my $churnLimit  = $self->dic->config->get('rate_limit', 'session_churn_limit',          10);
-	my $currentTime = time();
-	my $cutoff      = $currentTime - $churnWindow;
-
-	my $entries = $self->__sessionsByIp->{$ipAddress} //= [];
-	@{$entries} = grep { $_->[1] > $cutoff } @{$entries};
-
-	my %seen = map { $_->[0] => 1 } @{$entries};
-	unless ($seen{$tokenValue}) {
-		push @{$entries}, [ $tokenValue, $currentTime ];
-	}
-
-	my $distinctTokens = scalar(keys %{{ map { $_->[0] => 1 } @{$entries} }});
-	if ($distinctTokens > $churnLimit) {
-		$self->dic->logger->warn(sprintf(
-			'IP %s burned through %d session tokens in %ds, denying',
-			$ipAddress, $distinctTokens, $churnWindow,
-		));
-		return 1;
-	}
-
-	return 0;
-}
+has __damper => (
+	isa     => 'Chleb::Server::Dampen',
+	is      => 'ro',
+	lazy    => 1,
+	default => sub { Chleb::Server::Dampen->new(dic => $_[0]->dic) },
+);
 
 sub logRequest {
 	my ($self) = @_;
@@ -1748,7 +1695,7 @@ sub handleSessionToken {
 	my $sessionToken = Chleb::Server::Dancer2::_cookie('sessionToken');
 
 	if (!$sessionToken) {
-		if ($self->dampen()) {
+		if ($self->__damper->dampen($ipAddress)) {
 			Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 				HTTP_TOO_MANY_REQUESTS,
 				'Slow down, or respect the sessionToken cookie', # TODO: Make a web page explaining this & link to it
@@ -1785,14 +1732,14 @@ sub handleSessionToken {
 	Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
 	$self->dic->logger->trace('session token found: ' . $sessionToken->toString());
 
-	if ($self->__dampenChurn($ipAddress, $sessionToken->value)) {
+	if ($self->__damper->dampenChurn($ipAddress, $sessionToken->value)) {
 		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 			HTTP_TOO_MANY_REQUESTS,
 			'Too many session tokens from this IP address',
 		));
 	}
 
-	if ($self->__dampenSession($sessionToken->value)) {
+	if ($self->__damper->dampenSession($sessionToken->value)) {
 		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 			HTTP_TOO_MANY_REQUESTS,
 			'Request rate exceeded for this session',

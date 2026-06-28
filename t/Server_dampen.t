@@ -42,7 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
-use Chleb::Server::Moose;
+use Chleb::Server::Dampen;
 use Test::More 0.96;
 
 sub setUp {
@@ -52,7 +52,7 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb::Server::Moose->new());
+	$self->sut(Chleb::Server::Dampen->new());
 
 	return EXIT_SUCCESS;
 }
@@ -65,7 +65,7 @@ sub testSessionWindowAllows {
 
 	# inject 99 timestamps within the window — 100th should be allowed
 	$self->sut->{__sessionWindows}{$token} = [ ($now) x 99 ];
-	is($self->sut->__dampenSession($token), 0, '100th request within limit is allowed');
+	is($self->sut->dampenSession($token), 0, '100th request within limit is allowed');
 
 	return EXIT_SUCCESS;
 }
@@ -78,7 +78,7 @@ sub testSessionWindowDenies {
 
 	# inject 100 timestamps — next request must be denied
 	$self->sut->{__sessionWindows}{$token} = [ ($now) x 100 ];
-	is($self->sut->__dampenSession($token), 1, 'request over limit is denied');
+	is($self->sut->dampenSession($token), 1, 'request over limit is denied');
 
 	return EXIT_SUCCESS;
 }
@@ -91,7 +91,7 @@ sub testSessionWindowExpiry {
 
 	# 100 old timestamps — all should be pruned, so request is allowed
 	$self->sut->{__sessionWindows}{$token} = [ ($old) x 100 ];
-	is($self->sut->__dampenSession($token), 0, 'expired timestamps are pruned and request is allowed');
+	is($self->sut->dampenSession($token), 0, 'expired timestamps are pruned and request is allowed');
 
 	return EXIT_SUCCESS;
 }
@@ -105,7 +105,7 @@ sub testChurnAllows {
 	# 9 distinct tokens already seen; new one brings total to 10, exactly at limit — should be allowed
 	my @entries = map { [ "token-$_", $now ] } (1..9);
 	$self->sut->{__sessionsByIp}{$ip} = \@entries;
-	is($self->sut->__dampenChurn($ip, 'token-10'), 0, 'exactly at churn limit is allowed');
+	is($self->sut->dampenChurn($ip, 'token-10'), 0, 'exactly at churn limit is allowed');
 
 	return EXIT_SUCCESS;
 }
@@ -119,7 +119,7 @@ sub testChurnDenies {
 	# 11 distinct tokens already seen — next should be denied
 	my @entries = map { [ "token-$_", $now ] } (1..11);
 	$self->sut->{__sessionsByIp}{$ip} = \@entries;
-	is($self->sut->__dampenChurn($ip, 'token-new'), 1, 'exceeding churn limit is denied');
+	is($self->sut->dampenChurn($ip, 'token-new'), 1, 'exceeding churn limit is denied');
 
 	return EXIT_SUCCESS;
 }
@@ -133,7 +133,7 @@ sub testChurnExpiry {
 	# 11 old tokens — all should be pruned, so request is allowed
 	my @entries = map { [ "token-$_", $old ] } (1..11);
 	$self->sut->{__sessionsByIp}{$ip} = \@entries;
-	is($self->sut->__dampenChurn($ip, 'token-fresh'), 0, 'expired churn entries are pruned and request is allowed');
+	is($self->sut->dampenChurn($ip, 'token-fresh'), 0, 'expired churn entries are pruned and request is allowed');
 
 	return EXIT_SUCCESS;
 }
