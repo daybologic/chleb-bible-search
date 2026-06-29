@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,61 +29,42 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -e
+package main;
+use strict;
+use warnings;
 
-[ -z "$SERVER_USER" ] && SERVER_USER=chleb
-[ -z "$SERVER_NAME" ] && SERVER_NAME="Chleb Bible Search"
+use POSIX qw(EXIT_SUCCESS);
+use Test::More 0.96;
 
-installJwtSecret() {
-	configPath='/etc/chleb-bible-search/main.yaml'
-	placeholder='replace-on-first-install'
+my $runtimeDirectory = 'chleb-bible-search';
+my $servicePath = 'etc/chleb-bible-search.service';
+my $dirsPath = 'debian/chleb-bible-search-core.dirs';
 
-	[ "$1" = 'configure' ] || return 0
-	[ -f "$configPath" ] || return 0
-	grep -q "^    secret: '$placeholder'\$" "$configPath" || return 0
+open(my $fh, '<', $servicePath) or die("Cannot open $servicePath: $!");
+my @lines = <$fh>;
+close($fh);
 
-	secret=$(od -An -N32 -tx1 /dev/urandom | tr -d ' \n')
-	if [ "${#secret}" -ne 64 ]; then
-		echo 'Unable to generate JWT session secret' >&2
-		exit 1
-	fi
+my @runtimeDirectories = map {
+	my ($value) = m/\ARuntimeDirectory=(.+)\z/;
+	$value;
+} grep { m/\ARuntimeDirectory=/ } map { chomp; $_ } @lines;
 
-	sed -i "s/^    secret: '$placeholder'\$/    secret: '$secret'/" "$configPath"
-	echo 'Generated JWT session secret'
-}
+is_deeply(
+	\@runtimeDirectories,
+	[$runtimeDirectory],
+	"systemd creates /run/$runtimeDirectory for the FastCGI socket"
+);
 
-if ! getent passwd | grep -q "^$SERVER_USER:"; then
-	echo -n "Adding system user $SERVER_USER.."
-	adduser --quiet \
-		--system \
-		--no-create-home \
-		--home /nonexistent \
-		--disabled-password \
-		$SERVER_USER 2>/dev/null || true
-	echo "..done"
-fi
+open($fh, '<', $dirsPath) or die("Cannot open $dirsPath: $!");
+@lines = <$fh>;
+close($fh);
 
-usermod -c "$SERVER_NAME" $SERVER_USER
-install -d -o "$SERVER_USER" -m 0755 /var/run/chleb-bible-search
-chown $SERVER_USER \
-	/var/cache/chleb-bible-search \
-	/var/lib/chleb-bible-search \
-	/var/lib/chleb-bible-search/sessions
+my @volatileDirs = grep { m{\A/var/run/} } map { chomp; $_ } @lines;
+is_deeply(
+	\@volatileDirs,
+	[],
+	'Debian package does not ship volatile /var/run directories'
+);
 
-installJwtSecret "$@"
-
-echo 'clearing bible translation cache'
-rm -f /var/cache/chleb-bible-search/*.bin
-
-echo 'removing expired session files'
-/usr/share/chleb-bible-search/session-clean.sh -t 30
-
-echo 'installing symbolic links'
-cp -vlf /usr/share/chleb-bible-search/run.sh /usr/bin/chleb-bible-search/run.sh
-cp -vlf /usr/share/chleb-bible-search/session-dump.pl /usr/bin/chleb-bible-search/session-dump
-
-invoke-rc.d chleb-bible-search restart || :
-
-#DEBHELPER#
-
-exit 0
+done_testing();
+exit(EXIT_SUCCESS);
