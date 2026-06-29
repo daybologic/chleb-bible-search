@@ -1130,6 +1130,37 @@ sub __verseToJsonApi {
 	return \%hash;
 }
 
+=item C<__verseNavigationLink($json, $type, $label)>
+
+Build an HTML link for the verse navigation bar.
+
+C<$json> is a C<JSON:API> response hash for a verse page.  C<$type> is one of
+the verse link names such as C<prev>, C<next>, or C<self>.  C<$label> is the
+visible link text.
+
+The generated link keeps the concrete lookup path from the verse item and, when
+the response has a query string, applies that query string to preserve selected
+translations across HTML navigation.  If the requested link does not exist, an
+empty string is returned.
+
+=cut
+
+sub __verseNavigationLink {
+	my ($json, $type, $label) = @_;
+
+	my $link = $json->{data}->[0]->{links}->{$type};
+	return '' unless ($link);
+
+	my $selfLink = $json->{links}->{self} || '';
+	if ($selfLink =~ m/(\?.*)\z/) {
+		my $query = $1;
+		$link =~ s/\?.*\z//;
+		$link .= $query;
+	}
+
+	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
+}
+
 sub __verseToHtml {
 	my ($self, $verse, $json, $function) = @_;
 
@@ -1322,14 +1353,14 @@ sub __verseToHtml {
 		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
 		NEXT_CHAPTER_URL => $nextChapterLink,
 		NEXT_BOOK_URL => $nextBookLink,
-		PERMALINK_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{self} . '">permalink</a>',
+		PERMALINK_URL => __verseNavigationLink($json->[0], 'self', 'permalink'),
 		SETTINGS_URL => $settingsLink,
-		FIRST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">first verse</a>',
+		FIRST_VERSE_URL => __verseNavigationLink($json->[0], 'first', 'first verse'),
 		FIRST_CHAPTER_URL => sprintf($bookLinkFormat, 'first chapter'),
 		LAST_CHAPTER_URL => $lastChapterLink,
-		PREV_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{prev} . '">prev verse</a>',
-		NEXT_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{next} . '">next verse</a>',
-		LAST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{last} . '">last verse</a>',
+		PREV_VERSE_URL => __verseNavigationLink($json->[0], 'prev', 'prev verse'),
+		NEXT_VERSE_URL => __verseNavigationLink($json->[0], 'next', 'next verse'),
+		LAST_VERSE_URL => __verseNavigationLink($json->[0], 'last', 'last verse'),
 		RANDOM_URL => $random,
 		BOOKS => $self->__makeBooks($firstVerseObject->book),
 	});
