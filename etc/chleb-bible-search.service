@@ -4,6 +4,7 @@ After=network.target
 Documentation=https://github.com/daybologic/chleb-bible-search/blob/master/README.md
 
 [Service]
+Environment=PERL5LIB=/usr/share/chleb-bible-search/perl5
 EnvironmentFile=-/etc/default/chleb-bible-search
 ExecStart=/usr/bin/chleb-bible-search/run.sh
 ExecReload=/bin/kill -HUP $MAINPID
