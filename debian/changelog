@@ -1,3 +1,12 @@
+chleb-bible-search (2.5.1) stable; urgency=high
+
+  * 🚑️ /var/run/chleb-bible-search was not being re-created on reboot, which prevented the server from starting
+  * 🐛 When navigating between verses, the multiple translations option was being lost
+  * 🚑️ set packaged Perl library path for systemd
+  * 🚑️ missing libyaml-libyaml-perl (config reader)
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Tue, 30 Jun 2026 12:10:46 +0100
+
 chleb-bible-search (2.5.0) stable; urgency=high
 
   * 🍪 add preferred translation settings and remember translation/search preferences
