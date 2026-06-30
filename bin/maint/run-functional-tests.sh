@@ -48,7 +48,8 @@ if [[ ! -d "$BASE_DIR" ]]; then
 fi
 
 # Check if httpie (http command) is installed
-if command -v http >/dev/null 2>&1; then
+REAL_HTTP=$(command -v http || true)
+if [[ -n "$REAL_HTTP" ]]; then
 	echo "✅ HTTPie detected"
 else
 	echo "⚠️ HTTPie is not installed or not in the PATH" >&2
@@ -61,6 +62,19 @@ else
 	echo "⚠️ Host $SERVER_HOST does not resolve."
 	exit 0
 fi
+
+httpWrapperDir=$(mktemp -d)
+trap 'rm -rf "$httpWrapperDir"' EXIT
+
+cat > "$httpWrapperDir/http" <<'EOS'
+#!/usr/bin/env bash
+sleep "${CHLEB_HTTP_TEST_DELAY:-1}"
+exec "$CHLEB_REAL_HTTP" "$@"
+EOS
+chmod +x "$httpWrapperDir/http"
+
+export CHLEB_REAL_HTTP="$REAL_HTTP"
+export PATH="$httpWrapperDir:$PATH"
 
 # Find and execute .sh files
 while IFS= read -r -d '' script; do

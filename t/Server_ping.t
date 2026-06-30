@@ -42,6 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::MediaType;
 use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
@@ -73,6 +74,41 @@ sub testPing {
 		included => [ ],
 		links => { },
 	}, '__ping') or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testPingJsonApiMediaType {
+	my ($self) = @_;
+
+	my $json = $self->sut->__ping({
+		accept => Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json'),
+	});
+	cmp_deeply($json, {
+		data => [{
+			attributes => {
+				message => 'Ahoy-hoy!',
+			},
+			id => ignore(),
+			type => 'pong',
+		}],
+		included => [ ],
+		links => { },
+	}, '__ping JSON:API media type') or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtml {
+	my ($self) = @_;
+
+	my $html = $self->sut->__ping({
+		accept => Chleb::Server::MediaType->parseAcceptHeader('text/html'),
+	});
+	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__ping HTML has home link');
+	like($html, qr{<table class="info-table">}, '__ping HTML has info table');
+	like($html, qr{<th>Message</th>}, '__ping HTML has message header');
+	like($html, qr{<td>Ahoy-hoy!</td>}, '__ping HTML has message value');
 
 	return EXIT_SUCCESS;
 }

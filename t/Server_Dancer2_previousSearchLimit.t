@@ -1,0 +1,106 @@
+#!/usr/bin/env perl
+# Chleb Bible Search
+# Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+#     * Neither the name of the Daybo Logic nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+package Server_Dancer2_previousSearchLimitTests;
+use strict;
+use warnings;
+use Moose;
+
+use lib 'externals/libtest-module-runnable-perl/lib';
+
+extends 'Test::Module::Runnable';
+
+use Chleb::Bible::Search::Query;
+use Chleb::Server::Dancer2;
+use Chleb::Server::Moose;
+use POSIX qw(EXIT_SUCCESS);
+use Test::More 0.96;
+
+sub testCookiePreference {
+	my ($self) = @_;
+	plan tests => 4;
+
+	is(Chleb::Server::Dancer2::__previousSearchLimit(0, undef, '7'), 7, 'integer cookie is used');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(0, undef, undef), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'missing cookie uses default');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(0, undef, 'invalid'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'invalid cookie uses default');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(0, undef, '0'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'zero cookie uses default');
+
+	return EXIT_SUCCESS;
+}
+
+sub testExplicitPreference {
+	my ($self) = @_;
+	plan tests => 3;
+
+	is(Chleb::Server::Dancer2::__previousSearchLimit(1, '3', '7'), 3, 'explicit limit overrides cookie');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(1, '', '7'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit empty limit suppresses cookie');
+	is(Chleb::Server::Dancer2::__previousSearchLimit(1, 'invalid', '7'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit invalid limit suppresses cookie');
+
+	return EXIT_SUCCESS;
+}
+
+sub testPerPageCookiePreference {
+	my ($self) = @_;
+	plan tests => 5;
+
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, '11'), 11, 'integer cookie is used');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, undef), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'missing cookie uses default');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, 'invalid'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'invalid cookie uses default');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, '0'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'zero cookie uses default');
+	is(
+		Chleb::Server::Dancer2::__previousSearchPerPage(0, undef, $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE + 1),
+		$Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE,
+		'large cookie uses maximum page size',
+	);
+
+	return EXIT_SUCCESS;
+}
+
+sub testPerPageExplicitPreference {
+	my ($self) = @_;
+	plan tests => 4;
+
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(1, '5', '11'), 5, 'explicit per page overrides cookie');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(1, '', '11'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit empty per page suppresses cookie');
+	is(Chleb::Server::Dancer2::__previousSearchPerPage(1, 'invalid', '11'), $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT, 'explicit invalid per page suppresses cookie');
+	is(
+		Chleb::Server::Dancer2::__previousSearchPerPage(1, $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE + 1, '11'),
+		$Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE,
+		'large explicit per page uses maximum page size',
+	);
+
+	return EXIT_SUCCESS;
+}
+
+package main;
+use strict;
+use warnings;
+exit(Server_Dancer2_previousSearchLimitTests->new->run);

@@ -63,7 +63,7 @@ Readonly my $PROJECT => 'Chleb Bible Search';
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
-set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON;
+set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API;
 set static_handler => 1;
 
 sub _cookie {
@@ -74,6 +74,193 @@ sub _cookie {
 sub _request {
 	my (@args) = @_;
 	return request(@args);
+}
+
+=head1 __setJsonResponseContentType($accept, $default)
+
+Sets the response content type when the client accepts one of the supported
+JSON media types.
+
+C<$accept> is the request C<Accept> header value.  C<$default> is the fallback
+media type used when the header does not select a supported type.  The Dancer2
+response content type is updated only when negotiation resolves to either
+C<application/json> or the JSON:API media type, leaving HTML responses to the
+route handlers that serve them.
+
+=cut
+
+sub __setJsonResponseContentType {
+	my ($accept, $default) = @_;
+
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($accept, $default);
+	if (
+		$contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON
+		|| $contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API
+	) {
+		content_type $contentType;
+	}
+
+	return;
+}
+
+=head1 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation)
+
+Resolves the translation filters for a request which supports preferred
+translations.
+
+When C<$paramPresent> is true, C<$paramValue> is parsed as the explicit
+C<translations> request parameter and always takes precedence over the
+preferred translation cookie.  This includes an explicitly supplied empty
+parameter, which resolves to no translation filter rather than falling back to
+the cookie.
+
+When the request parameter is absent, C<$preferredTranslation> may be either a
+cookie object with a C<value()> method or its scalar value.  The supported
+C<asv> and C<kjv> preferences may be stored singly or as a comma-separated
+list, and are returned as an array reference.  The C<all> preference is also
+supported.  The C<default> preference, missing values, and unsupported values
+return an empty array reference so that normal lookup translation selection
+applies.
+
+=cut
+
+sub __preferredTranslations {
+	my ($paramPresent, $paramValue, $preferredTranslation) = @_;
+
+	if ($paramPresent) {
+		return Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray($paramValue));
+	}
+
+	if (blessed($preferredTranslation) && $preferredTranslation->can('value')) {
+		$preferredTranslation = $preferredTranslation->value;
+	}
+
+	return [] unless (defined($preferredTranslation) && length($preferredTranslation) > 0);
+
+	my @translations = @{ Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray($preferredTranslation)) };
+	return [] if (grep { $_ eq 'default' } @translations);
+	return [ 'all' ] if (grep { $_ eq 'all' } @translations);
+
+	my @supportedTranslations;
+	my %seenTranslation;
+	foreach my $translation (@translations) {
+		next unless ($translation =~ m/\A(?:asv|kjv)\z/);
+		next if ($seenTranslation{$translation});
+
+		push(@supportedTranslations, $translation);
+		$seenTranslation{$translation}++;
+	}
+
+	return \@supportedTranslations;
+}
+
+=head1 __preferredWholeword($paramPresent, $paramValue, $wholeword)
+
+Resolves the whole-word search preference.
+
+When C<$paramPresent> is true, C<$paramValue> is parsed as the explicit
+C<wholeword> request parameter and always takes precedence over the cookie.
+This includes an explicitly empty value, which resolves to false rather than
+falling back to the cookie.
+
+When the request parameter is absent, C<$wholeword> may be either a cookie
+object with a C<value()> method or its scalar value.  Valid boolean cookie
+values are honoured, and unsupported cookie values are ignored.
+
+=cut
+
+sub __preferredWholeword {
+	my ($paramPresent, $paramValue, $wholeword) = @_;
+
+	if ($paramPresent) {
+		return Chleb::Utils::boolean('wholeword', $paramValue, 0);
+	}
+
+	if (blessed($wholeword) && $wholeword->can('value')) {
+		$wholeword = $wholeword->value;
+	}
+
+	return 0 unless (defined($wholeword) && length($wholeword) > 0);
+
+	my $preferredWholeword = 0;
+	eval {
+		$preferredWholeword = Chleb::Utils::boolean('wholeword', $wholeword, 0);
+	};
+
+	return $EVAL_ERROR ? 0 : $preferredWholeword;
+}
+
+=head1 __previousSearchLimit($paramPresent, $paramValue, $previousSearchLimit)
+
+Resolves the search limit for the search form and endpoint.
+
+When C<$paramPresent> is true, C<$paramValue> is parsed as the explicit
+C<limit> request parameter and always takes precedence over the cookie.  When
+the request parameter is absent, C<$previousSearchLimit> may be either a cookie
+object with a C<value()> method or its scalar value.  Positive integer cookie
+values are honoured; missing or unsupported values fall back to the default
+search result limit.
+
+=cut
+
+sub __previousSearchLimit {
+	my ($paramPresent, $paramValue, $previousSearchLimit) = @_;
+
+	if ($paramPresent) {
+		return defined($paramValue) && $paramValue =~ m/\A[0-9]+\z/ && int($paramValue) > 0
+			? int($paramValue)
+			: $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	}
+
+	if (blessed($previousSearchLimit) && $previousSearchLimit->can('value')) {
+		$previousSearchLimit = $previousSearchLimit->value;
+	}
+
+	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
+		unless (defined($previousSearchLimit) && $previousSearchLimit =~ m/\A[0-9]+\z/ && int($previousSearchLimit) > 0);
+
+	return int($previousSearchLimit);
+}
+
+=head1 __previousSearchPerPage($paramPresent, $paramValue, $previousSearchPerPage)
+
+Resolves the preferred search page size for the search form and endpoint.
+
+When C<$paramPresent> is true, C<$paramValue> is parsed as the explicit
+C<per_page> request parameter and always takes precedence over the cookie.
+When the request parameter is absent, C<$previousSearchPerPage> may be either a
+cookie object with a C<value()> method or its scalar value.  Positive integer
+cookie values are honoured; missing or unsupported values fall back to the
+default search page size.  Values above the maximum page size are reduced to
+that maximum.
+
+=cut
+
+sub __previousSearchPerPage {
+	my ($paramPresent, $paramValue, $previousSearchPerPage) = @_;
+
+	if ($paramPresent) {
+		if (defined($paramValue) && $paramValue =~ m/\A[0-9]+\z/ && int($paramValue) > 0) {
+			return $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE
+				if (int($paramValue) > $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE);
+
+			return int($paramValue);
+		}
+
+		return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	}
+
+	if (blessed($previousSearchPerPage) && $previousSearchPerPage->can('value')) {
+		$previousSearchPerPage = $previousSearchPerPage->value;
+	}
+
+	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
+		unless (defined($previousSearchPerPage) && $previousSearchPerPage =~ m/\A[0-9]+\z/ && int($previousSearchPerPage) > 0);
+
+	return $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE
+		if (int($previousSearchPerPage) > $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE);
+
+	return int($previousSearchPerPage);
 }
 
 sub handleException {
@@ -96,9 +283,7 @@ sub handleException {
 	}
 
 	$server->dic->logger->error("Internal Server Error: $exception");
-	send_error($exception, 500);
-
-	return;
+	return send_error($exception, 500);
 }
 
 sub fetchStaticPage {
@@ -140,17 +325,19 @@ sub fetchStaticPage {
 	}
 
 	my $error = $ERRNO;
-	send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
+	return send_error("Can't open file '$filePathFailed': $error", $server->dic->errorMapper->map(int($error)));
 }
 
 sub serveStaticPage {
 	my ($name, $templateParams) = @_;
 	send_as html => fetchStaticPage($name, $templateParams);
+	return;
 }
 
-sub __configGetPublicDir {
+sub __configSetPublicDir {
 	die('Moose server must be initialized') unless ($server);
-	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public'),
+	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public');
+	return;
 }
 
 sub __detaint {
@@ -210,13 +397,27 @@ get '/' => sub {
 		});
 	}
 
-	serveStaticPage('index', {
+	my $result = fetchStaticPage('generic_head', { TITLE => 'Chleb Bible Search Service' });
+	$result .= fetchStaticPage('index', {
 		FACEBOOK_HTML => $facebookHtml,
 		HOSTNAME => hostname(),
 		MAILING_LIST_VOTD_HTML => $mailingListVoTDHtml,
 		TWITTER_HTML => $twitterHtml,
 	});
+	$result .= fetchStaticPage('generic_tail');
 
+	send_as html => $result;
+
+	return;
+};
+
+get '/settings' => sub {
+	$server->logRequest();
+	$server->handleSessionToken();
+	my $result = fetchStaticPage('generic_head', { TITLE => 'Settings - Chleb Bible Search' });
+	$result .= fetchStaticPage('public/settings');
+	$result .= fetchStaticPage('generic_tail');
+	send_as html => $result;
 	return;
 };
 
@@ -224,17 +425,24 @@ get '/:version/random' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
 	my $version = int(_param('version') || 1);
 	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
 
 	my $dancerRequest = request();
+	my $accept;
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__random({
-			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept => $accept,
 			translations => $translations,
 			testament => _param('testament'),
 			version => $version,
@@ -249,16 +457,12 @@ get '/:version/random' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: random verse lookup" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace("${version}/random returned as HTML");
 		send_as html => $result;
 	}
 
 	$server->dic->logger->trace("${version}/random returned as JSON");
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -270,12 +474,23 @@ get '/1/votd' => sub {
 	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
 	my $when = _param('when');
 	my $testament = _param('testament');
+	my $dancerRequest = request();
+	my $accept;
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__votd({
+			accept       => $accept,
 			parental    => $parental,
 			redirect    => $redirect,
+			translations => $translations,
 			when        => $when,
 			testament   => $testament,
 			form        => 0,
@@ -286,6 +501,7 @@ get '/1/votd' => sub {
 		handleException($exception);
 	}
 
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -295,15 +511,22 @@ get '/2/votd' => sub {
 
 	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
 	my $when = _param('when');
 	my $testament = _param('testament');
 	my $dancerRequest = request();
+	my $accept;
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__votd({
-			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept       => $accept,
 			version      => 2,
 			when         => $when,
 			parental     => $parental,
@@ -319,16 +542,12 @@ get '/2/votd' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Verse of The Day" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace('2/votd returned as HTML');
 		send_as html => $result;
 	}
 
 	$server->dic->logger->trace('2/votd returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -339,12 +558,19 @@ get '/1/lookup' => sub {
 	my $book = _param('book') // '';
 	my $chapter = _param('chapter') // 1;
 	my $verse = _param('verse');
+	my $queryParams = request()->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
+	my $translationQuery = Chleb::Utils::queryParamsHelper({ translations => $translations });
 
 	if (defined($verse) && length($verse) > 0) {
-		redirect "/1/lookup/${book}/${chapter}/${verse}", 307;
+		redirect "/1/lookup/${book}/${chapter}/${verse}${translationQuery}", 307;
 	}
 
-	redirect "/1/lookup/${book}/${chapter}", 307;
+	redirect "/1/lookup/${book}/${chapter}${translationQuery}", 307;
 };
 
 get '/1/lookup/:book/:chapter' => sub {
@@ -353,14 +579,20 @@ get '/1/lookup/:book/:chapter' => sub {
 
 	my $book = param('book') // '';
 	my $chapter = param('chapter') // '';
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(param('translations')));
-
 	my $dancerRequest = request();
+	my $accept;
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
-			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept       => $accept,
 			book         => $book,
 			chapter      => $chapter,
 			translations => $translations,
@@ -373,16 +605,12 @@ get '/1/lookup/:book/:chapter' => sub {
 	}
 
 	if (ref($result) ne 'HASH' && ref($result) ne 'ARRAY') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace('1/lookup chapter returned as HTML');
 		send_as html => $result;
 	}
 
 	$server->dic->logger->trace('1/lookup chapter returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -393,14 +621,20 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $book = _param('book') // '';
 	my $chapter = _param('chapter') // '';
 	my $verse = _param('verse') // '';
-	my $translations = Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray(_param('translations')));
-
 	my $dancerRequest = request();
+	my $accept;
+	my $queryParams = $dancerRequest->params('query');
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		_param('translations'),
+		_cookie('preferredTranslation'),
+	);
 
 	my $result;
 	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
-			accept       => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+			accept       => $accept,
 			book         => $book,
 			chapter      => $chapter,
 			translations => $translations,
@@ -414,11 +648,6 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	}
 
 	if (ref($result) eq '') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Lookup ${book} ${chapter}:${verse}" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
-
 		$server->dic->logger->trace('1/lookup verse returned as HTML');
 		send_as html => $result;
 	} elsif (ref($result) eq 'ARRAY') {
@@ -426,6 +655,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	}
 
 	$server->dic->logger->trace('1/lookup verse returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
@@ -433,21 +663,40 @@ get '/1/search' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $limit = _param('limit') ? int(_param('limit')) : $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
-	my $term = _param('term') // '';
-	my $wholeword = _param('wholeword');
-	my $form = Chleb::Utils::boolean('form', _param('form'), 0);
-
 	my $dancerRequest = request();
+	my $accept;
+	my $queryParams = $dancerRequest->params('query');
+	$queryParams = {} unless ($queryParams);
+	my $limit = __previousSearchLimit(
+		exists($queryParams->{limit}),
+		_param('limit'),
+		_cookie('previousSearchLimit'),
+	);
+	my $term = _param('term') // '';
+	my $wholeword = __preferredWholeword(
+		exists($queryParams->{wholeword}) || exists($queryParams->{wholeword_present}),
+		_param('wholeword'),
+		_cookie('wholeword'),
+	);
+	my $form = Chleb::Utils::boolean('form', _param('form'), 0);
+	my $page = _param('page');
+	my $perPage = __previousSearchPerPage(
+		exists($queryParams->{per_page}),
+		_param('per_page'),
+		_cookie('previousSearchPerPage'),
+	);
 
 	my $result = '';
 	my $resultHash;
 	if ($term) {
 		eval {
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 			($result, $resultHash) = $server->__search({
-				accept    => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+				accept    => $accept,
 				form      => $form,
 				limit     => $limit,
+				page      => $page,
+				per_page  => $perPage,
 				term      => $term,
 				wholeword => $wholeword,
 			});
@@ -474,13 +723,18 @@ get '/1/search' => sub {
 			SEARCH_LIMIT_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
 			SEARCH_LIMIT_MAX => 2_000, # What's reasonable?  It isn't enforced by the backend anyway
 			SEARCH_LIMIT_VALUE => $limit,
+			SEARCH_PER_PAGE_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
+			SEARCH_PER_PAGE_MAX => $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE,
+			SEARCH_PER_PAGE_VALUE => $perPage,
 			SEARCH_RESULTS => $result,
 			SEARCH_TERM => $term,
-			SEARCH_WHOLEWORD => Chleb::Utils::boolean('wholeword', $wholeword, 0) ? 'checked' : '',
+			SEARCH_WHOLEWORD => $wholeword ? 'checked' : '',
 			TITLE => $title,
 		);
 
-		my $searchPage = fetchStaticPage('search', \%templateParams);
+		my $searchPage = fetchStaticPage('generic_head', { TITLE => $title });
+		$searchPage .= fetchStaticPage('search', \%templateParams);
+		$searchPage .= fetchStaticPage('generic_tail');
 		send_as html => $searchPage;
 
 		return;
@@ -503,24 +757,73 @@ get '/1/search' => sub {
 	}
 
 	$server->dic->logger->trace('1/search returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
 get '/1/ping' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	return $server->__ping();
+	my $dancerRequest = request();
+	my $accept;
+
+	my $ping;
+	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+		$ping = $server->__ping({
+			accept => $accept,
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	if (ref($ping) eq 'HASH') {
+		__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
+		return $ping;
+	} elsif (ref($ping) eq '') {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Ping" });
+		$resultHtml .= $ping;
+		$resultHtml .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/ping returned as HTML');
+		send_as html => $resultHtml;
+	} else {
+		send_error('Unknown error', 500);
+	}
 };
 
 get '/1/version' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
+	my $dancerRequest = request();
+	my $accept;
 
-	my $version = $server->__version();
+	my $version;
+	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+		$version = $server->__version({
+			accept => $accept,
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
 	if (ref($version) eq 'HASH') {
+		__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
 		return $version;
-	} elsif ($version == 403) {
+	} elsif (ref($version) eq '' && $version eq '403') {
 		send_error('Disabled by server administrator', $version);
+	} elsif (ref($version) eq '') {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Server version" });
+		$resultHtml .= $version;
+		$resultHtml .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/version returned as HTML');
+		send_as html => $resultHtml;
 	} else {
 		send_error('Unknown error', 500);
 	}
@@ -529,19 +832,14 @@ get '/1/version' => sub {
 get '/1/uptime' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
-	return $server->__uptime();
-};
-
-get '/1/info' => sub {
-	$server->logRequest();
-	$server->handleSessionToken();
-
 	my $dancerRequest = request();
+	my $accept;
 
 	my $result;
 	eval {
-		$result = $server->__info({
-			accept => Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept')),
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+		$result = $server->__uptime({
+			accept => $accept,
 		});
 	};
 
@@ -550,23 +848,59 @@ get '/1/info' => sub {
 	}
 
 	if (ref($result) ne 'HASH') {
-		my $resultHtml = $result;
-		$result = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Bible info" });
-		$result .= $resultHtml;
-		$result .= fetchStaticPage('generic_tail');
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Service uptime" });
+		$resultHtml .= $result;
+		$resultHtml .= fetchStaticPage('generic_tail');
+
+		$server->dic->logger->trace('1/uptime returned as HTML');
+		send_as html => $resultHtml;
+	}
+
+	$server->dic->logger->trace('1/uptime returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
+	return $result;
+};
+
+get '/1/info' => sub {
+	$server->logRequest();
+	$server->handleSessionToken();
+
+	my $dancerRequest = request();
+	my $accept;
+
+	my $result;
+	eval {
+		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+		$result = $server->__info({
+			accept => $accept,
+		});
+	};
+
+	if (my $exception = $EVAL_ERROR) {
+		handleException($exception);
+	}
+
+	if (ref($result) ne 'HASH') {
+		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Bible info" });
+		$resultHtml .= fetchStaticPage('info', {
+			INFO_TABLES => $result,
+		});
+		$resultHtml .= fetchStaticPage('generic_tail');
+		$result = $resultHtml;
 
 		$server->dic->logger->trace('1/info returned as HTML');
 		send_as html => $result;
 	}
 
 	$server->dic->logger->trace('1/info returned as JSON');
+	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
 
 sub run {
 	my ($self) = @_;
 	$server = Chleb::Server::Moose->new();
-	__configGetPublicDir();
+	__configSetPublicDir();
 	return $self->dance;
 }
 

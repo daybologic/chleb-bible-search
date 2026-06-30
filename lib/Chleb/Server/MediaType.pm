@@ -55,8 +55,9 @@ use Scalar::Util qw(blessed);
 Readonly my $DEFAULT_HEADER => '*/*';
 Readonly my $MINIMUM_LENGTH => 3;
 
-Readonly our $CONTENT_TYPE_HTML => 'text/html';
-Readonly our $CONTENT_TYPE_JSON => 'application/json';
+Readonly our $CONTENT_TYPE_HTML     => 'text/html';
+Readonly our $CONTENT_TYPE_JSON     => 'application/json';
+Readonly our $CONTENT_TYPE_JSON_API => 'application/vnd.api+json';
 
 =head1 ATTRIBUTES
 
@@ -190,11 +191,15 @@ sub acceptToContentType {
 					$logBecause = sprintf("invalid minor '%s' for major supported type '%s'", $item->minor, $item->major);
 				}
 			} elsif ($item->major eq 'application') {
-				if ($item->minor eq 'json' || $item->minor eq '*') {
+				if ($item->minor eq 'vnd.api+json' || $item->minor eq '*') {
+					$contentType = $CONTENT_TYPE_JSON_API;
+					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
+					last;
+				} elsif ($item->minor eq 'json') {
 					$contentType = $CONTENT_TYPE_JSON;
 					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
 					last;
-				} elsif ($item->minor ne '*') {
+				} else {
 					$contentType = '';
 					$logBecause = sprintf("invalid minor '%s' for major supported type '%s'", $item->minor, $item->major);
 				}

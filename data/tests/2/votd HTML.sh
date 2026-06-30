@@ -31,4 +31,14 @@
 
 set -euo pipefail
 
-http --check-status GET chleb-api.example.org/2/votd Accept:text/html
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html)
+
+grep -q '<link href="/style.css?v=' <<< "$page"
+! grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
+grep -q '<div class="verse-nav-primary">' <<< "$page"
+grep -q '<div class="verse-nav-group verse-nav-core">' <<< "$page"
+grep -q '<div class="verse-nav-group verse-nav-verse">' <<< "$page"
+grep -q '<details class="verse-nav-more">' <<< "$page"
+grep -q '<summary>More navigation</summary>' <<< "$page"
+grep -q '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-label="Settings">' <<< "$page"
+grep -q '<span class="vn-settings-icon" aria-hidden="true">⚙</span>' <<< "$page"

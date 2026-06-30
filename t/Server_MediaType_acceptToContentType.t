@@ -181,7 +181,20 @@ sub testAcceptApplicationAnythingOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, 'application/json');
+	is($contentType, 'application/vnd.api+json');
+
+	return EXIT_SUCCESS;
+}
+
+sub testAcceptVndApiJsonOnly {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
+
+	my $default = $self->uniqueStr();
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
+	is($contentType, 'application/vnd.api+json');
 
 	return EXIT_SUCCESS;
 }

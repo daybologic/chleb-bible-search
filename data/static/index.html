@@ -1,20 +1,8 @@
-<!-- Chleb Bible Search -->
-<!DOCTYPE html>
-
 <!-- Chleb Template -->
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Chleb Bible Search Service</title>
-    <link rel="icon" href="/images/favicon.png" type="image/png">
-    <link href="/style.css" rel="stylesheet" type="text/css">
-</head>
-<body>
-    <img src="/images/bible.png" alt="Chleb Bible Search: The Holy Bible (royalty free image)" width="273" height="214">
     <h1>Welcome to Chleb Bible Search __VERSION__</h1>
     <p>This is a microservice for querying and searching the Bible. You can use the following endpoints directly, or explore the <a href="https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/__VERSION__" target="_blank">Swagger API documentation</a>.</p>
     <ul>
-        <li><a href="/1/search?wholeword=on&form=true">Search for verses</a> (e.g. <code>/1/search?wholeword=on&amp;form=true</code>)</li>
+        <li><a href="/1/search?form=true">Search for verses</a> (e.g. <code>/1/search?form=true</code>)</li>
         <li><a href="/2/votd">Verse of the Day</a> (<code>/2/votd</code>)</li>
         <li><a href="/2/random?testament=any">Random Verse</a> (<code>/2/random?testament=any</code>)</li>
         <li><a href="/1/lookup/john/3/16">Look up a Verse</a> (e.g. <code>/1/lookup/john/3/16</code>)</li>
@@ -23,6 +11,7 @@
         <li><a href="/1/ping">Ping</a> (<code>/1/ping</code>)</li>
         <li><a href="/1/version">Service Version</a> (<code>/1/version</code>)</li>
         <li><a href="/1/uptime">Service Uptime</a> (<code>/1/uptime</code>)</li>
+        <li><a href="/settings">Settings</a> (preferred Bible translation)</li>
     </ul>
     <div class="swagger">
         <strong>developers:</strong> <a href="https://github.com/daybologic/chleb-bible-search" target="_blank">GitHub</a>
@@ -36,5 +25,3 @@
     <div class="buildinfo">
         Chleb Bible Search __VERSION__ (__BUILD_CHANGESET__) on __HOSTNAME__, built by __BUILD_USER__@__BUILD_HOST__ (__BUILD_OS__/__BUILD_ARCH__) with Perl __BUILD_PERL_VERSION__ at __BUILD_TIME__
     </div>
-</body>
-</html>

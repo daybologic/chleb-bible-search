@@ -22,3 +22,9 @@ repos:
         entry: bin/git/hooks/run-podchecker.sh
         language: system
         pass_filenames: false
+      - id: openapi-check
+        name: OpenAPI Check
+        entry: bin/maint/swagger-check.sh
+        language: system
+        pass_filenames: false
+        files: ^swagger\.yaml$

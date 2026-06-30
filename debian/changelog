@@ -1,3 +1,30 @@
+chleb-bible-search (2.5.1) stable; urgency=high
+
+  * 🚑️ /var/run/chleb-bible-search was not being re-created on reboot, which prevented the server from starting
+  * 🐛 When navigating between verses, the multiple translations option was being lost
+  * 🚑️ set packaged Perl library path for systemd
+  * 🚑️ missing libyaml-libyaml-perl (config reader)
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Tue, 30 Jun 2026 12:10:46 +0100
+
+chleb-bible-search (2.5.0) stable; urgency=high
+
+  * 🍪 add preferred translation settings and remember translation/search preferences
+  * 🚸 it is now possible to set your preferred translation(s) and compare verses in one view
+  * ✨ add JWT token repository support for session handling
+  * 🔧 enable JWT-backed sessions for development and Debian deployments
+  * ✨ add stateless search pagination and remember search page size
+  * 💄 improve translated lookup rendering, search results, info tables, and verse navigation
+  * ✨ add HTML modes for ping, version, uptime, and related route presentation
+  * 🐛 support `application/vnd.api+json` while preserving `application/json`
+  * 📦 move vendored Perl dependencies into the core package
+  * 🔧 switch logging to stream/journal output and remove logrotate dependency
+  * 🚸 improve systemd, SysV init, and local dev-server support
+  * 🧪 expand functional HTTP coverage across settings, cookies, lookup, search, random, VOTD, and sessions
+  * 💚 update CI, Dependabot, and pre-commit wiring for the new workflow
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 28 Jun 2026 14:23:13 +0100
+
 chleb-bible-search (2.4.1) stable; urgency=high
 
   * 🚸 replace core search algo

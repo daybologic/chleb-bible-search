@@ -31,4 +31,23 @@
 
 set -euo pipefail
 
-http --check-status GET chleb-api.example.org/1/version Accept:text/html
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/version Accept:text/html)
+
+grep -q '<link href="/style.css?v=' <<< "$page"
+grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
+grep -q '<a class="vn-link vn-home" href="/">home</a>' <<< "$page"
+grep -q '<table class="info-table">' <<< "$page"
+grep -q '<th>Version</th>' <<< "$page"
+grep -q '<th>Git changeset</th>' <<< "$page"
+grep -Eq '<td>[0-9a-f]{12}</td>' <<< "$page"
+grep -q '<th>Build time</th>' <<< "$page"
+grep -Eq '<td>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{4}</td>' <<< "$page"
+grep -q '<th>Build host</th>' <<< "$page"
+grep -q '<th>Build OS</th>' <<< "$page"
+grep -q '<th>Build architecture</th>' <<< "$page"
+grep -q '<th>Build user</th>' <<< "$page"
+grep -q '<th>Perl version</th>' <<< "$page"
+grep -Eq '<td>v[0-9]+\.[0-9]+\.[0-9]+( \([0-9.]+\))?</td>' <<< "$page"
+grep -q '<th>Administrator</th>' <<< "$page"
+grep -q '<th>Admin email</th>' <<< "$page"
+grep -q '<th>Server host</th>' <<< "$page"

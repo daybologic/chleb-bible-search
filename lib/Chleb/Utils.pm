@@ -50,7 +50,7 @@ Readonly my $MAX_TEXT_LENGTH => 120;
 
 =back
 
-=head2 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.
+=head1 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.
 
 =over
 
@@ -178,8 +178,10 @@ sub queryParamsHelper {
 
 	while (my ($k, $v) = each(%$params)) {
 		next if ($blacklist{$k});
-		$str .= ($counter == 0) ? '?' : '&';
 		$v = join(',', @$v) if (ref($v) eq 'ARRAY');
+		next unless (defined($v) && length($v) > 0);
+
+		$str .= ($counter == 0) ? '?' : '&';
 		$v = 'all' if ($v eq 'asv,kjv' && $k eq 'translations'); # TODO: You should do this via a callback
 		$str .= "${k}=${v}";
 		$counter++;
@@ -371,7 +373,7 @@ sub explodeHtmlFilePath {
 
 =item C<colorIndexFromWord($word)>
 
-Map a word to an integer 0–63 for color selection
+Map a word to an integer 0-63 for color selection
 
 =cut
 
