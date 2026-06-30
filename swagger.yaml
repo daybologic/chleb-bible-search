@@ -829,6 +829,34 @@ components:
               type: string
               description: Version string in opaque, non-processable format
               example: 1.2.3-prerelease
+            changeset:
+              type: string
+              description: Git changeset captured when this build was created
+              example: 7f4c2d4d9f0a
+            build_time:
+              type: string
+              description: Build timestamp captured when this build was created
+              example: 2026-06-18T08:06:34+0000
+            build_host:
+              type: string
+              description: Hostname where this build was created
+              example: grable.daybologic.co.uk
+            build_os:
+              type: string
+              description: Operating system where this build was created
+              example: GNU/Linux
+            build_arch:
+              type: string
+              description: Architecture where this build was created
+              example: x86_64
+            build_user:
+              type: string
+              description: User which created this build
+              example: palmer
+            perl_version:
+              type: string
+              description: Perl version used when this build was created
+              example: v5.40.1 (5.040001)
             admin_email:
               type: string
               description: Email address to contact the server administrator
