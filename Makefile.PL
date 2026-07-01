@@ -88,7 +88,6 @@ WriteMakefile(
 		'Moose'           => 0,
 		'Test::More'      => 0,
 		'Readonly'        => 0,
-		'Redis'           => 0,
 		'Test::Deep'      => 0,
 		'Test::Exception' => 0,
 	},

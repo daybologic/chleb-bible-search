@@ -366,6 +366,7 @@ t/Server_versionFilter.t
 t/Server_votd.t
 t/Systemd_runtime_directory.t
 t/Token.t
+t/TokenRepository.t
 t/TokenRepository_JWT.t
 t/TokenRepository_Local.t
 t/traverse_entire_bible.t
