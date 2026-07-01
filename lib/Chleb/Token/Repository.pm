@@ -39,6 +39,7 @@ use Chleb::Exception;
 use Chleb::Token::Repository::Dummy;
 use Chleb::Token::Repository::JWT;
 use Chleb::Token::Repository::Local;
+use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 
 sub repo {
@@ -55,7 +56,10 @@ sub repo {
 	);
 
 	if (exists $repositories{$name}) {
-		require Chleb::Token::Repository::Redis if ($name eq 'Redis');
+		if ($name eq 'Redis') {
+			eval { require Chleb::Token::Repository::Redis; 1 } or
+			    die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "Failed to load ${name}: ${EVAL_ERROR}");
+		}
 		my $class = $repositories{$name};
 		return $class->new(repo => $self);
 	}
