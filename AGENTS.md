@@ -90,6 +90,11 @@ Key files and directories:
 - Use `Chleb::Exception` for custom exceptions and HTTP status mapping.
 - In Perl conditionals, write explicit string length comparisons such as
   `length($value) > 0` rather than relying on `length($value)` as a boolean.
+- In Perl tests and helper code, prefer explicit function/method call syntax
+  such as `die(...)`, `delete(...)`, and `$object->method()` when changing
+  nearby code.
+- When reporting file IO failures in Perl tests, prefer `$ERRNO` from
+  `English qw(-no_match_vars)` over raw `$!`.
 - In Perl PoD, use only `=head1` headings. Do not add `=head2` or lower
   heading levels.
 - Keep changes scoped to the library, server layer, config, or packaging area
@@ -101,6 +106,8 @@ Key files and directories:
 - Tests use `Test::Module::Runnable` with `setUp` and `tearDown` patterns.
 - Use `Chleb::DI::MockLogger` in tests when logging needs to be suppressed or
   captured.
+- Test scripts under `t/` have shebangs and may be executable; preserve the
+  executable bit when it is present.
 - Functional tests live under `data/tests/` and are shell scripts that invoke
   HTTPie against a live server.
 - When changing shared behavior, add or update focused tests in `t/`; when
