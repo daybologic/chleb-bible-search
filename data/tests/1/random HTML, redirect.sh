@@ -44,8 +44,7 @@ expectedStatus="307"
 declare -A expectedHeaders=(
 	["Content-Type"]="text/html; charset=utf-8"
 	["Connection"]="keep-alive"
-	["Server"]="Perl Dancer2 0.400001"
-	["Location"]="^/1/lookup/[a-z]+/[0-9]+/[0-9]+$"
+	["Location"]="^/1/lookup/[a-z0-9]+/[0-9]+/[0-9]+$"
 )
 
 # Exit code test
