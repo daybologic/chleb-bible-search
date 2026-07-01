@@ -48,6 +48,11 @@ votd_exclude:
     - Kefir 50:1
     - Rev 1000:11
     - Deu 22:21
+rate_limit:
+  session_window_seconds: 60    # rolling window size for session token holders
+  session_max_requests: 100     # max requests within that window
+  session_churn_window_seconds: 300  # lookback window for token-churn detection
+  session_churn_limit: 10       # distinct tokens from one IP before denying
 features:
   facebook: on
   sessions: on
