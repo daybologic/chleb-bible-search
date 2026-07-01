@@ -63,12 +63,12 @@ sub testRedisLoadFailureRaisesChlebException {
 
 	local @INC = (sub {
 		my ($self, $filename) = @_;
-		die "simulated Redis repository load failure\n"
+		die("simulated Redis repository load failure\n")
 		    if ($filename eq 'Chleb/Token/Repository/Redis.pm');
 		return;
 	}, @INC);
 	local $INC{'Chleb/Token/Repository/Redis.pm'};
-	delete $INC{'Chleb/Token/Repository/Redis.pm'};
+	delete($INC{'Chleb/Token/Repository/Redis.pm'});
 
 	eval {
 		$self->sut->repo('Redis');
@@ -92,12 +92,12 @@ sub testRedisUnavailableWithoutClientModule {
 
 	local @INC = (sub {
 		my ($self, $filename) = @_;
-		die "simulated Redis client load failure\n"
+		die("simulated Redis client load failure\n")
 		    if ($filename eq 'Redis/Fast.pm' || $filename eq 'Redis.pm');
 		return;
 	}, @INC);
 	local @INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)};
-	delete @INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)};
+	delete(@INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)});
 
 	my $evalError;
 	{
@@ -106,7 +106,7 @@ sub testRedisUnavailableWithoutClientModule {
 
 		my $repo = $self->sut->repo('Redis');
 		eval {
-			$repo->do;
+			$repo->do();
 		};
 		$evalError = $EVAL_ERROR;
 	}
@@ -142,9 +142,9 @@ sub testRedisFastPreferredWhenAvailable {
 sub __writeFile {
 	my ($path, $content) = @_;
 
-	open(my $fh, '>', $path) or die("open $path: $!");
-	print {$fh} $content;
-	close($fh) or die("close $path: $!");
+	open(my $fh, '>', $path) or die("open $path: $ERRNO");
+	print $fh $content;
+	close($fh) or die("close $path: $ERRNO");
 
 	return;
 }
