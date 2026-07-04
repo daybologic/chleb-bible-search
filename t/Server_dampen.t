@@ -53,6 +53,7 @@ sub setUp {
 	}
 
 	$self->sut(Chleb::Server::Dampen->new());
+	$self->sut->dic->time->set(2_000_000_000);
 
 	return EXIT_SUCCESS;
 }
@@ -61,7 +62,7 @@ sub testSessionWindowAllows {
 	my ($self) = @_;
 
 	my $token = 'token-allow-test';
-	my $now   = time();
+	my $now   = $self->sut->dic->time->get();
 
 	# inject 99 timestamps within the window — 100th should be allowed
 	$self->sut->{__sessionWindows}{$token} = [ ($now) x 99 ];
@@ -74,7 +75,7 @@ sub testSessionWindowDenies {
 	my ($self) = @_;
 
 	my $token = 'token-deny-test';
-	my $now   = time();
+	my $now   = $self->sut->dic->time->get();
 
 	# inject 100 timestamps — next request must be denied
 	$self->sut->{__sessionWindows}{$token} = [ ($now) x 100 ];
@@ -87,7 +88,7 @@ sub testSessionWindowExpiry {
 	my ($self) = @_;
 
 	my $token = 'token-expiry-test';
-	my $old   = time() - 120; # 2 minutes ago, outside default 60s window
+	my $old   = $self->sut->dic->time->get() - 120; # 2 minutes ago, outside default 60s window
 
 	# 100 old timestamps — all should be pruned, so request is allowed
 	$self->sut->{__sessionWindows}{$token} = [ ($old) x 100 ];
@@ -100,7 +101,7 @@ sub testChurnAllows {
 	my ($self) = @_;
 
 	my $ip  = '192.0.2.1';
-	my $now = time();
+	my $now = $self->sut->dic->time->get();
 
 	# 9 distinct tokens already seen; new one brings total to 10, exactly at limit — should be allowed
 	my @entries = map { [ "token-$_", $now ] } (1..9);
@@ -114,7 +115,7 @@ sub testChurnDenies {
 	my ($self) = @_;
 
 	my $ip  = '192.0.2.2';
-	my $now = time();
+	my $now = $self->sut->dic->time->get();
 
 	# 11 distinct tokens already seen — next should be denied
 	my @entries = map { [ "token-$_", $now ] } (1..11);
@@ -128,7 +129,7 @@ sub testChurnExpiry {
 	my ($self) = @_;
 
 	my $ip  = '192.0.2.3';
-	my $old = time() - 600; # 10 minutes ago, outside default 300s window
+	my $old = $self->sut->dic->time->get() - 600; # 10 minutes ago, outside default 300s window
 
 	# 11 old tokens — all should be pruned, so request is allowed
 	my @entries = map { [ "token-$_", $old ] } (1..11);

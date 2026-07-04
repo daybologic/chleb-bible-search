@@ -124,7 +124,7 @@ Returns C<1> if the request should be denied, C<0> otherwise.
 
 sub dampen {
 	my ($self, $ipAddress) = @_;
-	my $currentTime = time();
+	my $currentTime = $self->dic->time->get();
 
 	my $previousTime = $self->__dampenTime->{$ipAddress};
 	if ($previousTime && $previousTime == $currentTime) {
@@ -154,7 +154,7 @@ sub dampenSession {
 
 	my $windowSecs  = $self->dic->config->get('rate_limit', 'session_window_seconds', 60);
 	my $maxRequests = $self->dic->config->get('rate_limit', 'session_max_requests',   100);
-	my $currentTime = time();
+	my $currentTime = $self->dic->time->get();
 	my $cutoff      = $currentTime - $windowSecs;
 
 	my $timestamps = $self->__sessionWindows->{$tokenValue} //= [];
@@ -191,7 +191,7 @@ sub dampenChurn {
 
 	my $churnWindow = $self->dic->config->get('rate_limit', 'session_churn_window_seconds', 300);
 	my $churnLimit  = $self->dic->config->get('rate_limit', 'session_churn_limit',          10);
-	my $currentTime = time();
+	my $currentTime = $self->dic->time->get();
 	my $cutoff      = $currentTime - $churnWindow;
 
 	my $entries = $self->__sessionsByIp->{$ipAddress} //= [];

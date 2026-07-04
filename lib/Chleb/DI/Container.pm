@@ -48,6 +48,7 @@ via this "DIC" so that they may be reliably replaced during the test suites.
 use Log::Log4perl;
 use Chleb::Bible::Exclusions;
 use Chleb::DI::Config;
+use Chleb::DI::Time;
 use Chleb::Token::Repository;
 use Chleb::Utils::OSError::Mapper;
 use Readonly;
@@ -90,7 +91,8 @@ has logger => (is => 'rw', lazy => 1, builder => '_makeLogger', clearer => 'rese
 
 =item C<config>
 
-TODO
+The main runtime configuration object.  This is constructed from the first
+available C<main.yaml> found via L</configPaths>.
 
 =cut
 
@@ -98,7 +100,7 @@ has config => (is => 'rw', lazy => 1, builder => '_makeConfig');
 
 =item C<exclusions>
 
-TODO
+The shared verse-exclusion rules used by verse-of-the-day and related lookups.
 
 =cut
 
@@ -106,11 +108,21 @@ has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
 
 =item C<tokenRepo>
 
-TODO
+The session token repository facade.  It delegates to the configured token
+backend implementations.
 
 =cut
 
 has tokenRepo => (is => 'rw', lazy => 1, builder => '_makeTokenRepo');
+
+=item C<time>
+
+The mockable wall-clock service.  Code which needs epoch time or sleeping should
+use this instead of calling C<time> or C<sleep> directly.
+
+=cut
+
+has time => (is => 'rw', isa => 'Chleb::DI::Time', lazy => 1, builder => '_makeTime');
 
 =item C<errorMapper>
 
@@ -191,7 +203,7 @@ sub _makeConfig {
 
 =item C<_makeExclusions()>
 
-TODO
+The default lazy-initializer for L</exclusions>.
 
 =cut
 
@@ -202,13 +214,24 @@ sub _makeExclusions {
 
 =item C<_makeTokenRepo()>
 
-TODO
+The default lazy-initializer for L</tokenRepo>.
 
 =cut
 
 sub _makeTokenRepo {
 	my ($self) = @_;
 	return Chleb::Token::Repository->new({ dic => $self });
+}
+
+=item C<_makeTime()>
+
+The default lazy-initializer for L</time>.
+
+=cut
+
+sub _makeTime {
+	my ($self) = @_;
+	return Chleb::DI::Time->new();
 }
 
 =item C<_makeErrorMapper()>

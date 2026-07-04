@@ -1010,7 +1010,7 @@ Return the number of seconds the server has been running.
 sub __getUptime {
 	my ($self) = @_;
 	my $uptimeFilePath = $self->__uptimeFilePath();
-	my $startTime = time();
+	my $startTime = $self->dic->time->get();
 	if (my $fh = IO::File->new($uptimeFilePath, 'r')) {
 		$startTime = <$fh>;
 		chomp($startTime);
@@ -1019,7 +1019,7 @@ sub __getUptime {
 		print($fh "$startTime\n");
 	}
 
-	return time() - $startTime;
+	return $self->dic->time->get() - $startTime;
 }
 
 sub __uptimeFilePath {

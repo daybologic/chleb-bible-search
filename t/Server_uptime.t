@@ -57,6 +57,7 @@ sub setUp {
 	}
 
 	$self->sut(Chleb::Server::Moose->new());
+	$self->sut->dic->time->set(undef);
 
 	return EXIT_SUCCESS;
 }
@@ -142,18 +143,21 @@ EOF
 	close($fh) or die("close $dir/main.yaml: $!");
 
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => "$dir/main.yaml" }));
+	$self->dic->time->set(2_000_000_000);
 	$self->unmock(ref($self->sut), '__getUptime');
 	my $sut = Chleb::Server::Moose->new({ dic => $self->dic });
 
 	ok(-f $path, 'configured uptime file is created');
 
-	my $before = time();
-	open($fh, '>', $path) or die("open $path: $!");
-	print {$fh} $before - 42 . "\n";
-	close($fh) or die("close $path: $!");
+	my $before = $self->dic->time->get();
+	{
+		open($fh, '>', $path) or die("open $path: $!");
+		print {$fh} $before - 42 . "\n";
+		close($fh) or die("close $path: $!");
+	}
 
 	my $uptime = $sut->__getUptime();
-	my $after = time();
+	my $after = $self->dic->time->get();
 	cmp_ok($uptime, '>=', 42, 'configured uptime file is read');
 	cmp_ok($uptime, '<=', 42 + ($after - $before), 'configured uptime allows system delay');
 
