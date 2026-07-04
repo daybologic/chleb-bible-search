@@ -71,8 +71,7 @@ Sets and returns the mocked time value.
 
 sub set {
 	my ($self, $value) = @_;
-	$self->__value($value);
-	return $self->__value;
+	return $self->__value($value);
 }
 
 =item C<sleep($seconds)>
@@ -86,8 +85,7 @@ sub sleep { ## no critic (Subroutines::ProhibitBuiltinHomonyms)
 	my ($self, $seconds) = @_;
 
 	if ($self->__hasValue && defined($self->__value)) {
-		$self->__value($self->__value + $seconds);
-		return $self->__value;
+		return $self->__value($self->__value + $seconds);
 	}
 
 	return CORE::sleep($seconds);
