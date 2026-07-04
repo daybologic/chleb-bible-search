@@ -297,6 +297,9 @@ lib/Chleb/Generated/.keep
 lib/Chleb/Generated/Info.pm
 lib/Chleb/Info.pm
 lib/Chleb/Server/Dancer2.pm
+lib/Chleb/Server/Dampen.pm
+lib/Chleb/Server/Dampen/Store/Memcached.pm
+lib/Chleb/Server/Dampen/Store/Memory.pm
 lib/Chleb/Server/MediaType.pm
 lib/Chleb/Server/MediaType/Args/ToString.pm
 lib/Chleb/Server/MediaType/Item.pm
@@ -355,6 +358,8 @@ t/Server_linkToVerse.t
 t/Server_Dancer2_previousSearchLimit.t
 t/Server_Dancer2_preferredTranslations.t
 t/Server_Dancer2_preferredWholeword.t
+t/Server_dampen.t
+t/Server_dampen_memcached.t
 t/Server_lookup.t
 t/Server_MediaType.t
 t/Server_MediaType_acceptToContentType.t

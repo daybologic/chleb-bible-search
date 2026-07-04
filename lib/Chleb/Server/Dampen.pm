@@ -36,6 +36,9 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Server::Dampen::Store::Memcached;
+use Chleb::Server::Dampen::Store::Memory;
+
 =head1 NAME
 
 Chleb::Server::Dampen
@@ -66,9 +69,9 @@ C<rate_limit.session_churn_window_seconds> and C<rate_limit.session_churn_limit>
 
 =back
 
-All in-memory stores will leak over time.  A future improvement would switch to a
-shared disk-based or memcached backend so that limits are enforced across worker
-processes.
+When configured, shared memcached storage is used so limits are enforced across
+worker processes.  If memcached is unavailable, this object warns and falls back
+to per-process memory storage.
 
 =cut
 
@@ -76,36 +79,26 @@ processes.
 
 =over
 
-=item C<__dampenTime>
+=item C<__memoryStore>
 
-Maps IP address to the epoch second of the most recent unauthenticated request.
-Used by C<dampen> to enforce the one-request-per-second floor.
-
-=cut
-
-# FIXME: Will leak memory over time, switch to a disk-based cache, or memcached
-# additionally, this is a per-process store right now, which is probably not effective enough.
-has __dampenTime => (isa => 'HashRef[Str]', is => 'rw', lazy => 1, default => sub {{}});
-
-=item C<__sessionWindows>
-
-Maps session token value to an array of epoch timestamps representing requests
-made within the current sliding window.  Timestamps older than
-C<rate_limit.session_window_seconds> are pruned on each access.
+The per-process fallback store.
 
 =cut
 
-has __sessionWindows => (isa => 'HashRef[ArrayRef[Int]]', is => 'rw', lazy => 1, default => sub {{}});
+has __memoryStore => (
+	isa => 'Chleb::Server::Dampen::Store::Memory',
+	is => 'rw',
+	lazy => 1,
+	default => sub { Chleb::Server::Dampen::Store::Memory->new({ dic => $_[0]->dic }) },
+);
 
-=item C<__sessionsByIp>
+=item C<__sharedStore>
 
-Maps IP address to an array of C<[$tokenValue, $firstSeenEpoch]> pairs recording
-every distinct session token seen from that address within the churn detection window.
-Used by C<dampenChurn> to identify clients rotating tokens to evade rate limits.
+Optional shared store, currently C<memcached> when configured.
 
 =cut
 
-has __sessionsByIp => (isa => 'HashRef[ArrayRef]', is => 'rw', lazy => 1, default => sub {{}});
+has __sharedStore => (is => 'rw', lazy => 1, builder => '__makeSharedStore');
 
 =back
 
@@ -126,13 +119,12 @@ sub dampen {
 	my ($self, $ipAddress) = @_;
 	my $currentTime = $self->dic->time->get();
 
-	my $previousTime = $self->__dampenTime->{$ipAddress};
-	if ($previousTime && $previousTime == $currentTime) {
+	my $blocked = $self->__checkStore('dampen', $ipAddress, $currentTime);
+	if ($blocked) {
 		$self->dic->logger->warn(sprintf('Saw %s already this second, denying request', $ipAddress));
 		return 1;
 	}
 
-	$self->__dampenTime->{$ipAddress} = $currentTime;
 	return 0;
 }
 
@@ -155,12 +147,8 @@ sub dampenSession {
 	my $windowSecs  = $self->dic->config->get('rate_limit', 'session_window_seconds', 60);
 	my $maxRequests = $self->dic->config->get('rate_limit', 'session_max_requests',   100);
 	my $currentTime = $self->dic->time->get();
-	my $cutoff      = $currentTime - $windowSecs;
 
-	my $timestamps = $self->__sessionWindows->{$tokenValue} //= [];
-	@{$timestamps} = grep { $_ > $cutoff } @{$timestamps};
-
-	if (scalar(@{$timestamps}) >= $maxRequests) {
+	if ($self->__checkStore('dampenSession', $tokenValue, $currentTime, $windowSecs, $maxRequests)) {
 		$self->dic->logger->warn(sprintf(
 			'Session %s exceeded %d requests in %ds window, denying',
 			substr($tokenValue, 0, 8), $maxRequests, $windowSecs,
@@ -168,7 +156,6 @@ sub dampenSession {
 		return 1;
 	}
 
-	push @{$timestamps}, $currentTime;
 	return 0;
 }
 
@@ -192,26 +179,56 @@ sub dampenChurn {
 	my $churnWindow = $self->dic->config->get('rate_limit', 'session_churn_window_seconds', 300);
 	my $churnLimit  = $self->dic->config->get('rate_limit', 'session_churn_limit',          10);
 	my $currentTime = $self->dic->time->get();
-	my $cutoff      = $currentTime - $churnWindow;
 
-	my $entries = $self->__sessionsByIp->{$ipAddress} //= [];
-	@{$entries} = grep { $_->[1] > $cutoff } @{$entries};
-
-	my %seen = map { $_->[0] => 1 } @{$entries};
-	unless ($seen{$tokenValue}) {
-		push @{$entries}, [ $tokenValue, $currentTime ];
-	}
-
-	my $distinctTokens = scalar(keys %{{ map { $_->[0] => 1 } @{$entries} }});
-	if ($distinctTokens > $churnLimit) {
+	if ($self->__checkStore('dampenChurn', $ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit)) {
 		$self->dic->logger->warn(sprintf(
-			'IP %s burned through %d session tokens in %ds, denying',
-			$ipAddress, $distinctTokens, $churnWindow,
+			'IP %s burned through more than %d session tokens in %ds, denying',
+			$ipAddress, $churnLimit, $churnWindow,
 		));
 		return 1;
 	}
 
 	return 0;
+}
+
+=item C<__checkStore($method, @args)>
+
+Run a dampening operation against the shared store when one is configured and
+available, falling back to the per-process memory store when the shared store
+returns C<undef>.
+
+=cut
+
+sub __checkStore {
+	my ($self, $method, @args) = @_;
+
+	if (my $store = $self->__sharedStore) {
+		my $result = $store->$method(@args);
+		return $result if (defined($result));
+	}
+
+	return $self->__memoryStore->$method(@args);
+}
+
+=item C<__makeSharedStore()>
+
+Build the configured shared dampening store.  C<memcached> creates a
+L<Chleb::Server::Dampen::Store::Memcached>; C<memory> disables shared storage.
+Unknown backends are logged and treated as C<memory>.
+
+=cut
+
+sub __makeSharedStore {
+	my ($self) = @_;
+
+	my $backend = $self->dic->config->get('rate_limit', 'backend', 'memory');
+	return if ($backend eq 'memory');
+	if ($backend eq 'memcached') {
+		return Chleb::Server::Dampen::Store::Memcached->new({ dic => $self->dic });
+	}
+
+	$self->dic->logger->warn("Unknown rate_limit backend '$backend', falling back to per-process memory store");
+	return;
 }
 
 =back

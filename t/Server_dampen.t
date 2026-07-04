@@ -39,10 +39,12 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable::Local';
 
+use Chleb::DI::Config;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Dampen;
+use File::Temp qw(tempdir);
 use Test::More 0.96;
 
 sub setUp {
@@ -52,8 +54,34 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb::Server::Dampen->new());
+	my $dir = tempdir(CLEANUP => 1);
+	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
+	print {$fh} <<'EOF';
+rate_limit:
+  backend: memory
+  session_window_seconds: 60
+  session_max_requests: 100
+  session_churn_window_seconds: 300
+  session_churn_limit: 10
+EOF
+	close($fh) or die("close $dir/main.yaml: $!");
+
+	my $dic = Chleb::DI::Container->instance;
+	$dic->config(Chleb::DI::Config->new({ dic => $dic, path => "$dir/main.yaml" }));
+	$dic->logger(Chleb::DI::MockLogger->new());
+	$self->sut(Chleb::Server::Dampen->new({ dic => $dic }));
 	$self->sut->dic->time->set(2_000_000_000);
+
+	return EXIT_SUCCESS;
+}
+
+sub testIpDampenDeniesSameSecond {
+	my ($self) = @_;
+
+	is($self->sut->dampen('192.0.2.10'), 0, 'first request in second is allowed');
+	is($self->sut->dampen('192.0.2.10'), 1, 'second request in same second is denied');
+	$self->sut->dic->time->sleep(1);
+	is($self->sut->dampen('192.0.2.10'), 0, 'request in next second is allowed');
 
 	return EXIT_SUCCESS;
 }
@@ -62,11 +90,11 @@ sub testSessionWindowAllows {
 	my ($self) = @_;
 
 	my $token = 'token-allow-test';
-	my $now   = $self->sut->dic->time->get();
-
-	# inject 99 timestamps within the window — 100th should be allowed
-	$self->sut->{__sessionWindows}{$token} = [ ($now) x 99 ];
-	is($self->sut->dampenSession($token), 0, '100th request within limit is allowed');
+	my $allowed = 1;
+	for (my $requestI = 1; $requestI <= 100; $requestI++) {
+		$allowed &&= ($self->sut->dampenSession($token) == 0);
+	}
+	ok($allowed, 'requests within limit are allowed');
 
 	return EXIT_SUCCESS;
 }
@@ -75,10 +103,9 @@ sub testSessionWindowDenies {
 	my ($self) = @_;
 
 	my $token = 'token-deny-test';
-	my $now   = $self->sut->dic->time->get();
-
-	# inject 100 timestamps — next request must be denied
-	$self->sut->{__sessionWindows}{$token} = [ ($now) x 100 ];
+	for (1..100) {
+		$self->sut->dampenSession($token);
+	}
 	is($self->sut->dampenSession($token), 1, 'request over limit is denied');
 
 	return EXIT_SUCCESS;
@@ -88,10 +115,10 @@ sub testSessionWindowExpiry {
 	my ($self) = @_;
 
 	my $token = 'token-expiry-test';
-	my $old   = $self->sut->dic->time->get() - 120; # 2 minutes ago, outside default 60s window
-
-	# 100 old timestamps — all should be pruned, so request is allowed
-	$self->sut->{__sessionWindows}{$token} = [ ($old) x 100 ];
+	for (1..100) {
+		$self->sut->dampenSession($token);
+	}
+	$self->sut->dic->time->sleep(61);
 	is($self->sut->dampenSession($token), 0, 'expired timestamps are pruned and request is allowed');
 
 	return EXIT_SUCCESS;
@@ -101,12 +128,11 @@ sub testChurnAllows {
 	my ($self) = @_;
 
 	my $ip  = '192.0.2.1';
-	my $now = $self->sut->dic->time->get();
-
-	# 9 distinct tokens already seen; new one brings total to 10, exactly at limit — should be allowed
-	my @entries = map { [ "token-$_", $now ] } (1..9);
-	$self->sut->{__sessionsByIp}{$ip} = \@entries;
-	is($self->sut->dampenChurn($ip, 'token-10'), 0, 'exactly at churn limit is allowed');
+	my $allowed = 1;
+	for my $tokenI (1..10) {
+		$allowed &&= ($self->sut->dampenChurn($ip, "token-$tokenI") == 0);
+	}
+	ok($allowed, 'tokens within churn limit are allowed');
 
 	return EXIT_SUCCESS;
 }
@@ -115,12 +141,10 @@ sub testChurnDenies {
 	my ($self) = @_;
 
 	my $ip  = '192.0.2.2';
-	my $now = $self->sut->dic->time->get();
-
-	# 11 distinct tokens already seen — next should be denied
-	my @entries = map { [ "token-$_", $now ] } (1..11);
-	$self->sut->{__sessionsByIp}{$ip} = \@entries;
-	is($self->sut->dampenChurn($ip, 'token-new'), 1, 'exceeding churn limit is denied');
+	for my $tokenI (1..10) {
+		$self->sut->dampenChurn($ip, "token-$tokenI");
+	}
+	is($self->sut->dampenChurn($ip, 'token-11'), 1, 'exceeding churn limit is denied');
 
 	return EXIT_SUCCESS;
 }
@@ -129,11 +153,10 @@ sub testChurnExpiry {
 	my ($self) = @_;
 
 	my $ip  = '192.0.2.3';
-	my $old = $self->sut->dic->time->get() - 600; # 10 minutes ago, outside default 300s window
-
-	# 11 old tokens — all should be pruned, so request is allowed
-	my @entries = map { [ "token-$_", $old ] } (1..11);
-	$self->sut->{__sessionsByIp}{$ip} = \@entries;
+	for my $tokenI (1..10) {
+		$self->sut->dampenChurn($ip, "token-$tokenI");
+	}
+	$self->sut->dic->time->sleep(301);
 	is($self->sut->dampenChurn($ip, 'token-fresh'), 0, 'expired churn entries are pruned and request is allowed');
 
 	return EXIT_SUCCESS;
