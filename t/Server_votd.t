@@ -42,6 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::Dancer2;
 use Chleb::Server::Moose;
 use English qw(-no_match_vars);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
@@ -873,6 +874,29 @@ sub testV2_translations_all {
 			self => '/2/votd?translations=all',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlNavigationKeepsAllTranslations {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => ['asv', 'kjv'],
+	});
+
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv', 'kjv' ], 'HTML renders both selected translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/7\?translations=all">prev verse</a>}, 'previous verse keeps all translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/9\?translations=all">next verse</a>}, 'next verse keeps all translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/8\?translations=all">permalink</a>}, 'permalink keeps all translations');
 
 	return EXIT_SUCCESS;
 }

@@ -19,7 +19,6 @@ Build-Depends-Indep:
  libmoose-perl,
  libmoosex-singleton-perl,
  libreadonly-perl,
- libredis-perl,
  libtest-deep-perl,
  libtest-exception-perl,
  libtest-mockmodule-perl,
@@ -47,9 +46,11 @@ Depends: ${shlibs:Depends},
  bash (>= 5.2.15-2),
  jq,
  libplack-perl,
+ libyaml-libyaml-perl,
  swaks,
 Recommends:
  memcached,
+ libredis-fast-perl | libredis-perl,
 Replaces: libreligion-bible-verses-perl
 Description: Chleb Bible Search - Bible Query Service
  For further information see:

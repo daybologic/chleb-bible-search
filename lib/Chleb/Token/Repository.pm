@@ -39,7 +39,7 @@ use Chleb::Exception;
 use Chleb::Token::Repository::Dummy;
 use Chleb::Token::Repository::JWT;
 use Chleb::Token::Repository::Local;
-use Chleb::Token::Repository::Redis;
+use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 
 sub repo {
@@ -48,7 +48,6 @@ sub repo {
 	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be specified')
 	    unless (defined($name));
 
-	# TODO: Could we use UNIVERSAL require here?
 	my %repositories = (
 		'Dummy' => 'Chleb::Token::Repository::Dummy',
 		'JWT' => 'Chleb::Token::Repository::JWT',
@@ -57,6 +56,10 @@ sub repo {
 	);
 
 	if (exists $repositories{$name}) {
+		if ($name eq 'Redis') {
+			eval { require Chleb::Token::Repository::Redis; 1 } or
+			    die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "Failed to load ${name}: ${EVAL_ERROR}");
+		}
 		my $class = $repositories{$name};
 		return $class->new(repo => $self);
 	}

@@ -116,9 +116,11 @@ the cookie.
 
 When the request parameter is absent, C<$preferredTranslation> may be either a
 cookie object with a C<value()> method or its scalar value.  The supported
-C<asv> and C<kjv> preferences are returned as a single-item array reference.
-The C<default> preference, missing values, and unsupported values return an
-empty array reference so that normal lookup translation selection applies.
+C<asv> and C<kjv> preferences may be stored singly or as a comma-separated
+list, and are returned as an array reference.  The C<all> preference is also
+supported.  The C<default> preference, missing values, and unsupported values
+return an empty array reference so that normal lookup translation selection
+applies.
 
 =cut
 
@@ -133,8 +135,23 @@ sub __preferredTranslations {
 		$preferredTranslation = $preferredTranslation->value;
 	}
 
-	return [] unless (defined($preferredTranslation) && $preferredTranslation =~ m/\A(?:asv|kjv)\z/);
-	return [ $preferredTranslation ];
+	return [] unless (defined($preferredTranslation) && length($preferredTranslation) > 0);
+
+	my @translations = @{ Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray($preferredTranslation)) };
+	return [] if (grep { $_ eq 'default' } @translations);
+	return [ 'all' ] if (grep { $_ eq 'all' } @translations);
+
+	my @supportedTranslations;
+	my %seenTranslation;
+	foreach my $translation (@translations) {
+		next unless ($translation =~ m/\A(?:asv|kjv)\z/);
+		next if ($seenTranslation{$translation});
+
+		push(@supportedTranslations, $translation);
+		$seenTranslation{$translation}++;
+	}
+
+	return \@supportedTranslations;
 }
 
 =head1 __preferredWholeword($paramPresent, $paramValue, $wholeword)

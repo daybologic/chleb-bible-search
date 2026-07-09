@@ -30,8 +30,17 @@ use Data::Dumper;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 use Readonly;
-use Redis;
 use Scalar::Util qw(looks_like_number);
+
+our $REDIS_CLASS;
+BEGIN {
+	if (eval { require Redis::Fast; 1 }) {
+		$REDIS_CLASS = 'Redis::Fast';
+	} elsif (eval { require Redis; 1 }) {
+		$REDIS_CLASS = 'Redis';
+	}
+	# else undef: neither is installed; error deferred to __makeDo
+}
 
 =head1 CONSTANTS
 
@@ -77,7 +86,7 @@ The builder for this is L</__makeDo()>.
 
 =cut
 
-has do => (isa => 'Redis', is => 'rw', lazy => 1, init_arg => undef, default => \&__makeDo);
+has do => (isa => 'Object', is => 'rw', lazy => 1, init_arg => undef, default => \&__makeDo);
 
 =back
 
@@ -225,7 +234,7 @@ sub __buildRedis {
 
 	my $redis;
 	eval {
-		$redis = Redis->new(server => $server);
+		$redis = $REDIS_CLASS->new(server => $server);
 	};
 
 	if (my $evalError = $EVAL_ERROR) {
@@ -251,6 +260,11 @@ sub __makeDo {
 		$uri = "${uri}:${REDIS_PORT}";
 	}
 
+	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR,
+	    'Redis backend is unavailable: neither Redis nor Redis::Fast is installed')
+	    unless ($REDIS_CLASS);
+
+	$self->dic->logger->debug("Redis backend using $REDIS_CLASS");
 	my $redis = $self->__buildRedis($uri);
 
 	my $db = $config->{db};

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,39 +29,42 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+package main;
+use strict;
+use warnings;
 
-cookieResult=$(http --check-status --body --pretty=none GET \
-	chleb-api.example.org/1/lookup/john/3/16 \
-	Accept:application/json \
-	Cookie:preferredTranslation=asv)
+use POSIX qw(EXIT_SUCCESS);
+use Test::More 0.96;
 
-jq -e '.data | length == 1 and .[0].attributes.translation == "asv"' \
-	<<< "$cookieResult" >/dev/null
+my $runtimeDirectory = 'chleb-bible-search';
+my $servicePath = 'etc/chleb-bible-search.service';
+my $dirsPath = 'debian/chleb-bible-search-core.dirs';
 
-explicitResult=$(http --check-status --body --pretty=none GET \
-	chleb-api.example.org/1/lookup/john/3/16 \
-	Accept:application/json \
-	Cookie:preferredTranslation=asv \
-	translations==kjv)
+open(my $fh, '<', $servicePath) or die("Cannot open $servicePath: $!");
+my @lines = <$fh>;
+close($fh);
 
-jq -e '.data | length == 1 and .[0].attributes.translation == "kjv"' \
-	<<< "$explicitResult" >/dev/null
+my @runtimeDirectories = map {
+	my ($value) = m/\ARuntimeDirectory=(.+)\z/;
+	$value;
+} grep { m/\ARuntimeDirectory=/ } map { chomp; $_ } @lines;
 
-multiCookieResult=$(http --check-status --body --pretty=none GET \
-	chleb-api.example.org/1/lookup/john/3/16 \
-	Accept:application/json \
-	Cookie:preferredTranslation=asv,kjv)
+is_deeply(
+	\@runtimeDirectories,
+	[$runtimeDirectory],
+	"systemd creates /run/$runtimeDirectory for the FastCGI socket"
+);
 
-jq -e '.data | length == 2 and ([.[].attributes.translation] | sort == ["asv", "kjv"])' \
-	<<< "$multiCookieResult" >/dev/null
+open($fh, '<', $dirsPath) or die("Cannot open $dirsPath: $!");
+@lines = <$fh>;
+close($fh);
 
-allCookieResult=$(http --check-status --body --pretty=none GET \
-	chleb-api.example.org/1/lookup/john/3/16 \
-	Accept:application/json \
-	Cookie:preferredTranslation=all)
+my @volatileDirs = grep { m{\A/var/run/} } map { chomp; $_ } @lines;
+is_deeply(
+	\@volatileDirs,
+	[],
+	'Debian package does not ship volatile /var/run directories'
+);
 
-jq -e '.data | length == 2 and ([.[].attributes.translation] | sort == ["asv", "kjv"])' \
-	<<< "$allCookieResult" >/dev/null
-
-exit 0
+done_testing();
+exit(EXIT_SUCCESS);

@@ -38,6 +38,8 @@ APP='/usr/share/chleb-bible-search/app.psgi'
 SOCKET='/var/run/chleb-bible-search/sock'
 PLACK='/usr/bin/plackup'
 
+export PERL5LIB='/usr/share/chleb-bible-search/perl5'
+
 if [ -e "$(pwd)/.git" ] && [ -f 'bin/core/app.psgi' ]; then
 	$PLACK \
 		-I lib \
@@ -58,5 +60,4 @@ if [ -f "$CONFIG_PATH" ]; then
 	fi
 fi
 
-export PERL5LIB='/usr/share/chleb-bible-search/perl5'
 exec $PLACK --no-default-middleware -s FCGI --listen $SOCKET --nproc $nProc -a $APP

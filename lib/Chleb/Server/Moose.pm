@@ -531,6 +531,13 @@ sub __version {
 		version => $version,
 		admin_email => $self->dic->config->get('server', 'admin_email', 'example@example.org'),
 		admin_name => $self->dic->config->get('server', 'admin_name', 'Unknown'),
+		build_arch => $Chleb::Generated::Info::BUILD_ARCH,
+		build_host => $Chleb::Generated::Info::BUILD_HOST,
+		build_os => $Chleb::Generated::Info::BUILD_OS,
+		build_time => $Chleb::Generated::Info::BUILD_TIME,
+		build_user => $Chleb::Generated::Info::BUILD_USER,
+		changeset => $Chleb::Generated::Info::BUILD_CHANGESET,
+		perl_version => $Chleb::Generated::Info::BUILD_PERL_VERSION,
 		server_host => $self->dic->config->get('server', 'domain', 'localhost'),
 	);
 
@@ -565,6 +572,34 @@ sub __versionToHtml {
 	$html .= "<tr>\r\n";
 	$html .= "<th>Version</th>\r\n";
 	$html .= sprintf("<td>%s</td>\r\n", $attributes->{version});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Git changeset</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{changeset});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Build time</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{build_time});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Build host</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{build_host});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Build OS</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{build_os});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Build architecture</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{build_arch});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Build user</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{build_user});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Perl version</th>\r\n";
+	$html .= sprintf("<td>%s</td>\r\n", $attributes->{perl_version});
 	$html .= "</tr>\r\n";
 	$html .= "<tr>\r\n";
 	$html .= "<th>Administrator</th>\r\n";
@@ -1131,10 +1166,40 @@ sub __verseToJsonApi {
 	return \%hash;
 }
 
+=item C<__verseNavigationLink($json, $type, $label)>
+
+Build an HTML link for the verse navigation bar.
+
+C<$json> is a C<JSON:API> response hash for a verse page.  C<$type> is one of
+the verse link names such as C<prev>, C<next>, or C<self>.  C<$label> is the
+visible link text.
+
+The generated link keeps the concrete lookup path from the verse item and, when
+the response has a query string, applies that query string to preserve selected
+translations across HTML navigation.  If the requested link does not exist, an
+empty string is returned.
+
+=cut
+
+sub __verseNavigationLink {
+	my ($json, $type, $label) = @_;
+
+	my $link = $json->{data}->[0]->{links}->{$type};
+	return '' unless ($link);
+
+	my $selfLink = $json->{links}->{self} || '';
+	if ($selfLink =~ m/(\?.*)\z/) {
+		my $query = $1;
+		$link =~ s/\?.*\z//;
+		$link .= $query;
+	}
+
+	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
+}
+
 sub __verseToHtml {
 	my ($self, $verse, $json, $function) = @_;
 
-	my $output = '';
 	my $includedCount = scalar(@{ $json->[0]->{included} });
 	my %rawBookNameMap = ( );
 	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
@@ -1159,47 +1224,91 @@ sub __verseToHtml {
 
 	my $verseCount = scalar(@{ $json->[0]->{data} });
 	my $reference;
+	my @translationOrder;
+	my %translationSections;
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
 		my $bookName = $attributes->{book};
 		my $bookNameRaw = $rawBookNameMap{$bookName};
 		my $chapter = $attributes->{chapter};
 		my $verseOrdinal = $attributes->{ordinal};
+		my $translation = $attributes->{translation};
 
 		if ($verseIndex == 0) {
 			$reference = sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal);
-		} else {
-			$output .= '<sup class="versenum">';
-			$output .= sprintf('<a href="/1/lookup/%s/%d/%d">', $bookName, $chapter, $verseOrdinal);
-			$output .= "${verseOrdinal} </a></sup>";
 		}
 
-		$output .= $attributes->{text};
-
-		if ($verseIndex < $verseCount-1) { # not last verse
-			my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
-			$output .= '<br /><br />' unless ($thisVerse->continues);
-			$output .= "\r\n";
+		if (!exists($translationSections{$translation})) {
+			push(@translationOrder, $translation);
+			$translationSections{$translation} = {
+				emotion => $attributes->{emotion},
+				html => '',
+				last_continues => 0,
+				tones => [],
+				verse_count => 0,
+			};
 		}
+
+		my $section = $translationSections{$translation};
+		if ($section->{verse_count} > 0) {
+			$section->{html} .= '<br /><br />' unless ($section->{last_continues});
+			$section->{html} .= "\r\n";
+			$section->{html} .= '<sup class="versenum">';
+			$section->{html} .= sprintf('<a href="/1/lookup/%s/%d/%d">', $bookName, $chapter, $verseOrdinal);
+			$section->{html} .= "${verseOrdinal} </a></sup>";
+		}
+
+		$section->{html} .= $attributes->{text};
+
+		my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
+		$section->{last_continues} = $thisVerse->continues ? 1 : 0;
+		foreach my $tone (@{ $attributes->{tones} }) {
+			push(@{ $section->{tones} }, $tone);
+		}
+		$section->{verse_count}++;
 	}
 
-	my $firstVerse = $json->[0]->{data}->[0];
-	my ($translation, $emotion) = @{ $firstVerse->{attributes} }{qw(translation emotion)};
-
-	my (@allTones, %toneSeen);
-	foreach my $verseData (@{ $json->[0]->{data} }) {
-		my $tones = $verseData->{attributes}->{tones};
-		foreach my $tone (@$tones) {
-			next if ($tone eq $emotion || $toneSeen{$tone});
-			push(@allTones, $tone);
-			$toneSeen{$tone}++;
-		}
+	my $title = 'FIXME';
+	if ($function == $FUNCTION_RANDOM) {
+		$title = 'Random Verse';
+	} elsif ($function == $FUNCTION_VOTD) {
+		$title = 'Verse of The Day';
+	} else {
+		$title = 'Lookup';
 	}
+	my $pageTitle = "Chleb Bible Search - ${title}";
 
-	my $sentiments = '';
-	foreach my $sentiment ($emotion, @allTones) {
-		my $colorIndex = Chleb::Utils::colorIndexFromWord($sentiment);
-		$sentiments .= "<span class=\"tag tag-color-${colorIndex}\">$sentiment</span> ";
+	my $output = '';
+	foreach my $translation (@translationOrder) {
+		my $section = $translationSections{$translation};
+		my $sentiments = '';
+		my %toneSeen;
+
+		foreach my $sentiment ($section->{emotion}, @{ $section->{tones} }) {
+			next if ($toneSeen{$sentiment});
+			my $colorIndex = Chleb::Utils::colorIndexFromWord($sentiment);
+			$sentiments .= "<span class=\"tag tag-color-${colorIndex}\">$sentiment</span> ";
+			$toneSeen{$sentiment}++;
+		}
+
+		$output .= "\t\t\t\t\t\t<div class=\"card\">\n";
+		$output .= "\t\t\t\t\t\t\t<div class=\"subtitle\">$pageTitle</div>\n";
+		$output .= "\n";
+		$output .= "\t\t\t\t\t\t\t<h1>$reference</h1>\n";
+		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translation</div>\n";
+		$output .= "\n";
+		$output .= "\t\t\t\t\t\t\t<div>\n";
+		$output .= "\t\t\t\t\t\t\t\t<blockquote>\n";
+		$output .= "\t\t\t\t\t\t\t\t\t" . $section->{html} . "\n";
+		$output .= "\t\t\t\t\t\t\t\t</blockquote>\n";
+		$output .= "\t\t\t\t\t\t\t</div>\n";
+		$output .= "\n";
+		$output .= "\t\t\t\t\t\t\t<div>\n";
+		$output .= "\t\t\t\t\t\t\t\t<blockquote>\n";
+		$output .= "\t\t\t\t\t\t\t\t\t$sentiments\n";
+		$output .= "\t\t\t\t\t\t\t\t</blockquote>\n";
+		$output .= "\t\t\t\t\t\t\t</div>\n";
+		$output .= "\t\t\t\t\t\t</div>\n";
 	}
 
 	my $firstVerseObject = $verse;
@@ -1280,34 +1389,23 @@ sub __verseToHtml {
 		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
 		NEXT_CHAPTER_URL => $nextChapterLink,
 		NEXT_BOOK_URL => $nextBookLink,
-		PERMALINK_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{self} . '">permalink</a>',
+		PERMALINK_URL => __verseNavigationLink($json->[0], 'self', 'permalink'),
 		SETTINGS_URL => $settingsLink,
-		FIRST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{first} . '">first verse</a>',
+		FIRST_VERSE_URL => __verseNavigationLink($json->[0], 'first', 'first verse'),
 		FIRST_CHAPTER_URL => sprintf($bookLinkFormat, 'first chapter'),
 		LAST_CHAPTER_URL => $lastChapterLink,
-		PREV_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{prev} . '">prev verse</a>',
-		NEXT_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{next} . '">next verse</a>',
-		LAST_VERSE_URL => '<a class="vn-link vn-verse" href="' . $json->[0]->{data}->[0]->{links}->{last} . '">last verse</a>',
+		PREV_VERSE_URL => __verseNavigationLink($json->[0], 'prev', 'prev verse'),
+		NEXT_VERSE_URL => __verseNavigationLink($json->[0], 'next', 'next verse'),
+		LAST_VERSE_URL => __verseNavigationLink($json->[0], 'last', 'last verse'),
 		RANDOM_URL => $random,
 		BOOKS => $self->__makeBooks($firstVerseObject->book),
 	});
 
-	my $title = 'FIXME';
-	if ($function == $FUNCTION_RANDOM) {
-		$title = 'Random Verse';
-	} elsif ($function == $FUNCTION_VOTD) {
-		$title = 'Verse of The Day';
-	} else {
-		$title = 'Lookup';
-	}
-
 	return Chleb::Server::Dancer2::fetchStaticPage('verse', {
-		TITLE => "Chleb Bible Search - ${title}",
+		TITLE => $pageTitle,
 		REFERENCE => $reference,
 		HOME => __linkToHome(),
 		VERSES => $output,
-		TRANSLATION => $translation,
-		SENTIMENTS => $sentiments,
 		BROWSING_LEFT => $browsingLeft,
 		BROWSING_HEAD => $browsingHead,
 	});
