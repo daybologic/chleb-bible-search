@@ -47,9 +47,48 @@ per-process behavior for deployments where shared storage is unavailable.
 
 =cut
 
+=head1 ATTRIBUTES
+
+=over
+
+=item C<__dampenTime>
+
+Last observed request time by IP address for the one-request-per-second
+unauthenticated limit.
+
+=cut
+
 has __dampenTime => (isa => 'HashRef[Str]', is => 'rw', lazy => 1, default => sub {{}});
+
+=item C<__sessionWindows>
+
+Sliding request timestamp windows by session token value.
+
+=cut
+
 has __sessionWindows => (isa => 'HashRef[ArrayRef[Int]]', is => 'rw', lazy => 1, default => sub {{}});
+
+=item C<__sessionsByIp>
+
+Recent session token values by IP address for churn detection.
+
+=cut
+
 has __sessionsByIp => (isa => 'HashRef[ArrayRef]', is => 'rw', lazy => 1, default => sub {{}});
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<dampen($ipAddress, $currentTime)>
+
+Applies the one-request-per-second unauthenticated IP limit in process memory.
+Returns C<1> when the request should be blocked and C<0> when it should be
+allowed.
+
+=cut
 
 sub dampen {
 	my ($self, $ipAddress, $currentTime) = @_;
@@ -62,6 +101,16 @@ sub dampen {
 	$self->__dampenTime->{$ipAddress} = $currentTime;
 	return 0;
 }
+
+=item C<dampenSession($tokenValue, $currentTime, $windowSecs, $maxRequests)>
+
+Applies the per-session request limit by retaining timestamps inside the
+configured sliding window.
+
+Returns C<1> when the request should be blocked and C<0> when it should be
+allowed.
+
+=cut
 
 sub dampenSession {
 	my ($self, $tokenValue, $currentTime, $windowSecs, $maxRequests) = @_;
@@ -78,6 +127,16 @@ sub dampenSession {
 	return 0;
 }
 
+=item C<dampenChurn($ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit)>
+
+Applies the session-token churn limit by tracking distinct token values recently
+seen from an IP address.
+
+Returns C<1> when the request should be blocked and C<0> when it should be
+allowed.
+
+=cut
+
 sub dampenChurn {
 	my ($self, $ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit) = @_;
 	my $cutoff = $currentTime - $churnWindow;
@@ -93,6 +152,10 @@ sub dampenChurn {
 	my $distinctTokens = scalar(keys %{{ map { $_->[0] => 1 } @{$entries} }});
 	return $distinctTokens > $churnLimit ? 1 : 0;
 }
+
+=back
+
+=cut
 
 __PACKAGE__->meta->make_immutable;
 

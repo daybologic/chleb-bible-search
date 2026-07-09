@@ -55,16 +55,76 @@ serializing mutable arrays.
 
 =cut
 
+=head1 ATTRIBUTES
+
+=over
+
+=item C<client>
+
+Optional pre-built memcached client.  Tests can inject this instead of loading
+C<Cache::Memcached> and reading C<main.yaml>.
+
+=cut
+
 has client => (is => 'ro', init_arg => 'client', predicate => '__hasClient');
+
+=item C<__clientObject>
+
+Lazy C<Cache::Memcached> client built from C<rate_limit.backend_memcached>.
+
+=cut
+
 has __clientObject => (is => 'rw', lazy => 1, builder => '__makeClient');
+
+=item C<__available>
+
+Boolean availability flag.  This is cleared when the backend cannot be used so
+the caller can fall back to the memory store.
+
+=cut
+
 has __available => (is => 'rw', isa => 'Bool', lazy => 1, builder => '__makeAvailable');
+
+=item C<__warned>
+
+Tracks whether a backend-unavailable warning has already been logged.
+
+=cut
+
 has __warned => (is => 'rw', isa => 'Bool', default => 0);
+
+=item C<__prefix>
+
+Key prefix for dampening data in memcached.
+
+=cut
+
 has __prefix => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makePrefix');
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<available()>
+
+Returns true when memcached can currently be used for dampening state.
+
+=cut
 
 sub available {
 	my ($self) = @_;
 	return $self->__available;
 }
+
+=item C<dampen($ipAddress, $currentTime)>
+
+Applies the one-request-per-second unauthenticated IP limit using memcached.
+Returns C<1> when the request should be blocked, C<0> when it should be
+allowed, or C<undef> when the shared store is unavailable.
+
+=cut
 
 sub dampen {
 	my ($self, $ipAddress, $currentTime) = @_;
@@ -77,6 +137,14 @@ sub dampen {
 	return $added ? 0 : 1;
 }
 
+=item C<dampenSession($tokenValue, $currentTime, $windowSecs, $maxRequests)>
+
+Applies the per-session request limit using a memcached counter bucket.
+Returns C<1> when the request should be blocked, C<0> when it should be
+allowed, or C<undef> when the shared store is unavailable.
+
+=cut
+
 sub dampenSession {
 	my ($self, $tokenValue, $currentTime, $windowSecs, $maxRequests) = @_;
 	return unless ($self->available);
@@ -88,6 +156,17 @@ sub dampenSession {
 
 	return $count > $maxRequests ? 1 : 0;
 }
+
+=item C<dampenChurn($ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit)>
+
+Applies the session-token churn limit for an IP address.  Distinct token values
+are tracked with C<add>, and a separate counter records how many unique tokens
+have appeared in the current bucket.
+
+Returns C<1> when the request should be blocked, C<0> when it should be
+allowed, or C<undef> when the shared store is unavailable.
+
+=cut
 
 sub dampenChurn {
 	my ($self, $ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit) = @_;
@@ -110,6 +189,13 @@ sub dampenChurn {
 	return $count > $churnLimit ? 1 : 0;
 }
 
+=item C<__makeAvailable()>
+
+Builds the availability flag by creating a client and probing memcached with a
+short-lived key.
+
+=cut
+
 sub __makeAvailable {
 	my ($self) = @_;
 
@@ -125,11 +211,26 @@ sub __makeAvailable {
 	return 0;
 }
 
+=item C<__client()>
+
+Returns the injected client when present, otherwise returns the lazy client
+object.
+
+=cut
+
 sub __client {
 	my ($self) = @_;
 	return $self->client if ($self->__hasClient);
 	return $self->__clientObject;
 }
+
+=item C<__makeClient()>
+
+Loads C<Cache::Memcached> and builds a client from
+C<rate_limit.backend_memcached.servers>.  Returns C<undef> after logging a
+fallback warning if the module or client cannot be created.
+
+=cut
 
 sub __makeClient {
 	my ($self) = @_;
@@ -162,6 +263,13 @@ sub __makeClient {
 	return $client;
 }
 
+=item C<__increment($key, $ttl)>
+
+Atomically increments a memcached counter, creating it with C<add> when needed.
+If the key expires between C<add> and C<incr>, it retries once.
+
+=cut
+
 sub __increment {
 	my ($self, $key, $ttl) = @_;
 
@@ -179,6 +287,13 @@ sub __increment {
 	return $self->__call(incr => $key);
 }
 
+=item C<__call($method, @args)>
+
+Calls a method on the memcached client.  Backend failures mark the store
+unavailable, log a fallback warning, and return C<undef>.
+
+=cut
+
 sub __call {
 	my ($self, $method, @args) = @_;
 
@@ -195,17 +310,38 @@ sub __call {
 	return $result;
 }
 
+=item C<__key(@parts)>
+
+Builds a namespaced memcached key.  Key parts are SHA-1 encoded so raw IP
+addresses and token values are not stored directly in memcached key names.
+
+=cut
+
 sub __key {
 	my ($self, @parts) = @_;
 	my @encoded = map { sha1_hex($_ // '') } @parts;
 	return join(':', $self->__prefix, @encoded);
 }
 
+=item C<__makePrefix()>
+
+Reads the memcached key prefix from C<rate_limit.backend_memcached.prefix>, or
+uses C<chleb:dampen> when the setting is absent.
+
+=cut
+
 sub __makePrefix {
 	my ($self) = @_;
 	my $config = $self->dic->config->get('rate_limit', 'backend_memcached', {});
 	return $config->{prefix} // 'chleb:dampen';
 }
+
+=item C<__warnUnavailable($message)>
+
+Logs the first shared-store fallback warning for this object.  The message is
+normalized to mention the per-process memory fallback.
+
+=cut
 
 sub __warnUnavailable {
 	my ($self, $message) = @_;
@@ -217,6 +353,10 @@ sub __warnUnavailable {
 	$self->dic->logger->warn($message);
 	return;
 }
+
+=back
+
+=cut
 
 __PACKAGE__->meta->make_immutable;
 
