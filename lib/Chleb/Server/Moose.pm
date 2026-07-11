@@ -63,6 +63,7 @@ use IO::File;
 use JSON;
 use Log::Log4perl::MDC;
 use Readonly;
+use POSIX qw(_exit);
 use Sys::Hostname;
 use Time::Duration;
 use URI::Escape;
@@ -95,6 +96,7 @@ sub BUILD {
 	$self->__removeUptime();
 	$self->__getUptime(); # set startup time as soon as possible
 	$self->title();
+	$self->__kickOffWarmup();
 
 	return;
 }
@@ -132,6 +134,23 @@ sub title {
 	return;
 }
 
+sub __kickOffWarmup {
+	my ($self) = @_;
+
+	my $pid = fork();
+	return if (!defined($pid) || $pid != 0);
+
+	eval {
+		$self->__warmBackendCaches();
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Backend cache warmup failed: $evalError");
+	}
+
+	_exit(0);
+	return;
+}
+
 =back
 
 =head1 PRIVATE METHODS
@@ -149,6 +168,30 @@ sub __library {
 	my ($self) = @_;
 	$self->{__library} ||= Chleb->new();
 	return $self->{__library};
+}
+
+sub __warmBackendCaches {
+	my ($self) = @_;
+	my @bibles = $self->__library->info()->bibles;
+	my %hotVerses = (
+		asv => [ 'Gen:1:1', 'Psa:23:1', 'Rev:22:21' ],
+		kjv => [ 'Gen:1:1', 'Psa:23:1', 'Rev:22:21' ],
+	);
+
+	foreach my $bible (@bibles) {
+		my $translation = $bible->translation;
+		my $hotList = $hotVerses{$translation} // next;
+		$bible->books();
+		foreach my $verseSuffix (@$hotList) {
+			my $verseKey = join(':', $translation, $verseSuffix);
+			my $ordinal = $bible->__backend->getOrdinalByVerseKey($verseKey);
+			next unless ($ordinal > 0);
+			$bible->__backend->getVerseDataByKey($verseKey);
+			$bible->__backend->getVerseKeyByOrdinal($ordinal);
+		}
+	}
+
+	return;
 }
 
 =item C<__makeJsonApi()>
