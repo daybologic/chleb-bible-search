@@ -211,10 +211,18 @@ sub __warmBackendCaches {
 				$bible->translation,
 				$book->shortNameRaw,
 			));
+			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->shortNameRaw);
 			my @chapterOrdinals = shuffle(1 .. $book->chapterCount);
 			foreach my $chapterOrdinal (@chapterOrdinals) {
 				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
-				my @verses = shuffle(@{ $chapter->getVerses() });
+				my @verses = shuffle(map {
+					Chleb::Bible::Verse->new({
+						book    => $book,
+						chapter => $chapter,
+						ordinal => $_->{verse_ordinal} + 0,
+						text    => $_->{text},
+					});
+				} grep { $_->{chapter_ordinal} == $chapterOrdinal } @{ $bookVerses // [ ] });
 				my $verseCount = scalar(@verses);
 				my $verseIndex = 0;
 				$self->dic->logger->trace(sprintf(
