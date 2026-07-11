@@ -43,6 +43,7 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
 use DBI;
 use JSON;
+use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 
@@ -71,6 +72,9 @@ has __verseKeyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub 
 has __verseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseKeyByBookCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __sharedCacheClient => (is => 'ro', lazy => 1, builder => '__makeSharedCacheClient');
+has __sharedCacheAvailable => (is => 'rw', isa => 'Bool', lazy => 1, builder => '__makeSharedCacheAvailable');
+has __sharedCachePrefix => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeSharedCachePrefix');
 
 sub __makeCompressedPath {
 	my ($self) = @_;
@@ -141,6 +145,10 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	my $translation = $self->bible->translation;
 	return $self->__bookInfoCache->{$translation} if ($self->__bookInfoCache->{$translation});
 
+	if (my $cached = $self->__sharedCacheGet('books', $translation)) {
+		return $self->__bookInfoCache->{$translation} = $cached;
+	}
+
 	my @books = ( );
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT book.id, book.code, book.translation, book.testament, book.ordinal,
@@ -166,6 +174,7 @@ SQL
 	}
 
 	$self->__bookInfoCache->{$translation} = \@books;
+	$self->__sharedCacheSet('books', $translation, \@books);
 	return $self->__bookInfoCache->{$translation};
 }
 
@@ -175,6 +184,10 @@ sub getOrdinalByVerseKey {
 	return 0 unless (defined($verseNumber));
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseOrdinalCache->{$cacheKey} if (exists($self->__verseOrdinalCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('ordinal', $cacheKey)) {
+		$self->__verseOrdinalCache->{$cacheKey} = $cached + 0;
+		return $cached + 0;
+	}
 
 	my $sth = $self->data->prepare(<<'SQL');
 		WITH ordered_verses AS (
@@ -201,6 +214,7 @@ SQL
 	my ($ordinal) = $sth->fetchrow_array();
 	$ordinal //= 0;
 	$self->__verseOrdinalCache->{$cacheKey} = $ordinal;
+	$self->__sharedCacheSet('ordinal', $cacheKey, $ordinal) if ($ordinal > 0);
 	return $ordinal;
 }
 
@@ -212,6 +226,10 @@ sub getVerseKeyByOrdinal {
 	my $translation = $self->bible->translation;
 	my $cacheKey = join(':', $translation, $ordinal);
 	return $self->__verseKeyCache->{$cacheKey} if (exists($self->__verseKeyCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('versekey', $cacheKey)) {
+		$self->__verseKeyCache->{$cacheKey} = $cached;
+		return $cached;
+	}
 
 	my $sth = $self->data->prepare(<<'SQL');
 		WITH ordered_verses AS (
@@ -234,6 +252,7 @@ SQL
 	return unless ($row);
 	my $key = join(':', @$row);
 	$self->__verseKeyCache->{join(':', $translation, $ordinal)} = $key;
+	$self->__sharedCacheSet('versekey', $cacheKey, $key);
 	return $key;
 }
 
@@ -243,6 +262,10 @@ sub getVerseDataByKey {
 	return unless (defined($verseNumber));
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseTextCache->{$cacheKey} if (exists($self->__verseTextCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('text', $cacheKey)) {
+		$self->__verseTextCache->{$cacheKey} = $cached;
+		return $cached;
+	}
 
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT verse.text
@@ -257,6 +280,7 @@ SQL
 	$sth->execute($translation, $bookShortName, $chapterNumber, $verseNumber);
 	my ($text) = $sth->fetchrow_array();
 	$self->__verseTextCache->{$cacheKey} = $text if (defined($text));
+	$self->__sharedCacheSet('text', $cacheKey, $text) if (defined($text));
 	return $text;
 }
 
@@ -266,6 +290,10 @@ sub getVerseKeyByBookVerseKey {
 	return unless (defined($ordinal));
 	my $cacheKey = join(':', $translation, $bookShortName, $ordinal);
 	return $self->__verseKeyByBookCache->{$cacheKey} if (exists($self->__verseKeyByBookCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('bookversekey', $cacheKey)) {
+		$self->__verseKeyByBookCache->{$cacheKey} = $cached;
+		return $cached;
+	}
 
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT book.translation, book.code, chapter.ordinal, verse.ordinal_relative_to_chapter
@@ -283,6 +311,7 @@ SQL
 	return unless ($row);
 	my $verseKey = join(':', @$row);
 	$self->__verseKeyByBookCache->{$cacheKey} = $verseKey;
+	$self->__sharedCacheSet('bookversekey', $cacheKey, $verseKey);
 	return $verseKey;
 }
 
@@ -393,6 +422,90 @@ sub __sentimentData {
 	$fh->close();
 	$self->__sentimentCache->{$translation} = decode_json($text);
 	return $self->__sentimentCache->{$translation};
+}
+
+sub __makeSharedCacheClient {
+	my ($self) = @_;
+
+	eval {
+		require Cache::Memcached;
+		Cache::Memcached->import();
+	};
+	if ($EVAL_ERROR) {
+		return;
+	}
+
+	my $config = $self->dic->config->get('rate_limit', 'backend_memcached', {});
+	my $servers = $config->{servers} // [ '127.0.0.1:11211' ];
+	$servers = [ $servers ] unless (ref($servers) eq 'ARRAY');
+
+	my $client;
+	eval {
+		$client = Cache::Memcached->new({
+			servers => $servers,
+			compress_threshold => 10_000,
+		});
+	};
+	return if ($EVAL_ERROR);
+
+	return $client;
+}
+
+sub __makeSharedCachePrefix {
+	my ($self) = @_;
+	my $config = $self->dic->config->get('backend_cache', 'memcached', {});
+	return $config->{prefix} // 'chleb:backend';
+}
+
+sub __makeSharedCacheAvailable {
+	my ($self) = @_;
+
+	return 0 unless ($self->__sharedCacheClient);
+
+	my $probeKey = $self->__sharedCacheKey('probe', $$);
+	my $ok;
+	eval {
+		$ok = $self->__sharedCacheClient->set($probeKey, 1, 5);
+	};
+	return 0 if ($EVAL_ERROR);
+
+	return $ok ? 1 : 0;
+}
+
+sub __sharedCacheGet {
+	my ($self, $kind, $key) = @_;
+	return unless ($self->__sharedCacheAvailable);
+
+	my $result;
+	eval {
+		$result = $self->__sharedCacheClient->get($self->__sharedCacheKey($kind, $key));
+	};
+	if ($EVAL_ERROR) {
+		$self->__sharedCacheAvailable(0);
+		return;
+	}
+
+	return $result;
+}
+
+sub __sharedCacheSet {
+	my ($self, $kind, $key, $value) = @_;
+	return unless ($self->__sharedCacheAvailable);
+
+	eval {
+		$self->__sharedCacheClient->set($self->__sharedCacheKey($kind, $key), $value, 3600);
+	};
+	if ($EVAL_ERROR) {
+		$self->__sharedCacheAvailable(0);
+		return;
+	}
+
+	return 1;
+}
+
+sub __sharedCacheKey {
+	my ($self, $kind, $key) = @_;
+	return join(':', $self->__sharedCachePrefix, $kind, sha1_hex($key // ''));
 }
 
 sub __bookVerseCounts {
