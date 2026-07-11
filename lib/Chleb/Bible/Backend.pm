@@ -70,6 +70,7 @@ has __bookInfoCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub 
 has __bookInfoDataCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseOrdinalCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseKeyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __verseKeyOrdinalCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __chapterVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __bookVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
@@ -205,6 +206,10 @@ sub getOrdinalByVerseKey {
 	return 0 unless (defined($verseNumber));
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseOrdinalCache->{$cacheKey} if (exists($self->__verseOrdinalCache->{$cacheKey}));
+	if (my $mapped = $self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterNumber}->{$verseNumber}) {
+		$self->__verseOrdinalCache->{$cacheKey} = $mapped + 0;
+		return $mapped + 0;
+	}
 	if (my $cached = $self->__sharedCacheGet('ordinal', $cacheKey)) {
 		$self->__verseOrdinalCache->{$cacheKey} = $cached + 0;
 		return $cached + 0;
@@ -235,6 +240,7 @@ SQL
 	my ($ordinal) = $sth->fetchrow_array();
 	$ordinal //= 0;
 	$self->__verseOrdinalCache->{$cacheKey} = $ordinal;
+	$self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterNumber}->{$verseNumber} = $ordinal if ($ordinal > 0);
 	$self->__sharedCacheSet('ordinal', $cacheKey, $ordinal) if ($ordinal > 0);
 	return $ordinal;
 }
@@ -247,6 +253,10 @@ sub getVerseKeyByOrdinal {
 	my $translation = $self->bible->translation;
 	my $cacheKey = join(':', $translation, $ordinal);
 	return $self->__verseKeyCache->{$cacheKey} if (exists($self->__verseKeyCache->{$cacheKey}));
+	if (my $mapped = $self->__verseKeyOrdinalCache->{$translation}->{__ordinalToKey}->{$ordinal}) {
+		$self->__verseKeyCache->{$cacheKey} = $mapped;
+		return $mapped;
+	}
 	if (my $cached = $self->__sharedCacheGet('versekey', $cacheKey)) {
 		$self->__verseKeyCache->{$cacheKey} = $cached;
 		return $cached;
@@ -273,6 +283,9 @@ SQL
 	return unless ($row);
 	my $key = join(':', @$row);
 	$self->__verseKeyCache->{join(':', $translation, $ordinal)} = $key;
+	my ($mappedTranslation, $mappedBookShortName, $mappedChapterNumber, $mappedVerseNumber) = split(m/:/, $key, 4);
+	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{__ordinalToKey}->{$ordinal} = $key;
+	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{$mappedBookShortName}->{$mappedChapterNumber}->{$mappedVerseNumber} = $ordinal;
 	$self->__sharedCacheSet('versekey', $cacheKey, $key);
 	return $key;
 }
@@ -334,7 +347,9 @@ SQL
 sub getBookVerseDataByKey {
 	my ($self, $bookShortName) = @_;
 	my $cacheKey = join(':', $self->bible->translation, $bookShortName);
-	return $self->__bookVerseTextCache->{$cacheKey} if (exists($self->__bookVerseTextCache->{$cacheKey}));
+	if (exists($self->__bookVerseTextCache->{$cacheKey})) {
+		return $self->__bookVerseTextCache->{$cacheKey};
+	}
 
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT chapter.ordinal AS chapter_ordinal,
@@ -351,6 +366,14 @@ SQL
 	$sth->execute($self->bible->translation, $bookShortName);
 	my $rows = $sth->fetchall_arrayref({});
 	$self->__bookVerseTextCache->{$cacheKey} = $rows;
+	my $translation = $self->bible->translation;
+	foreach my $row (@{ $rows }) {
+		my $chapterOrdinal = $row->{chapter_ordinal} + 0;
+		my $verseOrdinal = $row->{verse_ordinal} + 0;
+		my $bookOrdinal = $row->{book_ordinal} + 0;
+		$self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterOrdinal}->{$verseOrdinal} = $bookOrdinal;
+		$self->__verseKeyOrdinalCache->{$translation}->{__ordinalToKey}->{$bookOrdinal} = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
+	}
 	return $rows;
 }
 
