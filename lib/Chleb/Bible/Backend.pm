@@ -577,7 +577,8 @@ sub __makeSharedCacheClient {
 sub __makeSharedCachePrefix {
 	my ($self) = @_;
 	my $config = $self->dic->config->get('backend_cache', 'memcached', {});
-	return $config->{prefix} // 'chleb:backend';
+	my $prefix = $config->{prefix} // 'chleb:backend';
+	return join(':', $prefix, $self->bible->translation);
 }
 
 sub __makeSharedCacheAvailable {
