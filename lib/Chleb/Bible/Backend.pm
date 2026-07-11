@@ -70,6 +70,7 @@ has __bookInfoCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub 
 has __verseOrdinalCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseKeyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __chapterVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseKeyByBookCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __sharedCacheClient => (is => 'ro', lazy => 1, builder => '__makeSharedCacheClient');
@@ -285,6 +286,27 @@ SQL
 	$self->__verseTextCache->{$cacheKey} = $text if (defined($text));
 	$self->__sharedCacheSet('text', $cacheKey, $text) if (defined($text));
 	return $text;
+}
+
+sub getChapterVerseDataByKey {
+	my ($self, $bookShortName, $chapterNumber) = @_;
+	my $cacheKey = join(':', $self->bible->translation, $bookShortName, $chapterNumber);
+	return $self->__chapterVerseTextCache->{$cacheKey} if (exists($self->__chapterVerseTextCache->{$cacheKey}));
+
+	my $sth = $self->data->prepare(<<'SQL');
+		SELECT verse.ordinal_relative_to_chapter AS verse_ordinal, verse.text
+		  FROM verse
+		  JOIN book ON book.id = verse.book_id
+		  JOIN chapter ON chapter.id = verse.chapter_id
+		 WHERE book.translation = ?
+		   AND book.code = ?
+		   AND chapter.ordinal = ?
+		 ORDER BY verse.ordinal_relative_to_chapter
+SQL
+	$sth->execute($self->bible->translation, $bookShortName, $chapterNumber);
+	my $rows = $sth->fetchall_arrayref({});
+	$self->__chapterVerseTextCache->{$cacheKey} = $rows;
+	return $rows;
 }
 
 sub getVerseKeyByBookVerseKey {

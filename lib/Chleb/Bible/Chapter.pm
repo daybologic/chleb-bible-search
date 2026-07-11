@@ -75,7 +75,16 @@ sub getVerseByOrdinal {
 
 sub getVerses {
 	my ($self) = @_;
-	return [ map { $self->getVerseByOrdinal($_) } 1..$self->verseCount ];
+	my $verses = $self->bible->__backend->getChapterVerseDataByKey($self->book->shortNameRaw, $self->ordinal);
+	return [ map {
+		my $row = $_;
+		Chleb::Bible::Verse->new({
+			book    => $self->book,
+			chapter => $self,
+			ordinal => $row->{verse_ordinal} + 0,
+			text    => $row->{text},
+		});
+	} @{ $verses // [ ] } ];
 }
 
 sub getNext {
