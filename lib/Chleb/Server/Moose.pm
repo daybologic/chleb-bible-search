@@ -212,6 +212,10 @@ sub __warmBackendCaches {
 				$book->shortNameRaw,
 			));
 			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->shortNameRaw);
+			my %chapterVerses;
+			foreach my $row (@{ $bookVerses // [ ] }) {
+				push(@{ $chapterVerses{ $row->{chapter_ordinal} } }, $row);
+			}
 			my @chapterOrdinals = shuffle(1 .. $book->chapterCount);
 			foreach my $chapterOrdinal (@chapterOrdinals) {
 				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
@@ -222,7 +226,7 @@ sub __warmBackendCaches {
 						ordinal => $_->{verse_ordinal} + 0,
 						text    => $_->{text},
 					});
-				} grep { $_->{chapter_ordinal} == $chapterOrdinal } @{ $bookVerses // [ ] });
+				} @{ $chapterVerses{$chapterOrdinal} // [ ] });
 				my $verseCount = scalar(@verses);
 				my $verseIndex = 0;
 				$self->dic->logger->trace(sprintf(
