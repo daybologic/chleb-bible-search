@@ -338,6 +338,7 @@ sub getBookVerseDataByKey {
 
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT chapter.ordinal AS chapter_ordinal,
+		       verse.ordinal_relative_to_book AS book_ordinal,
 		       verse.ordinal_relative_to_chapter AS verse_ordinal,
 		       verse.text
 		  FROM verse

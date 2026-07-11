@@ -218,15 +218,7 @@ sub __warmBackendCaches {
 			}
 			my @chapterOrdinals = shuffle(1 .. $book->chapterCount);
 			foreach my $chapterOrdinal (@chapterOrdinals) {
-				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
-				my @verses = shuffle(map {
-					Chleb::Bible::Verse->new({
-						book    => $book,
-						chapter => $chapter,
-						ordinal => $_->{verse_ordinal} + 0,
-						text    => $_->{text},
-					});
-				} @{ $chapterVerses{$chapterOrdinal} // [ ] });
+				my @verses = shuffle(@{ $chapterVerses{$chapterOrdinal} // [ ] });
 				my $verseCount = scalar(@verses);
 				my $verseIndex = 0;
 				$self->dic->logger->trace(sprintf(
@@ -234,14 +226,16 @@ sub __warmBackendCaches {
 					$bible->translation,
 					$book->shortNameRaw,
 					$chapterOrdinal,
-					$chapter->verseCount,
+					$verseCount,
 				));
 				foreach my $verse (@verses) {
 					$verseIndex++;
-					$verse->ordinalAbsolute;
-					$verse->text;
-					$verse->emotion;
-					$verse->tones;
+					my $verseOrdinal = $verse->{verse_ordinal} + 0;
+					my $verseKey = join(':', $bible->translation, $book->shortNameRaw, $chapterOrdinal, $verseOrdinal);
+					my $bookVerseKey = join(':', $bible->translation, $book->shortNameRaw, $verse->{book_ordinal} + 0);
+					$bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey);
+					$bible->__backend->getVerseDataByKey($verseKey);
+					$bible->__backend->getOrdinalByVerseKey($verseKey);
 					$processedVerses++;
 					if ($verseIndex == 1 || $verseIndex == $verseCount || ($verseIndex % 1000) == 0) {
 						my $overallPercent = ($totalVerses > 0) ? int((100 * $processedVerses) / $totalVerses) : 100;
@@ -253,7 +247,7 @@ sub __warmBackendCaches {
 								$bible->translation,
 								$book->shortNameRaw,
 								$chapterOrdinal,
-								$verse->ordinal,
+								$verseOrdinal,
 							));
 						}
 					}
