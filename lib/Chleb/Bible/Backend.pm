@@ -504,6 +504,7 @@ sub __sharedCacheSet {
 	return unless ($self->__sharedCacheAvailable);
 
 	eval {
+		# Memcached treats zero TTL as no expiry; these lookups are effectively static.
 		$self->__sharedCacheClient->set($self->__sharedCacheKey($kind, $key), $value, 0);
 	};
 	if (my $evalError = $EVAL_ERROR) {
