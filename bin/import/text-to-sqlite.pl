@@ -437,6 +437,7 @@ sub __processVerses {
 			my ($verseKey, $verseText) = @verseData;
 			my ($translation, $bookShortName, $chapterOrdinal, $verseNumber)
 			    = split(m/:/, $verseKey, 4);
+			chomp($verseText);
 
 			__writeBook($fileHandle, $translation, $bookShortName);
 			__writeChapter($fileHandle, $translation, $bookShortName, $chapterOrdinal);
