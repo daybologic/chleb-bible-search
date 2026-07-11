@@ -174,8 +174,21 @@ sub __library {
 sub __warmBackendCaches {
 	my ($self) = @_;
 	my @bibles = shuffle($self->__library->__getBible({ translations => ['all'] }));
+	my $totalVerses = 0;
+
+	foreach my $bible (@bibles) {
+		foreach my $book (@{ $bible->books() }) {
+			foreach my $chapterOrdinal (1 .. $book->chapterCount) {
+				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+				$totalVerses += $chapter->verseCount;
+			}
+		}
+	}
 
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s)', scalar(@bibles)));
+	$self->dic->logger->info(sprintf('Backend cache warmup will process %d verse(s)', $totalVerses));
+	my $processedVerses = 0;
+	my $lastPercent = -1;
 	foreach my $bible (@bibles) {
 		$self->dic->logger->info(sprintf('Backend cache warmup translation %s starting', $bible->translation));
 		my @books = shuffle(@{ $bible->books() });
@@ -189,6 +202,8 @@ sub __warmBackendCaches {
 			foreach my $chapterOrdinal (@chapterOrdinals) {
 				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
 				my @verseOrdinals = shuffle(1 .. $chapter->verseCount);
+				my $verseCount = scalar(@verseOrdinals);
+				my $verseIndex = 0;
 				$self->dic->logger->trace(sprintf(
 					'Backend cache warmup translation %s book %s chapter %d starting (%d verses)',
 					$bible->translation,
@@ -197,11 +212,27 @@ sub __warmBackendCaches {
 					$chapter->verseCount,
 				));
 				foreach my $verseOrdinal (@verseOrdinals) {
+					$verseIndex++;
 					my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 					$verse->ordinalAbsolute;
 					$verse->text;
 					$verse->emotion;
 					$verse->tones;
+					$processedVerses++;
+					if ($verseIndex == 1 || $verseIndex == $verseCount || ($verseIndex % 1000) == 0) {
+						my $overallPercent = ($totalVerses > 0) ? int((100 * $processedVerses) / $totalVerses) : 100;
+						if ($overallPercent != $lastPercent) {
+							$lastPercent = $overallPercent;
+							$self->dic->logger->info(sprintf(
+								'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
+								$overallPercent,
+								$bible->translation,
+								$book->shortNameRaw,
+								$chapterOrdinal,
+								$verseOrdinal,
+							));
+						}
+					}
 				}
 			}
 		}
