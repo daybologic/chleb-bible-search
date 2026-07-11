@@ -139,6 +139,7 @@ sub __kickOffWarmup {
 	my ($self) = @_;
 
 	my @bibles = shuffle($self->__library->__getBible({ translations => ['all'] }));
+	$self->dic->logger->info(sprintf('Backend cache warmup spawning %d translation child(ren)', scalar(@bibles)));
 	foreach my $bible (@bibles) {
 		my $pid = fork();
 		if (!defined($pid)) {
