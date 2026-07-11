@@ -67,6 +67,7 @@ has dataDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDataDir)
 has cacheDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeCacheDir);
 
 has __bookInfoCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __bookInfoDataCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseOrdinalCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseKeyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
@@ -150,10 +151,10 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	return $self->__bookInfoCache->{$translation} if ($self->__bookInfoCache->{$translation});
 
 	if (my $cached = $self->__sharedCacheGet('books', $translation)) {
-		return $self->__bookInfoCache->{$translation} = $cached;
+		return $self->__bookInfoCache->{$translation} = $self->__makeBooksFromRows($cached);
 	}
 
-	my @books = ( );
+	my @bookRows = ( );
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT book.id, book.code, book.translation, book.testament, book.ordinal,
 		       book.chapter_count
@@ -165,21 +166,36 @@ SQL
 	my $bookIndex = 0;
 	while (my $row = $sth->fetchrow_hashref()) {
 		my $shortNameRaw = $row->{code};
-		$books[$bookIndex] = Chleb::Bible::Book->new({
-			bible      => $self->bible,
-			ordinal    => $row->{ordinal} + 0,
+		$bookRows[$bookIndex] = {
+			ordinal      => $row->{ordinal} + 0,
 			shortNameRaw => $shortNameRaw,
-			longName   => $self->__bookLongName($shortNameRaw),
+			longName     => $self->__bookLongName($shortNameRaw),
 			chapterCount => $row->{chapter_count} + 0,
-			verseCount => $self->__bookVerseCount($row->{id}),
-			testament => Chleb::Type::Testament->createFromBackendValue($row->{testament}),
-		});
+			verseCount   => $self->__bookVerseCount($row->{id}),
+			testament    => $row->{testament},
+		};
 		$bookIndex++;
 	}
 
-	$self->__bookInfoCache->{$translation} = \@books;
-	$self->__sharedCacheSet('books', $translation, \@books);
+	$self->__bookInfoCache->{$translation} = $self->__makeBooksFromRows(\@bookRows);
+	$self->__sharedCacheSet('books', $translation, \@bookRows);
 	return $self->__bookInfoCache->{$translation};
+}
+
+sub __makeBooksFromRows {
+	my ($self, $rows) = @_;
+	my @books = map {
+		Chleb::Bible::Book->new({
+			bible        => $self->bible,
+			ordinal      => $_->{ordinal},
+			shortNameRaw => $_->{shortNameRaw},
+			longName     => $_->{longName},
+			chapterCount => $_->{chapterCount},
+			verseCount   => $_->{verseCount},
+			testament    => Chleb::Type::Testament->createFromBackendValue($_->{testament}),
+		});
+	} @{ $rows // [ ] };
+	return \@books;
 }
 
 sub getOrdinalByVerseKey {
