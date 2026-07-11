@@ -185,7 +185,7 @@ sub __warmBackendCaches {
 		}
 	}
 
-	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s)', scalar(@bibles)));
+	$self->dic->logger->info(sprintf('Backend cache warmup started for %d translation(s)', scalar(@bibles)));
 	$self->dic->logger->debug(sprintf('Backend cache warmup will process %d verse(s)', $totalVerses));
 	my $processedVerses = 0;
 	my $lastPercent = -1;
@@ -238,7 +238,7 @@ sub __warmBackendCaches {
 		}
 		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s completed', $bible->translation));
 	}
-	$self->dic->logger->info('Backend cache warmup completed');
+	$self->dic->logger->info('Backend cache warmup stopped');
 
 	return;
 }
