@@ -300,6 +300,20 @@ sub getVerseDataByKey {
 		$self->__verseTextCache->{$cacheKey} = $cached;
 		return $cached;
 	}
+	if (my $chapterRows = $self->__chapterVerseTextCache->{join(':', $translation, $bookShortName, $chapterNumber)}) {
+		foreach my $row (@{ $chapterRows }) {
+			my $rowKey = join(':', $translation, $bookShortName, $chapterNumber, $row->{verse_ordinal} + 0);
+			$self->__verseTextCache->{$rowKey} = $row->{text} if (!exists($self->__verseTextCache->{$rowKey}));
+		}
+		return $self->__verseTextCache->{$cacheKey} if (exists($self->__verseTextCache->{$cacheKey}));
+	}
+	if (my $bookRows = $self->__bookVerseTextCache->{join(':', $translation, $bookShortName)}) {
+		foreach my $row (@{ $bookRows }) {
+			my $rowKey = join(':', $translation, $bookShortName, $row->{chapter_ordinal}, $row->{verse_ordinal});
+			$self->__verseTextCache->{$rowKey} = $row->{text} if (!exists($self->__verseTextCache->{$rowKey}));
+		}
+		return $self->__verseTextCache->{$cacheKey} if (exists($self->__verseTextCache->{$cacheKey}));
+	}
 
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT verse.text
@@ -340,6 +354,10 @@ SQL
 	$sth->execute($self->bible->translation, $bookShortName, $chapterNumber);
 	my $rows = $sth->fetchall_arrayref({});
 	$self->__chapterVerseTextCache->{$cacheKey} = $rows;
+	foreach my $row (@{ $rows }) {
+		my $rowKey = join(':', $self->bible->translation, $bookShortName, $chapterNumber, $row->{verse_ordinal} + 0);
+		$self->__verseTextCache->{$rowKey} = $row->{text};
+	}
 	$self->__sharedCacheSet('chaptertext', $cacheKey, $rows);
 	return $rows;
 }
@@ -371,6 +389,8 @@ SQL
 		my $chapterOrdinal = $row->{chapter_ordinal} + 0;
 		my $verseOrdinal = $row->{verse_ordinal} + 0;
 		my $bookOrdinal = $row->{book_ordinal} + 0;
+		my $rowKey = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
+		$self->__verseTextCache->{$rowKey} = $row->{text};
 		$self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterOrdinal}->{$verseOrdinal} = $bookOrdinal;
 		$self->__verseKeyOrdinalCache->{$translation}->{__ordinalToKey}->{$bookOrdinal} = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
 	}
