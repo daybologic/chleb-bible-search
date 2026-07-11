@@ -52,7 +52,6 @@ Readonly my $FILE_VERSION => 13;
 Readonly my $OT_COUNT => 39;
 
 my %BOOK_NAMES;
-my %SENTIMENT_DATA;
 
 has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
@@ -65,6 +64,13 @@ has cachePath => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeCacheP
 has dataDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDataDir);
 
 has cacheDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeCacheDir);
+
+has __bookInfoCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __verseOrdinalCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __verseKeyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __verseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __verseKeyByBookCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 
 sub __makeCompressedPath {
 	my ($self) = @_;
@@ -132,6 +138,8 @@ sub BUILD {
 
 sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	my ($self) = @_;
+	my $translation = $self->bible->translation;
+	return $self->__bookInfoCache->{$translation} if ($self->__bookInfoCache->{$translation});
 
 	my @books = ( );
 	my $sth = $self->data->prepare(<<'SQL');
@@ -157,13 +165,16 @@ SQL
 		$bookIndex++;
 	}
 
-	return \@books;
+	$self->__bookInfoCache->{$translation} = \@books;
+	return $self->__bookInfoCache->{$translation};
 }
 
 sub getOrdinalByVerseKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $key, 4);
 	return 0 unless (defined($verseNumber));
+	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
+	return $self->__verseOrdinalCache->{$cacheKey} if (exists($self->__verseOrdinalCache->{$cacheKey}));
 
 	my $sth = $self->data->prepare(<<'SQL');
 		WITH ordered_verses AS (
@@ -188,7 +199,9 @@ sub getOrdinalByVerseKey {
 SQL
 	$sth->execute($translation, $bookShortName, $chapterNumber, $verseNumber);
 	my ($ordinal) = $sth->fetchrow_array();
-	return $ordinal // 0;
+	$ordinal //= 0;
+	$self->__verseOrdinalCache->{$cacheKey} = $ordinal;
+	return $ordinal;
 }
 
 sub getVerseKeyByOrdinal {
@@ -196,6 +209,9 @@ sub getVerseKeyByOrdinal {
 	return if (!defined($ordinal));
 	$ordinal = $self->__verseCount() + $ordinal + 1 if ($ordinal < 0);
 	return if ($ordinal < 1 || $ordinal > $self->__verseCount());
+	my $translation = $self->bible->translation;
+	my $cacheKey = join(':', $translation, $ordinal);
+	return $self->__verseKeyCache->{$cacheKey} if (exists($self->__verseKeyCache->{$cacheKey}));
 
 	my $sth = $self->data->prepare(<<'SQL');
 		WITH ordered_verses AS (
@@ -216,13 +232,17 @@ SQL
 	$sth->execute($ordinal - 1);
 	my $row = $sth->fetchrow_arrayref();
 	return unless ($row);
-	return join(':', @$row);
+	my $key = join(':', @$row);
+	$self->__verseKeyCache->{join(':', $translation, $ordinal)} = $key;
+	return $key;
 }
 
 sub getVerseDataByKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $key, 4);
 	return unless (defined($verseNumber));
+	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
+	return $self->__verseTextCache->{$cacheKey} if (exists($self->__verseTextCache->{$cacheKey}));
 
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT verse.text
@@ -236,6 +256,7 @@ sub getVerseDataByKey {
 SQL
 	$sth->execute($translation, $bookShortName, $chapterNumber, $verseNumber);
 	my ($text) = $sth->fetchrow_array();
+	$self->__verseTextCache->{$cacheKey} = $text if (defined($text));
 	return $text;
 }
 
@@ -243,6 +264,8 @@ sub getVerseKeyByBookVerseKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $ordinal) = split(m/:/, $key, 3);
 	return unless (defined($ordinal));
+	my $cacheKey = join(':', $translation, $bookShortName, $ordinal);
+	return $self->__verseKeyByBookCache->{$cacheKey} if (exists($self->__verseKeyByBookCache->{$cacheKey}));
 
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT book.translation, book.code, chapter.ordinal, verse.ordinal_relative_to_chapter
@@ -258,7 +281,9 @@ SQL
 	$sth->execute($translation, $bookShortName, $ordinal);
 	my $row = $sth->fetchrow_arrayref();
 	return unless ($row);
-	return join(':', @$row);
+	my $verseKey = join(':', @$row);
+	$self->__verseKeyByBookCache->{$cacheKey} = $verseKey;
+	return $verseKey;
 }
 
 sub getBookInfoByShortName {
@@ -315,6 +340,7 @@ sub getVerseCount {
 
 sub __bookLongName {
 	my ($self, $shortNameRaw) = @_;
+	return $BOOK_NAMES{$shortNameRaw} // $shortNameRaw if (exists($BOOK_NAMES{$shortNameRaw}));
 	if (!%BOOK_NAMES) {
 		my $path = join('/', $self->dataDir, 'static', 'kjv.cvs');
 		my $fh = IO::File->new($path, 'r') or die(sprintf("Failed to open '%s' -- %s", $path, $ERRNO));
@@ -332,8 +358,11 @@ sub __bookLongName {
 
 sub __bookVerseCount {
 	my ($self, $bookId) = @_;
+	return $self->__bookInfoCache->{"versecount:$bookId"} if (exists($self->__bookInfoCache->{"versecount:$bookId"}));
 	my ($count) = $self->data->selectrow_array('SELECT COUNT(*) FROM verse WHERE book_id = ?', undef, $bookId);
-	return $count + 0;
+	$count += 0;
+	$self->__bookInfoCache->{"versecount:$bookId"} = $count;
+	return $count;
 }
 
 sub __sentimentByOrdinal {
@@ -346,21 +375,24 @@ sub __sentimentByOrdinal {
 
 sub __verseCount {
 	my ($self) = @_;
+	return $self->__bookInfoCache->{"versecount:total"} if (exists($self->__bookInfoCache->{"versecount:total"}));
 	my ($count) = $self->data->selectrow_array('SELECT COUNT(*) FROM verse');
-	return $count + 0;
+	$count += 0;
+	$self->__bookInfoCache->{"versecount:total"} = $count;
+	return $count;
 }
 
 sub __sentimentData {
 	my ($self) = @_;
 	my $translation = $self->bible->translation;
-	return $SENTIMENT_DATA{$translation} if ($SENTIMENT_DATA{$translation});
+	return $self->__sentimentCache->{$translation} if ($self->__sentimentCache->{$translation});
 
 	my $path = join('/', $self->dataDir, 'static', 'emotion', $translation . '.json');
 	my $fh = IO::File->new($path, 'r') or die(sprintf("Failed to open '%s' -- %s", $path, $ERRNO));
 	my $text = do { local $/; <$fh> };
 	$fh->close();
-	$SENTIMENT_DATA{$translation} = decode_json($text);
-	return $SENTIMENT_DATA{$translation};
+	$self->__sentimentCache->{$translation} = decode_json($text);
+	return $self->__sentimentCache->{$translation};
 }
 
 sub __bookVerseCounts {
