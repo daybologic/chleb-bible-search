@@ -97,7 +97,6 @@ sub BUILD {
 	$self->__removeUptime();
 	$self->__getUptime(); # set startup time as soon as possible
 	$self->title();
-	$self->__kickOffWarmup();
 
 	return;
 }
@@ -135,7 +134,7 @@ sub title {
 	return;
 }
 
-sub __kickOffWarmup {
+sub kickOffWarmup {
 	my ($self) = @_;
 
 	my @bibles = shuffle($self->__library->__getBible({ translations => ['all'] }));
