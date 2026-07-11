@@ -118,7 +118,7 @@ clean ::
 # Build the generated Bible data before normal build and test targets.
 all :: data
 
-data :: pure_all
+data ::
 	cd data && $(MAKE)
 
 # Extend test target
