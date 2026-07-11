@@ -385,15 +385,27 @@ sub fetch {
 
 	$book = $self->resolveBook($book);
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
-	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+	my $result;
+	if (defined($verseOrdinal)) {
+		$result = $chapter->getVerseByOrdinal($verseOrdinal);
+	} else {
+		$result = $chapter->getVerses();
+	}
 
 	my $endTiming = Time::HiRes::time();
 	my $msec = int(1000 * ($endTiming - $startTiming));
 
-	$self->dic->logger->debug(sprintf('%s sought in %dms', $verse->toString(), $msec));
-	$verse->msec($msec);
+	if (ref($result) eq 'ARRAY') {
+		foreach my $verse (@{ $result }) {
+			$verse->msec($msec);
+		}
+		$self->dic->logger->debug(sprintf('%s sought in %dms', $chapter->toString(), $msec));
+	} else {
+		$self->dic->logger->debug(sprintf('%s sought in %dms', $result->toString(), $msec));
+		$result->msec($msec);
+	}
 
-	return $verse;
+	return $result;
 }
 
 =item C<TO_JSON()>
