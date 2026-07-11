@@ -9,6 +9,7 @@ Build-Depends-Indep:
  libdatetime-perl,
  libdatetime-format-strptime-perl,
  libcache-memcached-perl,
+ libdbi-perl,
  libdevel-cover-perl,
  libdigest-crc-perl,
  libdigest-sha-perl,

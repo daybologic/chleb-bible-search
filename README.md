@@ -11,9 +11,9 @@ The backend Perl library is also designed to be easily integrated with applicati
 
 The service also provides a deterministic verse of the day lookup.
 
-For Debian packaging builds, `libdbd-sqlite3-perl` is required at build time so the
-SQLite backend can be compiled and validated, but it is not a runtime dependency
-of the installed core service package.
+For Debian packaging builds, `libdbi-perl` and `libdbd-sqlite3-perl` are required
+at build time so the SQLite backend can be compiled and validated, but they are
+not runtime dependencies of the installed core service package.
 
 ## Documentation
 
