@@ -80,6 +80,7 @@ WriteMakefile(
 	PREREQ_PM => {
 		'Cache::Memcached' => 0,
 		'DBI'              => 0,
+		'DBD::SQLite'      => 0,
 		'Moose'            => 0,
 		'Test::MockModule' => 0,
 		'Test::More'       => 0,
