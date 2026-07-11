@@ -138,17 +138,29 @@ sub title {
 sub __kickOffWarmup {
 	my ($self) = @_;
 
-	my $pid = fork();
-	return if (!defined($pid) || $pid != 0);
+	my @bibles = shuffle($self->__library->__getBible({ translations => ['all'] }));
+	foreach my $bible (@bibles) {
+		my $pid = fork();
+		if (!defined($pid)) {
+			$self->dic->logger->warn(sprintf(
+				'Backend cache warmup fork failed for translation %s',
+				$bible->translation,
+			));
+			next;
+		}
 
-	eval {
-		$self->__warmBackendCaches();
-	};
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->warn("Backend cache warmup failed: $evalError");
+		next if ($pid != 0);
+
+		eval {
+			$self->__warmBackendCaches($bible);
+		};
+		if (my $evalError = $EVAL_ERROR) {
+			$self->dic->logger->warn("Backend cache warmup failed for translation " . $bible->translation . ": $evalError");
+		}
+
+		_exit(0);
 	}
 
-	_exit(0);
 	return;
 }
 
@@ -172,8 +184,8 @@ sub __library {
 }
 
 sub __warmBackendCaches {
-	my ($self) = @_;
-	my @bibles = shuffle($self->__library->__getBible({ translations => ['all'] }));
+	my ($self, $warmBible) = @_;
+	my @bibles = defined($warmBible) ? ($warmBible) : shuffle($self->__library->__getBible({ translations => ['all'] }));
 	my $totalVerses = 0;
 
 	foreach my $bible (@bibles) {
