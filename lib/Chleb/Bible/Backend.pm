@@ -504,7 +504,7 @@ sub __sharedCacheSet {
 	return unless ($self->__sharedCacheAvailable);
 
 	eval {
-		$self->__sharedCacheClient->set($self->__sharedCacheKey($kind, $key), $value, 3600);
+		$self->__sharedCacheClient->set($self->__sharedCacheKey($kind, $key), $value, 0);
 	};
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->warn("Memcached backend cache set failed for $kind: $evalError");
