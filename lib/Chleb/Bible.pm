@@ -443,8 +443,8 @@ with a back-reference to ourselves (this object).
 sub __makeBackend {
 	my ($self) = @_;
 
-	return Chleb::Bible::Backend->new({
-		bible => $self,
+	return $self->dic->backend($self->translation, sub {
+		Chleb::Bible::Backend->new({ bible => $self });
 	});
 }
 

@@ -139,6 +139,8 @@ called L</_makeErrorMapper()>.
 
 has errorMapper => (is => 'rw', lazy => 1, builder => '_makeErrorMapper');
 
+has __backendCache => (is => 'ro', isa => 'HashRef', default => sub { {} });
+
 =item C<configPaths>
 
 The paths in which we look for config files, defaulting to L</@DEFAULT_PATHS>.
@@ -267,6 +269,42 @@ sub __makePathsFor {
 	}
 
 	return \@fullPaths;
+}
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<backend($translation, $factory)>
+
+Returns the cached L<Chleb::Bible::Backend> for C<$translation>.  On the first
+call for a given translation the C<$factory> code reference is invoked to
+construct the instance; every subsequent call within the same process returns
+the previously constructed object without decompressing or probing the cache
+file again.
+
+=cut
+
+sub backend {
+	my ($self, $translation, $factory) = @_;
+	$self->__backendCache->{$translation} //= $factory->();
+	return $self->__backendCache->{$translation};
+}
+
+=item C<clearBackendCache()>
+
+Discards all cached L<Chleb::Bible::Backend> instances.  Intended for use in
+tests that need a fresh backend (e.g. after swapping data directories or
+forcing a re-decompress).
+
+=cut
+
+sub clearBackendCache {
+	my ($self) = @_;
+	%{ $self->__backendCache } = ();
+	return;
 }
 
 =back
