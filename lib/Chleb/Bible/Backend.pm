@@ -308,6 +308,10 @@ sub getChapterVerseDataByKey {
 	my ($self, $bookShortName, $chapterNumber) = @_;
 	my $cacheKey = join(':', $self->bible->translation, $bookShortName, $chapterNumber);
 	return $self->__chapterVerseTextCache->{$cacheKey} if (exists($self->__chapterVerseTextCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('chaptertext', $cacheKey)) {
+		$self->__chapterVerseTextCache->{$cacheKey} = $cached;
+		return $cached;
+	}
 
 	my $sth = $self->data->prepare(<<'SQL');
 		SELECT verse.ordinal_relative_to_chapter AS verse_ordinal, verse.text
@@ -322,6 +326,7 @@ SQL
 	$sth->execute($self->bible->translation, $bookShortName, $chapterNumber);
 	my $rows = $sth->fetchall_arrayref({});
 	$self->__chapterVerseTextCache->{$cacheKey} = $rows;
+	$self->__sharedCacheSet('chaptertext', $cacheKey, $rows);
 	return $rows;
 }
 
