@@ -62,6 +62,7 @@ use HTTP::Status qw(:constants);
 use IO::File;
 use JSON;
 use Log::Log4perl::MDC;
+use List::Util qw(shuffle);
 use Readonly;
 use POSIX qw(_exit);
 use Sys::Hostname;
@@ -172,29 +173,30 @@ sub __library {
 
 sub __warmBackendCaches {
 	my ($self) = @_;
-	my @bibles = $self->__library->__getBible({ translations => ['all'] });
+	my @bibles = shuffle($self->__library->__getBible({ translations => ['all'] }));
 
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s)', scalar(@bibles)));
 	foreach my $bible (@bibles) {
 		$self->dic->logger->info(sprintf('Backend cache warmup translation %s starting', $bible->translation));
-		$bible->books();
-		foreach my $book (@{ $bible->books }) {
+		my @books = shuffle(@{ $bible->books() });
+		foreach my $book (@books) {
 			$self->dic->logger->debug(sprintf(
 				'Backend cache warmup translation %s book %s starting',
 				$bible->translation,
 				$book->shortNameRaw,
 			));
-			for (my $chapterOrdinal = 1; $chapterOrdinal <= $book->chapterCount; $chapterOrdinal++) {
+			my @chapterOrdinals = shuffle(1 .. $book->chapterCount);
+			foreach my $chapterOrdinal (@chapterOrdinals) {
 				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
-				my $verseCount = $chapter->verseCount;
+				my @verseOrdinals = shuffle(1 .. $chapter->verseCount);
 				$self->dic->logger->trace(sprintf(
 					'Backend cache warmup translation %s book %s chapter %d starting (%d verses)',
 					$bible->translation,
 					$book->shortNameRaw,
 					$chapterOrdinal,
-					$verseCount,
+					$chapter->verseCount,
 				));
-				for (my $verseOrdinal = 1; $verseOrdinal <= $verseCount; $verseOrdinal++) {
+				foreach my $verseOrdinal (@verseOrdinals) {
 					my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
 					$verse->ordinalAbsolute;
 					$verse->text;
