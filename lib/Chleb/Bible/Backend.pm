@@ -104,7 +104,10 @@ sub __makeCachePath {
 			$needsRefresh = 1 if ($badOrdinal);
 			$dbh->disconnect();
 		};
-		$needsRefresh = 1 if ($EVAL_ERROR);
+		if (my $evalError = $EVAL_ERROR) {
+			$self->dic->logger->warn("Cache refresh probe failed for " . $self->cachePath . ": $evalError");
+			$needsRefresh = 1;
+		}
 	}
 
 	unless (!$needsRefresh) {
@@ -431,7 +434,8 @@ sub __makeSharedCacheClient {
 		require Cache::Memcached;
 		Cache::Memcached->import();
 	};
-	if ($EVAL_ERROR) {
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Cannot load Cache::Memcached for backend cache: $evalError");
 		return;
 	}
 
@@ -446,7 +450,10 @@ sub __makeSharedCacheClient {
 			compress_threshold => 10_000,
 		});
 	};
-	return if ($EVAL_ERROR);
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Cannot create memcached client for backend cache: $evalError");
+		return;
+	}
 
 	return $client;
 }
@@ -467,7 +474,10 @@ sub __makeSharedCacheAvailable {
 	eval {
 		$ok = $self->__sharedCacheClient->set($probeKey, 1, 5);
 	};
-	return 0 if ($EVAL_ERROR);
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Memcached backend cache unavailable during probe: $evalError");
+		return 0;
+	}
 
 	return $ok ? 1 : 0;
 }
@@ -480,7 +490,8 @@ sub __sharedCacheGet {
 	eval {
 		$result = $self->__sharedCacheClient->get($self->__sharedCacheKey($kind, $key));
 	};
-	if ($EVAL_ERROR) {
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Memcached backend cache get failed for $kind: $evalError");
 		$self->__sharedCacheAvailable(0);
 		return;
 	}
@@ -495,7 +506,8 @@ sub __sharedCacheSet {
 	eval {
 		$self->__sharedCacheClient->set($self->__sharedCacheKey($kind, $key), $value, 3600);
 	};
-	if ($EVAL_ERROR) {
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Memcached backend cache set failed for $kind: $evalError");
 		$self->__sharedCacheAvailable(0);
 		return;
 	}
