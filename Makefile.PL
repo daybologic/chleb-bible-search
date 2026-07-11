@@ -114,8 +114,14 @@ clean ::
 	cd data/ && make clean
 	cd info/ && make clean
 
+# Build the generated Bible data before normal build and test targets.
+all :: data
+
+data :: pure_all
+	cd data && $(MAKE)
+
 # Extend test target
-test :: http-test
+test :: data http-test
 
     ~;
 }
