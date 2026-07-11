@@ -1797,6 +1797,7 @@ sub handleSessionToken {
 			Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 				HTTP_TOO_MANY_REQUESTS,
 				'Slow down, or respect the sessionToken cookie', # TODO: Make a web page explaining this & link to it
+				{ retryAfterSeconds => 1 },
 			));
 		}
 
@@ -1831,16 +1832,20 @@ sub handleSessionToken {
 	$self->dic->logger->trace('session token found: ' . $sessionToken->toString());
 
 	if ($self->__damper->dampenChurn($ipAddress, $sessionToken->value)) {
+		my $retryAfterSeconds = $self->dic->config->get('rate_limit', 'session_churn_window_seconds', 300);
 		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 			HTTP_TOO_MANY_REQUESTS,
 			'Too many session tokens from this IP address',
+			{ retryAfterSeconds => $retryAfterSeconds },
 		));
 	}
 
 	if ($self->__damper->dampenSession($sessionToken->value)) {
+		my $retryAfterSeconds = $self->dic->config->get('rate_limit', 'session_window_seconds', 60);
 		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 			HTTP_TOO_MANY_REQUESTS,
 			'Request rate exceeded for this session',
+			{ retryAfterSeconds => $retryAfterSeconds },
 		));
 	}
 

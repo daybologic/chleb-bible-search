@@ -272,6 +272,11 @@ sub handleException {
 			$server->dic->logger->debug('Returning ' . $exception->toString());
 			if (is_redirect($exception->statusCode)) {
 				return redirect $exception->location, $exception->statusCode;
+			} elsif (defined($exception->retryAfterSeconds)) {
+				status $exception->statusCode;
+				content_type $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API;
+				response_header 'Retry-After' => $exception->retryAfterSeconds;
+				return halt($exception->toJsonApiErrorDocument());
 			} else {
 				send_error($exception->description, $exception->statusCode);
 			}

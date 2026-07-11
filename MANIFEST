@@ -5,6 +5,7 @@
 .github/workflows/pr-ai-notes.yml
 .gitignore
 .gitmodules
+.perlcriticrc
 bin/bugs/4e03075-wholeword-boolean-swagger/run.sh
 bin/core/app.psgi
 bin/core/run.sh
