@@ -49,6 +49,11 @@ Readonly my $DATA_DIR => 'data';
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 13;
 
+Readonly my %TRANSLATION_META => (
+	kjv => { year => 1611, language => 'en' },
+	asv => { year => 1901, language => 'en' },
+);
+
 Readonly my %BOOK_ORDINAL => (
 	Gen   => 1,
 	Exo   => 2,
@@ -157,7 +162,9 @@ CREATE TABLE IF NOT EXISTS book (
 	translation CHAR(8) NOT NULL,
 	testament CHAR(1) NOT NULL CHECK (testament IN ('O', 'N')),
 	ordinal INTEGER NOT NULL,
-	chapter_count INTEGER NOT NULL
+	chapter_count INTEGER NOT NULL,
+	FOREIGN KEY (translation) REFERENCES translation(code),
+	UNIQUE (translation, code)
 )
 SQL
 
@@ -168,7 +175,10 @@ CREATE TABLE IF NOT EXISTS chapter (
 	translation CHAR(8) NOT NULL,
 	book_code CHAR(8) NOT NULL,
 	ordinal INTEGER NOT NULL,
-	verse_count INTEGER NOT NULL
+	verse_count INTEGER NOT NULL,
+	FOREIGN KEY (book_id) REFERENCES book(id),
+	FOREIGN KEY (translation) REFERENCES translation(code),
+	UNIQUE (book_id, ordinal)
 )
 SQL
 
@@ -179,9 +189,60 @@ CREATE TABLE IF NOT EXISTS verse (
 	chapter_id INTEGER NOT NULL,
 	ordinal_relative_to_book INTEGER NOT NULL,
 	ordinal_relative_to_chapter INTEGER NOT NULL,
-	text TEXT NOT NULL
+	text TEXT NOT NULL,
+	FOREIGN KEY (book_id) REFERENCES book(id),
+	FOREIGN KEY (chapter_id) REFERENCES chapter(id),
+	UNIQUE (chapter_id, ordinal_relative_to_chapter)
 )
 SQL
+
+	return;
+}
+
+sub __createIndexes {
+	my ($fileHandle) = @_;
+
+	# The UNIQUE constraints above already index book(translation, code),
+	# chapter(book_id, ordinal) and verse(chapter_id, ordinal_relative_to_chapter);
+	# these cover the remaining hot lookups.
+	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_verse_book ON verse(book_id, ordinal_relative_to_book)');
+	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_book_trans ON book(translation, ordinal)');
+
+	$fileHandle->commit();
+
+	return;
+}
+
+sub __populateCounts {
+	my ($fileHandle) = @_;
+
+	# ordinal_relative_to_book: number each verse sequentially within its book,
+	# in canonical order (by chapter ordinal, then verse ordinal).
+	$fileHandle->do(<<'SQL');
+		UPDATE verse SET ordinal_relative_to_book = ranked.seq
+		FROM (
+			SELECT v.id AS vid,
+			       ROW_NUMBER() OVER (
+			           PARTITION BY v.book_id
+			           ORDER BY c.ordinal, v.ordinal_relative_to_chapter
+			       ) AS seq
+			FROM verse v
+			JOIN chapter c ON c.id = v.chapter_id
+		) AS ranked
+		WHERE verse.id = ranked.vid
+SQL
+
+	$fileHandle->do(<<'SQL');
+		UPDATE chapter SET verse_count =
+			(SELECT COUNT(*) FROM verse WHERE verse.chapter_id = chapter.id)
+SQL
+
+	$fileHandle->do(<<'SQL');
+		UPDATE book SET chapter_count =
+			(SELECT COUNT(*) FROM chapter WHERE chapter.book_id = book.id)
+SQL
+
+	$fileHandle->commit();
 
 	return;
 }
@@ -209,7 +270,9 @@ sub __writeTranslations {
 SQL
 
 	foreach my $translation (@$translations) {
-		$sth->execute($translation, 1066, 'en'); # FIXME: OK we know this is the wrong year
+		my $meta = $TRANSLATION_META{$translation}
+		    or die("No metadata (year/language) known for translation '$translation'");
+		$sth->execute($translation, $meta->{year}, $meta->{language});
 	}
 
 	$fileHandle->commit();
@@ -227,7 +290,7 @@ sub __uuid {
 
 sub __connect {
 	my ($fileName) = @_;
-	return DBI->connect(
+	my $dbh = DBI->connect(
 		"dbi:SQLite:dbname=${fileName}",
 		q{},
 		q{},
@@ -236,6 +299,14 @@ sub __connect {
 			AutoCommit => 0,
 		}
 	);
+
+	# Foreign-key enforcement is off by default in SQLite and is per-connection;
+	# it must be enabled before any transaction begins.
+	$dbh->{AutoCommit} = 1;
+	$dbh->do('PRAGMA foreign_keys = ON');
+	$dbh->{AutoCommit} = 0;
+
+	return $dbh;
 }
 
 sub __translationFileName {
@@ -282,6 +353,9 @@ sub main2 {
 		__processVerses($fileHandle, $translation);
 	}
 
+	__populateCounts($fileHandle);
+	__createIndexes($fileHandle);
+
 	$fileHandle->disconnect();
 
 	return EXIT_SUCCESS;
@@ -301,7 +375,7 @@ SQL
 		my $testament = $ordinal > $OT_COUNT ? 'N' : 'O';
 		my $id = __uuid('book');
 
-		my $chapterCount = 0; # FIXME: How can I know without two passes?
+		my $chapterCount = 0; # populated after load by __populateCounts()
 		$sthBook->execute($id, $bookShortName, $translation, $testament, $ordinal, $chapterCount);
 		$bookKeys{$bookKey} = $id;
 	}
@@ -323,7 +397,7 @@ SQL
 		my $id = __uuid('chapter');
 		my $bookId = $bookKeys{$bookKey};
 
-		my $verseCount = 0; # FIXME: How can I know without two passes?
+		my $verseCount = 0; # populated after load by __populateCounts()
 		$sthChapter->execute($id, $bookId, $translation, $bookShortName, $chapterOrdinal, $verseCount);
 		$chapterKeys{$chapterKey} = $id;
 	}
@@ -345,7 +419,11 @@ SQL
 	my $bookId = $bookKeys{$bookKey};
 	my $chapterId = $chapterKeys{$chapterKey};
 
-	$sthVerse->execute($id, $bookId, $chapterId, 0, 0, $verseText);
+	# ordinal_relative_to_chapter is the verse number from the key.
+	# ordinal_relative_to_book cannot be a running counter here because the
+	# input is ordered lexically by chapter (1, 10, 11, ... 2, 20), not
+	# canonically; it is derived after load by __populateCounts().
+	$sthVerse->execute($id, $bookId, $chapterId, 0, $verseNumber, $verseText);
 
 	return;
 }
