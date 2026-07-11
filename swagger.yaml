@@ -69,7 +69,7 @@ paths:
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
   /1/uptime:
     get:
       summary: Get server uptime
@@ -92,7 +92,7 @@ paths:
               schema:
                 type: string
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
   /1/ping:
     get:
       summary: Ping the server to check if it is alive
@@ -115,7 +115,7 @@ paths:
               schema:
                 type: string
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
   /1/version:
     get:
       summary: Get server version
@@ -140,7 +140,7 @@ paths:
         '403':
           description: Forbidden
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
   /1/random:
     get:
       summary: Random Verse
@@ -203,7 +203,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/Stats'
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Internal Server Error
         '502':
@@ -267,7 +267,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/Stats'
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Internal Server Error
         '502':
@@ -335,7 +335,7 @@ paths:
         '307':
           description: Temporary Redirect
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Internal Server Error
         '502':
@@ -407,7 +407,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/Stats'
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Internal Server Error
         '502':
@@ -505,7 +505,7 @@ paths:
         '400':
           description: Bad request
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Internal Server Error
         '502':
@@ -557,7 +557,7 @@ paths:
         '400':
           description: Bad request
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Internal Server Error
         '502':
@@ -621,7 +621,7 @@ paths:
         '404':
           description: Verse not found
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Internal Server Error
         '502':
@@ -691,7 +691,7 @@ paths:
         '404':
           description: Verse not found
         '429':
-          description: Rate-limited
+          $ref: '#/components/responses/RateLimited'
         '500':
           description: Internal Server Error
         '502':
@@ -701,7 +701,41 @@ paths:
         '504':
           description: Gateway Timeout
 components:
+  responses:
+    RateLimited:
+      description: Rate-limited
+      headers:
+        Retry-After:
+          description: Number of seconds the client should wait before retrying.
+          schema:
+            type: integer
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '#/components/schemas/JsonApiErrorDocument'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/JsonApiErrorDocument'
   schemas:
+    JsonApiErrorDocument:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/JsonApiError'
+    JsonApiError:
+      type: object
+      properties:
+        detail:
+          type: string
+          example: Request rate exceeded for this session
+        status:
+          type: string
+          example: "429"
+        title:
+          type: string
+          example: Too Many Requests
     Book:
       type: object
       properties:

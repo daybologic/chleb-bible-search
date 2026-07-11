@@ -103,6 +103,7 @@ Key files and directories:
 ## Testing Conventions
 
 - Unit tests live in `t/`.
+- New test scripts under `t/` must have a shebang and be marked executable.
 - Tests use `Test::Module::Runnable` with `setUp` and `tearDown` patterns.
 - Use `Chleb::DI::MockLogger` in tests when logging needs to be suppressed or
   captured.

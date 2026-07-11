@@ -5,6 +5,7 @@
 .github/workflows/pr-ai-notes.yml
 .gitignore
 .gitmodules
+.perlcriticrc
 bin/bugs/4e03075-wholeword-boolean-swagger/run.sh
 bin/core/app.psgi
 bin/core/run.sh
@@ -22,7 +23,6 @@ bin/demo/server-search.sh
 bin/demo/server-uptime.sh
 bin/demo/server-version.sh
 bin/demo/server-votd.sh
-bin/demo/server-walk-book-reverse.sh
 bin/demo/server-walk-book.sh
 bin/demo/socket-info.sh
 bin/demo/socket-lookup.sh
@@ -291,11 +291,15 @@ lib/Chleb/Constants.pm
 lib/Chleb/DI/Config.pm
 lib/Chleb/DI/Container.pm
 lib/Chleb/DI/MockLogger.pm
+lib/Chleb/DI/Time.pm
 lib/Chleb/Exception.pm
 lib/Chleb/Generated/.keep
 lib/Chleb/Generated/Info.pm
 lib/Chleb/Info.pm
 lib/Chleb/Server/Dancer2.pm
+lib/Chleb/Server/Dampen.pm
+lib/Chleb/Server/Dampen/Store/Memcached.pm
+lib/Chleb/Server/Dampen/Store/Memory.pm
 lib/Chleb/Server/MediaType.pm
 lib/Chleb/Server/MediaType/Args/ToString.pm
 lib/Chleb/Server/MediaType/Item.pm
@@ -338,6 +342,7 @@ t/Book_equals.t
 t/Book_getVerseByOrdinal.t
 t/Chleb_getBible.t
 t/Chleb_getTranslation.t
+t/DI_Time.t
 t/Chleb_isTestamentMatch.t
 t/Config_get.t
 t/Exception.t
@@ -353,6 +358,8 @@ t/Server_linkToVerse.t
 t/Server_Dancer2_previousSearchLimit.t
 t/Server_Dancer2_preferredTranslations.t
 t/Server_Dancer2_preferredWholeword.t
+t/Server_dampen.t
+t/Server_dampen_memcached.t
 t/Server_lookup.t
 t/Server_MediaType.t
 t/Server_MediaType_acceptToContentType.t

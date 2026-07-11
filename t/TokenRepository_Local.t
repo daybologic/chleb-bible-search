@@ -51,13 +51,11 @@ use Test::More 0.96;
 
 has dic => (is => 'rw', isa => 'Chleb::DI::Container');
 
-# TODO: We should use a mocked timer to avoid real sleeps to avoid this problem,
-# but it hasn't come up in the code-base very often yet.  Normally we don't have
-# to sleep.
 sub __time_ok {
 	my ($actual, $expected, $tolerance, $name) = @_;
 	$tolerance = 1 unless (defined($tolerance));
 	cmp_ok(abs($actual - $expected), '<=', $tolerance, $name);
+	return;
 }
 
 sub setUp {
@@ -65,6 +63,7 @@ sub setUp {
 
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->configPaths(['etc-local']);
+	$self->dic->time->set(2_000_000_000);
 	$self->sut(Chleb::Token::Repository::Local->new({ dic => $self->dic }));
 	$self->__mockLogger();
 
@@ -76,7 +75,7 @@ sub testSaveLoad {
 	plan tests => 3;
 
 	my $value;
-	my $now = time();
+	my $now = $self->dic->time->get();
 	$self->debug("now is $now");
 
 	subtest save => sub {
@@ -125,7 +124,7 @@ sub testSaveLoad {
 	};
 
 	$self->debug('sleeping until token expires (5s)');
-	sleep(5);
+	$self->dic->time->sleep(5);
 
 	subtest expired => sub {
 		plan tests => 2;

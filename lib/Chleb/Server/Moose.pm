@@ -53,6 +53,7 @@ use Chleb::Bible::Search::Query;
 use Chleb::DI::Container;
 use Chleb::Exception;
 use Chleb::Generated::Info;
+use Chleb::Server::Dampen;
 use Chleb::Server::MediaType;
 use Chleb::Type::Testament;
 use Chleb::Utils;
@@ -1044,7 +1045,7 @@ Return the number of seconds the server has been running.
 sub __getUptime {
 	my ($self) = @_;
 	my $uptimeFilePath = $self->__uptimeFilePath();
-	my $startTime = time();
+	my $startTime = $self->dic->time->get();
 	if (my $fh = IO::File->new($uptimeFilePath, 'r')) {
 		$startTime = <$fh>;
 		chomp($startTime);
@@ -1053,7 +1054,7 @@ sub __getUptime {
 		print($fh "$startTime\n");
 	}
 
-	return time() - $startTime;
+	return $self->dic->time->get() - $startTime;
 }
 
 sub __uptimeFilePath {
@@ -1741,25 +1742,24 @@ sub __removeUptime {
 	return;
 }
 
-# FIXME: Will leak memory over time, switch to a disk-based cache, or memcached
-# additionally, this is a per-process store right now, which is probably not effective enough.
-has __dampenTime => (isa => 'HashRef[Str]', is => 'rw', lazy => 1, default => sub {{}});
 has __warnedSessionToken => (is => 'rw', isa => 'Bool', default => 0);
 
-sub dampen {
-	my ($self) = @_;
-	my $ipAddress = Chleb::Server::Dancer2::_request()->address();
-	my $currentTime = time();
+=over
 
-	my $previousTime = $self->__dampenTime->{$ipAddress};
-	if ($previousTime && $previousTime == $currentTime) {
-		$self->dic->logger->warn(sprintf('Saw %s already this second, denying request', $ipAddress));
-		return 1;
-	}
+=item C<__damper>
 
-	$self->__dampenTime->{$ipAddress} = $currentTime;
-	return 0;
-}
+Instance of L<Chleb::Server::Dampen> that handles all rate-limiting logic.
+
+=back
+
+=cut
+
+has __damper => (
+	isa     => 'Chleb::Server::Dampen',
+	is      => 'ro',
+	lazy    => 1,
+	default => sub { Chleb::Server::Dampen->new(dic => $_[0]->dic) },
+);
 
 sub logRequest {
 	my ($self) = @_;
@@ -1793,10 +1793,11 @@ sub handleSessionToken {
 	my $sessionToken = Chleb::Server::Dancer2::_cookie('sessionToken');
 
 	if (!$sessionToken) {
-		if ($self->dampen()) {
+		if ($self->__damper->dampen($ipAddress)) {
 			Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 				HTTP_TOO_MANY_REQUESTS,
 				'Slow down, or respect the sessionToken cookie', # TODO: Make a web page explaining this & link to it
+				{ retryAfterSeconds => 1 },
 			));
 		}
 
@@ -1829,6 +1830,24 @@ sub handleSessionToken {
 
 	Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
 	$self->dic->logger->trace('session token found: ' . $sessionToken->toString());
+
+	if ($self->__damper->dampenChurn($ipAddress, $sessionToken->value)) {
+		my $retryAfterSeconds = $self->dic->config->get('rate_limit', 'session_churn_window_seconds', 300);
+		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
+			HTTP_TOO_MANY_REQUESTS,
+			'Too many session tokens from this IP address',
+			{ retryAfterSeconds => $retryAfterSeconds },
+		));
+	}
+
+	if ($self->__damper->dampenSession($sessionToken->value)) {
+		my $retryAfterSeconds = $self->dic->config->get('rate_limit', 'session_window_seconds', 60);
+		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
+			HTTP_TOO_MANY_REQUESTS,
+			'Request rate exceeded for this session',
+			{ retryAfterSeconds => $retryAfterSeconds },
+		));
+	}
 
 	if ($sessionToken->ipAddress ne $ipAddress) {
 		$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',

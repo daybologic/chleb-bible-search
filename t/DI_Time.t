@@ -1,3 +1,4 @@
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,65 +29,60 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-server:
-  uptime_file: cache/startup.txt
-#  admin_email: example@example.org
-#  admin_name: Unknown
-#  children: 30
-#  domain: chleb-api.example.org
-votd_exclude:
-  terms:
-    - fornication
-    - circumcision
-    - circumcised
-    - harlots
-  refs:
-    - Lev 20:13
-    - Gen 19:8
-    - Psa 137:9
-    - Judges 19:22-29
-    - Kefir 50:1
-    - Rev 1000:11
-    - Deu 22:21
-rate_limit:
-  backend: memcached
-  backend_memcached:
-    servers:
-      - 127.0.0.1:11211
-    prefix: chleb:dampen
-  session_window_seconds: 60    # rolling window size for session token holders
-  session_max_requests: 100     # max requests within that window
-  session_churn_window_seconds: 300  # lookback window for token-churn detection
-  session_churn_limit: 10       # distinct tokens from one IP before denying
-features:
-  facebook: on
-  sessions: on
-  twitter: on
-  version: on
-Dancer2:
-  public_dir: data/static/public
-session_tokens:
-  backend_jwt:
-    secret: replace-with-a-long-random-secret
-#  backend_local:
-#    dir: data/sessions
-#    dynamic_mkdir: true
-#  backend_redis:
-#    db: 1
-#    host: localhost:6379
-  load_order:
-#   - Local
-#   - Redis
-    - JWT
-  save_order:
-#   - Dummy
-#   - Local
-#   - Redis
-    - JWT
-  ttl: 1800
-facebook:
-  groupname: Chleb Bible Search (1268737414574145)
-  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
-twitter:
-  username: ChlebSearch
-  url: https://x.com/ChlebSearch
+package DITimeTests;
+use strict;
+use warnings;
+use Moose;
+
+use lib 'externals/libtest-module-runnable-perl/lib';
+
+extends 'Test::Module::Runnable';
+
+use Chleb::DI::Time;
+use POSIX qw(EXIT_SUCCESS);
+use Test::More 0.96;
+
+sub setUp {
+	my ($self) = @_;
+	$self->sut(Chleb::DI::Time->new());
+	return EXIT_SUCCESS;
+}
+
+sub testGetDefaultsToRealTime {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $before = CORE::time();
+	my $actual = $self->sut->get();
+	my $after = CORE::time();
+
+	cmp_ok($actual, '>=', $before, 'default time is not before call');
+	cmp_ok($actual, '<=', $after, 'default time is not after call');
+
+	return EXIT_SUCCESS;
+}
+
+sub testSetPinsTime {
+	my ($self) = @_;
+	plan tests => 2;
+
+	is($self->sut->set(1234), 1234, 'set returns mocked time');
+	is($self->sut->get(), 1234, 'get returns mocked time');
+
+	return EXIT_SUCCESS;
+}
+
+sub testSleepAdvancesMockedTime {
+	my ($self) = @_;
+	plan tests => 2;
+
+	$self->sut->set(1234);
+	is($self->sut->sleep(5), 1239, 'sleep returns advanced mocked time');
+	is($self->sut->get(), 1239, 'sleep updates mocked time');
+
+	return EXIT_SUCCESS;
+}
+
+__PACKAGE__->meta->make_immutable;
+
+exit(DITimeTests->new->run());

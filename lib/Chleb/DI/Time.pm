@@ -1,4 +1,3 @@
-#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,35 +28,73 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -e
+package Chleb::DI::Time;
+use strict;
+use warnings;
+use Moose;
 
-if [ -z "$CHLEB_SCHEME" ]; then
-	CHLEB_SCHEME=https
-fi
+=head1 NAME
 
-if [ -z "$CHLEB_HOSTNAME" ]; then
-	CHLEB_HOSTNAME=chleb-api.daybologic.co.uk
-fi
+Chleb::DI::Time - mockable wall-clock time
 
-if [ -z "$CHLEB_PORT" ]; then
-	CHLEB_PORT=443
-fi
+=head1 DESCRIPTION
 
-set -u
+Central wall-clock service for code which would otherwise call C<time> or
+C<sleep> directly.  Tests may pin time with C<set()>; once pinned, C<get()>
+returns only the pinned value and C<sleep()> advances it without waiting.
 
-p="/1/lookup/rev/22/21"
-scheme=$CHLEB_SCHEME
-host=$CHLEB_HOSTNAME
-port=$CHLEB_PORT
-base="${scheme}://${host}:${port}"
+=cut
 
-now=`date '+%Y-%m-%dT09:00:00%%2B0100'`
+has __value => (is => 'rw', isa => 'Maybe[Num]', predicate => '__hasValue');
 
-while [ ! -z "$p" ]; do
-	json=$(curl --header 'Accept: application/json' -s "${base}${p}");
-	p=$(echo "$json" | jq -r .links.prev);
-	text=$(echo "$json" | jq -r .data[0].attributes.text);
-	echo "$text"
-done
+=head1 METHODS
 
-exit 0
+=over
+
+=item C<get()>
+
+Returns the mocked time if defined, otherwise returns C<CORE::time()>.
+
+=cut
+
+sub get {
+	my ($self) = @_;
+	return $self->__value if ($self->__hasValue && defined($self->__value));
+	return CORE::time();
+}
+
+=item C<set($value)>
+
+Sets and returns the mocked time value.
+
+=cut
+
+sub set {
+	my ($self, $value) = @_;
+	return $self->__value($value);
+}
+
+=item C<sleep($seconds)>
+
+If mocked time is defined, increments it by C<$seconds> and returns immediately.
+Otherwise, calls C<CORE::sleep>.
+
+=cut
+
+sub sleep { ## no critic (Subroutines::ProhibitBuiltinHomonyms)
+	my ($self, $seconds) = @_;
+
+	if ($self->__hasValue && defined($self->__value)) {
+		return $self->__value($self->__value + $seconds);
+	}
+
+	return CORE::sleep($seconds);
+}
+
+=back
+
+=cut
+
+__PACKAGE__->meta->make_immutable;
+
+1;

@@ -72,6 +72,7 @@ EOF
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => "$dir/main.yaml" }));
 	$self->dic->logger(Chleb::DI::MockLogger->new());
+	$self->dic->time->set(2_000_000_000);
 	$self->sut(Chleb::Token::Repository::JWT->new({ dic => $self->dic }));
 
 	return EXIT_SUCCESS;
@@ -90,7 +91,7 @@ sub testSaveLoad {
 	my ($self) = @_;
 	plan tests => 11;
 
-	my $now = time();
+	my $now = $self->dic->time->get();
 	my $token = $self->sut->create();
 	$token->ipAddress('127.0.0.1');
 	$token->userAgent('Unit Test');
@@ -159,7 +160,7 @@ sub testLoadExpired {
 	plan tests => 1;
 
 	my $token = $self->sut->create();
-	$token->expires(time() - 1);
+	$token->expires($self->dic->time->get() - 1);
 	$self->sut->save($token);
 
 	eval {

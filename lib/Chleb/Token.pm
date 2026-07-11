@@ -51,7 +51,8 @@ has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
 });
 
 has created => (is => 'rw', isa => 'Int', init_arg => 'now', lazy => 1, default => sub {
-	return time();
+	my ($self) = @_;
+	return $self->dic->time->get();
 });
 
 has modified => (is => 'rw', isa => 'Int', init_arg => 'now', lazy => 1, default => sub {
@@ -99,7 +100,8 @@ sub _generate {
 	my ($self) = @_;
 
 	my $sha = Digest::SHA->new(256);
-	return $sha->add($PID, time(), rand(time()))->hexdigest;
+	my $time = $self->dic->time->get();
+	return $sha->add($PID, $time, rand($time))->hexdigest;
 }
 
 sub _makeShortValue {
@@ -122,7 +124,7 @@ sub toString {
 
 sub expired {
 	my ($self) = @_;
-	return time() >= $self->expires;
+	return $self->dic->time->get() >= $self->expires;
 }
 
 sub TO_JSON {

@@ -43,6 +43,8 @@ has statusCode => (is => 'ro', isa => 'Int', default => 200);
 
 has location => (is => 'ro', isa => 'Str');
 
+has retryAfterSeconds => (is => 'ro', isa => 'Maybe[Int]');
+
 sub raise {
 	my ($class, $statusCode, $thing, $additional) = @_;
 
@@ -61,6 +63,18 @@ sub raise {
 	}
 
 	return $class->new(\%params);
+}
+
+sub toJsonApiErrorDocument {
+	my ($self) = @_;
+
+	my $error = {
+		status => q{} . $self->statusCode,
+		title  => status_message($self->statusCode) // 'Unknown',
+		detail => $self->description,
+	};
+
+	return { errors => [ $error ] };
 }
 
 sub toString {

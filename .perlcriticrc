@@ -1,0 +1,5 @@
+severity = stern
+color = 0
+profile-strictness = quiet
+
+[-Miscellanea::RequireRcsKeywords]
