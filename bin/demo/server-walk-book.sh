@@ -31,6 +31,31 @@
 
 set -e
 
+reverse=0
+
+usage() {
+	echo "Usage: $0 [-r]" >&2
+}
+
+while getopts 'r' opt; do
+	case "$opt" in
+	r)
+		reverse=1
+		;;
+	*)
+		usage
+		exit 2
+		;;
+	esac
+done
+
+shift $((OPTIND - 1))
+
+if [ "$#" -ne 0 ]; then
+	usage
+	exit 2
+fi
+
 if [ -z "$CHLEB_SCHEME" ]; then
 	CHLEB_SCHEME=https
 fi
@@ -43,19 +68,43 @@ if [ -z "$CHLEB_PORT" ]; then
 	CHLEB_PORT=443
 fi
 
+# Keep the default below the session rate limit.  Walking all 31,102 Bible
+# verses with this delay takes a little over six hours.
+if [ -z "$CHLEB_REQUEST_DELAY" ]; then
+	CHLEB_REQUEST_DELAY=0.7
+fi
+
 set -u
 
-p="/1/lookup/gen/1/1"
+if [ "$reverse" -eq 1 ]; then
+	p="/1/lookup/rev/22/21"
+	linkName=prev
+else
+	p="/1/lookup/gen/1/1"
+	linkName=next
+fi
+
 scheme=$CHLEB_SCHEME
 host=$CHLEB_HOSTNAME
 port=$CHLEB_PORT
+requestDelay=$CHLEB_REQUEST_DELAY
 base="${scheme}://${host}:${port}"
+cookieJar=$(mktemp)
 
-while [ ! -z "$p" ]; do
-	json=$(curl --header 'Accept: application/json' -s "${base}${p}");
-	p=$(echo "$json" | jq -r .links.next);
+cleanup() {
+	rm -f "$cookieJar"
+}
+
+trap cleanup EXIT HUP INT TERM
+
+while [ -n "$p" ] && [ "$p" != "null" ]; do
+	json=$(curl --cookie "$cookieJar" --cookie-jar "$cookieJar" --header 'Accept: application/json' -s "${base}${p}");
+	p=$(echo "$json" | jq -r ".links.${linkName}");
 	text=$(echo "$json" | jq -r .data[0].attributes.text);
 	echo "$text"
+	if [ -n "$p" ] && [ "$p" != "null" ]; then
+		sleep "$requestDelay"
+	fi
 done
 
 exit 0

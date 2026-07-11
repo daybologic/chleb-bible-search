@@ -22,7 +22,6 @@ bin/demo/server-search.sh
 bin/demo/server-uptime.sh
 bin/demo/server-version.sh
 bin/demo/server-votd.sh
-bin/demo/server-walk-book-reverse.sh
 bin/demo/server-walk-book.sh
 bin/demo/socket-info.sh
 bin/demo/socket-lookup.sh
