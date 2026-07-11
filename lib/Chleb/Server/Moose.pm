@@ -173,23 +173,39 @@ sub __library {
 sub __warmBackendCaches {
 	my ($self) = @_;
 	my @bibles = $self->__library->info()->bibles;
-	my %hotVerses = (
-		asv => [ 'Gen:1:1', 'Psa:23:1', 'Rev:22:21' ],
-		kjv => [ 'Gen:1:1', 'Psa:23:1', 'Rev:22:21' ],
-	);
 
+	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s)', scalar(@bibles)));
 	foreach my $bible (@bibles) {
-		my $translation = $bible->translation;
-		my $hotList = $hotVerses{$translation} // next;
+		$self->dic->logger->info(sprintf('Backend cache warmup translation %s starting', $bible->translation));
 		$bible->books();
-		foreach my $verseSuffix (@$hotList) {
-			my $verseKey = join(':', $translation, $verseSuffix);
-			my $ordinal = $bible->__backend->getOrdinalByVerseKey($verseKey);
-			next unless ($ordinal > 0);
-			$bible->__backend->getVerseDataByKey($verseKey);
-			$bible->__backend->getVerseKeyByOrdinal($ordinal);
+		foreach my $book (@{ $bible->books }) {
+			$self->dic->logger->debug(sprintf(
+				'Backend cache warmup translation %s book %s starting',
+				$bible->translation,
+				$book->shortNameRaw,
+			));
+			for (my $chapterOrdinal = 1; $chapterOrdinal <= $book->chapterCount; $chapterOrdinal++) {
+				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+				my $verseCount = $chapter->verseCount;
+				$self->dic->logger->trace(sprintf(
+					'Backend cache warmup translation %s book %s chapter %d starting (%d verses)',
+					$bible->translation,
+					$book->shortNameRaw,
+					$chapterOrdinal,
+					$verseCount,
+				));
+				for (my $verseOrdinal = 1; $verseOrdinal <= $verseCount; $verseOrdinal++) {
+					my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+					$verse->ordinalAbsolute;
+					$verse->text;
+					$verse->emotion;
+					$verse->tones;
+				}
+			}
 		}
+		$self->dic->logger->info(sprintf('Backend cache warmup translation %s completed', $bible->translation));
 	}
+	$self->dic->logger->info('Backend cache warmup completed');
 
 	return;
 }
