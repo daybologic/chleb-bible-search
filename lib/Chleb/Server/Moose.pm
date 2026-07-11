@@ -186,11 +186,11 @@ sub __warmBackendCaches {
 	}
 
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s)', scalar(@bibles)));
-	$self->dic->logger->info(sprintf('Backend cache warmup will process %d verse(s)', $totalVerses));
+	$self->dic->logger->debug(sprintf('Backend cache warmup will process %d verse(s)', $totalVerses));
 	my $processedVerses = 0;
 	my $lastPercent = -1;
 	foreach my $bible (@bibles) {
-		$self->dic->logger->info(sprintf('Backend cache warmup translation %s starting', $bible->translation));
+		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s starting', $bible->translation));
 		my @books = shuffle(@{ $bible->books() });
 		foreach my $book (@books) {
 			$self->dic->logger->debug(sprintf(
@@ -223,7 +223,7 @@ sub __warmBackendCaches {
 						my $overallPercent = ($totalVerses > 0) ? int((100 * $processedVerses) / $totalVerses) : 100;
 						if ($overallPercent != $lastPercent) {
 							$lastPercent = $overallPercent;
-							$self->dic->logger->info(sprintf(
+							$self->dic->logger->debug(sprintf(
 								'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
 								$overallPercent,
 								$bible->translation,
@@ -236,7 +236,7 @@ sub __warmBackendCaches {
 				}
 			}
 		}
-		$self->dic->logger->info(sprintf('Backend cache warmup translation %s completed', $bible->translation));
+		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s completed', $bible->translation));
 	}
 	$self->dic->logger->info('Backend cache warmup completed');
 
