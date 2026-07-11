@@ -38,6 +38,7 @@ packages:
   - libdatetime-format-strptime-perl
   - libdatetime-perl
   - libdevel-cover-perl
+  - libdbd-sqlite3-perl
   - libdbd-mysql-perl
   - libdbi-perl
   - libdigest-crc-perl
