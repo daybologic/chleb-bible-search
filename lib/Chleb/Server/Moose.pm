@@ -172,7 +172,7 @@ sub __library {
 
 sub __warmBackendCaches {
 	my ($self) = @_;
-	my @bibles = $self->__library->info()->bibles;
+	my @bibles = $self->__library->__getBible({ translations => ['all'] });
 
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s)', scalar(@bibles)));
 	foreach my $bible (@bibles) {
