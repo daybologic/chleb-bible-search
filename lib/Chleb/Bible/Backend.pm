@@ -464,7 +464,6 @@ SQL
 		my $rowKey = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
 		$self->__verseTextCache->{$rowKey} = $row->{text};
 		$self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterOrdinal}->{$verseOrdinal} = $bookOrdinal;
-		$self->__verseKeyOrdinalCache->{$translation}->{__ordinalToKey}->{$bookOrdinal} = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
 		$self->__verseKeyByBookCache->{join(':', $translation, $bookShortName, $bookOrdinal)} = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
 	}
 	return $rows;
@@ -479,10 +478,6 @@ sub getVerseKeyByBookVerseKey {
 	if (my $cached = $self->__sharedCacheGet('bookversekey', $cacheKey)) {
 		$self->__verseKeyByBookCache->{$cacheKey} = $cached;
 		return $cached;
-	}
-	if (my $mapped = $self->__verseKeyOrdinalCache->{$translation}->{__ordinalToKey}->{$ordinal}) {
-		$self->__verseKeyByBookCache->{$cacheKey} = $mapped;
-		return $mapped;
 	}
 
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $bookShortName, $ordinal);

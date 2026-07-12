@@ -191,7 +191,15 @@ sub __warmBackendCaches {
 	foreach my $bible (@bibles) {
 		foreach my $book (@{ $bible->books() }) {
 			foreach my $chapterOrdinal (1 .. $book->chapterCount) {
-				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+				my $chapter = $book->getChapterByOrdinal($chapterOrdinal, { nonFatal => 1 });
+				unless ($chapter) {
+					$self->dic->logger->warn(sprintf(
+						'Skipping missing chapter %d in %s during backend cache warmup',
+						$chapterOrdinal,
+						$book->shortNameRaw,
+					));
+					next;
+				}
 				$totalVerses += $chapter->verseCount;
 			}
 		}
@@ -1097,7 +1105,15 @@ sub __info {
 			});
 
 			for (my $chapterOrdinal = 1; $chapterOrdinal <= $book->chapterCount; $chapterOrdinal++) {
-				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+				my $chapter = $book->getChapterByOrdinal($chapterOrdinal, { nonFatal => 1 });
+				unless ($chapter) {
+					$self->dic->logger->warn(sprintf(
+						'Skipping missing chapter %d in %s while building info response',
+						$chapterOrdinal,
+						$book->shortNameRaw,
+					));
+					next;
+				}
 				push(@{ $hash{included} }, {
 					id => $chapter->id,
 					type => $chapter->type,
