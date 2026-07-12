@@ -43,6 +43,7 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use File::Temp qw(tempfile);
 use Readonly;
 use DBI;
+use JSON qw(decode_json);
 use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
