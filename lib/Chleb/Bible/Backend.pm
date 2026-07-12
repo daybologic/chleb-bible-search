@@ -225,6 +225,32 @@ sub BUILD {
 	return;
 }
 
+=item C<resetForkUnsafeHandles()>
+
+Close and forget the SQLite database handle and the memcached client so that,
+after the PSGI server forks its workers, each worker lazily re-opens its own
+rather than sharing a file descriptor across processes (which corrupts both
+SQLite and the memcached protocol).  The populated in-memory caches are left
+intact so forked workers inherit a warm cache via copy-on-write.
+
+=cut
+
+sub resetForkUnsafeHandles {
+	my ($self) = @_;
+
+	if (my $dbh = delete $self->{data}) {
+		eval { $dbh->disconnect(); };
+	}
+
+	if (my $client = delete $self->{__sharedCacheClient}) {
+		eval { $client->disconnect_all(); };
+	}
+
+	delete $self->{__sharedCacheAvailable};
+
+	return;
+}
+
 sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	my ($self) = @_;
 	my $translation = $self->bible->translation;
@@ -412,6 +438,7 @@ sub getChapterVerseDataByKey {
 	return $self->__chapterVerseTextCache->{$cacheKey} if (exists($self->__chapterVerseTextCache->{$cacheKey}));
 	if (my $cached = $self->__sharedCacheGet('chaptertext', $cacheKey)) {
 		$self->__chapterVerseTextCache->{$cacheKey} = $cached;
+		$self->__primeChapterOrdinals($bookShortName, $chapterNumber, $cached);
 		return $cached;
 	}
 
@@ -432,7 +459,43 @@ SQL
 		$self->__verseTextCache->{$rowKey} = $row->{text};
 	}
 	$self->__sharedCacheSet('chaptertext', $cacheKey, $rows);
+	$self->__primeChapterOrdinals($bookShortName, $chapterNumber, $rows);
 	return $rows;
+}
+
+=item C<__primeChapterOrdinals($bookShortName, $chapterNumber, $rows)>
+
+Populate the global absolute-ordinal caches for every verse of a chapter in one
+pass.  A chapter's verses are contiguous in the global verse ordering, so we only
+resolve the absolute ordinal of the chapter's first verse (one lookup) and derive
+the rest by position.  This lets subsequent per-verse getOrdinalByVerseKey() calls
+made while rendering a whole chapter hit the local cache instead of issuing one
+memcached round-trip (or SQLite window query) per verse.
+
+C<$rows> is the ARRAY ref returned by L</getChapterVerseDataByKey>, ordered by
+C<verse_ordinal>.
+
+=cut
+
+sub __primeChapterOrdinals {
+	my ($self, $bookShortName, $chapterNumber, $rows) = @_;
+	return unless (ref($rows) eq 'ARRAY' && scalar(@$rows));
+
+	my $translation = $self->bible->translation;
+	my $firstVerseOrdinal = $rows->[0]->{verse_ordinal} + 0;
+	my $base = $self->getOrdinalByVerseKey(join(':', $translation, $bookShortName, $chapterNumber, $firstVerseOrdinal));
+	return unless (defined($base) && $base > 0);
+
+	for (my $i = 0; $i < scalar(@$rows); $i++) {
+		my $verseOrdinal = $rows->[$i]->{verse_ordinal} + 0;
+		my $absolute = $base + $i;
+		my $verseCacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseOrdinal);
+		$self->__verseOrdinalCache->{$verseCacheKey} //= $absolute;
+		$self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterNumber}->{$verseOrdinal} //= $absolute;
+		$self->__verseKeyOrdinalCache->{$translation}->{__ordinalToKey}->{$absolute} //= $verseCacheKey;
+	}
+
+	return;
 }
 
 sub getBookVerseDataByKey {
@@ -463,7 +526,9 @@ SQL
 		my $bookOrdinal = $row->{book_ordinal} + 0;
 		my $rowKey = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
 		$self->__verseTextCache->{$rowKey} = $row->{text};
-		$self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterOrdinal}->{$verseOrdinal} = $bookOrdinal;
+		# NB: $bookOrdinal is the *within-book* ordinal; it must NOT be written to
+		# __verseKeyOrdinalCache, which holds the *global* absolute ordinal read
+		# back by getOrdinalByVerseKey().  It only feeds the book-relative map below.
 		$self->__verseKeyByBookCache->{join(':', $translation, $bookShortName, $bookOrdinal)} = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
 	}
 	return $rows;
