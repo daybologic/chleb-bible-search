@@ -255,7 +255,7 @@ sub __warmBackendCaches {
 		}
 		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s completed', $bible->translation));
 	}
-	$self->dic->logger->info('Backend cache warmup stopped');
+	$self->dic->logger->info('Backend cache warmup finished');
 
 	return;
 }
