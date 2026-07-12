@@ -244,7 +244,7 @@ sub __warmBackendCaches {
 						my $overallPercent = ($totalVerses > 0) ? int((100 * $processedVerses) / $totalVerses) : 100;
 						if ($overallPercent != $lastPercent) {
 							$lastPercent = $overallPercent;
-							$self->dic->logger->debug(sprintf(
+							$self->dic->logger->trace(sprintf(
 								'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
 								$overallPercent,
 								$bible->translation,
