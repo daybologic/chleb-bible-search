@@ -54,6 +54,74 @@ Readonly my $FILE_VERSION => 13;
 Readonly my $OT_COUNT => 39;
 
 my %BOOK_NAMES;
+Readonly my %BOOK_LONG_NAMES => (
+	Gen => 'Genesis',
+	Exo => 'Exodus',
+	Lev => 'Leviticus',
+	Num => 'Numbers',
+	Deu => 'Deuteronomy',
+	Josh => 'Joshua',
+	Judg => 'Judges',
+	Ruth => 'Ruth',
+	'1Sam' => '1 Samuel',
+	'2Sam' => '2 Samuel',
+	'1Ki' => '1 Kings',
+	'2Ki' => '2 Kings',
+	'1Chr' => '1 Chronicles',
+	'2Chr' => '2 Chronicles',
+	Ezra => 'Ezra',
+	Neh => 'Nehemiah',
+	Est => 'Esther',
+	Job => 'Job',
+	Psa => 'Psalms',
+	Prov => 'Proverbs',
+	Eccl => 'Ecclesiastes',
+	Song => 'Song of Solomon',
+	Isa => 'Isaiah',
+	Jer => 'Jeremiah',
+	Lam => 'Lamentations',
+	Ezek => 'Ezekiel',
+	Dan => 'Daniel',
+	Hosea => 'Hosea',
+	Joel => 'Joel',
+	Amos => 'Amos',
+	Oba => 'Obadiah',
+	Jonah => 'Jonah',
+	Micah => 'Micah',
+	Nahum => 'Nahum',
+	Hab => 'Habakkuk',
+	Zep => 'Zephaniah',
+	Hag => 'Haggai',
+	Zec => 'Zechariah',
+	Mal => 'Malachi',
+	Mat => 'Matthew',
+	Mark => 'Mark',
+	Luke => 'Luke',
+	John => 'John',
+	Acts => 'Acts',
+	Rom => 'Romans',
+	'1Cor' => '1 Corinthians',
+	'2Cor' => '2 Corinthians',
+	Gal => 'Galatians',
+	Eph => 'Ephesians',
+	Phil => 'Philippians',
+	Col => 'Colossians',
+	'1Th' => '1 Thessalonians',
+	'2Th' => '2 Thessalonians',
+	'1Tim' => '1 Timothy',
+	'2Tim' => '2 Timothy',
+	Titus => 'Titus',
+	Phile => 'Philemon',
+	Heb => 'Hebrews',
+	James => 'James',
+	'1Pet' => '1 Peter',
+	'2Pet' => '2 Peter',
+	'1John' => '1 John',
+	'2John' => '2 John',
+	'3John' => '3 John',
+	Jude => 'Jude',
+	Rev => 'Revelation of John',
+);
 
 has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
@@ -498,20 +566,7 @@ sub getVerseCount {
 
 sub __bookLongName {
 	my ($self, $shortNameRaw) = @_;
-	return $BOOK_NAMES{$shortNameRaw} // $shortNameRaw if (exists($BOOK_NAMES{$shortNameRaw}));
-	if (!%BOOK_NAMES) {
-		my $path = join('/', $self->dataDir, 'static', 'kjv.cvs');
-		my $fh = IO::File->new($path, 'r') or die(sprintf("Failed to open '%s' -- %s", $path, $ERRNO));
-		while (my $line = <$fh>) {
-			chomp($line);
-			my ($code, undef, $longName) = split(m/;/, $line, 3);
-			$longName =~ s/;\z// if (defined($longName));
-			$BOOK_NAMES{$code} = $longName if (defined($code) && length($code) > 0);
-		}
-		$fh->close();
-	}
-
-	return $BOOK_NAMES{$shortNameRaw} // $shortNameRaw;
+	return $BOOK_NAMES{$shortNameRaw} //= ($BOOK_LONG_NAMES{$shortNameRaw} // $shortNameRaw);
 }
 
 sub __bookVerseCount {
