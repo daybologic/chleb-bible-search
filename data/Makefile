@@ -37,13 +37,13 @@ all: \
 	kjv.bin.gz \
 	kjv.sqlite.gz
 
-asv.bin.gz asv.sqlite.gz &: static/asv.txt
+asv.bin.gz asv.sqlite.gz &: static/asv.txt ../bin/import/text-to-asv.sh ../bin/import/text-to-bin.pl ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-asv.sh
 
-core.sqlite.gz : static/kjv.txt
+core.sqlite.gz : static/kjv.txt ../bin/import/text-to-core.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-core.sh
 
-kjv.bin.gz kjv.sqlite.gz &: static/kjv.txt
+kjv.bin.gz kjv.sqlite.gz &: static/kjv.txt ../bin/import/text-to-kjv.sh ../bin/import/text-to-bin.pl ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-kjv.sh
 
 clean:

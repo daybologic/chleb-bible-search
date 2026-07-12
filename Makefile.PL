@@ -112,6 +112,7 @@ http-test :: pure_all
 clean :: 
 	rm -rf cover_db
 	rm -f cache/*.bin
+	rm -f cache/*.sqlite cache/*.sqlite-journal cache/*.sqlite-wal cache/*.sqlite-shm
 	cd data/ && make clean
 	cd info/ && make clean
 
