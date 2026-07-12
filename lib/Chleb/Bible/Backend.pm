@@ -235,14 +235,13 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	}
 
 	my @bookRows = ( );
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $self->bible->translation);
 		SELECT book.id, book.code, book.translation, book.testament, book.ordinal,
 		       book.chapter_count
 		  FROM book
 		 WHERE book.translation = ?
 		 ORDER BY book.ordinal
 SQL
-	$sth->execute($self->bible->translation);
 	my $bookIndex = 0;
 	while (my $row = $sth->fetchrow_hashref()) {
 		my $shortNameRaw = $row->{code};
@@ -293,7 +292,7 @@ sub getOrdinalByVerseKey {
 		return $cached + 0;
 	}
 
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $bookShortName, $chapterNumber, $verseNumber);
 		WITH ordered_verses AS (
 			SELECT
 				ROW_NUMBER() OVER (
@@ -314,7 +313,6 @@ sub getOrdinalByVerseKey {
 		   AND chapter_ordinal = ?
 		   AND ordinal_relative_to_chapter = ?
 SQL
-	$sth->execute($translation, $bookShortName, $chapterNumber, $verseNumber);
 	my ($ordinal) = $sth->fetchrow_array();
 	$ordinal //= 0;
 	$self->__verseOrdinalCache->{$cacheKey} = $ordinal;
@@ -340,7 +338,7 @@ sub getVerseKeyByOrdinal {
 		return $cached;
 	}
 
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $ordinal - 1);
 		WITH ordered_verses AS (
 			SELECT
 				book.translation,
@@ -356,7 +354,6 @@ sub getVerseKeyByOrdinal {
 		  FROM ordered_verses
 		LIMIT 1 OFFSET ?
 SQL
-	$sth->execute($ordinal - 1);
 	my $row = $sth->fetchrow_arrayref();
 	return unless ($row);
 	my $key = join(':', @$row);
@@ -393,7 +390,7 @@ sub getVerseDataByKey {
 		return $self->__verseTextCache->{$cacheKey} if (exists($self->__verseTextCache->{$cacheKey}));
 	}
 
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $bookShortName, $chapterNumber, $verseNumber);
 		SELECT verse.text
 		  FROM verse
 		  JOIN book ON book.id = verse.book_id
@@ -403,7 +400,6 @@ sub getVerseDataByKey {
 		   AND chapter.ordinal = ?
 		   AND verse.ordinal_relative_to_chapter = ?
 SQL
-	$sth->execute($translation, $bookShortName, $chapterNumber, $verseNumber);
 	my ($text) = $sth->fetchrow_array();
 	$self->__verseTextCache->{$cacheKey} = $text if (defined($text));
 	$self->__sharedCacheSet('text', $cacheKey, $text) if (defined($text));
@@ -419,7 +415,7 @@ sub getChapterVerseDataByKey {
 		return $cached;
 	}
 
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $self->bible->translation, $bookShortName, $chapterNumber);
 		SELECT verse.ordinal_relative_to_chapter AS verse_ordinal, verse.text
 		  FROM verse
 		  JOIN book ON book.id = verse.book_id
@@ -429,7 +425,6 @@ sub getChapterVerseDataByKey {
 		   AND chapter.ordinal = ?
 		 ORDER BY verse.ordinal_relative_to_chapter
 SQL
-	$sth->execute($self->bible->translation, $bookShortName, $chapterNumber);
 	my $rows = $sth->fetchall_arrayref({});
 	$self->__chapterVerseTextCache->{$cacheKey} = $rows;
 	foreach my $row (@{ $rows }) {
@@ -447,7 +442,7 @@ sub getBookVerseDataByKey {
 		return $self->__bookVerseTextCache->{$cacheKey};
 	}
 
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $self->bible->translation, $bookShortName);
 		SELECT chapter.ordinal AS chapter_ordinal,
 		       verse.ordinal_relative_to_book AS book_ordinal,
 		       verse.ordinal_relative_to_chapter AS verse_ordinal,
@@ -459,7 +454,6 @@ sub getBookVerseDataByKey {
 		   AND book.code = ?
 		 ORDER BY chapter.ordinal, verse.ordinal_relative_to_chapter
 SQL
-	$sth->execute($self->bible->translation, $bookShortName);
 	my $rows = $sth->fetchall_arrayref({});
 	$self->__bookVerseTextCache->{$cacheKey} = $rows;
 	my $translation = $self->bible->translation;
@@ -491,7 +485,7 @@ sub getVerseKeyByBookVerseKey {
 		return $mapped;
 	}
 
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $bookShortName, $ordinal);
 		SELECT book.translation, book.code, chapter.ordinal, verse.ordinal_relative_to_chapter
 		  FROM verse
 		  JOIN book ON book.id = verse.book_id
@@ -502,7 +496,6 @@ sub getVerseKeyByBookVerseKey {
 		 ORDER BY verse.id
 		LIMIT 1
 SQL
-	$sth->execute($translation, $bookShortName, $ordinal);
 	my $row = $sth->fetchrow_arrayref();
 	return unless ($row);
 	my $verseKey = join(':', @$row);
@@ -514,12 +507,11 @@ SQL
 
 sub getBookInfoByShortName {
 	my ($self, $shortNameRaw) = @_;
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $shortNameRaw);
 		SELECT book.id, book.code, book.testament, book.chapter_count
 		  FROM book
 		 WHERE book.code = ?
 SQL
-	$sth->execute($shortNameRaw);
 	my $row = $sth->fetchrow_hashref();
 	return unless ($row);
 
@@ -560,7 +552,7 @@ sub getSentimentByOrdinal {
 
 sub getVerseCount {
 	my ($self) = @_;
-	my ($count) = $self->data->selectrow_array('SELECT COUNT(*) FROM verse');
+	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');
 	return $count + 0;
 }
 
@@ -572,7 +564,7 @@ sub __bookLongName {
 sub __bookVerseCount {
 	my ($self, $bookId) = @_;
 	return $self->__bookInfoCache->{"versecount:$bookId"} if (exists($self->__bookInfoCache->{"versecount:$bookId"}));
-	my ($count) = $self->data->selectrow_array('SELECT COUNT(*) FROM verse WHERE book_id = ?', undef, $bookId);
+	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse WHERE book_id = ?', $bookId);
 	$count += 0;
 	$self->__bookInfoCache->{"versecount:$bookId"} = $count;
 	return $count;
@@ -589,7 +581,7 @@ sub __sentimentByOrdinal {
 sub __verseCount {
 	my ($self) = @_;
 	return $self->__bookInfoCache->{"versecount:total"} if (exists($self->__bookInfoCache->{"versecount:total"}));
-	my ($count) = $self->data->selectrow_array('SELECT COUNT(*) FROM verse');
+	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');
 	$count += 0;
 	$self->__bookInfoCache->{"versecount:total"} = $count;
 	return $count;
@@ -600,13 +592,12 @@ sub __sentimentData {
 	my $translation = $self->bible->translation;
 	return $self->__sentimentCache->{$translation} if ($self->__sentimentCache->{$translation});
 
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation);
 		SELECT emotion, tones
 		  FROM sentiment
 		 WHERE translation = ?
 		 ORDER BY ordinal
 SQL
-	$sth->execute($translation);
 	my @sentiment;
 	while (my $row = $sth->fetchrow_hashref()) {
 		push(@sentiment, {
@@ -715,7 +706,7 @@ sub __sharedCacheKey {
 
 sub __bookVerseCounts {
 	my ($self, $bookId) = @_;
-	my $sth = $self->data->prepare(<<'SQL');
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $bookId);
 		SELECT chapter.ordinal, COUNT(verse.id) AS verse_count
 		  FROM chapter
 		  LEFT JOIN verse ON verse.chapter_id = chapter.id
@@ -723,7 +714,6 @@ sub __bookVerseCounts {
 		 GROUP BY chapter.id
 		 ORDER BY chapter.ordinal
 SQL
-	$sth->execute($bookId);
 	my %verseCounts;
 	while (my $chapterRow = $sth->fetchrow_hashref()) {
 		$verseCounts{ $chapterRow->{ordinal} + 0 } = $chapterRow->{verse_count} + 0;
@@ -750,14 +740,14 @@ sub __fsck {
 
 sub __validateSig {
 	my ($self) = @_;
-	my ($sig) = $self->data->selectrow_array('SELECT sig FROM master LIMIT 1');
+	my ($sig) = $self->__selectrowArray($self->data, 'SELECT sig FROM master LIMIT 1');
 	return EXIT_SUCCESS if (defined($sig) && $sig eq $FILE_SIG);
 	return EXIT_FAILURE;
 }
 
 sub __validateVersion {
 	my ($self) = @_;
-	my ($version) = $self->data->selectrow_array('SELECT version FROM master LIMIT 1');
+	my ($version) = $self->__selectrowArray($self->data, 'SELECT version FROM master LIMIT 1');
 	# Until we reach version 1.0.0 of the package (stable release), we only accept the exact correct version of the file!
 	# this gives us more flexibility to make changes.
 	if (defined($version) && length($version) <= 5 && $version =~ m/^\d+$/) {
@@ -879,8 +869,7 @@ sub __inspectSourceFile {
 		}
 	);
 
-	my $sth = $dbh->prepare('SELECT code FROM translation');
-	$sth->execute();
+	my $sth = $self->__prepareSelect($dbh, 'SELECT code FROM translation');
 	my %translations;
 	while (my ($code) = $sth->fetchrow_array()) {
 		$translations{$code} = 1 if (defined($code) && length($code) > 0);
@@ -891,6 +880,36 @@ sub __inspectSourceFile {
 		translations => \%translations,
 		translation_count => scalar(keys(%translations)),
 	};
+}
+
+sub __traceSelectQuery {
+	my ($self, $sql, @bind) = @_;
+	my $summary = $sql // q{};
+	$summary =~ s/\s+/ /g;
+	$summary =~ s/^\s+//;
+	$summary =~ s/\s+\z//;
+
+	my $message = 'SQLite SELECT: ' . $summary;
+	if (scalar(@bind) > 0) {
+		$message .= ' bind=' . encode_json(\@bind);
+	}
+
+	$self->dic->logger->trace($message);
+	return;
+}
+
+sub __selectrowArray {
+	my ($self, $dbh, $sql, @bind) = @_;
+	$self->__traceSelectQuery($sql, @bind);
+	return $dbh->selectrow_array($sql, undef, @bind);
+}
+
+sub __prepareSelect {
+	my ($self, $dbh, $sql, @bind) = @_;
+	$self->__traceSelectQuery($sql, @bind);
+	my $sth = $dbh->prepare($sql);
+	$sth->execute(@bind);
+	return $sth;
 }
 
 =item C<__inspectSourceFile($sourceFile)>
