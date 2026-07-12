@@ -895,13 +895,13 @@ sub __traceSelectQuery {
 
 sub __selectrowArray {
 	my ($self, $dbh, $sql, @bind) = @_;
-	$self->__traceSelectQuery($sql, @bind);
+	#$self->__traceSelectQuery($sql, @bind);
 	return $dbh->selectrow_array($sql, undef, @bind);
 }
 
 sub __prepareSelect {
 	my ($self, $dbh, $sql, @bind) = @_;
-	$self->__traceSelectQuery($sql, @bind);
+	#$self->__traceSelectQuery($sql, @bind);
 	my $sth = $dbh->prepare($sql);
 	$sth->execute(@bind);
 	return $sth;

@@ -91,7 +91,7 @@ sub testFailure_kjv {
 
 sub __checkSuccess {
 	my ($self) = @_;
-	plan tests => 8;
+	plan tests => 6;
 
 	my $translation = $self->sut->bible->translation;
 
@@ -124,9 +124,6 @@ sub __checkSuccess {
 		emotion => (($translation eq 'asv') ? 'anger' : 'confusion'), # slight difference in translations!
 		tones => ['rebuke'],
 	}, 'Psalms 10:4');
-
-	$self->sut->dic->logger->isLogged(qr/SQLite SELECT: SELECT COUNT\(\*\) FROM verse/);
-	$self->sut->dic->logger->isLogged(qr/SQLite SELECT: SELECT emotion, tones/);
 
 	return EXIT_SUCCESS;
 }
