@@ -49,7 +49,7 @@ use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 13;
+Readonly my $FILE_VERSION => 14;
 
 Readonly my $OT_COUNT => 39;
 
@@ -600,11 +600,21 @@ sub __sentimentData {
 	my $translation = $self->bible->translation;
 	return $self->__sentimentCache->{$translation} if ($self->__sentimentCache->{$translation});
 
-	my $path = join('/', $self->dataDir, 'static', 'emotion', $translation . '.json');
-	my $fh = IO::File->new($path, 'r') or die(sprintf("Failed to open '%s' -- %s", $path, $ERRNO));
-	my $text = do { local $/; <$fh> };
-	$fh->close();
-	$self->__sentimentCache->{$translation} = decode_json($text);
+	my $sth = $self->data->prepare(<<'SQL');
+		SELECT emotion, tones
+		  FROM sentiment
+		 WHERE translation = ?
+		 ORDER BY ordinal
+SQL
+	$sth->execute($translation);
+	my @sentiment;
+	while (my $row = $sth->fetchrow_hashref()) {
+		push(@sentiment, {
+			emotion => $row->{emotion},
+			tones   => decode_json($row->{tones}),
+		});
+	}
+	$self->__sentimentCache->{$translation} = \@sentiment;
 	return $self->__sentimentCache->{$translation};
 }
 

@@ -47,7 +47,7 @@ Readonly my $OT_COUNT => 39;
 Readonly my $DATA_DIR => 'data';
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 13;
+Readonly my $FILE_VERSION => 14;
 
 Readonly my %TRANSLATION_META => (
 	kjv => { year => 1611, language => 'en' },
@@ -196,6 +196,16 @@ CREATE TABLE IF NOT EXISTS verse (
 )
 SQL
 
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS sentiment (
+	translation CHAR(8) NOT NULL,
+	ordinal INTEGER PRIMARY KEY,
+	emotion TEXT NOT NULL,
+	tones TEXT NOT NULL,
+	UNIQUE (translation, ordinal)
+)
+SQL
+
 	return;
 }
 
@@ -280,6 +290,28 @@ SQL
 	return;
 }
 
+sub __writeSentiment {
+	my ($fileHandle, $translation) = @_;
+
+	my $sentiment = getSentiment($translation);
+	my $sth = $fileHandle->prepare(<<'SQL');
+		INSERT INTO sentiment (translation, ordinal, emotion, tones)
+		VALUES(?, ?, ?, ?)
+SQL
+
+	my $ordinal = 0;
+	foreach my $entry (@{ $sentiment }) {
+		$ordinal++;
+		my $emotion = $entry->{emotion} // 'neutral';
+		my $tones = encode_json($entry->{tones} // [ ]);
+		$sth->execute($translation, $ordinal, $emotion, $tones);
+	}
+
+	$fileHandle->commit();
+
+	return;
+}
+
 my %idCounters = ( );
 sub __uuid {
 	my ($domain) = @_;
@@ -347,10 +379,12 @@ sub main2 {
 		__writeTranslations($fileHandle, \@translations);
 		foreach my $translation2 (@translations) {
 			__processVerses($fileHandle, $translation2);
+			__writeSentiment($fileHandle, $translation2);
 		}
 	} else {
 		__writeTranslations($fileHandle, [$translation]);
 		__processVerses($fileHandle, $translation);
+		__writeSentiment($fileHandle, $translation);
 	}
 
 	__populateCounts($fileHandle);
