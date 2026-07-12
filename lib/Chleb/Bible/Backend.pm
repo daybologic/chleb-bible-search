@@ -44,6 +44,7 @@ use File::Temp qw(tempfile);
 use Readonly;
 use DBI;
 use JSON qw(decode_json);
+use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 
@@ -144,6 +145,9 @@ has __chapterVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default
 has __bookVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseKeyByBookCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __sharedCacheClient => (is => 'ro', lazy => 1, builder => '__makeSharedCacheClient');
+has __sharedCacheAvailable => (is => 'rw', isa => 'Bool', lazy => 1, builder => '__makeSharedCacheAvailable');
+has __sharedCachePrefix => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeSharedCachePrefix');
 has __sourceMetadata => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 
 sub __makeCompressedPath {
@@ -223,11 +227,11 @@ sub BUILD {
 
 =item C<resetForkUnsafeHandles()>
 
-Close and forget the SQLite database handle so that, after the PSGI server
-forks its workers, each worker lazily re-opens its own rather than sharing a
-file descriptor across processes (which corrupts SQLite).  The populated
-in-memory caches are left intact so forked workers inherit a warm cache via
-copy-on-write.
+Close and forget the SQLite database handle and the memcached client so that,
+after the PSGI server forks its workers, each worker lazily re-opens its own
+rather than sharing a file descriptor across processes (which corrupts both
+SQLite and the memcached protocol).  The populated in-memory caches are left
+intact so forked workers inherit a warm cache via copy-on-write.
 
 =cut
 
@@ -238,6 +242,12 @@ sub resetForkUnsafeHandles {
 		eval { $dbh->disconnect(); };
 	}
 
+	if (my $client = delete $self->{__sharedCacheClient}) {
+		eval { $client->disconnect_all(); };
+	}
+
+	delete $self->{__sharedCacheAvailable};
+
 	return;
 }
 
@@ -245,6 +255,10 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	my ($self) = @_;
 	my $translation = $self->bible->translation;
 	return $self->__bookInfoCache->{$translation} if ($self->__bookInfoCache->{$translation});
+
+	if (my $cached = $self->__sharedCacheGet('books', $translation)) {
+		return $self->__bookInfoCache->{$translation} = $self->__makeBooksFromRows($cached);
+	}
 
 	my @bookRows = ( );
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $self->bible->translation);
@@ -269,6 +283,7 @@ SQL
 	}
 
 	$self->__bookInfoCache->{$translation} = $self->__makeBooksFromRows(\@bookRows);
+	$self->__sharedCacheSet('books', $translation, \@bookRows);
 	return $self->__bookInfoCache->{$translation};
 }
 
@@ -298,6 +313,10 @@ sub getOrdinalByVerseKey {
 		$self->__verseOrdinalCache->{$cacheKey} = $mapped + 0;
 		return $mapped + 0;
 	}
+	if (my $cached = $self->__sharedCacheGet('ordinal', $cacheKey)) {
+		$self->__verseOrdinalCache->{$cacheKey} = $cached + 0;
+		return $cached + 0;
+	}
 
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $bookShortName, $chapterNumber, $verseNumber);
 		WITH ordered_verses AS (
@@ -324,6 +343,7 @@ SQL
 	$ordinal //= 0;
 	$self->__verseOrdinalCache->{$cacheKey} = $ordinal;
 	$self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterNumber}->{$verseNumber} = $ordinal if ($ordinal > 0);
+	$self->__sharedCacheSet('ordinal', $cacheKey, $ordinal) if ($ordinal > 0);
 	return $ordinal;
 }
 
@@ -338,6 +358,10 @@ sub getVerseKeyByOrdinal {
 	if (my $mapped = $self->__verseKeyOrdinalCache->{$translation}->{__ordinalToKey}->{$ordinal}) {
 		$self->__verseKeyCache->{$cacheKey} = $mapped;
 		return $mapped;
+	}
+	if (my $cached = $self->__sharedCacheGet('versekey', $cacheKey)) {
+		$self->__verseKeyCache->{$cacheKey} = $cached;
+		return $cached;
 	}
 
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $ordinal - 1);
@@ -363,6 +387,7 @@ SQL
 	my ($mappedTranslation, $mappedBookShortName, $mappedChapterNumber, $mappedVerseNumber) = split(m/:/, $key, 4);
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{__ordinalToKey}->{$ordinal} = $key;
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{$mappedBookShortName}->{$mappedChapterNumber}->{$mappedVerseNumber} = $ordinal;
+	$self->__sharedCacheSet('versekey', $cacheKey, $key);
 	return $key;
 }
 
@@ -372,6 +397,10 @@ sub getVerseDataByKey {
 	return unless (defined($verseNumber));
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseTextCache->{$cacheKey} if (exists($self->__verseTextCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('text', $cacheKey)) {
+		$self->__verseTextCache->{$cacheKey} = $cached;
+		return $cached;
+	}
 	if (my $chapterRows = $self->__chapterVerseTextCache->{join(':', $translation, $bookShortName, $chapterNumber)}) {
 		foreach my $row (@{ $chapterRows }) {
 			my $rowKey = join(':', $translation, $bookShortName, $chapterNumber, $row->{verse_ordinal} + 0);
@@ -399,6 +428,7 @@ sub getVerseDataByKey {
 SQL
 	my ($text) = $sth->fetchrow_array();
 	$self->__verseTextCache->{$cacheKey} = $text if (defined($text));
+	$self->__sharedCacheSet('text', $cacheKey, $text) if (defined($text));
 	return $text;
 }
 
@@ -406,6 +436,11 @@ sub getChapterVerseDataByKey {
 	my ($self, $bookShortName, $chapterNumber) = @_;
 	my $cacheKey = join(':', $self->bible->translation, $bookShortName, $chapterNumber);
 	return $self->__chapterVerseTextCache->{$cacheKey} if (exists($self->__chapterVerseTextCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('chaptertext', $cacheKey)) {
+		$self->__chapterVerseTextCache->{$cacheKey} = $cached;
+		$self->__primeChapterOrdinals($bookShortName, $chapterNumber, $cached);
+		return $cached;
+	}
 
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $self->bible->translation, $bookShortName, $chapterNumber);
 		SELECT verse.ordinal_relative_to_chapter AS verse_ordinal, verse.text
@@ -423,6 +458,7 @@ SQL
 		my $rowKey = join(':', $self->bible->translation, $bookShortName, $chapterNumber, $row->{verse_ordinal} + 0);
 		$self->__verseTextCache->{$rowKey} = $row->{text};
 	}
+	$self->__sharedCacheSet('chaptertext', $cacheKey, $rows);
 	$self->__primeChapterOrdinals($bookShortName, $chapterNumber, $rows);
 	return $rows;
 }
@@ -434,7 +470,7 @@ pass.  A chapter's verses are contiguous in the global verse ordering, so we onl
 resolve the absolute ordinal of the chapter's first verse (one lookup) and derive
 the rest by position.  This lets subsequent per-verse getOrdinalByVerseKey() calls
 made while rendering a whole chapter hit the local cache instead of issuing one
-SQLite window query per verse.
+memcached round-trip (or SQLite window query) per verse.
 
 C<$rows> is the ARRAY ref returned by L</getChapterVerseDataByKey>, ordered by
 C<verse_ordinal>.
@@ -504,6 +540,10 @@ sub getVerseKeyByBookVerseKey {
 	return unless (defined($ordinal));
 	my $cacheKey = join(':', $translation, $bookShortName, $ordinal);
 	return $self->__verseKeyByBookCache->{$cacheKey} if (exists($self->__verseKeyByBookCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('bookversekey', $cacheKey)) {
+		$self->__verseKeyByBookCache->{$cacheKey} = $cached;
+		return $cached;
+	}
 
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $bookShortName, $ordinal);
 		SELECT book.translation, book.code, chapter.ordinal, verse.ordinal_relative_to_chapter
@@ -521,6 +561,7 @@ SQL
 	my $verseKey = join(':', @$row);
 	$self->__verseKeyByBookCache->{$cacheKey} = $verseKey;
 	$self->__verseKeyOrdinalCache->{$translation}->{__ordinalToKey}->{$ordinal} = $verseKey;
+	$self->__sharedCacheSet('bookversekey', $cacheKey, $verseKey);
 	return $verseKey;
 }
 
@@ -529,6 +570,10 @@ sub getBookInfoByShortName {
 	my $translation = $self->bible->translation;
 	my $cacheKey = join(':', $translation, $shortNameRaw);
 	return $self->__bookInfoDataCache->{$cacheKey} if (exists($self->__bookInfoDataCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('bookinfo', $cacheKey)) {
+		$self->__bookInfoDataCache->{$cacheKey} = $cached;
+		return $cached;
+	}
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $shortNameRaw);
 		SELECT book.id, book.code, book.testament, book.chapter_count
 		  FROM book
@@ -544,6 +589,7 @@ SQL
 		v => $self->__bookVerseCounts($row->{id}),
 	};
 	$self->__bookInfoDataCache->{$cacheKey} = $bookInfo;
+	$self->__sharedCacheSet('bookinfo', $cacheKey, $bookInfo);
 	return $bookInfo;
 }
 
@@ -607,9 +653,14 @@ sub __verseCount {
 	my $translation = $self->bible->translation;
 	my $cacheKey = join(':', $translation, 'versecount:total');
 	return $self->__bookInfoCache->{$cacheKey} if (exists($self->__bookInfoCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('versecount', $cacheKey)) {
+		$self->__bookInfoCache->{$cacheKey} = $cached + 0;
+		return $cached + 0;
+	}
 	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');
 	$count += 0;
 	$self->__bookInfoCache->{$cacheKey} = $count;
+	$self->__sharedCacheSet('versecount', $cacheKey, $count);
 	return $count;
 }
 
@@ -618,6 +669,11 @@ sub __sentimentData {
 	my $translation = $self->bible->translation;
 	return $self->__sentimentCache->{$translation} if ($self->__sentimentCache->{$translation});
 
+	# Unlike the other lookups, sentiment is deliberately NOT routed through the
+	# shared (memcached) cache: it is the whole-translation array (~31k entries),
+	# a single multi-MB blob that is a poor memcached citizen (item-size limits,
+	# serialization/transfer cost) and is loaded here in one cheap bulk query
+	# anyway.  It lives only in the per-process cache above.
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation);
 		SELECT emotion, tones
 		  FROM sentiment
@@ -633,6 +689,107 @@ SQL
 	}
 	$self->__sentimentCache->{$translation} = \@sentiment;
 	return $self->__sentimentCache->{$translation};
+}
+
+sub __makeSharedCacheClient {
+	my ($self) = @_;
+
+	eval {
+		require Cache::Memcached;
+		Cache::Memcached->import();
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Cannot load Cache::Memcached for backend cache: $evalError");
+		return;
+	}
+
+	my $config = $self->dic->config->get('rate_limit', 'backend_memcached', {});
+	my $servers = $config->{servers} // [ '127.0.0.1:11211' ];
+	$servers = [ $servers ] unless (ref($servers) eq 'ARRAY');
+
+	my $client;
+	eval {
+		$client = Cache::Memcached->new({
+			servers => $servers,
+			compress_threshold => 10_000,
+		});
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Cannot create memcached client for backend cache: $evalError");
+		return;
+	}
+
+	return $client;
+}
+
+sub __makeSharedCachePrefix {
+	my ($self) = @_;
+	my $config = $self->dic->config->get('backend_cache', 'memcached', {});
+	my $prefix = $config->{prefix} // 'chleb:backend';
+	return join(':', $prefix, 'v' . $FILE_VERSION, $self->bible->translation);
+}
+
+sub __makeSharedCacheAvailable {
+	my ($self) = @_;
+
+	unless ($self->__sharedCacheClient) {
+		return 0;
+	}
+
+	my $probeKey = $self->__sharedCacheKey('probe', $$);
+	my $ok;
+	eval {
+		$ok = $self->__sharedCacheClient->set($probeKey, 1, 5);
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Memcached backend cache unavailable during probe: $evalError");
+		return 0;
+	}
+
+	return $ok ? 1 : 0;
+}
+
+sub __sharedCacheGet {
+	my ($self, $kind, $key) = @_;
+	unless ($self->__sharedCacheAvailable) {
+		return;
+	}
+
+	my $result;
+	eval {
+		$result = $self->__sharedCacheClient->get($self->__sharedCacheKey($kind, $key));
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Memcached backend cache get failed for $kind: $evalError");
+		$self->__sharedCacheAvailable(0);
+		return;
+	}
+
+	return $result;
+}
+
+sub __sharedCacheSet {
+	my ($self, $kind, $key, $value) = @_;
+	unless ($self->__sharedCacheAvailable) {
+		return;
+	}
+
+	eval {
+		# Memcached treats zero TTL as no expiry; these lookups are effectively static.
+		$self->__sharedCacheClient->set($self->__sharedCacheKey($kind, $key), $value, 0);
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Memcached backend cache set failed for $kind: $evalError");
+		$self->__sharedCacheAvailable(0);
+		return;
+	}
+
+	return 1;
+}
+
+sub __sharedCacheKey {
+	my ($self, $kind, $key) = @_;
+	return join(':', $self->__sharedCachePrefix, $kind, sha1_hex($key // ''));
 }
 
 sub __bookVerseCounts {
