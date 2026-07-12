@@ -64,7 +64,6 @@ use JSON;
 use Log::Log4perl::MDC;
 use List::Util qw(shuffle);
 use Readonly;
-use POSIX qw(_exit);
 use Sys::Hostname;
 use Time::Duration;
 use URI::Escape;
@@ -137,28 +136,28 @@ sub title {
 sub kickOffWarmup {
 	my ($self) = @_;
 
-	my @bibles = shuffle($self->__library->__getBible({ translations => ['all'] }));
-	$self->dic->logger->info(sprintf('Backend cache warmup spawning %d translation child(ren)', scalar(@bibles)));
+	# Warm in the current (master) process, BEFORE the PSGI server forks its
+	# workers, so that every worker inherits fully-populated in-process caches
+	# via copy-on-write.  This previously ran in short-lived forked children
+	# whose caches died with them, leaving the actual request-serving workers
+	# cold: the first whole-chapter request in each worker then paid one
+	# cache-miss round-trip per verse.  __warmBackendCaches() also primes
+	# memcached as a side-effect, so the shared cache survives restarts and
+	# late-spawned workers.
+	my @bibles = $self->__library->__getBible({ translations => ['all'] });
+	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s) in master process', scalar(@bibles)));
+	eval {
+		$self->__warmBackendCaches();
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Backend cache warmup failed: $evalError");
+	}
+
+	# The SQLite handle and memcached socket opened during warmup are not safe to
+	# share across the fork the PSGI server is about to perform; drop them so each
+	# worker re-opens its own.  The warmed in-memory caches are inherited intact.
 	foreach my $bible (@bibles) {
-		my $pid = fork();
-		if (!defined($pid)) {
-			$self->dic->logger->warn(sprintf(
-				'Backend cache warmup fork failed for translation %s',
-				$bible->translation,
-			));
-			next;
-		}
-
-		next if ($pid != 0);
-
-		eval {
-			$self->__warmBackendCaches($bible);
-		};
-		if (my $evalError = $EVAL_ERROR) {
-			$self->dic->logger->warn("Backend cache warmup failed for translation " . $bible->translation . ": $evalError");
-		}
-
-		_exit(0);
+		$bible->__backend->resetForkUnsafeHandles();
 	}
 
 	return;
