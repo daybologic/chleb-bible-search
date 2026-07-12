@@ -66,6 +66,7 @@ use List::Util qw(shuffle);
 use Readonly;
 use Sys::Hostname;
 use Time::Duration;
+use Time::HiRes ();
 use URI::Escape;
 use UUID::Tiny ':std';
 
@@ -184,6 +185,7 @@ sub __library {
 
 sub __warmBackendCaches {
 	my ($self, $warmBible) = @_;
+	my $startTiming = Time::HiRes::time();
 	my @bibles = defined($warmBible) ? ($warmBible) : shuffle($self->__library->__getBible({ translations => ['all'] }));
 	my $totalVerses = 0;
 
@@ -208,9 +210,8 @@ sub __warmBackendCaches {
 	$self->dic->logger->debug(sprintf('Backend cache warmup will process %d verse(s)', $totalVerses));
 	my $processedVerses = 0;
 	my $lastPercent = -1;
-	my $lastTranslation = q{};
 	foreach my $bible (@bibles) {
-		$lastTranslation = $bible->translation;
+		my $translationStartTiming = Time::HiRes::time();
 		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s starting', $bible->translation));
 		$self->dic->logger->trace(sprintf(
 			'Backend cache warmup translation %s priming sentiment cache',
@@ -256,9 +257,18 @@ sub __warmBackendCaches {
 				}
 			}
 		}
-		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s completed', $bible->translation));
+		my $translationMsec = int(1000 * (Time::HiRes::time() - $translationStartTiming));
+		$self->dic->logger->info(sprintf(
+			'Backend cache warmup finished for translation %s in %d msec',
+			$bible->translation,
+			$translationMsec,
+		));
 	}
-	$self->dic->logger->info(sprintf('Backend cache warmup finished for translation %s', $lastTranslation));
+	my $totalMsec = int(1000 * (Time::HiRes::time() - $startTiming));
+	$self->dic->logger->info(sprintf(
+		'All backend cache warmup finished in %d msec',
+		$totalMsec,
+	));
 
 	return;
 }
