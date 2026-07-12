@@ -65,10 +65,10 @@ Readonly my %BOOK_LONG_NAMES => (
 	Ruth => 'Ruth',
 	'1Sam' => '1 Samuel',
 	'2Sam' => '2 Samuel',
-	'1Ki' => '1 Kings',
-	'2Ki' => '2 Kings',
-	'1Chr' => '1 Chronicles',
-	'2Chr' => '2 Chronicles',
+	'1Ki' => 'I Kings',
+	'2Ki' => 'II Kings',
+	'1Chr' => 'I Chronicles',
+	'2Chr' => 'II Chronicles',
 	Ezra => 'Ezra',
 	Neh => 'Nehemiah',
 	Est => 'Esther',
@@ -100,25 +100,25 @@ Readonly my %BOOK_LONG_NAMES => (
 	John => 'John',
 	Acts => 'Acts',
 	Rom => 'Romans',
-	'1Cor' => '1 Corinthians',
-	'2Cor' => '2 Corinthians',
+	'1Cor' => 'I Corinthians',
+	'2Cor' => 'II Corinthians',
 	Gal => 'Galatians',
 	Eph => 'Ephesians',
 	Phil => 'Philippians',
 	Col => 'Colossians',
-	'1Th' => '1 Thessalonians',
-	'2Th' => '2 Thessalonians',
-	'1Tim' => '1 Timothy',
-	'2Tim' => '2 Timothy',
+	'1Th' => 'I Thessalonians',
+	'2Th' => 'II Thessalonians',
+	'1Tim' => 'I Timothy',
+	'2Tim' => 'II Timothy',
 	Titus => 'Titus',
 	Phile => 'Philemon',
 	Heb => 'Hebrews',
 	James => 'James',
-	'1Pet' => '1 Peter',
-	'2Pet' => '2 Peter',
-	'1John' => '1 John',
-	'2John' => '2 John',
-	'3John' => '3 John',
+	'1Pet' => 'I Peter',
+	'2Pet' => 'II Peter',
+	'1John' => 'I John',
+	'2John' => 'II John',
+	'3John' => 'III John',
 	Jude => 'Jude',
 	Rev => 'Revelation of John',
 );
@@ -653,7 +653,7 @@ sub __makeSharedCachePrefix {
 	my ($self) = @_;
 	my $config = $self->dic->config->get('backend_cache', 'memcached', {});
 	my $prefix = $config->{prefix} // 'chleb:backend';
-	return join(':', $prefix, $self->bible->translation);
+	return join(':', $prefix, 'v' . $FILE_VERSION, $self->bible->translation);
 }
 
 sub __makeSharedCacheAvailable {

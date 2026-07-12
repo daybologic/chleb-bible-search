@@ -63,7 +63,11 @@ sub setUp {
 	$self->__makeSourceFile($root . '/data', 'kjv.sqlite.gz', ['kjv']);
 	chdir($root) or die("chdir $root failed: $!");
 
-	$self->sut(Chleb::Bible->new({ translation => 'kjv' })->__backend);
+	$self->sut(Chleb::Bible::Backend->new({
+		bible    => Chleb::Bible->new({ translation => 'kjv' }),
+		dataDir  => $root . '/data',
+		cacheDir => $root . '/cache',
+	}));
 
 	return EXIT_SUCCESS;
 }
@@ -107,7 +111,7 @@ sub __makeSourceFile {
 		AutoCommit => 1,
 	});
 	$dbh->do('CREATE TABLE master (sig CHAR(36) NOT NULL, version INTEGER NOT NULL, built_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)');
-	$dbh->do(q{INSERT INTO master (sig, version) VALUES ('178d4220-2531-11f1-8c59-ab2e7e0be878', 13)});
+	$dbh->do(q{INSERT INTO master (sig, version) VALUES ('178d4220-2531-11f1-8c59-ab2e7e0be878', 14)});
 	$dbh->do('CREATE TABLE translation (code TEXT NOT NULL)');
 	foreach my $translation (@{ $translations }) {
 		$dbh->do('INSERT INTO translation (code) VALUES (?)', undef, $translation);
