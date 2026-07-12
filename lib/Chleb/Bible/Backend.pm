@@ -645,7 +645,10 @@ sub __makeSharedCachePrefix {
 sub __makeSharedCacheAvailable {
 	my ($self) = @_;
 
-	return 0 unless ($self->__sharedCacheClient);
+	unless ($self->__sharedCacheClient) {
+		$self->dic->logger->trace('Memcached backend cache is not available: no client');
+		return 0;
+	}
 
 	my $probeKey = $self->__sharedCacheKey('probe', $$);
 	my $ok;
@@ -657,12 +660,16 @@ sub __makeSharedCacheAvailable {
 		return 0;
 	}
 
+	$self->dic->logger->trace('Memcached backend cache is available');
 	return $ok ? 1 : 0;
 }
 
 sub __sharedCacheGet {
 	my ($self, $kind, $key) = @_;
-	return unless ($self->__sharedCacheAvailable);
+	unless ($self->__sharedCacheAvailable) {
+		$self->dic->logger->trace("Memcached backend cache get skipped for $kind: unavailable");
+		return;
+	}
 
 	my $result;
 	eval {
@@ -674,12 +681,20 @@ sub __sharedCacheGet {
 		return;
 	}
 
+	$self->dic->logger->trace(sprintf(
+		"Memcached backend cache %s for %s",
+		defined($result) ? 'hit' : 'miss',
+		$kind,
+	));
 	return $result;
 }
 
 sub __sharedCacheSet {
 	my ($self, $kind, $key, $value) = @_;
-	return unless ($self->__sharedCacheAvailable);
+	unless ($self->__sharedCacheAvailable) {
+		$self->dic->logger->trace("Memcached backend cache set skipped for $kind: unavailable");
+		return;
+	}
 
 	eval {
 		# Memcached treats zero TTL as no expiry; these lookups are effectively static.
@@ -691,6 +706,7 @@ sub __sharedCacheSet {
 		return;
 	}
 
+	$self->dic->logger->trace("Memcached backend cache stored for $kind");
 	return 1;
 }
 
@@ -895,13 +911,13 @@ sub __traceSelectQuery {
 
 sub __selectrowArray {
 	my ($self, $dbh, $sql, @bind) = @_;
-	#$self->__traceSelectQuery($sql, @bind);
+	$self->__traceSelectQuery($sql, @bind);
 	return $dbh->selectrow_array($sql, undef, @bind);
 }
 
 sub __prepareSelect {
 	my ($self, $dbh, $sql, @bind) = @_;
-	#$self->__traceSelectQuery($sql, @bind);
+	$self->__traceSelectQuery($sql, @bind);
 	my $sth = $dbh->prepare($sql);
 	$sth->execute(@bind);
 	return $sth;

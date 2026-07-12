@@ -290,6 +290,35 @@ sub test_translation_all {
 	return EXIT_SUCCESS;
 }
 
+sub testWarmupPrimesSentimentCache {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $dic = Chleb::DI::Container->instance();
+	my $previousLogger = $dic->logger;
+	my $logger = Chleb::DI::MockLogger->new();
+	$dic->logger($logger);
+
+	my ($bible) = $self->sut->__library->__getBible({ translations => [ 'kjv' ] });
+	$self->sut->__warmBackendCaches($bible);
+
+	my $before = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	$self->sut->__lookup({
+		accept => $mediaType,
+		book => 'Acts',
+		chapter => 2,
+		verse => 1,
+	});
+	my $after = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+
+	is($after, $before, 'lookup does not reload sentiment after warmup');
+
+	$dic->logger($previousLogger);
+
+	return EXIT_SUCCESS;
+}
+
 sub test_not_found {
 	my ($self) = @_;
 	plan tests => 1;

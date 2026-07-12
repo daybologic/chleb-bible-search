@@ -213,6 +213,11 @@ sub __warmBackendCaches {
 	foreach my $bible (@bibles) {
 		$lastTranslation = $bible->translation;
 		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s starting', $bible->translation));
+		$self->dic->logger->trace(sprintf(
+			'Backend cache warmup translation %s priming sentiment cache',
+			$bible->translation,
+		));
+		$bible->__backend->getSentimentByOrdinal(1);
 		my @books = shuffle(@{ $bible->books() });
 		foreach my $book (@books) {
 			$self->dic->logger->debug(sprintf(
@@ -227,6 +232,7 @@ sub __warmBackendCaches {
 			}
 			my @chapterOrdinals = shuffle(1 .. $book->chapterCount);
 			foreach my $chapterOrdinal (@chapterOrdinals) {
+				$bible->__backend->getChapterVerseDataByKey($book->shortNameRaw, $chapterOrdinal);
 				my @verses = shuffle(@{ $chapterVerses{$chapterOrdinal} // [ ] });
 				my $verseCount = scalar(@verses);
 				my $verseIndex = 0;
@@ -335,10 +341,11 @@ sub __lookup {
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
 	my @verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
+	my $verseToJsonApiCache = { };
 
 	my @json;
 	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
-		push(@json, __verseToJsonApi($verse[$verseI], $params));
+		push(@json, __verseToJsonApi($verse[$verseI], $params, $verseToJsonApiCache));
 		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath())
 		    . Chleb::Utils::queryParamsHelper($params);
 	}
@@ -419,9 +426,10 @@ sub __random {
 	my $verse = $self->__library->random($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
+		my $verseToJsonApiCache = { };
 
 		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
-			push(@json, __verseToJsonApi($verse->[$verseI], $params));
+			push(@json, __verseToJsonApi($verse->[$verseI], $params, $verseToJsonApiCache));
 		}
 
 		my $secondary_total_msec = 0;
@@ -503,9 +511,10 @@ sub __votd {
 	my $verse = $self->__library->votd($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
+		my $verseToJsonApiCache = { };
 
 		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
-			push(@json, __verseToJsonApi($verse->[$verseI], $params));
+			push(@json, __verseToJsonApi($verse->[$verseI], $params, $verseToJsonApiCache));
 		}
 
 		my $secondary_total_msec = 0;
@@ -1195,7 +1204,7 @@ sub __uptimeFilePath {
 
 =over
 
-=item C<__verseToJsonApi($verse, $params)>
+=item C<__verseToJsonApi($verse, $params, [$cache])>
 
 Take the given C<$verse> (L<Chleb::Bible::Verse>) and optional C<$params> (C<HASH>)
 and produce the user-facing C<JSON:API> response (C<HASH>).  Shared logic used by
@@ -1204,18 +1213,23 @@ multiple results-orientated server methods.
 =cut
 
 sub __verseToJsonApi {
-	my ($verse, $params) = @_;
+	my ($verse, $params, $cache) = @_;
+	$cache ||= { };
 	my %hash = __makeJsonApi();
+	my $bookId = $verse->book->id;
+	my $chapterId = $verse->chapter->id;
+	my $bookAttributes = $cache->{book_attributes}->{$bookId} //= $verse->book->TO_JSON();
+	my $chapterAttributes = $cache->{chapter_attributes}->{$chapterId} //= $verse->chapter->TO_JSON();
 
 	push(@{ $hash{included} }, {
 		type => $verse->chapter->type,
-		id => $verse->chapter->id,
-		attributes => $verse->chapter->TO_JSON(),
+		id => $chapterId,
+		attributes => $chapterAttributes,
 		relationships => {
 			book => {
 				data => {
 					type => $verse->book->type,
-					id => $verse->book->id,
+					id => $bookId,
 				},
 			}
 		},
@@ -1223,8 +1237,8 @@ sub __verseToJsonApi {
 
 	push(@{ $hash{included} }, {
 		type => $verse->book->type,
-		id => $verse->book->id,
-		attributes => $verse->book->TO_JSON(),
+		id => $bookId,
+		attributes => $bookAttributes,
 		relationships => { },
 	});
 
@@ -1256,10 +1270,19 @@ sub __verseToJsonApi {
 		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->getPath()) . $queryParams;
 	}
 
-	$links{first} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal(1)->getPath())
-	    . Chleb::Utils::queryParamsHelper($params);
-	$links{last} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal($verse->chapter->verseCount)->getPath())
-	    . Chleb::Utils::queryParamsHelper($params);
+	my $chapterLinkCacheKey = join(':', $chapterId, $queryParams);
+	my $chapterLinkCache = $cache->{chapter_links}->{$chapterLinkCacheKey};
+	if (!$chapterLinkCache) {
+		$chapterLinkCache = {
+			first => '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal(1)->getPath())
+			    . Chleb::Utils::queryParamsHelper($params),
+			last => '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal($verse->chapter->verseCount)->getPath())
+			    . Chleb::Utils::queryParamsHelper($params),
+		};
+		$cache->{chapter_links}->{$chapterLinkCacheKey} = $chapterLinkCache;
+	}
+	$links{first} = $chapterLinkCache->{first};
+	$links{last} = $chapterLinkCache->{last};
 
 	push(@{ $hash{data} }, {
 		type => $verse->type,
