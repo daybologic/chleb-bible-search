@@ -199,10 +199,10 @@ SQL
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS sentiment (
 	translation CHAR(8) NOT NULL,
-	ordinal INTEGER PRIMARY KEY,
+	ordinal INTEGER NOT NULL,
 	emotion TEXT NOT NULL,
 	tones TEXT NOT NULL,
-	UNIQUE (translation, ordinal)
+	PRIMARY KEY (translation, ordinal)
 )
 SQL
 
@@ -322,6 +322,7 @@ sub __uuid {
 
 sub __connect {
 	my ($fileName) = @_;
+	unlink($fileName);
 	my $dbh = DBI->connect(
 		"dbi:SQLite:dbname=${fileName}",
 		q{},
