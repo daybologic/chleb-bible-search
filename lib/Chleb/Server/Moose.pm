@@ -219,11 +219,6 @@ sub __warmBackendCaches {
 		$bible->__backend->getSentimentByOrdinal(1);
 		my @books = shuffle(@{ $bible->books() });
 		foreach my $book (@books) {
-			$self->dic->logger->debug(sprintf(
-				'Backend cache warmup translation %s book %s starting',
-				$bible->translation,
-				$book->shortNameRaw,
-			));
 			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->shortNameRaw);
 			my %chapterVerses;
 			foreach my $row (@{ $bookVerses // [ ] }) {
@@ -235,13 +230,6 @@ sub __warmBackendCaches {
 				my @verses = shuffle(@{ $chapterVerses{$chapterOrdinal} // [ ] });
 				my $verseCount = scalar(@verses);
 				my $verseIndex = 0;
-				$self->dic->logger->trace(sprintf(
-					'Backend cache warmup translation %s book %s chapter %d starting (%d verses)',
-					$bible->translation,
-					$book->shortNameRaw,
-					$chapterOrdinal,
-					$verseCount,
-				));
 				foreach my $verse (@verses) {
 					$verseIndex++;
 					my $verseOrdinal = $verse->{verse_ordinal} + 0;
