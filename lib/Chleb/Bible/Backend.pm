@@ -502,6 +502,13 @@ SQL
 
 sub getBookInfoByShortName {
 	my ($self, $shortNameRaw) = @_;
+	my $translation = $self->bible->translation;
+	my $cacheKey = join(':', $translation, $shortNameRaw);
+	return $self->__bookInfoDataCache->{$cacheKey} if (exists($self->__bookInfoDataCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('bookinfo', $cacheKey)) {
+		$self->__bookInfoDataCache->{$cacheKey} = $cached;
+		return $cached;
+	}
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $shortNameRaw);
 		SELECT book.id, book.code, book.testament, book.chapter_count
 		  FROM book
@@ -510,12 +517,15 @@ SQL
 	my $row = $sth->fetchrow_hashref();
 	return unless ($row);
 
-	return {
+	my $bookInfo = {
 		c => $row->{chapter_count} + 0,
 		n => $self->__bookLongName($shortNameRaw),
 		t => $row->{testament},
 		v => $self->__bookVerseCounts($row->{id}),
 	};
+	$self->__bookInfoDataCache->{$cacheKey} = $bookInfo;
+	$self->__sharedCacheSet('bookinfo', $cacheKey, $bookInfo);
+	return $bookInfo;
 }
 
 sub getSentimentByOrdinal {
@@ -575,10 +585,17 @@ sub __sentimentByOrdinal {
 
 sub __verseCount {
 	my ($self) = @_;
-	return $self->__bookInfoCache->{"versecount:total"} if (exists($self->__bookInfoCache->{"versecount:total"}));
+	my $translation = $self->bible->translation;
+	my $cacheKey = join(':', $translation, 'versecount:total');
+	return $self->__bookInfoCache->{$cacheKey} if (exists($self->__bookInfoCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('versecount', $cacheKey)) {
+		$self->__bookInfoCache->{$cacheKey} = $cached + 0;
+		return $cached + 0;
+	}
 	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');
 	$count += 0;
-	$self->__bookInfoCache->{"versecount:total"} = $count;
+	$self->__bookInfoCache->{$cacheKey} = $count;
+	$self->__sharedCacheSet('versecount', $cacheKey, $count);
 	return $count;
 }
 
@@ -586,6 +603,10 @@ sub __sentimentData {
 	my ($self) = @_;
 	my $translation = $self->bible->translation;
 	return $self->__sentimentCache->{$translation} if ($self->__sentimentCache->{$translation});
+	if (my $cached = $self->__sharedCacheGet('sentiment', $translation)) {
+		$self->__sentimentCache->{$translation} = $cached;
+		return $cached;
+	}
 
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation);
 		SELECT emotion, tones
@@ -601,6 +622,7 @@ SQL
 		});
 	}
 	$self->__sentimentCache->{$translation} = \@sentiment;
+	$self->__sharedCacheSet('sentiment', $translation, \@sentiment);
 	return $self->__sentimentCache->{$translation};
 }
 

@@ -292,7 +292,7 @@ sub test_translation_all {
 
 sub testWarmupPrimesSentimentCache {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 3;
 
 	my $dic = Chleb::DI::Container->instance();
 	my $previousLogger = $dic->logger;
@@ -303,6 +303,8 @@ sub testWarmupPrimesSentimentCache {
 	$self->sut->__warmBackendCaches($bible);
 
 	my $before = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+	my $bookInfoBefore = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
+	my $verseCountBefore = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
 	$self->sut->__lookup({
 		accept => $mediaType,
@@ -311,8 +313,12 @@ sub testWarmupPrimesSentimentCache {
 		verse => 1,
 	});
 	my $after = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+	my $bookInfoAfter = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
+	my $verseCountAfter = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 
 	is($after, $before, 'lookup does not reload sentiment after warmup');
+	is($bookInfoAfter, $bookInfoBefore, 'lookup does not reload book info after warmup');
+	is($verseCountAfter, $verseCountBefore, 'lookup does not reload verse counts after warmup');
 
 	$dic->logger($previousLogger);
 
