@@ -43,7 +43,6 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use File::Temp qw(tempfile);
 use Readonly;
 use DBI;
-use JSON;
 use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
@@ -733,7 +732,6 @@ sub __makeSharedCacheAvailable {
 	my ($self) = @_;
 
 	unless ($self->__sharedCacheClient) {
-		$self->dic->logger->trace('Memcached backend cache is not available: no client');
 		return 0;
 	}
 
@@ -747,14 +745,12 @@ sub __makeSharedCacheAvailable {
 		return 0;
 	}
 
-	$self->dic->logger->trace('Memcached backend cache is available');
 	return $ok ? 1 : 0;
 }
 
 sub __sharedCacheGet {
 	my ($self, $kind, $key) = @_;
 	unless ($self->__sharedCacheAvailable) {
-		$self->dic->logger->trace("Memcached backend cache get skipped for $kind: unavailable");
 		return;
 	}
 
@@ -768,18 +764,12 @@ sub __sharedCacheGet {
 		return;
 	}
 
-	$self->dic->logger->trace(sprintf(
-		"Memcached backend cache %s for %s",
-		defined($result) ? 'hit' : 'miss',
-		$kind,
-	));
 	return $result;
 }
 
 sub __sharedCacheSet {
 	my ($self, $kind, $key, $value) = @_;
 	unless ($self->__sharedCacheAvailable) {
-		$self->dic->logger->trace("Memcached backend cache set skipped for $kind: unavailable");
 		return;
 	}
 
@@ -793,7 +783,6 @@ sub __sharedCacheSet {
 		return;
 	}
 
-	$self->dic->logger->trace("Memcached backend cache stored for $kind");
 	return 1;
 }
 
@@ -982,17 +971,6 @@ sub __inspectSourceFile {
 
 sub __traceSelectQuery {
 	my ($self, $sql, @bind) = @_;
-	my $summary = $sql // q{};
-	$summary =~ s/\s+/ /g;
-	$summary =~ s/^\s+//;
-	$summary =~ s/\s+\z//;
-
-	my $message = 'SQLite SELECT: ' . $summary;
-	if (scalar(@bind) > 0) {
-		$message .= ' bind=' . encode_json(\@bind);
-	}
-
-	$self->dic->logger->trace($message);
 	return;
 }
 
