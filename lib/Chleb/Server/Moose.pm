@@ -142,9 +142,7 @@ sub kickOffWarmup {
 	# via copy-on-write.  This previously ran in short-lived forked children
 	# whose caches died with them, leaving the actual request-serving workers
 	# cold: the first whole-chapter request in each worker then paid one
-	# cache-miss round-trip per verse.  __warmBackendCaches() also primes
-	# memcached as a side-effect, so the shared cache survives restarts and
-	# late-spawned workers.
+	# cache-miss lookup per verse.
 	my @bibles = $self->__library->__getBible({ translations => ['all'] });
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s) in master process', scalar(@bibles)));
 	eval {
@@ -154,9 +152,9 @@ sub kickOffWarmup {
 		$self->dic->logger->warn("Backend cache warmup failed: $evalError");
 	}
 
-	# The SQLite handle and memcached socket opened during warmup are not safe to
-	# share across the fork the PSGI server is about to perform; drop them so each
-	# worker re-opens its own.  The warmed in-memory caches are inherited intact.
+	# The SQLite handle opened during warmup is not safe to share across the fork
+	# the PSGI server is about to perform; drop it so each worker re-opens its own.
+	# The warmed in-memory caches are inherited intact.
 	foreach my $bible (@bibles) {
 		$bible->__backend->resetForkUnsafeHandles();
 	}
