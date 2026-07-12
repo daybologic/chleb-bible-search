@@ -40,6 +40,7 @@ use IO::File;
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use Moose;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
+use File::Temp qw(tempfile);
 use Readonly;
 use DBI;
 use JSON;
@@ -79,11 +80,20 @@ has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub
 has __sharedCacheClient => (is => 'ro', lazy => 1, builder => '__makeSharedCacheClient');
 has __sharedCacheAvailable => (is => 'rw', isa => 'Bool', lazy => 1, builder => '__makeSharedCacheAvailable');
 has __sharedCachePrefix => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeSharedCachePrefix');
+has __sourceMetadata => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 
 sub __makeCompressedPath {
 	my ($self) = @_;
-	return join('/', $self->dataDir, $self->__bibleFileName(compressed => 1));
+	return $self->__makeSourceCompressedPath();
 }
+
+=item C<__makeCompressedPath()>
+
+Resolve the compressed source file path for the current bible translation.
+This now delegates to the source-selection helper so startup can inspect all
+available SQLite bundles and choose the best match.
+
+=cut
 
 sub __makeCachePath {
 	my ($self) = @_;
@@ -702,8 +712,8 @@ sub __makeDataDir {
 	Readonly my @PATHS => ('data', '/usr/share/chleb-bible-search');
 	foreach my $path (@PATHS) {
 		if (-d $path) {
-			my $testFile = join('/', $path, $self->__bibleFileName(compressed => 1));
-			if (-f $testFile) {
+			my @sourceFiles = $self->__sourceFilesInPath($path);
+			if (scalar(@sourceFiles) > 0) {
 				return $path;
 			}
 		}
@@ -725,10 +735,106 @@ sub __makeCacheDir {
 
 sub __bibleFileName {
 	my ($self, %flags) = @_;
-	my $fileName = join('.', $self->bible->translation, 'sqlite'); # TODO: need better logic to know which translations match which combined SQLite databases
+	my $fileName = $self->bible->translation . '.sqlite';
 	$fileName .= '.gz' if ($flags{compressed});
 	return $fileName;
 }
+
+sub __makeSourceCompressedPath {
+	my ($self) = @_;
+	my @candidates = $self->__sourceCompressedPathsForTranslation($self->bible->translation);
+	return $candidates[0] if (scalar(@candidates) > 0);
+	return join('/', $self->dataDir, $self->__bibleFileName(compressed => 1));
+}
+
+=item C<__makeSourceCompressedPath()>
+
+Pick the compressed SQLite source file to use for the current translation.
+The preferred order is a single-translation SQLite file first, then a
+multi-translation bundle such as C<core.sqlite.gz>, and finally the
+translation-specific filename as a fallback.
+
+=cut
+
+sub __sourceCompressedPathsForTranslation {
+	my ($self) = @_;
+	my $translation = $self->bible->translation;
+	my @sourceFiles = $self->__sourceFilesInPath($self->dataDir);
+	my @singleTranslationFiles;
+	my @coreFiles;
+	my @matchingFiles;
+	foreach my $sourceFile (@sourceFiles) {
+		my $meta = $self->__sourceMetadata->{$sourceFile} //= $self->__inspectSourceFile($sourceFile);
+		next unless (exists($meta->{translations}->{$translation}));
+		push(@matchingFiles, $sourceFile);
+		push(@singleTranslationFiles, $sourceFile) if (scalar(keys(%{ $meta->{translations} })) == 1);
+		push(@coreFiles, $sourceFile) if ($meta->{translation_count} > 1);
+	}
+
+	return @singleTranslationFiles if (scalar(@singleTranslationFiles) > 0);
+	return @coreFiles if (scalar(@coreFiles) > 0);
+	return @matchingFiles;
+}
+
+=item C<__sourceCompressedPathsForTranslation($translation)>
+
+Return candidate compressed SQLite source files for a translation, ordered by
+preference. Files containing only one translation are preferred over bundles
+that contain multiple translations.
+
+=cut
+
+sub __sourceFilesInPath {
+	my ($self, $path) = @_;
+	my @files = sort glob(join('/', $path, '*.sqlite.gz'));
+	return @files;
+}
+
+=item C<__sourceFilesInPath($path)>
+
+Return all compressed SQLite source files in a directory, sorted
+lexicographically.
+
+=cut
+
+sub __inspectSourceFile {
+	my ($self, $sourceFile) = @_;
+	my ($tempHandle, $tempPath) = tempfile(SUFFIX => '.sqlite', UNLINK => 1);
+	close($tempHandle);
+	gunzip $sourceFile => $tempPath
+	   or die("gunzip \"" . $sourceFile . "\" failed: $GunzipError\n");
+
+	my $dbh = DBI->connect(
+		"dbi:SQLite:dbname=${tempPath}",
+		q{},
+		q{},
+		{
+			RaiseError => 1,
+			AutoCommit => 1,
+		}
+	);
+
+	my $sth = $dbh->prepare('SELECT code FROM translation');
+	$sth->execute();
+	my %translations;
+	while (my ($code) = $sth->fetchrow_array()) {
+		$translations{$code} = 1 if (defined($code) && length($code) > 0);
+	}
+	$dbh->disconnect();
+
+	return {
+		translations => \%translations,
+		translation_count => scalar(keys(%translations)),
+	};
+}
+
+=item C<__inspectSourceFile($sourceFile)>
+
+Inspect a compressed SQLite source file and return cached metadata describing
+the translations it contains. This is used at startup to map translations to
+the best available source file without relying on filenames alone.
+
+=cut
 
 __PACKAGE__->meta->make_immutable;
 
