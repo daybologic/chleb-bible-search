@@ -691,6 +691,14 @@ SQL
 	return $self->__sentimentCache->{$translation};
 }
 
+=item C<__sharedCacheGet($kind, $key)>
+
+Return a value from the Storable-backed shared cache for this translation, or
+C<undef> if no entry exists.  C<$kind> groups related cache entries, while
+C<$key> is hashed before being used as the stored entry key.
+
+=cut
+
 sub __sharedCacheGet {
 	my ($self, $kind, $key) = @_;
 	my $entries = $self->__sharedCacheTranslation->{entries};
@@ -699,6 +707,14 @@ sub __sharedCacheGet {
 	return $entries->{$kind}->{$sharedKey} if (exists($entries->{$kind}->{$sharedKey}));
 	return;
 }
+
+=item C<__sharedCacheSet($kind, $key, $value)>
+
+Store a value in the shared cache for this translation.  By default this also
+flushes C<shared.bin> immediately; callers doing many writes can defer those
+flushes with L</deferSharedCacheWrites>.
+
+=cut
 
 sub __sharedCacheSet {
 	my ($self, $kind, $key, $value) = @_;
@@ -711,11 +727,27 @@ sub __sharedCacheSet {
 	return 1;
 }
 
+=item C<deferSharedCacheWrites($defer)>
+
+Enable or disable deferred writes for the Storable-backed shared cache.  This is
+used by warmup and search loops so they can add many entries in memory and then
+write C<shared.bin> once at the end.
+
+=cut
+
 sub deferSharedCacheWrites {
 	my ($self, $defer) = @_;
 	$self->__sharedCacheWriteDeferred($defer ? 1 : 0);
 	return;
 }
+
+=item C<flushSharedCache()>
+
+Flush pending shared-cache changes to C<shared.bin>.  The write path takes an
+exclusive lock, merges this backend's current translation cache with the latest
+file contents, and replaces the file atomically.
+
+=cut
 
 sub flushSharedCache {
 	my ($self) = @_;
@@ -734,6 +766,14 @@ sub flushSharedCache {
 	return $ok;
 }
 
+=item C<__makeSharedCache()>
+
+Build the in-memory representation of C<shared.bin>.  The file is read under a
+shared lock and falls back to an empty cache structure if the file does not
+exist, cannot be read, or is stale for this code's cache format.
+
+=cut
+
 sub __makeSharedCache {
 	my ($self) = @_;
 	return $self->__withSharedCacheLock(LOCK_SH, sub {
@@ -741,10 +781,25 @@ sub __makeSharedCache {
 	}) // $self->__emptySharedCache();
 }
 
+=item C<__makeSharedCachePath()>
+
+Return the path to the backend shared cache file in the selected cache
+directory.
+
+=cut
+
 sub __makeSharedCachePath {
 	my ($self) = @_;
 	return join('/', $self->cacheDir, $SHARED_CACHE_FILE);
 }
+
+=item C<__sharedCacheTranslation()>
+
+Return the per-translation shared-cache structure for the current bible.  If the
+translation entry is missing or stale relative to the compressed SQLite source,
+it is replaced with a fresh empty entry.
+
+=cut
 
 sub __sharedCacheTranslation {
 	my ($self) = @_;
@@ -765,6 +820,14 @@ sub __sharedCacheTranslation {
 	return $translationCache;
 }
 
+=item C<__mergeSharedCacheTranslation($cache)>
+
+Merge this backend object's current translation cache into a full shared-cache
+hash read from disk.  Other translation entries already present in C<$cache> are
+preserved.
+
+=cut
+
 sub __mergeSharedCacheTranslation {
 	my ($self, $cache) = @_;
 	my $translation = $self->bible->translation;
@@ -772,6 +835,13 @@ sub __mergeSharedCacheTranslation {
 	$cache->{translations}->{$translation} = $self->__sharedCacheTranslation;
 	return;
 }
+
+=item C<__sharedCacheTranslationIsFresh($translationCache)>
+
+Return true when a translation entry has the expected structure and was built
+from the same compressed SQLite source file that this backend is using.
+
+=cut
 
 sub __sharedCacheTranslationIsFresh {
 	my ($self, $translationCache) = @_;
@@ -787,6 +857,13 @@ sub __sharedCacheTranslationIsFresh {
 	return 1;
 }
 
+=item C<__sharedCacheSourceMeta()>
+
+Return the compressed source file metadata used to decide whether a
+translation's shared-cache entry is still valid.
+
+=cut
+
 sub __sharedCacheSourceMeta {
 	my ($self) = @_;
 	my @stat = stat($self->compressedPath);
@@ -795,6 +872,13 @@ sub __sharedCacheSourceMeta {
 		source_size  => $stat[7] // 0,
 	};
 }
+
+=item C<__readSharedCacheFile()>
+
+Read and validate C<shared.bin>.  Corrupt, incompatible, or missing cache files
+are treated as empty caches so backend operation can continue.
+
+=cut
 
 sub __readSharedCacheFile {
 	my ($self) = @_;
@@ -812,6 +896,13 @@ sub __readSharedCacheFile {
 
 	return $self->__validSharedCache($cache) ? $cache : $self->__emptySharedCache();
 }
+
+=item C<__writeSharedCacheFile($cache)>
+
+Write the supplied shared-cache hash to C<shared.bin> using a temporary file in
+the cache directory, flushing it, and atomically renaming it into place.
+
+=cut
 
 sub __writeSharedCacheFile {
 	my ($self, $cache) = @_;
@@ -837,6 +928,14 @@ sub __writeSharedCacheFile {
 	return $ok;
 }
 
+=item C<__withSharedCacheLock($mode, $callback)>
+
+Run C<$callback> while holding the shared-cache lock file with the supplied
+C<flock()> mode.  Returns the callback result, or C<undef> if the lock file
+cannot be opened or locked.
+
+=cut
+
 sub __withSharedCacheLock {
 	my ($self, $mode, $callback) = @_;
 	my $lockPath = $self->__sharedCachePath . '.lock';
@@ -855,6 +954,13 @@ sub __withSharedCacheLock {
 	return $result;
 }
 
+=item C<__emptySharedCache()>
+
+Return a new empty top-level shared-cache structure tagged with the current
+cache format and backend file version.
+
+=cut
+
 sub __emptySharedCache {
 	my ($self) = @_;
 	return {
@@ -864,6 +970,13 @@ sub __emptySharedCache {
 	};
 }
 
+=item C<__validSharedCache($cache)>
+
+Return true when C<$cache> is a top-level shared-cache hash for the current
+cache format and backend file version.
+
+=cut
+
 sub __validSharedCache {
 	my ($self, $cache) = @_;
 	return 0 unless (ref($cache) eq 'HASH');
@@ -872,6 +985,14 @@ sub __validSharedCache {
 	return 0 unless (ref($cache->{translations}) eq 'HASH');
 	return 1;
 }
+
+=item C<__sharedCacheKey($key)>
+
+Return the SHA-1 key used for a single shared-cache entry.  Hashing keeps stored
+entry names short and avoids leaking raw lookup strings into the cache file's
+internal structure.
+
+=cut
 
 sub __sharedCacheKey {
 	my ($self, $key) = @_;
