@@ -670,10 +670,11 @@ sub __sentimentData {
 	my $translation = $self->bible->translation;
 	return $self->__sentimentCache->{$translation} if ($self->__sentimentCache->{$translation});
 
-	# Unlike the other lookups, sentiment is deliberately NOT routed through the
-	# shared cache: it is the whole-translation array (~31k entries), and is
-	# loaded here in one cheap bulk query anyway.  It lives only in the
-	# per-process cache above.
+	if (my $cached = $self->__sharedCacheGet('sentiment', $translation)) {
+		$self->__sentimentCache->{$translation} = $cached;
+		return $cached;
+	}
+
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation);
 		SELECT emotion, tones
 		  FROM sentiment
@@ -688,6 +689,7 @@ SQL
 		});
 	}
 	$self->__sentimentCache->{$translation} = \@sentiment;
+	$self->__sharedCacheSet('sentiment', $translation, \@sentiment);
 	return $self->__sentimentCache->{$translation};
 }
 

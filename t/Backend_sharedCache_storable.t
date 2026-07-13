@@ -107,6 +107,30 @@ sub testDeferredWritesFlushWhenRequested {
 	return EXIT_SUCCESS;
 }
 
+sub testSentimentPersistsAcrossBackendInstances {
+	my ($self) = @_;
+	plan tests => 3;
+
+	is_deeply($self->sut->getSentimentByOrdinal(1), {
+		emotion => 'joy',
+		tones   => [ 'praise', 'trust' ],
+	}, 'sentiment loads from SQLite');
+
+	my $second = $self->__makeBackend('kjv');
+	is_deeply($second->__sharedCacheGet('sentiment', 'kjv'), [
+		{
+			emotion => 'joy',
+			tones   => [ 'trust', 'praise' ],
+		},
+	], 'sentiment array is stored in the shared cache');
+	is_deeply($second->getSentimentByOrdinal(1), {
+		emotion => 'joy',
+		tones   => [ 'praise', 'trust' ],
+	}, 'second backend reads sentiment through shared cache');
+
+	return EXIT_SUCCESS;
+}
+
 sub testStaleSourceMetadataInvalidatesTranslation {
 	my ($self) = @_;
 	plan tests => 2;
@@ -170,8 +194,10 @@ sub __makeSourceFile {
 	$dbh->do(q{INSERT INTO master (sig, version) VALUES ('178d4220-2531-11f1-8c59-ab2e7e0be878', 14)});
 	$dbh->do('CREATE TABLE translation (code TEXT NOT NULL)');
 	$dbh->do('CREATE TABLE verse (id INTEGER NOT NULL, ordinal_relative_to_chapter INTEGER NOT NULL)');
+	$dbh->do('CREATE TABLE sentiment (translation TEXT NOT NULL, ordinal INTEGER NOT NULL, emotion TEXT NOT NULL, tones TEXT NOT NULL)');
 	foreach my $translation (@{ $translations }) {
 		$dbh->do('INSERT INTO translation (code) VALUES (?)', undef, $translation);
+		$dbh->do(q{INSERT INTO sentiment (translation, ordinal, emotion, tones) VALUES (?, 1, 'joy', '["trust","praise"]')}, undef, $translation);
 	}
 	$dbh->disconnect();
 
