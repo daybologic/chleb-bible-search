@@ -334,6 +334,7 @@ redocly.yaml
 swagger.yaml
 t/Backend_getOrdinalByVerseKey.t
 t/Backend_getSentimentByOrdinal.t
+t/Backend_sharedCache_storable.t
 t/Backend_sourceSelection.t
 t/Base.t
 t/Bible_getBookByLongName.t

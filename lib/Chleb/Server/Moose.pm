@@ -142,9 +142,9 @@ sub kickOffWarmup {
 	# via copy-on-write.  This previously ran in short-lived forked children
 	# whose caches died with them, leaving the actual request-serving workers
 	# cold: the first whole-chapter request in each worker then paid one
-	# cache-miss round-trip per verse.  __warmBackendCaches() also primes
-	# memcached as a side-effect, so the shared cache survives restarts and
-	# late-spawned workers.
+	# cache-miss round-trip per verse.  __warmBackendCaches() also primes the
+	# Storable-backed shared cache as a side-effect, so warm data survives
+	# restarts and late-spawned workers.
 	my @bibles = $self->__library->__getBible({ translations => ['all'] });
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s) in master process', scalar(@bibles)));
 	eval {
@@ -154,9 +154,9 @@ sub kickOffWarmup {
 		$self->dic->logger->warn("Backend cache warmup failed: $evalError");
 	}
 
-	# The SQLite handle and memcached socket opened during warmup are not safe to
-	# share across the fork the PSGI server is about to perform; drop them so each
-	# worker re-opens its own.  The warmed in-memory caches are inherited intact.
+	# The SQLite handle opened during warmup is not safe to share across the fork
+	# the PSGI server is about to perform; drop it so each worker re-opens its
+	# own.  The warmed in-memory caches are inherited intact.
 	foreach my $bible (@bibles) {
 		$bible->__backend->resetForkUnsafeHandles();
 	}
@@ -211,6 +211,8 @@ sub __warmBackendCaches {
 	my $processedVerses = 0;
 	my $lastPercent = -1;
 	foreach my $bible (@bibles) {
+		my $backend = $bible->__backend;
+		$backend->deferSharedCacheWrites(1);
 		my $translationStartTiming = Time::HiRes::time();
 		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s starting', $bible->translation));
 		$self->dic->logger->trace(sprintf(
@@ -257,6 +259,8 @@ sub __warmBackendCaches {
 				}
 			}
 		}
+		$backend->deferSharedCacheWrites(0);
+		$backend->flushSharedCache();
 		my $translationMsec = int(1000 * (Time::HiRes::time() - $translationStartTiming));
 		$self->dic->logger->info(sprintf(
 			'Backend cache warmup finished for translation %s in %d msec',
