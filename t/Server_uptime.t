@@ -131,7 +131,7 @@ sub testUptimeHtml {
 
 sub testUptimeConfiguredFile {
 	my ($self) = @_;
-	plan tests => 3;
+	plan tests => 4;
 
 	my $dir = tempdir(CLEANUP => 1);
 	my $path = "$dir/startup.txt";
@@ -146,6 +146,8 @@ EOF
 	$self->dic->time->set(2_000_000_000);
 	$self->unmock(ref($self->sut), '__getUptime');
 	my $sut = Chleb::Server::Moose->new({ dic => $self->dic });
+	ok(!-f $path, 'configured uptime file is not created during construction');
+	$sut->__startupReady();
 
 	ok(-f $path, 'configured uptime file is created');
 

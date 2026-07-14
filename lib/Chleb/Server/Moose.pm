@@ -95,8 +95,6 @@ sub BUILD {
 	my ($self) = @_;
 
 	$self->__removeUptime();
-	$self->__getUptime(); # set startup time as soon as possible
-	$self->title();
 
 	return;
 }
@@ -161,6 +159,8 @@ sub kickOffWarmup {
 		$bible->__backend->resetForkUnsafeHandles();
 	}
 
+	$self->__startupReady();
+
 	return;
 }
 
@@ -169,6 +169,22 @@ sub kickOffWarmup {
 =head1 PRIVATE METHODS
 
 =over
+
+=item C<__startupReady()>
+
+Mark startup as complete after backend cache warmup has run.  This creates the
+uptime file and logs the server title and administrator details.
+
+=cut
+
+sub __startupReady {
+	my ($self) = @_;
+
+	$self->__getUptime();
+	$self->title();
+
+	return;
+}
 
 =item C<__library()>
 
