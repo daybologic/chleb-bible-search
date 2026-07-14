@@ -57,13 +57,24 @@ if [ "$#" -eq 0 ]; then
 	exit 0
 fi
 
-# Run perlcritic over all files passed in one invocation.
+# Run perlcritic over each file.  Test scripts conventionally end by switching
+# back to package main for the runnable harness, so allow multiple package
+# declarations only for top-level t/*.t files.
 # We intentionally ignore exit status to make it "information-only".
 # perlcritic exits:
 #   0 = no violations
 #   1 = perlcritic error (e.g., profile/policy issue)
 #   2 = violations found
 # We don't want any of these to fail CI here.
-"$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS "$@"
+for file in "$@"; do
+	case "$file" in
+		t/*.t|*/t/*.t)
+			"$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS --exclude Modules::ProhibitMultiplePackages "$file" || true
+			;;
+		*)
+			"$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS "$file" || true
+			;;
+	esac
+done
 
 exit 0

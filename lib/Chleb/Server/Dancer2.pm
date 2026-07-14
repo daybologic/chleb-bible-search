@@ -906,7 +906,7 @@ get '/1/info' => sub {
 sub run {
 	my ($self) = @_;
 	$server = Chleb::Server::Moose->new();
-	$server->kickOffWarmup();
+	$server->warmup();
 	__configSetPublicDir();
 	return $self->dance;
 }

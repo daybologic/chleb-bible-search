@@ -95,8 +95,6 @@ sub BUILD {
 	my ($self) = @_;
 
 	$self->__removeUptime();
-	$self->__getUptime(); # set startup time as soon as possible
-	$self->title();
 
 	return;
 }
@@ -134,7 +132,16 @@ sub title {
 	return;
 }
 
-sub kickOffWarmup {
+=item C<warmup()>
+
+Warm backend caches before the PSGI server forks worker processes.  This lets
+workers inherit hot in-process caches by copy-on-write, writes the
+Storable-backed shared cache for future restarts, then marks startup ready by
+creating the uptime file and logging server details.
+
+=cut
+
+sub warmup {
 	my ($self) = @_;
 
 	# Warm in the current (master) process, BEFORE the PSGI server forks its
@@ -142,9 +149,9 @@ sub kickOffWarmup {
 	# via copy-on-write.  This previously ran in short-lived forked children
 	# whose caches died with them, leaving the actual request-serving workers
 	# cold: the first whole-chapter request in each worker then paid one
-	# cache-miss round-trip per verse.  __warmBackendCaches() also primes
-	# memcached as a side-effect, so the shared cache survives restarts and
-	# late-spawned workers.
+	# cache-miss round-trip per verse.  __warmBackendCaches() also primes the
+	# Storable-backed shared cache as a side-effect, so warm data survives
+	# restarts and late-spawned workers.
 	my @bibles = $self->__library->__getBible({ translations => ['all'] });
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s) in master process', scalar(@bibles)));
 	eval {
@@ -154,12 +161,14 @@ sub kickOffWarmup {
 		$self->dic->logger->warn("Backend cache warmup failed: $evalError");
 	}
 
-	# The SQLite handle and memcached socket opened during warmup are not safe to
-	# share across the fork the PSGI server is about to perform; drop them so each
-	# worker re-opens its own.  The warmed in-memory caches are inherited intact.
+	# The SQLite handle opened during warmup is not safe to share across the fork
+	# the PSGI server is about to perform; drop it so each worker re-opens its
+	# own.  The warmed in-memory caches are inherited intact.
 	foreach my $bible (@bibles) {
 		$bible->__backend->resetForkUnsafeHandles();
 	}
+
+	$self->__startupReady();
 
 	return;
 }
@@ -169,6 +178,22 @@ sub kickOffWarmup {
 =head1 PRIVATE METHODS
 
 =over
+
+=item C<__startupReady()>
+
+Mark startup as complete after backend cache warmup has run.  This creates the
+uptime file and logs the server title and administrator details.
+
+=cut
+
+sub __startupReady {
+	my ($self) = @_;
+
+	$self->__getUptime();
+	$self->title();
+
+	return;
+}
 
 =item C<__library()>
 
@@ -211,6 +236,8 @@ sub __warmBackendCaches {
 	my $processedVerses = 0;
 	my $lastPercent = -1;
 	foreach my $bible (@bibles) {
+		my $backend = $bible->__backend;
+		$backend->deferSharedCacheWrites(1);
 		my $translationStartTiming = Time::HiRes::time();
 		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s starting', $bible->translation));
 		$self->dic->logger->trace(sprintf(
@@ -242,11 +269,12 @@ sub __warmBackendCaches {
 					$processedVerses++;
 					if ($verseIndex == 1 || $verseIndex == $verseCount || ($verseIndex % 1000) == 0) {
 						my $overallPercent = ($totalVerses > 0) ? int((100 * $processedVerses) / $totalVerses) : 100;
-						if ($overallPercent != $lastPercent) {
-							$lastPercent = $overallPercent;
+						my $progressPercent = int($overallPercent / 10) * 10;
+						if ($progressPercent != $lastPercent) {
+							$lastPercent = $progressPercent;
 							$self->dic->logger->trace(sprintf(
 								'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
-								$overallPercent,
+								$progressPercent,
 								$bible->translation,
 								$book->shortNameRaw,
 								$chapterOrdinal,
@@ -257,6 +285,8 @@ sub __warmBackendCaches {
 				}
 			}
 		}
+		$backend->deferSharedCacheWrites(0);
+		$backend->flushSharedCache();
 		my $translationMsec = int(1000 * (Time::HiRes::time() - $translationStartTiming));
 		$self->dic->logger->info(sprintf(
 			'Backend cache warmup finished for translation %s in %d msec',

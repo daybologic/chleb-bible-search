@@ -36,7 +36,9 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use English qw(-no_match_vars);
+use Fcntl qw(:flock);
 use IO::File;
+use IO::Handle ();
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use Moose;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
@@ -44,12 +46,15 @@ use File::Temp qw(tempfile);
 use Readonly;
 use DBI;
 use JSON qw(decode_json);
+use Storable qw(nstore_fd retrieve);
 use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 14;
+Readonly my $SHARED_CACHE_FILE => 'shared.bin';
+Readonly my $SHARED_CACHE_FORMAT_VERSION => 1;
 
 Readonly my $OT_COUNT => 39;
 
@@ -145,9 +150,10 @@ has __chapterVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default
 has __bookVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseKeyByBookCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
-has __sharedCacheClient => (is => 'ro', lazy => 1, builder => '__makeSharedCacheClient');
-has __sharedCacheAvailable => (is => 'rw', isa => 'Bool', lazy => 1, builder => '__makeSharedCacheAvailable');
-has __sharedCachePrefix => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeSharedCachePrefix');
+has __sharedCache => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeSharedCache');
+has __sharedCacheDirty => (is => 'rw', isa => 'Bool', default => 0);
+has __sharedCachePath => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeSharedCachePath');
+has __sharedCacheWriteDeferred => (is => 'rw', isa => 'Bool', default => 0);
 has __sourceMetadata => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 
 sub __makeCompressedPath {
@@ -227,26 +233,21 @@ sub BUILD {
 
 =item C<resetForkUnsafeHandles()>
 
-Close and forget the SQLite database handle and the memcached client so that,
-after the PSGI server forks its workers, each worker lazily re-opens its own
-rather than sharing a file descriptor across processes (which corrupts both
-SQLite and the memcached protocol).  The populated in-memory caches are left
-intact so forked workers inherit a warm cache via copy-on-write.
+Flush the Storable-backed shared cache, then close and forget the SQLite
+database handle so that, after the PSGI server forks its workers, each worker
+lazily re-opens its own handle.  The populated in-memory caches are left intact
+so forked workers inherit a warm cache via copy-on-write.
 
 =cut
 
 sub resetForkUnsafeHandles {
 	my ($self) = @_;
 
+	$self->flushSharedCache();
+
 	if (my $dbh = delete $self->{data}) {
 		eval { $dbh->disconnect(); };
 	}
-
-	if (my $client = delete $self->{__sharedCacheClient}) {
-		eval { $client->disconnect_all(); };
-	}
-
-	delete $self->{__sharedCacheAvailable};
 
 	return;
 }
@@ -470,7 +471,7 @@ pass.  A chapter's verses are contiguous in the global verse ordering, so we onl
 resolve the absolute ordinal of the chapter's first verse (one lookup) and derive
 the rest by position.  This lets subsequent per-verse getOrdinalByVerseKey() calls
 made while rendering a whole chapter hit the local cache instead of issuing one
-memcached round-trip (or SQLite window query) per verse.
+shared-cache lookup (or SQLite window query) per verse.
 
 C<$rows> is the ARRAY ref returned by L</getChapterVerseDataByKey>, ordered by
 C<verse_ordinal>.
@@ -669,11 +670,11 @@ sub __sentimentData {
 	my $translation = $self->bible->translation;
 	return $self->__sentimentCache->{$translation} if ($self->__sentimentCache->{$translation});
 
-	# Unlike the other lookups, sentiment is deliberately NOT routed through the
-	# shared (memcached) cache: it is the whole-translation array (~31k entries),
-	# a single multi-MB blob that is a poor memcached citizen (item-size limits,
-	# serialization/transfer cost) and is loaded here in one cheap bulk query
-	# anyway.  It lives only in the per-process cache above.
+	if (my $cached = $self->__sharedCacheGet('sentiment', $translation)) {
+		$self->__sentimentCache->{$translation} = $cached;
+		return $cached;
+	}
+
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation);
 		SELECT emotion, tones
 		  FROM sentiment
@@ -688,108 +689,316 @@ SQL
 		});
 	}
 	$self->__sentimentCache->{$translation} = \@sentiment;
+	$self->__sharedCacheSet('sentiment', $translation, \@sentiment);
 	return $self->__sentimentCache->{$translation};
 }
 
-sub __makeSharedCacheClient {
-	my ($self) = @_;
+=item C<__sharedCacheGet($kind, $key)>
 
-	eval {
-		require Cache::Memcached;
-		Cache::Memcached->import();
-	};
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->warn("Cannot load Cache::Memcached for backend cache: $evalError");
-		return;
-	}
+Return a value from the Storable-backed shared cache for this translation, or
+C<undef> if no entry exists.  C<$kind> groups related cache entries, while
+C<$key> is hashed before being used as the stored entry key.
 
-	my $config = $self->dic->config->get('rate_limit', 'backend_memcached', {});
-	my $servers = $config->{servers} // [ '127.0.0.1:11211' ];
-	$servers = [ $servers ] unless (ref($servers) eq 'ARRAY');
-
-	my $client;
-	eval {
-		$client = Cache::Memcached->new({
-			servers => $servers,
-			compress_threshold => 10_000,
-		});
-	};
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->warn("Cannot create memcached client for backend cache: $evalError");
-		return;
-	}
-
-	return $client;
-}
-
-sub __makeSharedCachePrefix {
-	my ($self) = @_;
-	my $config = $self->dic->config->get('backend_cache', 'memcached', {});
-	my $prefix = $config->{prefix} // 'chleb:backend';
-	return join(':', $prefix, 'v' . $FILE_VERSION, $self->bible->translation);
-}
-
-sub __makeSharedCacheAvailable {
-	my ($self) = @_;
-
-	unless ($self->__sharedCacheClient) {
-		return 0;
-	}
-
-	my $probeKey = $self->__sharedCacheKey('probe', $$);
-	my $ok;
-	eval {
-		$ok = $self->__sharedCacheClient->set($probeKey, 1, 5);
-	};
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->warn("Memcached backend cache unavailable during probe: $evalError");
-		return 0;
-	}
-
-	return $ok ? 1 : 0;
-}
+=cut
 
 sub __sharedCacheGet {
 	my ($self, $kind, $key) = @_;
-	unless ($self->__sharedCacheAvailable) {
-		return;
-	}
-
-	my $result;
-	eval {
-		$result = $self->__sharedCacheClient->get($self->__sharedCacheKey($kind, $key));
-	};
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->warn("Memcached backend cache get failed for $kind: $evalError");
-		$self->__sharedCacheAvailable(0);
-		return;
-	}
-
-	return $result;
+	my $entries = $self->__sharedCacheTranslation->{entries};
+	return unless (ref($entries->{$kind}) eq 'HASH');
+	my $sharedKey = $self->__sharedCacheKey($key);
+	return $entries->{$kind}->{$sharedKey} if (exists($entries->{$kind}->{$sharedKey}));
+	return;
 }
+
+=item C<__sharedCacheSet($kind, $key, $value)>
+
+Store a value in the shared cache for this translation.  By default this also
+flushes C<shared.bin> immediately; callers doing many writes can defer those
+flushes with L</deferSharedCacheWrites>.
+
+=cut
 
 sub __sharedCacheSet {
 	my ($self, $kind, $key, $value) = @_;
-	unless ($self->__sharedCacheAvailable) {
-		return;
+	my $entries = $self->__sharedCacheTranslation->{entries};
+	$entries->{$kind} //= {};
+	$entries->{$kind}->{ $self->__sharedCacheKey($key) } = $value;
+	$self->__sharedCacheDirty(1);
+	$self->flushSharedCache() unless ($self->__sharedCacheWriteDeferred);
+
+	return 1;
+}
+
+=item C<deferSharedCacheWrites($defer)>
+
+Enable or disable deferred writes for the Storable-backed shared cache.  This is
+used by warmup and search loops so they can add many entries in memory and then
+write C<shared.bin> once at the end.
+
+=cut
+
+sub deferSharedCacheWrites {
+	my ($self, $defer) = @_;
+	$self->__sharedCacheWriteDeferred($defer ? 1 : 0);
+	return;
+}
+
+=item C<flushSharedCache()>
+
+Flush pending shared-cache changes to C<shared.bin>.  The write path takes an
+exclusive lock, merges this backend's current translation cache with the latest
+file contents, and replaces the file atomically.
+
+=cut
+
+sub flushSharedCache {
+	my ($self) = @_;
+	return 1 unless ($self->__sharedCacheDirty);
+
+	my $ok = $self->__withSharedCacheLock(LOCK_EX, sub {
+		my $diskCache = $self->__readSharedCacheFile();
+		$self->__mergeSharedCacheTranslation($diskCache);
+		return $self->__writeSharedCacheFile($diskCache);
+	});
+
+	if ($ok) {
+		$self->__sharedCacheDirty(0);
 	}
 
-	eval {
-		# Memcached treats zero TTL as no expiry; these lookups are effectively static.
-		$self->__sharedCacheClient->set($self->__sharedCacheKey($kind, $key), $value, 0);
-	};
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->warn("Memcached backend cache set failed for $kind: $evalError");
-		$self->__sharedCacheAvailable(0);
-		return;
+	return $ok;
+}
+
+=item C<__makeSharedCache()>
+
+Build the in-memory representation of C<shared.bin>.  The file is read under a
+shared lock and falls back to an empty cache structure if the file does not
+exist, cannot be read, or is stale for this code's cache format.
+
+=cut
+
+sub __makeSharedCache {
+	my ($self) = @_;
+	return $self->__withSharedCacheLock(LOCK_SH, sub {
+		return $self->__readSharedCacheFile();
+	}) // $self->__emptySharedCache();
+}
+
+=item C<__makeSharedCachePath()>
+
+Return the path to the backend shared cache file in the selected cache
+directory.
+
+=cut
+
+sub __makeSharedCachePath {
+	my ($self) = @_;
+	return join('/', $self->cacheDir, $SHARED_CACHE_FILE);
+}
+
+=item C<__sharedCacheTranslation()>
+
+Return the per-translation shared-cache structure for the current bible.  If the
+translation entry is missing or stale relative to the compressed SQLite source,
+it is replaced with a fresh empty entry.
+
+=cut
+
+sub __sharedCacheTranslation {
+	my ($self) = @_;
+	my $translation = $self->bible->translation;
+	my $cache = $self->__sharedCache;
+	$cache->{translations} //= {};
+	my $translationCache = $cache->{translations}->{$translation};
+
+	if (!$self->__sharedCacheTranslationIsFresh($translationCache)) {
+		$translationCache = {
+			source => $self->__sharedCacheSourceMeta(),
+			entries => {},
+		};
+		$cache->{translations}->{$translation} = $translationCache;
+	}
+
+	$translationCache->{entries} //= {};
+	return $translationCache;
+}
+
+=item C<__mergeSharedCacheTranslation($cache)>
+
+Merge this backend object's current translation cache into a full shared-cache
+hash read from disk.  Other translation entries already present in C<$cache> are
+preserved.
+
+=cut
+
+sub __mergeSharedCacheTranslation {
+	my ($self, $cache) = @_;
+	my $translation = $self->bible->translation;
+	$cache->{translations} //= {};
+	$cache->{translations}->{$translation} = $self->__sharedCacheTranslation;
+	return;
+}
+
+=item C<__sharedCacheTranslationIsFresh($translationCache)>
+
+Return true when a translation entry has the expected structure and was built
+from the same compressed SQLite source file that this backend is using.
+
+=cut
+
+sub __sharedCacheTranslationIsFresh {
+	my ($self, $translationCache) = @_;
+	return 0 unless (ref($translationCache) eq 'HASH');
+	return 0 unless (ref($translationCache->{entries}) eq 'HASH');
+	return 0 unless (ref($translationCache->{source}) eq 'HASH');
+
+	my $source = $self->__sharedCacheSourceMeta();
+	foreach my $key (qw(source_mtime source_size)) {
+		return 0 unless (($translationCache->{source}->{$key} // -1) == ($source->{$key} // -2));
 	}
 
 	return 1;
 }
 
+=item C<__sharedCacheSourceMeta()>
+
+Return the compressed source file metadata used to decide whether a
+translation's shared-cache entry is still valid.
+
+=cut
+
+sub __sharedCacheSourceMeta {
+	my ($self) = @_;
+	my @stat = stat($self->compressedPath);
+	return {
+		source_mtime => $stat[9] // 0,
+		source_size  => $stat[7] // 0,
+	};
+}
+
+=item C<__readSharedCacheFile()>
+
+Read and validate C<shared.bin>.  Corrupt, incompatible, or missing cache files
+are treated as empty caches so backend operation can continue.
+
+=cut
+
+sub __readSharedCacheFile {
+	my ($self) = @_;
+	my $path = $self->__sharedCachePath;
+	return $self->__emptySharedCache() unless (-f $path);
+
+	my $cache;
+	eval {
+		$cache = retrieve($path);
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Cannot load backend shared cache from $path: $evalError");
+		return $self->__emptySharedCache();
+	}
+
+	return $self->__validSharedCache($cache) ? $cache : $self->__emptySharedCache();
+}
+
+=item C<__writeSharedCacheFile($cache)>
+
+Write the supplied shared-cache hash to C<shared.bin> using a temporary file in
+the cache directory, flushing it, and atomically renaming it into place.
+
+=cut
+
+sub __writeSharedCacheFile {
+	my ($self, $cache) = @_;
+	my $path = $self->__sharedCachePath;
+	my ($tempHandle, $tempPath) = tempfile(DIR => $self->cacheDir, UNLINK => 0);
+	my $ok = 1;
+
+	eval {
+		binmode($tempHandle, ':raw');
+		nstore_fd($cache, $tempHandle);
+		$tempHandle->flush() if ($tempHandle->can('flush'));
+		$tempHandle->sync() or die("sync failed: $ERRNO");
+		close($tempHandle) or die("close($tempPath) failed: $ERRNO");
+		rename($tempPath, $path) or die("rename($tempPath -> $path) failed: $ERRNO");
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$ok = 0;
+		$self->dic->logger->warn("Cannot store backend shared cache to $path: $evalError");
+		close($tempHandle) if ($tempHandle);
+		unlink($tempPath) if (defined($tempPath) && -f $tempPath);
+	}
+
+	return $ok;
+}
+
+=item C<__withSharedCacheLock($mode, $callback)>
+
+Run C<$callback> while holding the shared-cache lock file with the supplied
+C<flock()> mode.  Returns the callback result, or C<undef> if the lock file
+cannot be opened or locked.
+
+=cut
+
+sub __withSharedCacheLock {
+	my ($self, $mode, $callback) = @_;
+	my $lockPath = $self->__sharedCachePath . '.lock';
+	open(my $lockHandle, '>>', $lockPath) or do {
+		$self->dic->logger->warn("Cannot open backend shared cache lock $lockPath: $ERRNO");
+		return;
+	};
+	flock($lockHandle, $mode) or do {
+		$self->dic->logger->warn("Cannot lock backend shared cache $lockPath: $ERRNO");
+		close($lockHandle);
+		return;
+	};
+
+	my $result = $callback->();
+	close($lockHandle);
+	return $result;
+}
+
+=item C<__emptySharedCache()>
+
+Return a new empty top-level shared-cache structure tagged with the current
+cache format and backend file version.
+
+=cut
+
+sub __emptySharedCache {
+	my ($self) = @_;
+	return {
+		format_version => $SHARED_CACHE_FORMAT_VERSION,
+		file_version => $FILE_VERSION,
+		translations => {},
+	};
+}
+
+=item C<__validSharedCache($cache)>
+
+Return true when C<$cache> is a top-level shared-cache hash for the current
+cache format and backend file version.
+
+=cut
+
+sub __validSharedCache {
+	my ($self, $cache) = @_;
+	return 0 unless (ref($cache) eq 'HASH');
+	return 0 unless (($cache->{format_version} // -1) == $SHARED_CACHE_FORMAT_VERSION);
+	return 0 unless (($cache->{file_version} // -1) == $FILE_VERSION);
+	return 0 unless (ref($cache->{translations}) eq 'HASH');
+	return 1;
+}
+
+=item C<__sharedCacheKey($key)>
+
+Return the SHA-1 key used for a single shared-cache entry.  Hashing keeps stored
+entry names short and avoids leaking raw lookup strings into the cache file's
+internal structure.
+
+=cut
+
 sub __sharedCacheKey {
-	my ($self, $kind, $key) = @_;
-	return join(':', $self->__sharedCachePrefix, $kind, sha1_hex($key // ''));
+	my ($self, $key) = @_;
+	return sha1_hex($key // '');
 }
 
 sub __bookVerseCounts {

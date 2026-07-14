@@ -37,6 +37,7 @@ use Moose::Util::TypeConstraints;
 extends 'Chleb::Bible::Base';
 
 use Data::Dumper;
+use English qw(-no_match_vars);
 use Moose::Util::TypeConstraints qw(enum);
 use Chleb::Bible::Search::Results;
 use Chleb::Utils::SecureString;
@@ -80,6 +81,7 @@ sub setWholeword {
 sub run {
 	my ($self) = @_;
 	my $startTiming = Time::HiRes::time();
+	my $backend = $self->bible->__backend;
 
 	my @booksToQuery = ( );
 	if ($self->bookShortName) {
@@ -89,11 +91,18 @@ sub run {
 	}
 
 	my @verses = ( );
-	foreach my $book (@booksToQuery) {
-		next if ($self->testament && $self->testament ne $book->testament);
-		my $bookVerses = $book->search($self);
-		push(@verses, @$bookVerses);
-	}
+	$backend->deferSharedCacheWrites(1);
+	eval {
+		foreach my $book (@booksToQuery) {
+			next if ($self->testament && $self->testament ne $book->testament);
+			my $bookVerses = $book->search($self);
+			push(@verses, @$bookVerses);
+		}
+	};
+	my $evalError = $EVAL_ERROR;
+	$backend->deferSharedCacheWrites(0);
+	$backend->flushSharedCache();
+	die($evalError) if ($evalError);
 
 	splice(@verses, $self->limit);
 
