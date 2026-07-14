@@ -132,7 +132,16 @@ sub title {
 	return;
 }
 
-sub kickOffWarmup {
+=item C<warmup()>
+
+Warm backend caches before the PSGI server forks worker processes.  This lets
+workers inherit hot in-process caches by copy-on-write, writes the
+Storable-backed shared cache for future restarts, then marks startup ready by
+creating the uptime file and logging server details.
+
+=cut
+
+sub warmup {
 	my ($self) = @_;
 
 	# Warm in the current (master) process, BEFORE the PSGI server forks its
