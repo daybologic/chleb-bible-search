@@ -30,15 +30,23 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-all: kjv.bin.gz asv.bin.gz
+all: \
+	asv.bin.gz \
+	asv.sqlite.gz \
+	core.sqlite.gz \
+	kjv.bin.gz \
+	kjv.sqlite.gz
 
-kjv.bin.gz: static/kjv.txt
-	cd ../ && ./bin/import/text-to-kjv.sh
-
-asv.bin.gz: static/asv.txt
+asv.bin.gz asv.sqlite.gz &: static/asv.txt ../bin/import/text-to-asv.sh ../bin/import/text-to-bin.pl ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-asv.sh
 
+core.sqlite.gz : static/kjv.txt ../bin/import/text-to-core.sh ../bin/import/text-to-sqlite.pl
+	cd ../ && ./bin/import/text-to-core.sh
+
+kjv.bin.gz kjv.sqlite.gz &: static/kjv.txt ../bin/import/text-to-kjv.sh ../bin/import/text-to-bin.pl ../bin/import/text-to-sqlite.pl
+	cd ../ && ./bin/import/text-to-kjv.sh
+
 clean:
-	rm -vf kjv.bin.gz kjv.bin asv.bin.gz asv.bin
+	rm -vf *.bin *.bin.gz *.sqlite *.sqlite.gz
 
 .PHONY: clean all

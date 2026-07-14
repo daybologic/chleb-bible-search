@@ -196,6 +196,33 @@ sub testOutOfBounds {
 	return EXIT_SUCCESS;
 }
 
+sub testBookOrdinalCacheIsolation {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my @bible = $self->sut->__getBible();
+	my $gen = $bible[0]->getBookByShortName('Gen');
+	$gen->getVerseByOrdinal(1);
+
+	my $book = $bible[0]->getBookByShortName('2Ki');
+	my $verse = $book->getVerseByOrdinal(1);
+	cmp_deeply($verse, all(
+		isa('Chleb::Bible::Verse'),
+		methods(
+			book => methods(
+				shortNameRaw => '2Ki',
+			),
+			chapter => methods(
+				ordinal => 1,
+			),
+			ordinal => 1,
+		),
+	), 'book-relative verse ordinal cache stays book-specific') or diag(explain($verse->toString()));
+	is($verse->chapter->book->shortNameRaw, '2Ki', 'chapter belongs to the requested book');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;

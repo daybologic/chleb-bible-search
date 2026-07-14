@@ -11,6 +11,10 @@ The backend Perl library is also designed to be easily integrated with applicati
 
 The service also provides a deterministic verse of the day lookup.
 
+For Debian packaging builds, `libdbi-perl` and `libdbd-sqlite3-perl` are required
+at build time so the SQLite backend can be compiled and validated, but they are
+not runtime dependencies of the installed core service package.
+
 ## Documentation
 
 For up to date documentation, please ensure you are viewing the latest copy at [GitHub](https://github.com/daybologic/chleb-bible-search/blob/master/README.md)

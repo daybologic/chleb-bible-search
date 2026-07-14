@@ -62,9 +62,11 @@ use HTTP::Status qw(:constants);
 use IO::File;
 use JSON;
 use Log::Log4perl::MDC;
+use List::Util qw(shuffle);
 use Readonly;
 use Sys::Hostname;
 use Time::Duration;
+use Time::HiRes ();
 use URI::Escape;
 use UUID::Tiny ':std';
 
@@ -132,6 +134,36 @@ sub title {
 	return;
 }
 
+sub kickOffWarmup {
+	my ($self) = @_;
+
+	# Warm in the current (master) process, BEFORE the PSGI server forks its
+	# workers, so that every worker inherits fully-populated in-process caches
+	# via copy-on-write.  This previously ran in short-lived forked children
+	# whose caches died with them, leaving the actual request-serving workers
+	# cold: the first whole-chapter request in each worker then paid one
+	# cache-miss round-trip per verse.  __warmBackendCaches() also primes
+	# memcached as a side-effect, so the shared cache survives restarts and
+	# late-spawned workers.
+	my @bibles = $self->__library->__getBible({ translations => ['all'] });
+	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s) in master process', scalar(@bibles)));
+	eval {
+		$self->__warmBackendCaches();
+	};
+	if (my $evalError = $EVAL_ERROR) {
+		$self->dic->logger->warn("Backend cache warmup failed: $evalError");
+	}
+
+	# The SQLite handle and memcached socket opened during warmup are not safe to
+	# share across the fork the PSGI server is about to perform; drop them so each
+	# worker re-opens its own.  The warmed in-memory caches are inherited intact.
+	foreach my $bible (@bibles) {
+		$bible->__backend->resetForkUnsafeHandles();
+	}
+
+	return;
+}
+
 =back
 
 =head1 PRIVATE METHODS
@@ -149,6 +181,96 @@ sub __library {
 	my ($self) = @_;
 	$self->{__library} ||= Chleb->new();
 	return $self->{__library};
+}
+
+sub __warmBackendCaches {
+	my ($self, $warmBible) = @_;
+	my $startTiming = Time::HiRes::time();
+	my @bibles = defined($warmBible) ? ($warmBible) : shuffle($self->__library->__getBible({ translations => ['all'] }));
+	my $totalVerses = 0;
+
+	foreach my $bible (@bibles) {
+		foreach my $book (@{ $bible->books() }) {
+			foreach my $chapterOrdinal (1 .. $book->chapterCount) {
+				my $chapter = $book->getChapterByOrdinal($chapterOrdinal, { nonFatal => 1 });
+				unless ($chapter) {
+					$self->dic->logger->warn(sprintf(
+						'Skipping missing chapter %d in %s during backend cache warmup',
+						$chapterOrdinal,
+						$book->shortNameRaw,
+					));
+					next;
+				}
+				$totalVerses += $chapter->verseCount;
+			}
+		}
+	}
+
+	$self->dic->logger->info(sprintf('Backend cache warmup started for %d translation(s)', scalar(@bibles)));
+	$self->dic->logger->debug(sprintf('Backend cache warmup will process %d verse(s)', $totalVerses));
+	my $processedVerses = 0;
+	my $lastPercent = -1;
+	foreach my $bible (@bibles) {
+		my $translationStartTiming = Time::HiRes::time();
+		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s starting', $bible->translation));
+		$self->dic->logger->trace(sprintf(
+			'Backend cache warmup translation %s priming sentiment cache',
+			$bible->translation,
+		));
+		$bible->__backend->getSentimentByOrdinal(1);
+		my @books = shuffle(@{ $bible->books() });
+		foreach my $book (@books) {
+			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->shortNameRaw);
+			my %chapterVerses;
+			foreach my $row (@{ $bookVerses // [ ] }) {
+				push(@{ $chapterVerses{ $row->{chapter_ordinal} } }, $row);
+			}
+			my @chapterOrdinals = shuffle(1 .. $book->chapterCount);
+			foreach my $chapterOrdinal (@chapterOrdinals) {
+				$bible->__backend->getChapterVerseDataByKey($book->shortNameRaw, $chapterOrdinal);
+				my @verses = shuffle(@{ $chapterVerses{$chapterOrdinal} // [ ] });
+				my $verseCount = scalar(@verses);
+				my $verseIndex = 0;
+				foreach my $verse (@verses) {
+					$verseIndex++;
+					my $verseOrdinal = $verse->{verse_ordinal} + 0;
+					my $verseKey = join(':', $bible->translation, $book->shortNameRaw, $chapterOrdinal, $verseOrdinal);
+					my $bookVerseKey = join(':', $bible->translation, $book->shortNameRaw, $verse->{book_ordinal} + 0);
+					$bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey);
+					$bible->__backend->getVerseDataByKey($verseKey);
+					$bible->__backend->getOrdinalByVerseKey($verseKey);
+					$processedVerses++;
+					if ($verseIndex == 1 || $verseIndex == $verseCount || ($verseIndex % 1000) == 0) {
+						my $overallPercent = ($totalVerses > 0) ? int((100 * $processedVerses) / $totalVerses) : 100;
+						if ($overallPercent != $lastPercent) {
+							$lastPercent = $overallPercent;
+							$self->dic->logger->trace(sprintf(
+								'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
+								$overallPercent,
+								$bible->translation,
+								$book->shortNameRaw,
+								$chapterOrdinal,
+								$verseOrdinal,
+							));
+						}
+					}
+				}
+			}
+		}
+		my $translationMsec = int(1000 * (Time::HiRes::time() - $translationStartTiming));
+		$self->dic->logger->info(sprintf(
+			'Backend cache warmup finished for translation %s in %d msec',
+			$bible->translation,
+			$translationMsec,
+		));
+	}
+	my $totalMsec = int(1000 * (Time::HiRes::time() - $startTiming));
+	$self->dic->logger->info(sprintf(
+		'All backend cache warmup finished in %d msec',
+		$totalMsec,
+	));
+
+	return;
 }
 
 =item C<__makeJsonApi()>
@@ -216,10 +338,11 @@ sub __lookup {
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
 	my @verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
+	my $verseToJsonApiCache = { };
 
 	my @json;
 	for (my $verseI = 0; $verseI < scalar(@verse); $verseI++) {
-		push(@json, __verseToJsonApi($verse[$verseI], $params));
+		push(@json, __verseToJsonApi($verse[$verseI], $params, $verseToJsonApiCache));
 		$json[$verseI]->{links}->{self} = '/' . join('/', 1, 'lookup', $verse[$verseI]->getPath())
 		    . Chleb::Utils::queryParamsHelper($params);
 	}
@@ -300,9 +423,10 @@ sub __random {
 	my $verse = $self->__library->random($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
+		my $verseToJsonApiCache = { };
 
 		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
-			push(@json, __verseToJsonApi($verse->[$verseI], $params));
+			push(@json, __verseToJsonApi($verse->[$verseI], $params, $verseToJsonApiCache));
 		}
 
 		my $secondary_total_msec = 0;
@@ -384,9 +508,10 @@ sub __votd {
 	my $verse = $self->__library->votd($params);
 	if (ref($verse) eq 'ARRAY') {
 		my @json;
+		my $verseToJsonApiCache = { };
 
 		for (my $verseI = 0; $verseI < scalar(@$verse); $verseI++) {
-			push(@json, __verseToJsonApi($verse->[$verseI], $params));
+			push(@json, __verseToJsonApi($verse->[$verseI], $params, $verseToJsonApiCache));
 		}
 
 		my $secondary_total_msec = 0;
@@ -986,7 +1111,15 @@ sub __info {
 			});
 
 			for (my $chapterOrdinal = 1; $chapterOrdinal <= $book->chapterCount; $chapterOrdinal++) {
-				my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
+				my $chapter = $book->getChapterByOrdinal($chapterOrdinal, { nonFatal => 1 });
+				unless ($chapter) {
+					$self->dic->logger->warn(sprintf(
+						'Skipping missing chapter %d in %s while building info response',
+						$chapterOrdinal,
+						$book->shortNameRaw,
+					));
+					next;
+				}
 				push(@{ $hash{included} }, {
 					id => $chapter->id,
 					type => $chapter->type,
@@ -1068,7 +1201,7 @@ sub __uptimeFilePath {
 
 =over
 
-=item C<__verseToJsonApi($verse, $params)>
+=item C<__verseToJsonApi($verse, $params, [$cache])>
 
 Take the given C<$verse> (L<Chleb::Bible::Verse>) and optional C<$params> (C<HASH>)
 and produce the user-facing C<JSON:API> response (C<HASH>).  Shared logic used by
@@ -1077,18 +1210,23 @@ multiple results-orientated server methods.
 =cut
 
 sub __verseToJsonApi {
-	my ($verse, $params) = @_;
+	my ($verse, $params, $cache) = @_;
+	$cache ||= { };
 	my %hash = __makeJsonApi();
+	my $bookId = $verse->book->id;
+	my $chapterId = $verse->chapter->id;
+	my $bookAttributes = $cache->{book_attributes}->{$bookId} //= $verse->book->TO_JSON();
+	my $chapterAttributes = $cache->{chapter_attributes}->{$chapterId} //= $verse->chapter->TO_JSON();
 
 	push(@{ $hash{included} }, {
 		type => $verse->chapter->type,
-		id => $verse->chapter->id,
-		attributes => $verse->chapter->TO_JSON(),
+		id => $chapterId,
+		attributes => $chapterAttributes,
 		relationships => {
 			book => {
 				data => {
 					type => $verse->book->type,
-					id => $verse->book->id,
+					id => $bookId,
 				},
 			}
 		},
@@ -1096,8 +1234,8 @@ sub __verseToJsonApi {
 
 	push(@{ $hash{included} }, {
 		type => $verse->book->type,
-		id => $verse->book->id,
-		attributes => $verse->book->TO_JSON(),
+		id => $bookId,
+		attributes => $bookAttributes,
 		relationships => { },
 	});
 
@@ -1129,10 +1267,19 @@ sub __verseToJsonApi {
 		$links{prev} = '/' . join('/', 1, 'lookup', $prevVerse->getPath()) . $queryParams;
 	}
 
-	$links{first} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal(1)->getPath())
-	    . Chleb::Utils::queryParamsHelper($params);
-	$links{last} = '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal($verse->chapter->verseCount)->getPath())
-	    . Chleb::Utils::queryParamsHelper($params);
+	my $chapterLinkCacheKey = join(':', $chapterId, $queryParams);
+	my $chapterLinkCache = $cache->{chapter_links}->{$chapterLinkCacheKey};
+	if (!$chapterLinkCache) {
+		$chapterLinkCache = {
+			first => '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal(1)->getPath())
+			    . Chleb::Utils::queryParamsHelper($params),
+			last => '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal($verse->chapter->verseCount)->getPath())
+			    . Chleb::Utils::queryParamsHelper($params),
+		};
+		$cache->{chapter_links}->{$chapterLinkCacheKey} = $chapterLinkCache;
+	}
+	$links{first} = $chapterLinkCache->{first};
+	$links{last} = $chapterLinkCache->{last};
 
 	push(@{ $hash{data} }, {
 		type => $verse->type,

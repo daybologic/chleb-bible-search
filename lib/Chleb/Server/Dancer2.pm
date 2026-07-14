@@ -891,10 +891,11 @@ get '/1/info' => sub {
 			INFO_TABLES => $result,
 		});
 		$resultHtml .= fetchStaticPage('generic_tail');
-		$result = $resultHtml;
 
 		$server->dic->logger->trace('1/info returned as HTML');
-		send_as html => $result;
+		content_type $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+		send_as html => $resultHtml;
+		return;
 	}
 
 	$server->dic->logger->trace('1/info returned as JSON');
@@ -905,6 +906,7 @@ get '/1/info' => sub {
 sub run {
 	my ($self) = @_;
 	$server = Chleb::Server::Moose->new();
+	$server->kickOffWarmup();
 	__configSetPublicDir();
 	return $self->dance;
 }
