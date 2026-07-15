@@ -35,7 +35,7 @@ set -e
 [ -z "$SERVER_NAME" ] && SERVER_NAME="Chleb Bible Search"
 
 installJwtSecret() {
-	configPath='/etc/chleb-bible-search/main.yaml'
+	configPath='/etc/chleb-bible-search/tokens.yaml'
 	placeholder='replace-on-first-install'
 
 	[ "$1" = 'configure' ] || return 0

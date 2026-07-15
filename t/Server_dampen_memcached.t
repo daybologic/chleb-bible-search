@@ -121,7 +121,7 @@ EOF
 	close($fh) or die("close $dir/main.yaml: $!");
 
 	$self->dic(Chleb::DI::Container->instance);
-	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => "$dir/main.yaml" }));
+	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));
 	$self->dic->logger(Chleb::DI::MockLogger->new());
 
 	return EXIT_SUCCESS;

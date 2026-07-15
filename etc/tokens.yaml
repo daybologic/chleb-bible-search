@@ -28,14 +28,22 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-simple_boolean:
-  off_value: off
-  on_value: on
-  true_value: true
-  false_value: false
-Dancer2:
-  public_dir: data/static/public
 session_tokens:
-  backend_redis:
-    db: 5
-    host: redis-82.example.net
+  backend_jwt:
+    secret: replace-with-a-long-random-secret
+#  backend_local:
+#    dir: data/sessions
+#    dynamic_mkdir: true
+#  backend_redis:
+#    db: 1
+#    host: localhost:6379
+  load_order:
+#   - Local
+#   - Redis
+    - JWT
+  save_order:
+#   - Dummy
+#   - Local
+#   - Redis
+    - JWT
+  ttl: 1800

@@ -142,7 +142,7 @@ server:
 EOF
 	close($fh) or die("close $dir/main.yaml: $!");
 
-	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => "$dir/main.yaml" }));
+	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));
 	$self->dic->time->set(2_000_000_000);
 	$self->unmock(ref($self->sut), '__getUptime');
 	my $sut = Chleb::Server::Moose->new({ dic => $self->dic });

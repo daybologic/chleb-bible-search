@@ -32,11 +32,15 @@
 set -euo pipefail
 
 YAML_SCRIPT='/usr/share/chleb-bible-search/yaml2json.pl'
-CONFIG_PATH='/etc/chleb-bible-search/main.yaml'
+CONFIG_DIR='/etc/chleb-bible-search'
 
 rootDir='/var/lib/chleb-bible-search/sessions/'
-if [ -f "$CONFIG_PATH" ]; then
-	json=$($YAML_SCRIPT < $CONFIG_PATH)
+if [ -f "$CONFIG_DIR/main.yaml" ]; then
+	json=$($YAML_SCRIPT \
+		"$CONFIG_DIR/main.yaml" \
+		"$CONFIG_DIR/contact.yaml" \
+		"$CONFIG_DIR/features.yaml" \
+		"$CONFIG_DIR/tokens.yaml")
 	__rootDir=$(echo $json | jq -r .session_tokens.backend_local.dir)
 	if [ "$__rootDir" != 'null' ]; then
 		rootDir=$__rootDir

@@ -92,7 +92,9 @@ has logger => (is => 'rw', lazy => 1, builder => '_makeLogger', clearer => 'rese
 =item C<config>
 
 The main runtime configuration object.  This is constructed from the first
-available C<main.yaml> found via L</configPaths>.
+available directory in L</configPaths> which contains C<main.yaml>, together
+with split configuration files such as C<contact.yaml>, C<features.yaml>, and
+C<tokens.yaml>.
 
 =cut
 
@@ -194,10 +196,10 @@ sub _makeConfig {
 	my ($self) = @_;
 
 	my $configFileName = 'main.yaml';
-	my $paths = $self->__makePathsFor($configFileName);
-	foreach my $path (@$paths) {
+	foreach my $dirName (@{ $self->configPaths }) {
+		my $path = join('/', $dirName, $configFileName);
 		next unless (-e $path);
-		return Chleb::DI::Config->new({ dic => $self, path => $path });
+		return Chleb::DI::Config->new({ dic => $self, path => $dirName });
 	}
 
 	die("No config available ($configFileName)");

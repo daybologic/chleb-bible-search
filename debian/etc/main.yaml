@@ -29,10 +29,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 server:
-  admin_email: example@example.org
-  admin_name: Unknown
   children: 30
-  domain: chleb-api.example.org
   uptime_file: /var/run/chleb-bible-search/startup.txt
 votd_exclude:
   terms:
@@ -58,35 +55,5 @@ rate_limit:
   session_max_requests: 100     # max requests within that window
   session_churn_window_seconds: 300  # lookback window for token-churn detection
   session_churn_limit: 10       # distinct tokens from one IP before denying
-features:
-  facebook: on
-  sessions: on
-  twitter: on
-  version: on
 Dancer2:
   public_dir: /usr/share/chleb-bible-search/public
-session_tokens:
-  backend_jwt:
-    secret: 'replace-on-first-install'
-#  backend_local:
-#    dir: /var/lib/chleb-bible-search/sessions
-#    dynamic_mkdir: true
-#  backend_redis:
-#    db: 1
-#    host: localhost:6379
-  load_order:
-#   - Local
-#   - Redis
-    - JWT
-  save_order:
-#   - Dummy
-#   - Local
-#   - Redis
-    - JWT
-  ttl: 10800
-facebook:
-  groupname: Chleb Bible Search (1268737414574145)
-  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
-twitter:
-  username: ChlebSearch
-  url: https://x.com/ChlebSearch

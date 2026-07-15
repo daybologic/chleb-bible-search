@@ -32,14 +32,85 @@
 use strict;
 use warnings;
 use JSON;
-use YAML::XS;
+use YAML::XS qw(Load LoadFile);
 
-my $yaml = '';
-while (my $input = <STDIN>) {
-	$yaml .= $input;
+=head1 NAME
+
+yaml2json.pl - convert Chleb YAML configuration to JSON
+
+=head1 DESCRIPTION
+
+Reads one YAML document from standard input, or one or more YAML files from the
+command line, and writes the merged data structure as JSON.  File arguments are
+merged in the order supplied so later files can override earlier files.
+
+=head1 FUNCTIONS
+
+=over
+
+=item C<mergeHashRef($target, $source)>
+
+Recursively merge C<$source> into C<$target>.  Nested hash references are merged
+key-by-key; all other values from C<$source> replace the value in C<$target>.
+
+=cut
+
+sub mergeHashRef {
+	my ($target, $source) = @_;
+
+	foreach my $key (keys(%$source)) {
+		if (
+			exists($target->{$key})
+			&& ref($target->{$key}) eq 'HASH'
+			&& ref($source->{$key}) eq 'HASH'
+		) {
+			mergeHashRef($target->{$key}, $source->{$key});
+			next;
+		}
+
+		$target->{$key} = $source->{$key};
+	}
+
+	return $target;
 }
 
-my $data = Load($yaml);
+=item C<readStdin()>
+
+Read a single YAML document from standard input and return it as a hash
+reference.  Empty input is treated as an empty hash.
+
+=cut
+
+sub readStdin {
+	my $yaml = '';
+	while (my $input = <>) {
+		$yaml .= $input;
+	}
+
+	return Load($yaml) || { };
+}
+
+=item C<readFiles()>
+
+Read every YAML file named in C<@ARGV>, skipping paths that do not exist, and
+return a recursively merged hash reference.
+
+=cut
+
+sub readFiles {
+	my $data = { };
+
+	foreach my $path (@ARGV) {
+		next unless (-e $path);
+		mergeHashRef($data, LoadFile($path) || { });
+	}
+
+	return $data;
+}
+
+=back
+
+my $data = @ARGV ? readFiles() : readStdin();
 print encode_json $data;
 print "\n";
 

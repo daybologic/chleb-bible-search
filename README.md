@@ -27,8 +27,12 @@ For API documentation, please use the documentation published at [SwaggerHub](ht
 
 ## Configuration
 
-The configuration YAML file can be found in etc/main.yaml or when installed,
-/etc/chleb-bible-search/main.yaml
+The configuration YAML files can be found in etc/ or when installed,
+/etc/chleb-bible-search/
+
+Core service settings live in main.yaml.  Administrator contact details,
+optional feature settings, and session token/JWT settings live in contact.yaml,
+features.yaml, and tokens.yaml respectively.
 
 ## Availability
 
@@ -134,7 +138,7 @@ You could use the dummy load point for debug hooks or logging, etc.
 Session tokens by default are stored in the (presumably) local directory:
 /var/lib/chleb-bible-search/sessions/
 
-This may be altered via the config main.yaml
+This may be altered via the config tokens.yaml
 
 Sessions will be deleted from disk every month if they are over 30 days old, nb. that means that there can be
 a fairly wide-window of up to a couple of months before a session is deleted.  This is to keep load down and
@@ -155,7 +159,7 @@ Redis support is preferred over Local!  It's much simpler, there are no Crontabs
 and they are instrinsically-safer for clustered nodes.  There is less maintenance for the administrator,
 if you are paying for a shared Redis service.
 
-All you need to do is install a Redis server on either localhost (for a single node), or edit the main.yaml
+All you need to do is install a Redis server on either localhost (for a single node), or edit the tokens.yaml
 config file to point to the shared Redis end-point.  Ensure you are pointing at the correct database number,
 which will typically be 0-15.
 
