@@ -100,6 +100,20 @@ sub testFallbackToCoreWhenNoSingleFile {
 	return EXIT_SUCCESS;
 }
 
+sub testLocalDataDirWinsWithoutGeneratedSqlite {
+	my ($self) = @_;
+
+	my $root = tempdir(CLEANUP => 1);
+	mkdir($root . '/data') or die("mkdir $root/data failed: $!");
+	mkdir($root . '/data/static') or die("mkdir $root/data/static failed: $!");
+
+	chdir($root) or die("chdir $root failed: $!");
+	my $backend = bless({}, 'Chleb::Bible::Backend');
+	is($backend->__makeDataDir(), 'data', 'source checkout data dir wins even before generated SQLite exists');
+
+	return EXIT_SUCCESS;
+}
+
 sub __makeSourceFile {
 	my ($self, $dir, $fileName, $translations) = @_;
 
