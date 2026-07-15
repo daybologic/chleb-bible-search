@@ -7,40 +7,41 @@ updates can change fundamental service defaults without making it awkward for a
 server administrator to preserve local contact details, token settings, or
 optional feature choices.
 
-Keep `main.yaml` support for backward compatibility.
+Treat `main.yaml` as the general configuration file.  It should hold the
+fundamental service settings which do not belong to a more specific split file.
 
 ## Proposed Files
 
 - `contact.yaml`: server administrator details.
-- `general.yaml`: everything not covered by the other split files.
+- `main.yaml`: everything not covered by the other split files.
 - `features.yaml`: optional features and related feature metadata.
 - `tokens.yaml`: session token and JWT configuration.
 
 ## Loading Model
 
-Update `Chleb::DI::Config` so that selecting a `main.yaml` also loads sibling
-split files from the same directory.
+Update `Chleb::DI::Config` so that selecting a config directory loads
+`main.yaml` plus the sibling split files from that same directory.
 
 Suggested load order:
 
 1. `main.yaml`
-2. `general.yaml`
-3. `contact.yaml`
-4. `features.yaml`
-5. `tokens.yaml`
+2. `contact.yaml`
+3. `features.yaml`
+4. `tokens.yaml`
 
 Use a recursive hash merge so existing call sites such as
 `config->get('server', 'admin_email', ...)` continue to work unchanged.
 Later files should override earlier files if a key appears in more than one
 file.
 
-Temporary test configs containing only `main.yaml` should keep working.
+Temporary test configs containing only `main.yaml` should not need to create
+empty split files.
 
 ## Development Config Split
 
 Split `etc/main.yaml` into:
 
-- `etc/general.yaml`
+- `etc/main.yaml`
   - `server.uptime_file`
   - `server.children`, if present
   - `Dancer2`
@@ -58,9 +59,6 @@ Split `etc/main.yaml` into:
 - `etc/tokens.yaml`
   - `session_tokens`
 
-Leave `etc/main.yaml` as a small compatibility anchor, probably containing
-comments only.
-
 ## Debian Config Split
 
 Split `debian/etc/main.yaml` in the same way, preserving Debian-specific values:
@@ -72,7 +70,7 @@ Split `debian/etc/main.yaml` in the same way, preserving Debian-specific values:
 - `ttl: 10800`
 - `children: 30`
 
-Leave `debian/etc/main.yaml` as a small compatibility anchor.
+Keep the Debian fundamental service settings in `debian/etc/main.yaml`.
 
 ## Script Updates
 
@@ -89,7 +87,6 @@ The scripts can then call it with:
 
 ```text
 /etc/chleb-bible-search/main.yaml
-/etc/chleb-bible-search/general.yaml
 /etc/chleb-bible-search/contact.yaml
 /etc/chleb-bible-search/features.yaml
 /etc/chleb-bible-search/tokens.yaml
@@ -124,7 +121,7 @@ Add or update tests around `Chleb::DI::Config` for:
 - Loading split sibling config files.
 - Recursive hash merging.
 - Override order.
-- Backward compatibility with a single `main.yaml`.
+- Single-file operation when only `main.yaml` exists.
 
 Keep existing temporary test configs working without requiring every test to
 create the full split-file set.
@@ -135,14 +132,14 @@ Update README references to `main.yaml` so administrators know the installed
 configuration is split across:
 
 - `/etc/chleb-bible-search/main.yaml`
-- `/etc/chleb-bible-search/general.yaml`
 - `/etc/chleb-bible-search/contact.yaml`
 - `/etc/chleb-bible-search/features.yaml`
 - `/etc/chleb-bible-search/tokens.yaml`
 
 ## Recommendation
 
-Keep `main.yaml` present and supported, but make the package's normal config
-use the four split files.  This avoids breaking existing local deployments and
-test fixtures, while giving Debian administrators smaller conffiles with clearer
-ownership boundaries.
+Keep `main.yaml` as the general configuration file and move administrator
+contact details, optional feature choices, and token/JWT settings into their
+own files.  This gives Debian administrators smaller conffiles with clearer
+ownership boundaries while preserving the existing section/key access pattern in
+the Perl code.
