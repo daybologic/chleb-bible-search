@@ -1,4 +1,3 @@
-#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,39 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -eu
-
-DEFAULT_NPROC=10
-YAML_SCRIPT='/usr/share/chleb-bible-search/yaml2json.pl'
-CONFIG_DIR='/etc/chleb-bible-search'
-APP='/usr/share/chleb-bible-search/app.psgi'
-SOCKET='/var/run/chleb-bible-search/sock'
-PLACK='/usr/bin/plackup'
-
-export PERL5LIB='/usr/share/chleb-bible-search/perl5'
-
-if [ -e "$(pwd)/.git" ] && [ -f 'bin/core/app.psgi' ]; then
-	$PLACK \
-		-I lib \
-		--no-default-middleware \
-		-r \
-		-R lib,data/static,etc,bin/core \
-		-p 5000 \
-		-a bin/core/app.psgi
-	exit $?
-fi
-
-nProc=$DEFAULT_NPROC
-if [ -f "$CONFIG_DIR/main.yaml" ]; then
-	json=$($YAML_SCRIPT \
-		"$CONFIG_DIR/main.yaml" \
-		"$CONFIG_DIR/contact.yaml" \
-		"$CONFIG_DIR/features.yaml" \
-		"$CONFIG_DIR/tokens.yaml")
-	__nProc=$(echo $json | jq -r .server.children)
-	if [ "$__nProc" != 'null' ]; then
-		nProc=$__nProc
-	fi
-fi
-
-exec $PLACK --no-default-middleware -s FCGI --listen $SOCKET --nproc $nProc -a $APP
+#server:
+#  admin_email: example@example.org
+#  admin_name: Unknown
+#  domain: chleb-api.example.org

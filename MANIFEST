@@ -253,8 +253,11 @@ debian/control
 debian/copyright
 debian/dirs
 debian/etc/cron.monthly/chleb-bible-search
+debian/etc/contact.yaml
+debian/etc/features.yaml
 debian/etc/log4perl.conf
 debian/etc/main.yaml
+debian/etc/tokens.yaml
 debian/etc/votd-mailer.yaml
 debian/install
 debian/postinst
@@ -265,6 +268,8 @@ debian/source/format
 etc-defaults/main.yaml
 etc-local/main.yaml
 etc/chleb-bible-search.service
+etc/contact.yaml
+etc/features.yaml
 etc/init.d/chleb-bible-search
 etc/log4perl.conf
 etc/logrotate/chleb-bible-search
@@ -272,6 +277,7 @@ etc/main.yaml
 etc/nginx/chleb-bible-search-notls.example
 etc/nginx/chleb-bible-search.example
 etc/test-suite.yaml
+etc/tokens.yaml
 etc/votd-mailer.yaml
 info.PL
 info/.gitignore

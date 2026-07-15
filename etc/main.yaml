@@ -30,10 +30,7 @@
 
 server:
   uptime_file: cache/startup.txt
-#  admin_email: example@example.org
-#  admin_name: Unknown
 #  children: 30
-#  domain: chleb-api.example.org
 votd_exclude:
   terms:
     - fornication
@@ -58,35 +55,5 @@ rate_limit:
   session_max_requests: 100     # max requests within that window
   session_churn_window_seconds: 300  # lookback window for token-churn detection
   session_churn_limit: 10       # distinct tokens from one IP before denying
-features:
-  facebook: on
-  sessions: on
-  twitter: on
-  version: on
 Dancer2:
   public_dir: data/static/public
-session_tokens:
-  backend_jwt:
-    secret: replace-with-a-long-random-secret
-#  backend_local:
-#    dir: data/sessions
-#    dynamic_mkdir: true
-#  backend_redis:
-#    db: 1
-#    host: localhost:6379
-  load_order:
-#   - Local
-#   - Redis
-    - JWT
-  save_order:
-#   - Dummy
-#   - Local
-#   - Redis
-    - JWT
-  ttl: 1800
-facebook:
-  groupname: Chleb Bible Search (1268737414574145)
-  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr
-twitter:
-  username: ChlebSearch
-  url: https://x.com/ChlebSearch
