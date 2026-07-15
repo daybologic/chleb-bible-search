@@ -44,6 +44,7 @@ use Chleb::DI::Config;
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use English qw(-no_match_vars);
+use File::Temp qw(tempdir);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
@@ -127,6 +128,84 @@ sub testSubsectionHash_default {
 	}, 'key not set - returning default within subsection') or diag(explain($subsection));
 
 	return EXIT_SUCCESS;
+}
+
+sub testSplitConfigFiles {
+	my ($self) = @_;
+	plan tests => 6;
+
+	my $dir = tempdir(CLEANUP => 1);
+	__writeConfigFile("$dir/main.yaml", <<'YAML');
+server:
+  children: 3
+  domain: main.example.org
+session_tokens:
+  backend_jwt:
+    secret: from-main
+  ttl: 10
+features:
+  sessions: on
+YAML
+	__writeConfigFile("$dir/contact.yaml", <<'YAML');
+server:
+  admin_name: Split Admin
+  domain: contact.example.org
+YAML
+	__writeConfigFile("$dir/features.yaml", <<'YAML');
+features:
+  sessions: off
+YAML
+	__writeConfigFile("$dir/tokens.yaml", <<'YAML');
+session_tokens:
+  backend_jwt:
+    issuer: split-tests
+  ttl: 20
+YAML
+
+	my $config = Chleb::DI::Config->new({ path => "$dir/main.yaml" });
+
+	is($config->get('server', 'children', 1), 3, 'main.yaml supplies general settings');
+	is($config->get('server', 'admin_name', 'Unknown'), 'Split Admin', 'contact.yaml supplies contact settings');
+	is($config->get('server', 'domain', 'default.example.org'), 'contact.example.org', 'later split files override earlier files');
+	ok(!$config->get('features', 'sessions', 1, 1), 'features.yaml supplies feature flags');
+	is($config->get('session_tokens', 'ttl', 1), 20, 'tokens.yaml supplies token settings');
+	cmp_deeply(
+		$config->get('session_tokens', 'backend_jwt', { secret => undef, issuer => undef }),
+		{
+			secret => 'from-main',
+			issuer => 'split-tests',
+		},
+		'nested hashes are recursively merged',
+	);
+
+	return EXIT_SUCCESS;
+}
+
+sub testMainOnlyConfigFile {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $dir = tempdir(CLEANUP => 1);
+	__writeConfigFile("$dir/main.yaml", <<'YAML');
+server:
+  domain: single.example.org
+YAML
+
+	my $config = Chleb::DI::Config->new({ path => "$dir/main.yaml" });
+
+	is($config->get('server', 'domain', 'default.example.org'), 'single.example.org', 'main.yaml works without split siblings');
+
+	return EXIT_SUCCESS;
+}
+
+sub __writeConfigFile {
+	my ($path, $content) = @_;
+
+	open(my $fh, '>', $path) or die("open $path: $ERRNO");
+	print {$fh} $content or die("print $path: $ERRNO");
+	close($fh) or die("close $path: $ERRNO");
+
+	return;
 }
 
 __PACKAGE__->meta->make_immutable;

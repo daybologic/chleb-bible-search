@@ -38,9 +38,17 @@ extends 'Chleb::Bible::Base';
 use Chleb::Utils;
 use Data::Dumper;
 use English qw(-no_match_vars);
+use File::Basename qw(basename dirname);
 use IO::File;
 use Readonly;
 use YAML::XS 'LoadFile';
+
+Readonly my @SPLIT_CONFIG_FILE_NAMES => qw(
+	main.yaml
+	contact.yaml
+	features.yaml
+	tokens.yaml
+);
 
 has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
 
@@ -53,7 +61,14 @@ sub BUILD {
 
 sub __makeData {
 	my ($self) = @_;
-	return LoadFile($self->path) || { };
+	my $data = { };
+
+	foreach my $path (@{ $self->__configPaths }) {
+		next unless (-e $path);
+		__mergeHashRef($data, LoadFile($path) || { });
+	}
+
+	return $data;
 }
 
 sub get {
@@ -116,6 +131,35 @@ sub __get {
 	$$pDefaultUsed = 1;
 	return Chleb::Utils::boolean($key, $default, 0, $Chleb::Utils::BOOLEAN_FLAG_EMPTY_IS_FALSE) if ($isBoolean);
 	return $default;
+}
+
+sub __configPaths {
+	my ($self) = @_;
+
+	return [ $self->path ] unless (basename($self->path) eq 'main.yaml');
+
+	my $dir = dirname($self->path);
+	my @paths = map { "$dir/$_" } @SPLIT_CONFIG_FILE_NAMES;
+	return \@paths;
+}
+
+sub __mergeHashRef {
+	my ($target, $source) = @_;
+
+	foreach my $key (keys(%$source)) {
+		if (
+			exists($target->{$key})
+			&& ref($target->{$key}) eq 'HASH'
+			&& ref($source->{$key}) eq 'HASH'
+		) {
+			__mergeHashRef($target->{$key}, $source->{$key});
+			next;
+		}
+
+		$target->{$key} = $source->{$key};
+	}
+
+	return $target;
 }
 
 __PACKAGE__->meta->make_immutable;

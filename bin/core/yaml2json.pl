@@ -32,14 +32,48 @@
 use strict;
 use warnings;
 use JSON;
-use YAML::XS;
+use YAML::XS qw(Load LoadFile);
 
-my $yaml = '';
-while (my $input = <STDIN>) {
-	$yaml .= $input;
+sub mergeHashRef {
+	my ($target, $source) = @_;
+
+	foreach my $key (keys(%$source)) {
+		if (
+			exists($target->{$key})
+			&& ref($target->{$key}) eq 'HASH'
+			&& ref($source->{$key}) eq 'HASH'
+		) {
+			mergeHashRef($target->{$key}, $source->{$key});
+			next;
+		}
+
+		$target->{$key} = $source->{$key};
+	}
+
+	return $target;
 }
 
-my $data = Load($yaml);
+sub readStdin {
+	my $yaml = '';
+	while (my $input = <>) {
+		$yaml .= $input;
+	}
+
+	return Load($yaml) || { };
+}
+
+sub readFiles {
+	my $data = { };
+
+	foreach my $path (@ARGV) {
+		next unless (-e $path);
+		mergeHashRef($data, LoadFile($path) || { });
+	}
+
+	return $data;
+}
+
+my $data = @ARGV ? readFiles() : readStdin();
 print encode_json $data;
 print "\n";
 

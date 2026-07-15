@@ -92,7 +92,9 @@ has logger => (is => 'rw', lazy => 1, builder => '_makeLogger', clearer => 'rese
 =item C<config>
 
 The main runtime configuration object.  This is constructed from the first
-available C<main.yaml> found via L</configPaths>.
+available C<main.yaml> found via L</configPaths>, together with any sibling
+split configuration files such as C<contact.yaml>, C<features.yaml>, and
+C<tokens.yaml>.
 
 =cut
 
