@@ -31,6 +31,7 @@ translation selection, and JSON response ordering are unchanged.
 reverse order, `kjv` followed by `asv`, and verifies that the rendered cards
 are ordered `asv`, then `kjv`.
 
-`lib/Chleb/Server/Moose.pm` passes Perl syntax checking and the repository
-pre-commit checks.  The focused lookup test could not run in the affected
-checkout because `data/kjv.sqlite.gz` was missing.
+`lib/Chleb/Server/Moose.pm` passes Perl syntax checking and the focused lookup
+test passes all 4 subtests.  The shared test base now runs `make -C data` when
+generated Bible artifacts are missing, so direct targeted test invocations no
+longer fail merely because ignored build outputs have not been generated.

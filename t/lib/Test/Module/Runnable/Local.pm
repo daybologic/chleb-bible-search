@@ -51,9 +51,28 @@ has dic => (isa => 'Chleb::DI::Container', is => 'ro', lazy => 1, default => sub
 sub setUp {
 	my ($self, %params) = @_;
 
+	$self->__ensureGeneratedData();
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
+}
+
+sub __ensureGeneratedData {
+	my ($self) = @_;
+	my @generatedFiles = qw(
+		data/asv.bin.gz
+		data/asv.sqlite.gz
+		data/core.sqlite.gz
+		data/kjv.bin.gz
+		data/kjv.sqlite.gz
+	);
+
+	return unless (grep { !-f } @generatedFiles);
+
+	my $status = system('make', '-C', 'data');
+	die("Failed to build generated Bible data\n") if ($status != 0);
+
+	return;
 }
 
 sub _isTestComprehensive {
