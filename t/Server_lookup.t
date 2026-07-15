@@ -382,6 +382,29 @@ sub testHtmlListsTranslationsSeparately {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlSortsReversedTranslationInput {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @verse = (
+		$self->sut->__library->fetch('Matthew', 22, 14, { translations => ['kjv'] }),
+		$self->sut->__library->fetch('Matthew', 22, 14, { translations => ['asv'] }),
+	);
+	my $cache = { };
+	my @json = map {
+		Chleb::Server::Moose::__verseToJsonApi($_, { translations => ['all'] }, $cache)
+	} @verse;
+	push(@{ $json[0]->{data} }, $json[1]->{data}->[0]);
+	$json[0]->{links}->{self} = '/1/lookup/mat/22/14?translations=all';
+
+	my $html = $self->sut->__verseToHtml(\@verse, \@json, 3);
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv', 'kjv' ], 'HTML sorts reversed renderer input lexically');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
