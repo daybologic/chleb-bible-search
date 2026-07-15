@@ -35,6 +35,19 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+=head1 NAME
+
+Chleb::DI::Config - runtime configuration reader
+
+=head1 DESCRIPTION
+
+Loads the YAML configuration files from a configuration directory and exposes
+section/key lookups through C<get>.  The directory must contain C<main.yaml>;
+optional sibling files such as C<contact.yaml>, C<features.yaml>, and
+C<tokens.yaml> are merged over it when present.
+
+=cut
+
 use Chleb::Utils;
 use Data::Dumper;
 use English qw(-no_match_vars);
@@ -51,7 +64,31 @@ Readonly my @SPLIT_CONFIG_FILE_NAMES => qw(
 
 has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
 
+=head1 ATTRIBUTES
+
+=over
+
+=item C<path>
+
+Directory containing the runtime YAML configuration files.  This is a directory
+path, not the path to C<main.yaml>.
+
+=cut
+
 has path => (is => 'ro', isa => 'Str', required => 1);
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<BUILD()>
+
+Moose construction hook.  Validates that L</path> is a directory and that it
+contains C<main.yaml>, failing early when callers still pass a YAML filename.
+
+=cut
 
 sub BUILD {
 	my ($self) = @_;
@@ -67,17 +104,13 @@ sub BUILD {
 	return;
 }
 
-sub __makeData {
-	my ($self) = @_;
-	my $data = { };
+=item C<get($section, $key, $default, $isBoolean)>
 
-	foreach my $path (@{ $self->__configPaths }) {
-		next unless (-e $path);
-		__mergeHashRef($data, LoadFile($path) || { });
-	}
+Return a configuration value from the merged configuration data.  Missing
+values return C<$default> and are logged as defaults.  When C<$isBoolean> is
+true, the value is parsed using the project's boolean parser.
 
-	return $data;
-}
+=cut
 
 sub get {
 	my ($self, $section, $key, $default, $isBoolean) = @_;
@@ -97,6 +130,39 @@ sub get {
 	$self->dic->logger->$level($msg);
 	return $value;
 }
+
+=back
+
+=head1 PRIVATE METHODS
+
+=over
+
+=item C<__makeData()>
+
+Lazy builder for the merged configuration hash.  It walks the configured YAML
+file list from C<__configPaths> and recursively merges each file that exists.
+
+=cut
+
+sub __makeData {
+	my ($self) = @_;
+	my $data = { };
+
+	foreach my $path (@{ $self->__configPaths }) {
+		next unless (-e $path);
+		__mergeHashRef($data, LoadFile($path) || { });
+	}
+
+	return $data;
+}
+
+=item C<__get($section, $key, $default, $isBoolean, $pDefaultUsed)>
+
+Internal implementation for C<get>.  It performs the actual section/key lookup,
+fills missing keys in nested hashes from hash defaults, applies boolean parsing
+when requested, and reports whether the outer default was used.
+
+=cut
 
 sub __get {
 	my ($self, $section, $key, $default, $isBoolean, $pDefaultUsed) = @_;
@@ -141,12 +207,27 @@ sub __get {
 	return $default;
 }
 
+=item C<__configPaths()>
+
+Return the ordered list of YAML files to merge for this configuration directory.
+C<main.yaml> is loaded first, followed by the split files that may override or
+extend it.
+
+=cut
+
 sub __configPaths {
 	my ($self) = @_;
 
 	my @paths = map { $self->path . '/' . $_ } @SPLIT_CONFIG_FILE_NAMES;
 	return \@paths;
 }
+
+=item C<__mergeHashRef($target, $source)>
+
+Recursively merge C<$source> into C<$target>.  Nested hash references are merged
+key-by-key; all other values from C<$source> replace the value in C<$target>.
+
+=cut
 
 sub __mergeHashRef {
 	my ($target, $source) = @_;
@@ -166,6 +247,10 @@ sub __mergeHashRef {
 
 	return $target;
 }
+
+=back
+
+=cut
 
 __PACKAGE__->meta->make_immutable;
 
