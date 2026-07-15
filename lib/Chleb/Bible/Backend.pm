@@ -1062,6 +1062,9 @@ sub __makeDataDir {
 	my ($self) = @_;
 
 	Readonly my @PATHS => ('data', '/usr/share/chleb-bible-search');
+	# In a source checkout, do not fall through to stale installed data just because generated SQLite is absent.
+	return $PATHS[0] if (-d $PATHS[0] && -d join('/', $PATHS[0], 'static'));
+
 	foreach my $path (@PATHS) {
 		if (-d $path) {
 			my @sourceFiles = $self->__sourceFilesInPath($path);
