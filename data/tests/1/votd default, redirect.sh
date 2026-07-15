@@ -29,9 +29,13 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+set -uo pipefail
 
-echo "❌ TODO this does a 307 redirect with HTML, it's correct but the test needs more work"
-exit 0
+headers=$(http --print=h --pretty=none --check-status GET chleb-api.example.org/1/votd redirect==true 2>/dev/null)
+exitCode=$?
+statusCode=$(awk 'NR == 1 { print $2 }' <<< "$headers")
+location=$(sed -n 's/^Location: //Ip' <<< "$headers" | tr -d '\r')
 
-http --check-status GET chleb-api.example.org/1/votd redirect==true
+[[ "$exitCode" -eq 3 ]]
+[[ "$statusCode" == 307 ]]
+[[ "$location" =~ ^/1/lookup/[a-z0-9]+/[0-9]+/[0-9]+$ ]]

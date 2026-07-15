@@ -29,9 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+set -uo pipefail
 
-echo '❌ TODO'
-exit 0
-
-http --check-status GET chleb-api.example.org/2/random redirect==true
+http --check-status GET chleb-api.example.org/2/random redirect==true >/dev/null 2>&1
+[[ $? -eq 4 ]]
