@@ -38,7 +38,6 @@ extends 'Chleb::Bible::Base';
 use Chleb::Utils;
 use Data::Dumper;
 use English qw(-no_match_vars);
-use File::Basename qw(basename dirname);
 use IO::File;
 use Readonly;
 use YAML::XS 'LoadFile';
@@ -56,6 +55,15 @@ has path => (is => 'ro', isa => 'Str', required => 1);
 
 sub BUILD {
 	my ($self) = @_;
+
+	if (!-d $self->path) {
+		die("Config path is not a directory: " . $self->path);
+	}
+
+	if (!-e $self->path . '/main.yaml') {
+		die("No config available (" . $self->path . '/main.yaml)');
+	}
+
 	return;
 }
 
@@ -136,10 +144,7 @@ sub __get {
 sub __configPaths {
 	my ($self) = @_;
 
-	return [ $self->path ] unless (basename($self->path) eq 'main.yaml');
-
-	my $dir = dirname($self->path);
-	my @paths = map { "$dir/$_" } @SPLIT_CONFIG_FILE_NAMES;
+	my @paths = map { $self->path . '/' . $_ } @SPLIT_CONFIG_FILE_NAMES;
 	return \@paths;
 }
 

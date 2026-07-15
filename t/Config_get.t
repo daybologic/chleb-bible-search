@@ -46,6 +46,7 @@ use Chleb::DI::MockLogger;
 use English qw(-no_match_vars);
 use File::Temp qw(tempdir);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
+use Test::Exception;
 use Test::More 0.96;
 
 sub setUp {
@@ -55,7 +56,21 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(Chleb::DI::Config->new({ path => 'etc/test-suite.yaml' }));
+	my $dir = tempdir(CLEANUP => 1);
+	__writeConfigFile("$dir/main.yaml", <<'YAML');
+simple_boolean:
+  off_value: off
+  on_value: on
+  true_value: true
+  false_value: false
+Dancer2:
+  public_dir: data/static/public
+session_tokens:
+  backend_redis:
+    db: 5
+    host: redis-82.example.net
+YAML
+	$self->sut(Chleb::DI::Config->new({ path => $dir }));
 
 	return EXIT_SUCCESS;
 }
@@ -162,7 +177,7 @@ session_tokens:
   ttl: 20
 YAML
 
-	my $config = Chleb::DI::Config->new({ path => "$dir/main.yaml" });
+	my $config = Chleb::DI::Config->new({ path => $dir });
 
 	is($config->get('server', 'children', 1), 3, 'main.yaml supplies general settings');
 	is($config->get('server', 'admin_name', 'Unknown'), 'Split Admin', 'contact.yaml supplies contact settings');
@@ -191,9 +206,26 @@ server:
   domain: single.example.org
 YAML
 
-	my $config = Chleb::DI::Config->new({ path => "$dir/main.yaml" });
+	my $config = Chleb::DI::Config->new({ path => $dir });
 
 	is($config->get('server', 'domain', 'default.example.org'), 'single.example.org', 'main.yaml works without split siblings');
+
+	return EXIT_SUCCESS;
+}
+
+sub testPathMustBeDirectory {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $dir = tempdir(CLEANUP => 1);
+	__writeConfigFile("$dir/main.yaml", <<'YAML');
+server:
+  domain: file.example.org
+YAML
+
+	throws_ok {
+		Chleb::DI::Config->new({ path => "$dir/main.yaml" });
+	} qr/Config path is not a directory/, 'path rejects main.yaml filename';
 
 	return EXIT_SUCCESS;
 }

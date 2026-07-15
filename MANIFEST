@@ -276,7 +276,6 @@ etc/logrotate/chleb-bible-search
 etc/main.yaml
 etc/nginx/chleb-bible-search-notls.example
 etc/nginx/chleb-bible-search.example
-etc/test-suite.yaml
 etc/tokens.yaml
 etc/votd-mailer.yaml
 info.PL

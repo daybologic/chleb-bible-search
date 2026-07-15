@@ -67,7 +67,7 @@ EOF
 	close($fh) or die("close $dir/main.yaml: $!");
 
 	my $dic = Chleb::DI::Container->instance;
-	$dic->config(Chleb::DI::Config->new({ dic => $dic, path => "$dir/main.yaml" }));
+	$dic->config(Chleb::DI::Config->new({ dic => $dic, path => $dir }));
 	$dic->logger(Chleb::DI::MockLogger->new());
 	$self->sut(Chleb::Server::Dampen->new({ dic => $dic }));
 	$self->sut->dic->time->set(2_000_000_000);
