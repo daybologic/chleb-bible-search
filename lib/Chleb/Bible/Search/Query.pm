@@ -82,7 +82,7 @@ sub setWholeword {
 sub run {
 	my ($self) = @_;
 	my $startTiming = Time::HiRes::time();
-	my $backend = $self->bible->__backend;
+	my $bible = $self->bible;
 
 	my @booksToQuery = ( );
 	if ($self->bookShortName) {
@@ -92,7 +92,7 @@ sub run {
 	}
 
 	my @verses = ( );
-	$backend->deferSharedCacheWrites(1);
+	$bible->deferSharedCacheWrites(1);
 	my $evalOk1; $evalOk1 = eval {
 		foreach my $book (@booksToQuery) {
 			next if ($self->testament && $self->testament ne $book->testament);
@@ -102,8 +102,8 @@ sub run {
 		1;
 	} or $evalOk1 = 0;
 	my $evalError = $EVAL_ERROR;
-	$backend->deferSharedCacheWrites(0);
-	$backend->flushSharedCache();
+	$bible->deferSharedCacheWrites(0);
+	$bible->flushSharedCache();
 	croak($evalError) if ($evalError);
 
 	splice(@verses, $self->limit);

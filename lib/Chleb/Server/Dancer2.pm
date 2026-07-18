@@ -67,12 +67,17 @@ set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API;
 set static_handler => 1;
 
-sub _cookie {
+sub getCookie {
 	my (@args) = @_;
 	return cookie(@args);
 }
 
-sub _request { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+sub setCookie {
+	my (@args) = @_;
+	return cookie(@args);
+}
+
+sub getRequest {
 	my (@args) = @_;
 	return request(@args);
 }
@@ -375,7 +380,7 @@ sub __detaint {
 	return $detainted;
 }
 
-sub _param {
+sub getParam {
 	my ($name) = @_;
 
 	my $value = param($name);
@@ -464,17 +469,17 @@ sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubr
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $version = int(_param('version') || 1);
-	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
+	my $version = int(getParam('version') || 1);
+	my $parental = Chleb::Utils::boolean('parental', getParam('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', getParam('redirect'), 0);
 
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
@@ -483,7 +488,7 @@ sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubr
 		$result = $server->__random({
 			accept => $accept,
 			translations => $translations,
-			testament => _param('testament'),
+			testament => getParam('testament'),
 			version => $version,
 			parental => $parental,
  			redirect => $redirect,
@@ -510,17 +515,17 @@ get '/1/votd' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
-	my $when = _param('when');
-	my $testament = _param('testament');
+	my $parental = Chleb::Utils::boolean('parental', getParam('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', getParam('redirect'), 0);
+	my $when = getParam('when');
+	my $testament = getParam('testament');
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
@@ -550,17 +555,17 @@ get '/2/votd' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
-	my $when = _param('when');
-	my $testament = _param('testament');
+	my $parental = Chleb::Utils::boolean('parental', getParam('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', getParam('redirect'), 0);
+	my $when = getParam('when');
+	my $testament = getParam('testament');
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
@@ -607,14 +612,14 @@ sub __registerLookupRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $book = _param('book') // '';
-	my $chapter = _param('chapter') // 1;
-	my $verse = _param('verse');
+	my $book = getParam('book') // '';
+	my $chapter = getParam('chapter') // 1;
+	my $verse = getParam('verse');
 	my $queryParams = request()->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 	my $translationQuery = Chleb::Utils::queryParamsHelper({ translations => $translations });
 
@@ -636,8 +641,8 @@ get '/1/lookup/:book/:chapter' => sub {
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
@@ -671,16 +676,16 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $book = _param('book') // '';
-	my $chapter = _param('chapter') // '';
-	my $verse = _param('verse') // '';
+	my $book = getParam('book') // '';
+	my $chapter = getParam('chapter') // '';
+	my $verse = getParam('verse') // '';
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
@@ -733,21 +738,21 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	$queryParams = {} unless ($queryParams);
 	my $limit = __previousSearchLimit(
 		exists($queryParams->{limit}),
-		_param('limit'),
-		_cookie('previousSearchLimit'),
+		getParam('limit'),
+		getCookie('previousSearchLimit'),
 	);
-	my $term = _param('term') // '';
+	my $term = getParam('term') // '';
 	my $wholeword = __preferredWholeword(
 		exists($queryParams->{wholeword}) || exists($queryParams->{wholeword_present}),
-		_param('wholeword'),
-		_cookie('wholeword'),
+		getParam('wholeword'),
+		getCookie('wholeword'),
 	);
-	my $form = Chleb::Utils::boolean('form', _param('form'), 0);
-	my $page = _param('page');
+	my $form = Chleb::Utils::boolean('form', getParam('form'), 0);
+	my $page = getParam('page');
 	my $perPage = __previousSearchPerPage(
 		exists($queryParams->{per_page}),
-		_param('per_page'),
-		_cookie('previousSearchPerPage'),
+		getParam('per_page'),
+		getCookie('previousSearchPerPage'),
 	);
 
 	my $result = '';

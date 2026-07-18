@@ -472,6 +472,51 @@ sub getBookInfoByShortName {
 	return $self->__backend->getBookInfoByShortName($bookShortName);
 }
 
+=item C<getOrdinalByVerseKey($key)>
+
+Return the absolute ordinal for a canonical verse key.
+
+=cut
+
+sub getOrdinalByVerseKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getOrdinalByVerseKey($key);
+}
+
+=item C<getSentimentByOrdinal($ordinal)>
+
+Return sentiment data for an absolute verse ordinal.
+
+=cut
+
+sub getSentimentByOrdinal {
+	my ($self, $ordinal) = @_;
+	return $self->__backend->getSentimentByOrdinal($ordinal);
+}
+
+=item C<deferSharedCacheWrites($defer)>
+
+Control deferred writes to the shared backend cache while performing a grouped
+operation such as a search.
+
+=cut
+
+sub deferSharedCacheWrites {
+	my ($self, $defer) = @_;
+	return $self->__backend->deferSharedCacheWrites($defer);
+}
+
+=item C<flushSharedCache()>
+
+Flush pending writes to the shared backend cache.
+
+=cut
+
+sub flushSharedCache {
+	my ($self) = @_;
+	return $self->__backend->flushSharedCache();
+}
+
 =back
 
 =head1 PRIVATE METHODS

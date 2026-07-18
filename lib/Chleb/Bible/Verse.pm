@@ -162,12 +162,12 @@ sub __makeTones {
 
 sub __makeSentiment {
 	my ($self) = @_;
-	return $self->book->bible->__backend->getSentimentByOrdinal($self->ordinalAbsolute);
+	return $self->book->bible->getSentimentByOrdinal($self->ordinalAbsolute);
 }
 
 sub __makeOrdinalAbsolute {
 	my ($self) = @_;
-	return $self->book->bible->__backend->getOrdinalByVerseKey($self->key);
+	return $self->book->bible->getOrdinalByVerseKey($self->key);
 }
 
 sub __makeKey {

@@ -153,7 +153,7 @@ sub warmup {
 	# cache-miss round-trip per verse.  __warmBackendCaches() also primes the
 	# Storable-backed shared cache as a side-effect, so warm data survives
 	# restarts and late-spawned workers.
-	my @bibles = $self->__library->__getBible({ translations => ['all'] });
+	my @bibles = $self->__library->getBibles({ translations => ['all'] });
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s) in master process', scalar(@bibles)));
 	my $evalOk1; $evalOk1 = eval {
 		$self->__warmBackendCaches();
@@ -261,7 +261,7 @@ sub __warmBackendVerse {
 sub __warmBackendCaches {
 	my ($self, $warmBible) = @_;
 	my $startTiming = Time::HiRes::time();
-	my @bibles = defined($warmBible) ? ($warmBible) : shuffle($self->__library->__getBible({ translations => ['all'] }));
+	my @bibles = defined($warmBible) ? ($warmBible) : shuffle($self->__library->getBibles({ translations => ['all'] }));
 	my $totalVerses = 0;
 
 	foreach my $bible (@bibles) {
@@ -1671,7 +1671,7 @@ sub __makeBooks {
 	if ($currentBook) {
 		$thisBookName = $currentBook->shortName;
 	} else {
-		$thisBookName = Chleb::Server::Dancer2::_param('book');
+		$thisBookName = Chleb::Server::Dancer2::getParam('book');
 	}
 
 	my $books = $self->__library->info->bibles->[0]->books; # TODO: do we need info, or can we skip it somehow?
@@ -2017,7 +2017,7 @@ has __damper => (
 sub logRequest {
 	my ($self) = @_;
 
-	my $request = Chleb::Server::Dancer2::_request();
+	my $request = Chleb::Server::Dancer2::getRequest();
 	my $ipAddress = $request->address();
 	Log::Log4perl::MDC->put(address => $ipAddress);
 	my $path = $request->path();
@@ -2038,12 +2038,12 @@ sub handleSessionToken {
 		$self->__warnedSessionToken(1);
 	}
 
-	my $request = Chleb::Server::Dancer2::_request();
+	my $request = Chleb::Server::Dancer2::getRequest();
 	my $ipAddress = $request->address() // '';
 	my $userAgent = $request->agent() // '';
 
 	my $tokenRepo = $self->dic->tokenRepo;
-	my $sessionToken = Chleb::Server::Dancer2::_cookie('sessionToken');
+	my $sessionToken = Chleb::Server::Dancer2::getCookie('sessionToken');
 
 	if (!$sessionToken) {
 		if ($self->__damper->dampen($ipAddress)) {
@@ -2069,7 +2069,7 @@ sub handleSessionToken {
 		}
 
 		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
-		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
+		Chleb::Server::Dancer2::setCookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 
 		return;
 	}

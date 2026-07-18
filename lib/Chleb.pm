@@ -309,6 +309,11 @@ sub bibles {
 	return $self->__bibles->{$translation};
 }
 
+sub getBibles {
+	my ($self, $args) = @_;
+	return $self->__getBible($args);
+}
+
 sub __getBible {
 	my ($self, $args) = @_;
 
