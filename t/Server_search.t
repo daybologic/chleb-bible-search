@@ -553,6 +553,26 @@ sub testWholeWordPunctuation {
 	return EXIT_SUCCESS;
 }
 
+sub testSearchSelectedTranslation {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__search({
+		accept => $mediaType,
+		limit => 2,
+		term => 'Allah',
+		translations => ['pickthall'],
+		wholeword => 'true',
+	});
+
+	ok(scalar(@{ $json->{data} }) > 0, 'selected translation returns search results');
+	is($json->{data}->[0]->{attributes}->{translation}, 'pickthall', 'result uses selected translation');
+	like($json->{links}->{self}, qr{translations=pickthall}, 'pagination links preserve selected translation');
+
+	return EXIT_SUCCESS;
+}
+
 sub __resultsSummary {
 	my ($json) = @_;
 

@@ -763,6 +763,12 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 		getParam('per_page'),
 		getCookie('previousSearchPerPage'),
 	);
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
+	);
 
 	my $result = '';
 	my $resultHash;
@@ -776,6 +782,7 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 				page      => $page,
 				per_page  => $perPage,
 				term      => $term,
+				translations => $translations,
 				wholeword => $wholeword,
 			});
 			1;

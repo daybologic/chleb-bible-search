@@ -910,10 +910,34 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($search->{accept}, $CONTENT_TYPE_DEFAULT);
 
-	my $query = $self->__library->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
-	my $results = $query->run();
-	my $totalCount = $results->count;
-	my @pageVerses = @{ $results->verses };
+	my @translations = @{ $search->{translations} || [] };
+	if (grep { $_ eq 'all' } @translations) {
+		@translations = $self->__library->availableTranslations();
+	}
+	my @queries;
+	if (scalar(@translations) > 0) {
+		foreach my $translation (@translations) {
+			push(@queries, $self->__library->newSearchQuery(
+				text => $search->{term},
+				translations => [$translation],
+			)->setLimit($limit)->setWholeword($wholeword));
+		}
+	} else {
+		push(@queries, $self->__library->newSearchQuery($search->{term}));
+		$queries[0]->setLimit($limit)->setWholeword($wholeword);
+	}
+
+	my @allVerses;
+	my $resultsMsec = 0;
+	foreach my $query (@queries) {
+		my $results = $query->run();
+		push(@allVerses, @{ $results->verses });
+		$resultsMsec += $results->msec;
+	}
+	splice(@allVerses, $limit);
+	my $query = $queries[0];
+	my $totalCount = scalar(@allVerses);
+	my @pageVerses = @allVerses;
 	splice(@pageVerses, 0, $offset);
 	splice(@pageVerses, $perPage);
 	my $pageCount = scalar(@pageVerses);
@@ -988,7 +1012,7 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 			type => 'stats',
 			id => uuid_to_string(create_uuid()),
 			attributes => {
-				msec => int($results->msec),
+				msec => int($resultsMsec),
 			},
 			links => { },
 		},
@@ -1000,6 +1024,7 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		page        => $page,
 		per_page    => $perPage,
 		term        => $query->text,
+		translations => \@translations,
 		total_pages => $totalPages,
 		wholeword   => $wholeword,
 	);
@@ -1134,6 +1159,9 @@ sub __searchPageLink {
 		'page=' . uri_escape($page),
 		'per_page=' . uri_escape($params->{per_page}),
 	);
+	if (ref($params->{translations}) eq 'ARRAY' && scalar(@{ $params->{translations} }) > 0) {
+		push(@parts, 'translations=' . uri_escape(join(',', @{ $params->{translations} })));
+	}
 	push(@parts, 'form=true') if ($params->{form});
 
 	return '/1/search?' . join('&', @parts);
