@@ -41,6 +41,8 @@ PLACK='/usr/bin/plackup'
 export PERL5LIB='/usr/share/chleb-bible-search/perl5'
 
 if [ -e "$(pwd)/.git" ] && [ -f 'bin/core/app.psgi' ]; then
+	# Source checkouts need generated SQLite data before warmup can start.
+	make -C data
 	$PLACK \
 		-I lib \
 		--no-default-middleware \
