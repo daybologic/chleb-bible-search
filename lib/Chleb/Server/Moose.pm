@@ -1376,19 +1376,28 @@ sub __verseNavigationLink {
 	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
 }
 
+=item C<__verseToHtml($verse, $json, $function)>
+
+Render a verse response as the HTML verse page, including translation cards and
+book, chapter, and verse navigation.
+
+=cut
+
 sub __verseToHtml {
 	my ($self, $verse, $json, $function) = @_;
 
-	my $includedCount = scalar(@{ $json->[0]->{included} });
-	my %rawBookNameMap = ( );
-	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
-		my $includedItem = $json->[0]->{included}->[$includedIndex];
-		my $type = $includedItem->{type};
-		next if ($type ne 'book');
-
-		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
-		    = $includedItem->{attributes}->{short_name_raw};
+	my $verseHtmlData = __verseHtmlData($verse, $json);
+	my $reference = $verseHtmlData->{reference};
+	my $title = 'FIXME';
+	if ($function == $FUNCTION_RANDOM) {
+		$title = 'Random Verse';
+	} elsif ($function == $FUNCTION_VOTD) {
+		$title = 'Verse of The Day';
+	} else {
+		$title = 'Lookup';
 	}
+	my $pageTitle = "Chleb Bible Search - ${title}";
+	my $output = __verseHtmlCards($verseHtmlData, $pageTitle);
 
 	my $random;
 	{
@@ -1399,6 +1408,127 @@ sub __verseToHtml {
 		} else {
 			$random = sprintf($pattern, '/2/random', 'random');
 		}
+	}
+
+	my $firstVerseObject = $verse;
+	$firstVerseObject = $firstVerseObject->[0] if (ref($firstVerseObject) eq 'ARRAY');
+
+	my $prevBookLink = '';
+	if (my $prevBook = $firstVerseObject->book->getPrev()) {
+		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1">prev book</a>';
+	}
+
+	my $prevChapterLink = '';
+	if (my $prevChapter = $firstVerseObject->chapter->getPrev()) {
+		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '">prev chapter</a>';
+	}
+
+	my $nextBookLink = '';
+	if (my $nextBook = $firstVerseObject->book->getNext()) {
+		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1">next book</a>';
+	}
+
+	my $nextChapterLink = '';
+	if (my $nextChapter = $firstVerseObject->chapter->getNext()) {
+		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '">next chapter</a>';
+	}
+
+	my $lastChapterLink = '';
+	my $chapterCount = $firstVerseObject->book->chapterCount;
+	my @chapters = ( );
+	for (my $chapterOrdinal = 1; $chapterOrdinal <= $firstVerseObject->book->chapterCount; $chapterOrdinal++) {
+		if (my $chapter = $firstVerseObject->book->getChapterByOrdinal($chapterOrdinal, { nonFatal => 1 })) {
+			push(@chapters, $chapter);
+		} else {
+			$self->dic->logger->error("Can't get chapter $chapterCount from book " . $firstVerseObject->book->shortName
+				. 'even though it logically exists, so LAST_CHAPTER_URL will be broken');
+		}
+	}
+
+	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
+		my $lastChapter = $chapters[-1];
+		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>';
+	}
+
+	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
+
+	my $browsingLeft;
+	{
+		my $chapterLinks = '';
+		foreach my $chapter (@chapters) {
+			my $classCurrent = '';
+			if ($chapter->ordinal == $firstVerseObject->chapter->ordinal) {
+				$classCurrent = 'class="current" ';
+			}
+			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s">%s %d</a><br />', $classCurrent, $chapter->getPath(),
+				$chapter->book->shortNameRaw, $chapter->ordinal);
+		}
+		$browsingLeft = Chleb::Server::Dancer2::fetchStaticPage('browsing_left', {
+			CHAPTER_LINKS => $chapterLinks,
+		});
+	}
+
+	my $thisChapter = $json->[0]->{data}->[0]->{links}->{first};
+	$self->dic->logger->trace("Link kludge in effect (pre): ${thisChapter}");
+	my $thisChapter_KLUDGE = $thisChapter;
+	$thisChapter_KLUDGE =~ s@/1(?=\?)@@x; # TODO: This is a kludge, the JSON should provide it somehow.
+	if ($thisChapter_KLUDGE eq $thisChapter) {
+		$thisChapter_KLUDGE =~ s@/1$@@x; # TODO: This is a kludge, the JSON should provide it somehow.
+	}
+	$self->dic->logger->trace("Link kludge in effect (post): ${thisChapter_KLUDGE}");
+	my $settingsLink = '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-label="Settings">'
+		. '<span class="vn-settings-icon" aria-hidden="true">⚙</span>'
+		. '<span class="vn-settings-text"> Settings</span></a>';
+
+	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
+		PREV_BOOK_URL => $prevBookLink,
+		PREV_CHAPTER_URL => $prevChapterLink,
+		HOME_URL => __linkToHome(),
+		BOOK_URL => sprintf($bookLinkFormat, 'book index'),
+		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
+		NEXT_CHAPTER_URL => $nextChapterLink,
+		NEXT_BOOK_URL => $nextBookLink,
+		PERMALINK_URL => __verseNavigationLink($json->[0], 'self', 'permalink'),
+		SETTINGS_URL => $settingsLink,
+		FIRST_VERSE_URL => __verseNavigationLink($json->[0], 'first', 'first verse'),
+		FIRST_CHAPTER_URL => sprintf($bookLinkFormat, 'first chapter'),
+		LAST_CHAPTER_URL => $lastChapterLink,
+		PREV_VERSE_URL => __verseNavigationLink($json->[0], 'prev', 'prev verse'),
+		NEXT_VERSE_URL => __verseNavigationLink($json->[0], 'next', 'next verse'),
+		LAST_VERSE_URL => __verseNavigationLink($json->[0], 'last', 'last verse'),
+		RANDOM_URL => $random,
+		BOOKS => $self->__makeBooks($firstVerseObject->book),
+	});
+
+	return Chleb::Server::Dancer2::fetchStaticPage('verse', {
+		TITLE => $pageTitle,
+		REFERENCE => $reference,
+		HOME => __linkToHome(),
+		VERSES => $output,
+		BROWSING_LEFT => $browsingLeft,
+		BROWSING_HEAD => $browsingHead,
+	});
+}
+
+=item C<__verseHtmlData($verse, $json)>
+
+Collect the verse reference and translation sections used by the HTML renderer.
+The order in which translations first appear is retained for card rendering.
+
+=cut
+
+sub __verseHtmlData {
+	my ($verse, $json) = @_;
+
+	my $includedCount = scalar(@{ $json->[0]->{included} });
+	my %rawBookNameMap = ( );
+	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
+		my $includedItem = $json->[0]->{included}->[$includedIndex];
+		my $type = $includedItem->{type};
+		next if ($type ne 'book');
+
+		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
+		    = $includedItem->{attributes}->{short_name_raw};
 	}
 
 	my $verseCount = scalar(@{ $json->[0]->{data} });
@@ -1447,19 +1577,24 @@ sub __verseToHtml {
 		$section->{verse_count}++;
 	}
 
-	my $title = 'FIXME';
-	if ($function == $FUNCTION_RANDOM) {
-		$title = 'Random Verse';
-	} elsif ($function == $FUNCTION_VOTD) {
-		$title = 'Verse of The Day';
-	} else {
-		$title = 'Lookup';
-	}
-	my $pageTitle = "Chleb Bible Search - ${title}";
+	return {
+		reference => $reference,
+		translationOrder => \@translationOrder,
+		translationSections => \%translationSections,
+	};
+}
 
+=item C<__verseHtmlCards($data, $pageTitle)>
+
+Render the ordered translation sections as HTML cards.
+
+=cut
+
+sub __verseHtmlCards {
+	my ($data, $pageTitle) = @_;
 	my $output = '';
-	foreach my $translation (@translationOrder) {
-		my $section = $translationSections{$translation};
+	foreach my $translation (@{ $data->{translationOrder} }) {
+		my $section = $data->{translationSections}->{$translation};
 		my $sentiments = '';
 		my %toneSeen;
 
@@ -1473,7 +1608,7 @@ sub __verseToHtml {
 		$output .= "\t\t\t\t\t\t<div class=\"card\">\n";
 		$output .= "\t\t\t\t\t\t\t<div class=\"subtitle\">$pageTitle</div>\n";
 		$output .= "\n";
-		$output .= "\t\t\t\t\t\t\t<h1>$reference</h1>\n";
+		$output .= "\t\t\t\t\t\t\t<h1>$data->{reference}</h1>\n";
 		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translation</div>\n";
 		$output .= "\n";
 		$output .= "\t\t\t\t\t\t\t<div>\n";
@@ -1490,104 +1625,7 @@ sub __verseToHtml {
 		$output .= "\t\t\t\t\t\t</div>\n";
 	}
 
-	my $firstVerseObject = $verse;
-	$firstVerseObject = $firstVerseObject->[0] if (ref($firstVerseObject) eq 'ARRAY');
-
-	my $prevBookLink = '';
-	if (my $prevBook = $firstVerseObject->book->getPrev()) {
-		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1">prev book</a>';
-	}
-
-	my $prevChapterLink = '';
-	if (my $prevChapter = $firstVerseObject->chapter->getPrev()) {
-		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '">prev chapter</a>';
-	}
-
-	my $nextBookLink = '';
-	if (my $nextBook = $firstVerseObject->book->getNext()) {
-		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1">next book</a>';
-	}
-
-	my $nextChapterLink = '';
-	if (my $nextChapter = $firstVerseObject->chapter->getNext()) {
-		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '">next chapter</a>';
-	}
-
-	my $lastChapterLink = '';
-	my $chapterCount = $firstVerseObject->book->chapterCount;
-	my @chapters = ( );
-	for (my $chapterOrdinal = 1; $chapterOrdinal <= $firstVerseObject->book->chapterCount; $chapterOrdinal++) {
-		if (my $chapter = $firstVerseObject->book->getChapterByOrdinal($chapterOrdinal, { nonFatal => 1 })) {
-			push(@chapters, $chapter);
-		} else {
-			$self->dic->logger->error("Can't get chapter $chapterCount from book " . $firstVerseObject->book->shortName
-			    . 'even though it logically exists, so LAST_CHAPTER_URL will be broken');
-		}
-	}
-
-	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
-		my $lastChapter = $chapters[-1];
-		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>';
-	}
-
-	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
-
-	my $browsingLeft;
-	{
-		my $chapterLinks = '';
-		foreach my $chapter (@chapters) {
-			my $classCurrent = '';
-			if ($chapter->ordinal == $firstVerseObject->chapter->ordinal) {
-				$classCurrent = 'class="current" ';
-			}
-			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s">%s %d</a><br />', $classCurrent, $chapter->getPath(),
-			    $chapter->book->shortNameRaw, $chapter->ordinal);
-		}
-		$browsingLeft = Chleb::Server::Dancer2::fetchStaticPage('browsing_left', {
-			CHAPTER_LINKS => $chapterLinks,
-		});
-	}
-
-	my $thisChapter = $json->[0]->{data}->[0]->{links}->{first};
-	$self->dic->logger->trace("Link kludge in effect (pre): ${thisChapter}");
-	my $thisChapter_KLUDGE = $thisChapter;
-	$thisChapter_KLUDGE =~ s@/1(?=\?)@@x; # TODO: This is a kludge, the JSON should provide it somehow.
-	if ($thisChapter_KLUDGE eq $thisChapter) {
-		$thisChapter_KLUDGE =~ s@/1$@@x; # TODO: This is a kludge, the JSON should provide it somehow.
-	}
-	$self->dic->logger->trace("Link kludge in effect (post): ${thisChapter_KLUDGE}");
-	my $settingsLink = '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-label="Settings">'
-	    . '<span class="vn-settings-icon" aria-hidden="true">⚙</span>'
-	    . '<span class="vn-settings-text"> Settings</span></a>';
-
-	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
-		PREV_BOOK_URL => $prevBookLink,
-		PREV_CHAPTER_URL => $prevChapterLink,
-		HOME_URL => __linkToHome(),
-		BOOK_URL => sprintf($bookLinkFormat, 'book index'),
-		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
-		NEXT_CHAPTER_URL => $nextChapterLink,
-		NEXT_BOOK_URL => $nextBookLink,
-		PERMALINK_URL => __verseNavigationLink($json->[0], 'self', 'permalink'),
-		SETTINGS_URL => $settingsLink,
-		FIRST_VERSE_URL => __verseNavigationLink($json->[0], 'first', 'first verse'),
-		FIRST_CHAPTER_URL => sprintf($bookLinkFormat, 'first chapter'),
-		LAST_CHAPTER_URL => $lastChapterLink,
-		PREV_VERSE_URL => __verseNavigationLink($json->[0], 'prev', 'prev verse'),
-		NEXT_VERSE_URL => __verseNavigationLink($json->[0], 'next', 'next verse'),
-		LAST_VERSE_URL => __verseNavigationLink($json->[0], 'last', 'last verse'),
-		RANDOM_URL => $random,
-		BOOKS => $self->__makeBooks($firstVerseObject->book),
-	});
-
-	return Chleb::Server::Dancer2::fetchStaticPage('verse', {
-		TITLE => $pageTitle,
-		REFERENCE => $reference,
-		HOME => __linkToHome(),
-		VERSES => $output,
-		BROWSING_LEFT => $browsingLeft,
-		BROWSING_HEAD => $browsingHead,
-	});
+	return $output;
 }
 
 sub __makeBooks {

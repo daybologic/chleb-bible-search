@@ -97,6 +97,8 @@ Key files and directories:
   `English qw(-no_match_vars)` over raw `$!`.
 - In Perl PoD, use only `=head1` headings. Do not add `=head2` or lower
   heading levels.
+- When adding or extracting a named Perl subroutine, add or update its PoD
+  `=item` documentation in the surrounding section.
 - Keep changes scoped to the library, server layer, config, or packaging area
   implied by the task.
 
