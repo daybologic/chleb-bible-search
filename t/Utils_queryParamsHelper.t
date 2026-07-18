@@ -64,7 +64,7 @@ sub testEffectiveValues {
 	plan tests => 3;
 
 	is(Chleb::Utils::queryParamsHelper({ translations => ['asv'] }), '?translations=asv', 'single translation');
-	is(Chleb::Utils::queryParamsHelper({ translations => ['asv', 'kjv'] }), '?translations=all', 'all translations shortcut');
+	is(Chleb::Utils::queryParamsHelper({ translations => ['asv', 'kjv'] }), '?translations=asv,kjv', 'translation list is preserved');
 	like(Chleb::Utils::queryParamsHelper({ testament => 'old', translations => ['kjv'] }), qr/\A\?(?:testament=old&translations=kjv|translations=kjv&testament=old)\z/, 'multiple values are joined correctly');
 
 	return EXIT_SUCCESS;

@@ -175,16 +175,17 @@ sub queryParamsHelper {
 
 	my $str = '';
 	my $counter = 0;
-	my %blacklist = map { $_ => 1 } (qw(accept book chapter translation verse version when)); # TODO: We should aim to eliminate this hack
+	my %blacklist = map { $_ => 1 } (qw(__translationsAll accept book chapter translation verse version when)); # TODO: We should aim to eliminate this hack
 
 	while (my ($k, $v) = each(%$params)) {
 		next if ($blacklist{$k});
+		my $isTranslationList = ($k eq 'translations' && ref($v) eq 'ARRAY' && scalar(@$v) > 1);
 		$v = join(',', @$v) if (ref($v) eq 'ARRAY');
 		next if (!defined($v));
 		next if (length($v) == 0);
 
 		$str .= ($counter == 0) ? '?' : '&';
-		$v = 'all' if ($v eq 'asv,kjv' && $k eq 'translations'); # TODO: You should do this via a callback
+		$v = 'all' if ($isTranslationList && $params->{__translationsAll});
 		$str .= "${k}=${v}";
 		$counter++;
 	}

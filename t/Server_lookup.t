@@ -299,15 +299,14 @@ sub test_translation_all {
 
 sub testWarmupPrimesSentimentCache {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 6;
 
 	my $dic = Chleb::DI::Container->instance();
 	my $previousLogger = $dic->logger;
 	my $logger = Chleb::DI::MockLogger->new();
 	$dic->logger($logger);
 
-	my ($bible) = $self->sut->__library->__getBible({ translations => [ 'kjv' ] });
-	$self->sut->__warmBackendCaches($bible);
+	$self->sut->__warmBackendCaches();
 
 	my $before = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
 	my $bookInfoBefore = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
@@ -323,12 +322,14 @@ sub testWarmupPrimesSentimentCache {
 	my $bookInfoAfter = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountAfter = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $translationWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation kjv in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
+	my $pickthallWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation pickthall in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 	my $allWarmupFinished = scalar(grep { /\QAll backend cache warmup finished in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 
 	is($after, $before, 'lookup does not reload sentiment after warmup');
 	is($bookInfoAfter, $bookInfoBefore, 'lookup does not reload book info after warmup');
 	is($verseCountAfter, $verseCountBefore, 'lookup does not reload verse counts after warmup');
 	ok($translationWarmupFinished > 0, 'warmup logs per-translation msec');
+	ok($pickthallWarmupFinished > 0, 'warmup discovers Pickthall');
 	ok($allWarmupFinished > 0, 'warmup logs overall msec');
 
 	$dic->logger($previousLogger);

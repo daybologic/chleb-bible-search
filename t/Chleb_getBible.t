@@ -107,6 +107,10 @@ sub testSuccess {
 			isa('Chleb::Bible'),
 			methods(translation => 'kjv'),
 		),
+		all(
+			isa('Chleb::Bible'),
+			methods(translation => 'pickthall'),
+		),
 	], 'all bibles returned');
 
 	return EXIT_SUCCESS;

@@ -58,6 +58,7 @@ use Carp qw(croak);
 Readonly my $TRANSLATION_DEFAULT => 'kjv';
 
 has __bibles => (is => 'ro', isa => 'HashRef[Str]', lazy => 1, default => \&__makeBibles); # use 'bibles' to access
+has __availableTranslations => (is => 'ro', isa => 'ArrayRef[Str]', lazy => 1, default => \&__makeAvailableTranslations);
 
 # The release version is generated during the build.
 ## no critic (ValuesAndExpressions::ProhibitComplexVersion)
@@ -85,7 +86,7 @@ sub newSearchQuery {
 	}
 
 	my %params = @args;
-	__fixTranslationsParam(\%params);
+	$self->__fixTranslationsParam(\%params);
 
 	$params{text} = __ensureSecureString($params{text});
 
@@ -96,13 +97,19 @@ sub newSearchQuery {
 sub fetch {
 	my ($self, $book, $chapterOrdinal, $verseOrdinal, $args) = @_;
 	my $startTiming = Time::HiRes::time();
-	__fixTranslationsParam($args);
+	$self->__fixTranslationsParam($args);
 
 	my (@bible) = $self->__getBible($args);
 
 	my @verse;
 	for (my $bibleI = 0; $bibleI < scalar(@bible); $bibleI++) {
-		if (my $resolvedBook = $bible[$bibleI]->resolveBook($book)) {
+		my $resolvedBook;
+		my $resolvedOk = eval {
+			$resolvedBook = $bible[$bibleI]->resolveBook($book);
+			1;
+		};
+		next unless ($resolvedOk && $resolvedBook);
+		if ($resolvedBook) {
 			my $chapter = $resolvedBook->getChapterByOrdinal($chapterOrdinal);
 			if ($verseOrdinal) { # want a specific verse?
 				push(@verse, $chapter->getVerseByOrdinal($verseOrdinal));
@@ -111,6 +118,9 @@ sub fetch {
 			}
 		}
 	}
+
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, "Book '$book' was not found in any requested translation"))
+	    if (scalar(@verse) == 0);
 
 	my $endTiming = Time::HiRes::time();
 	my $msec = int(1000 * ($endTiming - $startTiming));
@@ -142,12 +152,23 @@ sub info {
 	return $info;
 }
 
+=head1 availableTranslations()
+
+Return the translation codes discovered from the available SQLite source data.
+
+=cut
+
+sub availableTranslations {
+	my ($self) = @_;
+	return @{ $self->__availableTranslations };
+}
+
 sub random {
 	my ($self, $args) = @_;
 
 	my $startTiming = Time::HiRes::time();
 
-	__fixTranslationsParam($args);
+	$self->__fixTranslationsParam($args);
 	my ($version, $parental, $testament) = @{$args}{qw(version parental testament)};
 
 	$testament = Chleb::Utils::parseIntoType(
@@ -169,6 +190,7 @@ sub random {
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
+		@bible = grep { $_->verseCount >= $verseOrdinal } @bible; # remove translations without enough verses
 
 		next unless ($self->__isTestamentMatch($verse, $testament));
 
@@ -224,7 +246,7 @@ sub votd {
 
 	my $startTiming = Time::HiRes::time();
 
-	__fixTranslationsParam($args);
+	$self->__fixTranslationsParam($args);
 	my ($when, $version, $parental, $testament) = @{$args}{qw(when version parental testament)};
 
 	$testament = Chleb::Utils::parseIntoType(
@@ -248,6 +270,7 @@ sub votd {
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
+		@bible = grep { $_->verseCount >= $verseOrdinal } @bible; # remove translations without enough verses
 
 		next unless ($self->__isTestamentMatch($verse, $testament));
 
@@ -318,15 +341,15 @@ sub __getBible {
 	my ($self, $args) = @_;
 
 	my @bible = ( );
-	my %real = map { $_ => 1 } __allTranslationsList();
+	my %real = map { $_ => 1 } $self->__allTranslationsList();
 	my @translations = __getTranslation($args);
 
 	if (scalar(@translations) == 0) {
-		@translations = __allTranslationsList();
+		@translations = $self->__allTranslationsList();
 	} else {
 		foreach my $translation (@translations) {
 			next if ($translation ne 'all');
-			@translations = __allTranslationsList();
+			@translations = $self->__allTranslationsList();
 			last;
 		}
 	}
@@ -373,7 +396,7 @@ sub __makeBibles {
 }
 
 sub __fixTranslationsParam {
-	my ($args) = @_;
+	my ($self, $args) = @_;
 
 	if (my $translation = $args->{translation}) { # legacy
 		if ($translation eq 'all') {
@@ -385,7 +408,8 @@ sub __fixTranslationsParam {
 	if (my $translations = $args->{translations}) { # new style
 		TRANSLATION: foreach my $translation (@{ $args->{translations} }) {
 			if ($translation eq 'all') {
-				$translations = [ __allTranslationsList() ];
+				$args->{__translationsAll} = 1;
+				$translations = [ $self->__allTranslationsList() ];
 				last TRANSLATION;
 			}
 		}
@@ -400,8 +424,14 @@ sub __fixTranslationsParam {
 }
 
 sub __allTranslationsList {
-	# TODO: Can we make this dynamic?  If we can, we can drop in custom translations dynamically
-	return ('asv', 'kjv');
+	my ($self) = @_;
+	return @{ $self->__availableTranslations };
+}
+
+sub __makeAvailableTranslations {
+	my ($self) = @_;
+	my $bible = $self->bibles($TRANSLATION_DEFAULT);
+	return [ $bible->__backend->getAvailableTranslations() ];
 }
 
 sub __isTestamentMatch {

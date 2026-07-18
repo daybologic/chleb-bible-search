@@ -307,6 +307,25 @@ sub __makeBooksFromRows {
 	return \@books;
 }
 
+=item C<getAvailableTranslations()>
+
+Return translation codes found in the available compressed SQLite source files.
+
+=cut
+
+sub getAvailableTranslations {
+	my ($self) = @_;
+
+	my %translations;
+	foreach my $sourceFile ($self->__sourceFilesInPath($self->dataDir)) {
+		my $meta = $self->__sourceMetadata->{$sourceFile} //= $self->__inspectSourceFile($sourceFile);
+		$translations{$_} = 1 foreach (keys(%{ $meta->{translations} }));
+	}
+
+	my @translations = sort(keys(%translations));
+	return @translations;
+}
+
 sub getOrdinalByVerseKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $key, 4);

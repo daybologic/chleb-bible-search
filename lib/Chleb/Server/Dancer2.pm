@@ -48,6 +48,7 @@ Pass this object to Plack to launch the server!
 =cut
 
 use Chleb::Bible::Search::Query;
+use Chleb;
 use Chleb::Server::Moose;
 use Chleb::TemplateProcessor;
 use Chleb::Utils::OSError::Mapper;
@@ -109,7 +110,7 @@ sub __setJsonResponseContentType {
 	return;
 }
 
-=head1 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation)
+=head1 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation, $availableTranslations)
 
 Resolves the translation filters for a request which supports preferred
 translations.
@@ -121,17 +122,17 @@ parameter, which resolves to no translation filter rather than falling back to
 the cookie.
 
 When the request parameter is absent, C<$preferredTranslation> may be either a
-cookie object with a C<value()> method or its scalar value.  The supported
-C<asv> and C<kjv> preferences may be stored singly or as a comma-separated
-list, and are returned as an array reference.  The C<all> preference is also
-supported.  The C<default> preference, missing values, and unsupported values
-return an empty array reference so that normal lookup translation selection
-applies.
+cookie object with a C<value()> method or its scalar value.  Available
+translation codes are supplied in C<$availableTranslations>; when omitted,
+they are discovered from the local source data.  The C<all> preference is
+also supported.  The C<default> preference, missing values, and unsupported
+values return an empty array reference so that normal lookup translation
+selection applies.
 
 =cut
 
 sub __preferredTranslations {
-	my ($paramPresent, $paramValue, $preferredTranslation) = @_;
+	my ($paramPresent, $paramValue, $preferredTranslation, $availableTranslations) = @_;
 
 	if ($paramPresent) {
 		return Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray($paramValue));
@@ -147,10 +148,12 @@ sub __preferredTranslations {
 	return [] if (grep { $_ eq 'default' } @translations);
 	return [ 'all' ] if (grep { $_ eq 'all' } @translations);
 
+	$availableTranslations //= [ Chleb->new()->availableTranslations() ];
+	my %available = map { $_ => 1 } @{ $availableTranslations };
 	my @supportedTranslations;
 	my %seenTranslation;
 	foreach my $translation (@translations) {
-		next unless ($translation =~ m{ \A(?:asv|kjv)\z }x);
+		next unless ($available{$translation});
 		next if ($seenTranslation{$translation});
 
 		push(@supportedTranslations, $translation);
@@ -480,6 +483,7 @@ sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubr
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
@@ -526,6 +530,7 @@ get '/1/votd' => sub {
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
@@ -566,6 +571,7 @@ get '/2/votd' => sub {
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
@@ -620,6 +626,7 @@ sub __registerLookupRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 	my $translationQuery = Chleb::Utils::queryParamsHelper({ translations => $translations });
 
@@ -643,6 +650,7 @@ get '/1/lookup/:book/:chapter' => sub {
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
@@ -686,6 +694,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
