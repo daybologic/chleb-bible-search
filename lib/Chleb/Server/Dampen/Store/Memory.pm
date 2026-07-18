@@ -151,7 +151,11 @@ sub dampenChurn {
 		push(@{$entries}, [ $tokenValue, $currentTime ]);
 	}
 
-	my $distinctTokens = scalar(keys %{{ map { $_->[0] => 1 } @{$entries} }});
+	my %distinct;
+	for my $entry (@{$entries}) {
+		$distinct{$entry->[0]} = 1;
+	}
+	my $distinctTokens = scalar(keys %distinct);
 	return $distinctTokens > $churnLimit ? 1 : 0;
 }
 

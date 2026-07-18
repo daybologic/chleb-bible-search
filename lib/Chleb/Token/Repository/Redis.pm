@@ -182,8 +182,8 @@ sub load {
 		1;
 	} or $evalOk2 = 0;
 
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->error($evalError);
+	if (my $tokenEvalError = $EVAL_ERROR) {
+		$self->dic->logger->error($tokenEvalError);
 		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data')); # This should not happen!
 	} elsif ($token->major != $Chleb::Token::DATA_VERSION_MAJOR) {
 		$self->dic->logger->error(sprintf('Version mismatch in %s, (store %d, expect %d), stale data?', $token->toString(), $token->major, $Chleb::Token::DATA_VERSION_MAJOR));
