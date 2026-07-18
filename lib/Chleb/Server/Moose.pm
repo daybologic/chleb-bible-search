@@ -1741,7 +1741,7 @@ sub __searchPaginationToHtml {
 		}
 	}
 
-	return '' unless ($summary && $summary->{total_pages} > 1);
+	return '' if (!$summary || $summary->{total_pages} <= 1);
 
 	my $page = $summary->{page};
 	my $totalPages = $summary->{total_pages};
