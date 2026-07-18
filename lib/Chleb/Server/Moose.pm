@@ -1650,15 +1650,15 @@ sub __makeBooks {
 		));
 	}
 
-        my $html='<form action="/1/lookup" method="GET">
-                <select name="book">
-        ';
+	my $html = "<form action=\"/1/lookup\" method=\"GET\">\n"
+		. "                <select name=\"book\">\n"
+		. '        ';
 
-        $html .= join("\r\n", @options)
-            . '</select>
-                <input type="hidden" name="chapter" value="1">
-                <button>→</button>
-        </form>';
+	$html .= join("\r\n", @options)
+		. "</select>\n"
+		. "                <input type=\"hidden\" name=\"chapter\" value=\"1\">\n"
+		. "                <button>→</button>\n"
+		. '        </form>';
 
 	return $html;
 }
