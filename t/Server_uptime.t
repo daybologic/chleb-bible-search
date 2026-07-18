@@ -1,3 +1,8 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +37,7 @@
 package UptimeServerTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -57,7 +63,7 @@ sub setUp {
 	}
 
 	$self->sut(Chleb::Server::Moose->new());
-	$self->sut->dic->time->set(undef);
+	$self->sut->dic->time->setMockedTime(undef);
 
 	return EXIT_SUCCESS;
 }
@@ -135,15 +141,12 @@ sub testUptimeConfiguredFile {
 
 	my $dir = tempdir(CLEANUP => 1);
 	my $path = "$dir/startup.txt";
-	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
-	print {$fh} <<EOF;
-server:
-  uptime_file: $path
-EOF
-	close($fh) or die("close $dir/main.yaml: $!");
+	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
+	print {$fh} "server:\n  uptime_file: $path\n";
+	close($fh) or croak("close $dir/main.yaml: $!");
 
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));
-	$self->dic->time->set(2_000_000_000);
+	$self->dic->time->setMockedTime(2_000_000_000);
 	$self->unmock(ref($self->sut), '__getUptime');
 	my $sut = Chleb::Server::Moose->new({ dic => $self->dic });
 	ok(!-f $path, 'configured uptime file is not created during construction');
@@ -153,9 +156,9 @@ EOF
 
 	my $before = $self->dic->time->get();
 	{
-		open($fh, '>', $path) or die("open $path: $!");
-		print {$fh} $before - 42 . "\n";
-		close($fh) or die("close $path: $!");
+		open($fh, '>', $path) or croak("open $path: $!");
+		print {$fh} ($before - 42) . "\n";
+		close($fh) or croak("close $path: $!");
 	}
 
 	my $uptime = $sut->__getUptime();

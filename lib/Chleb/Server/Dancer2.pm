@@ -32,6 +32,7 @@
 package Chleb::Server::Dancer2;
 use strict;
 use warnings;
+use Carp qw(croak);
 use utf8;
 binmode STDOUT, ":encoding(UTF-8)";
 use Dancer2 0.2;
@@ -66,12 +67,17 @@ set serializer => 'JSON'; # or any other serializer
 set content_type => $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API;
 set static_handler => 1;
 
-sub _cookie {
+sub getCookie {
 	my (@args) = @_;
 	return cookie(@args);
 }
 
-sub _request {
+sub setCookie {
+	my (@args) = @_;
+	return cookie(@args);
+}
+
+sub getRequest {
 	my (@args) = @_;
 	return request(@args);
 }
@@ -135,7 +141,7 @@ sub __preferredTranslations {
 		$preferredTranslation = $preferredTranslation->value;
 	}
 
-	return [] unless (defined($preferredTranslation) && length($preferredTranslation) > 0);
+	return [] if (!defined($preferredTranslation) || length($preferredTranslation) == 0);
 
 	my @translations = @{ Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray($preferredTranslation)) };
 	return [] if (grep { $_ eq 'default' } @translations);
@@ -144,7 +150,7 @@ sub __preferredTranslations {
 	my @supportedTranslations;
 	my %seenTranslation;
 	foreach my $translation (@translations) {
-		next unless ($translation =~ m/\A(?:asv|kjv)\z/);
+		next unless ($translation =~ m{ \A(?:asv|kjv)\z }x);
 		next if ($seenTranslation{$translation});
 
 		push(@supportedTranslations, $translation);
@@ -180,12 +186,13 @@ sub __preferredWholeword {
 		$wholeword = $wholeword->value;
 	}
 
-	return 0 unless (defined($wholeword) && length($wholeword) > 0);
+	return 0 if (!defined($wholeword) || length($wholeword) == 0);
 
 	my $preferredWholeword = 0;
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$preferredWholeword = Chleb::Utils::boolean('wholeword', $wholeword, 0);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	return $EVAL_ERROR ? 0 : $preferredWholeword;
 }
@@ -207,7 +214,7 @@ sub __previousSearchLimit {
 	my ($paramPresent, $paramValue, $previousSearchLimit) = @_;
 
 	if ($paramPresent) {
-		return defined($paramValue) && $paramValue =~ m/\A[0-9]+\z/ && int($paramValue) > 0
+		return defined($paramValue) && $paramValue =~ m{ \A[0-9]+\z }x && int($paramValue) > 0
 			? int($paramValue)
 			: $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 	}
@@ -216,8 +223,9 @@ sub __previousSearchLimit {
 		$previousSearchLimit = $previousSearchLimit->value;
 	}
 
-	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
-		unless (defined($previousSearchLimit) && $previousSearchLimit =~ m/\A[0-9]+\z/ && int($previousSearchLimit) > 0);
+	if (!defined($previousSearchLimit) || $previousSearchLimit !~ m{ \A[0-9]+\z }x || int($previousSearchLimit) <= 0) {
+		return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	}
 
 	return int($previousSearchLimit);
 }
@@ -240,7 +248,7 @@ sub __previousSearchPerPage {
 	my ($paramPresent, $paramValue, $previousSearchPerPage) = @_;
 
 	if ($paramPresent) {
-		if (defined($paramValue) && $paramValue =~ m/\A[0-9]+\z/ && int($paramValue) > 0) {
+		if (defined($paramValue) && $paramValue =~ m{ \A[0-9]+\z }x && int($paramValue) > 0) {
 			return $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE
 				if (int($paramValue) > $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE);
 
@@ -254,8 +262,9 @@ sub __previousSearchPerPage {
 		$previousSearchPerPage = $previousSearchPerPage->value;
 	}
 
-	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
-		unless (defined($previousSearchPerPage) && $previousSearchPerPage =~ m/\A[0-9]+\z/ && int($previousSearchPerPage) > 0);
+	if (!defined($previousSearchPerPage) || $previousSearchPerPage !~ m{ \A[0-9]+\z }x || int($previousSearchPerPage) <= 0) {
+		return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	}
 
 	return $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE
 		if (int($previousSearchPerPage) > $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE);
@@ -291,6 +300,20 @@ sub handleException {
 	return send_error($exception, 500);
 }
 
+=head1 __isTemplateMarker($line)
+
+Return true when a source line is the case-insensitive Chleb template marker.
+Whitespace is ignored to preserve the existing template syntax handling.
+
+=cut
+
+sub __isTemplateMarker {
+	my ($line) = @_;
+	chomp($line);
+	$line =~ s{\s*}{}gx;
+	return lc($line) eq '<!--chlebtemplate-->';
+}
+
 sub fetchStaticPage {
 	my ($name, $templateParams) = @_;
 	my $html = '';
@@ -301,26 +324,21 @@ sub fetchStaticPage {
 		if (my $file = IO::File->new($filePath, '<:encoding(UTF-8)')) {
 			my $templateMode = 0; # off
 			my $lineCounter = 0;
-			while (my $line = $file->getline()) {
-				$lineCounter++;
+				while (my $line = $file->getline()) {
+					$lineCounter++;
 
-				if ($templateMode) {
-					$templateProcessor = Chleb::TemplateProcessor->new({ params => $templateParams })
-					    unless ($templateProcessor);
+					if ($templateMode) {
+						$templateProcessor = Chleb::TemplateProcessor->new({ params => $templateParams })
+						    unless ($templateProcessor);
 
-					$html .= $templateProcessor->byLine($line);
-				} else {
-					$html .= $line;
-
-					if ($lineCounter <= 10) {
-						chomp($line);
-						$line =~ s/\s*//g;
-						if (lc($line) eq '<!--chlebtemplate-->') {
-							$templateMode = 1; # on
-						}
+						$html .= $templateProcessor->byLine($line);
+						next;
 					}
+
+					$html .= $line;
+					next if ($lineCounter > 10);
+					$templateMode = 1 if (__isTemplateMarker($line)); # on
 				}
-			}
 
 			$file->close();
 			return $html;
@@ -340,7 +358,7 @@ sub serveStaticPage {
 }
 
 sub __configSetPublicDir {
-	die('Moose server must be initialized') unless ($server);
+	croak('Moose server must be initialized') unless ($server);
 	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public');
 	return;
 }
@@ -349,10 +367,11 @@ sub __detaint {
 	my ($value, $name) = @_;
 
 	my $detainted;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		my $mode = $Chleb::Utils::SecureString::MODE_TRAP;
 		$detainted = Chleb::Utils::SecureString::detaint($value, $mode, $name)->value;
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -361,7 +380,7 @@ sub __detaint {
 	return $detainted;
 }
 
-sub _param {
+sub getParam {
 	my ($name) = @_;
 
 	my $value = param($name);
@@ -374,7 +393,17 @@ sub _param {
 	return $value;
 }
 
-get '/' => sub {
+=over
+
+=item C<__registerPageRoutes()>
+
+Register the home page and settings routes.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerPageRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
@@ -425,37 +454,48 @@ get '/settings' => sub {
 	send_as html => $result;
 	return;
 };
+	return;
+}
 
-get '/:version/random' => sub {
+=item C<__registerVerseRoutes()>
+
+Register random-verse and verse-of-the-day routes.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/:version/random' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $version = int(_param('version') || 1);
-	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
+	my $version = int(getParam('version') || 1);
+	my $parental = Chleb::Utils::boolean('parental', getParam('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', getParam('redirect'), 0);
 
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__random({
 			accept => $accept,
 			translations => $translations,
-			testament => _param('testament'),
+			testament => getParam('testament'),
 			version => $version,
 			parental => $parental,
  			redirect => $redirect,
 			form => 0,
 		});
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -475,21 +515,21 @@ get '/1/votd' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
-	my $when = _param('when');
-	my $testament = _param('testament');
+	my $parental = Chleb::Utils::boolean('parental', getParam('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', getParam('redirect'), 0);
+	my $when = getParam('when');
+	my $testament = getParam('testament');
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
-	eval {
+	my $evalOk4; $evalOk4 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__votd({
 			accept       => $accept,
@@ -500,7 +540,8 @@ get '/1/votd' => sub {
 			testament   => $testament,
 			form        => 0,
 		});
-	};
+		1;
+	} or $evalOk4 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -514,21 +555,21 @@ get '/2/votd' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $parental = Chleb::Utils::boolean('parental', _param('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', _param('redirect'), 0);
-	my $when = _param('when');
-	my $testament = _param('testament');
+	my $parental = Chleb::Utils::boolean('parental', getParam('parental'), 0);
+	my $redirect = Chleb::Utils::boolean('redirect', getParam('redirect'), 0);
+	my $when = getParam('when');
+	my $testament = getParam('testament');
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
-	eval {
+	my $evalOk5; $evalOk5 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__votd({
 			accept       => $accept,
@@ -540,7 +581,8 @@ get '/2/votd' => sub {
 			testament    => $testament,
 			form         => 0,
 		});
-	};
+		1;
+	} or $evalOk5 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -555,19 +597,29 @@ get '/2/votd' => sub {
 	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
+	return;
+}
 
-get '/1/lookup' => sub {
+=item C<__registerLookupRoutes()>
+
+Register lookup redirect, chapter, and verse routes.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerLookupRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/1/lookup' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $book = _param('book') // '';
-	my $chapter = _param('chapter') // 1;
-	my $verse = _param('verse');
+	my $book = getParam('book') // '';
+	my $chapter = getParam('chapter') // 1;
+	my $verse = getParam('verse');
 	my $queryParams = request()->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 	my $translationQuery = Chleb::Utils::queryParamsHelper({ translations => $translations });
 
@@ -589,12 +641,12 @@ get '/1/lookup/:book/:chapter' => sub {
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
-	eval {
+	my $evalOk6; $evalOk6 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
 			accept       => $accept,
@@ -603,7 +655,8 @@ get '/1/lookup/:book/:chapter' => sub {
 			translations => $translations,
 			form         => 0,
 		});
-	};
+		1;
+	} or $evalOk6 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -623,20 +676,20 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $book = _param('book') // '';
-	my $chapter = _param('chapter') // '';
-	my $verse = _param('verse') // '';
+	my $book = getParam('book') // '';
+	my $chapter = getParam('chapter') // '';
+	my $verse = getParam('verse') // '';
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
-		_param('translations'),
-		_cookie('preferredTranslation'),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
 	);
 
 	my $result;
-	eval {
+	my $evalOk7; $evalOk7 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
 			accept       => $accept,
@@ -646,7 +699,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 			verse        => $verse,
 			form         => 0,
 		});
-	};
+		1;
+	} or $evalOk7 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -663,8 +717,18 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
+	return;
+}
 
-get '/1/search' => sub {
+=item C<__registerSearchRoutes()>
+
+Register the search route.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/1/search' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
@@ -674,27 +738,27 @@ get '/1/search' => sub {
 	$queryParams = {} unless ($queryParams);
 	my $limit = __previousSearchLimit(
 		exists($queryParams->{limit}),
-		_param('limit'),
-		_cookie('previousSearchLimit'),
+		getParam('limit'),
+		getCookie('previousSearchLimit'),
 	);
-	my $term = _param('term') // '';
+	my $term = getParam('term') // '';
 	my $wholeword = __preferredWholeword(
 		exists($queryParams->{wholeword}) || exists($queryParams->{wholeword_present}),
-		_param('wholeword'),
-		_cookie('wholeword'),
+		getParam('wholeword'),
+		getCookie('wholeword'),
 	);
-	my $form = Chleb::Utils::boolean('form', _param('form'), 0);
-	my $page = _param('page');
+	my $form = Chleb::Utils::boolean('form', getParam('form'), 0);
+	my $page = getParam('page');
 	my $perPage = __previousSearchPerPage(
 		exists($queryParams->{per_page}),
-		_param('per_page'),
-		_cookie('previousSearchPerPage'),
+		getParam('per_page'),
+		getCookie('previousSearchPerPage'),
 	);
 
 	my $result = '';
 	my $resultHash;
 	if ($term) {
-		eval {
+		my $evalOk8; $evalOk8 = eval {
 			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 			($result, $resultHash) = $server->__search({
 				accept    => $accept,
@@ -705,7 +769,8 @@ get '/1/search' => sub {
 				term      => $term,
 				wholeword => $wholeword,
 			});
-		};
+			1;
+		} or $evalOk8 = 0;
 
 		if (my $exception = $EVAL_ERROR) {
 			handleException($exception);
@@ -765,20 +830,31 @@ get '/1/search' => sub {
 	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
+	return;
+}
 
-get '/1/ping' => sub {
+=item C<__registerStatusRoutes()>
+
+Register ping, version, uptime, and Bible information routes.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerStatusRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/1/ping' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 	my $dancerRequest = request();
 	my $accept;
 
 	my $ping;
-	eval {
+	my $evalOk9; $evalOk9 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$ping = $server->__ping({
 			accept => $accept,
 		});
-	};
+		1;
+	} or $evalOk9 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -806,12 +882,13 @@ get '/1/version' => sub {
 	my $accept;
 
 	my $version;
-	eval {
+	my $evalOk10; $evalOk10 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$version = $server->__version({
 			accept => $accept,
 		});
-	};
+		1;
+	} or $evalOk10 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -841,12 +918,13 @@ get '/1/uptime' => sub {
 	my $accept;
 
 	my $result;
-	eval {
+	my $evalOk11; $evalOk11 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__uptime({
 			accept => $accept,
 		});
-	};
+		1;
+	} or $evalOk11 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -874,12 +952,13 @@ get '/1/info' => sub {
 	my $accept;
 
 	my $result;
-	eval {
+	my $evalOk12; $evalOk12 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__info({
 			accept => $accept,
 		});
-	};
+		1;
+	} or $evalOk12 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -902,6 +981,18 @@ get '/1/info' => sub {
 	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
+	return;
+}
+
+=back
+
+=cut
+
+__registerPageRoutes();
+__registerVerseRoutes();
+__registerLookupRoutes();
+__registerSearchRoutes();
+__registerStatusRoutes();
 
 sub run {
 	my ($self) = @_;

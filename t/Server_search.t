@@ -1,3 +1,9 @@
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +38,7 @@
 package SearchServerTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -553,7 +560,7 @@ sub __resultsSummary {
 		return $included->{attributes} if ($included->{type} eq 'results_summary');
 	}
 
-	die('results summary not found');
+	croak('results summary not found');
 }
 
 __PACKAGE__->meta->make_immutable;

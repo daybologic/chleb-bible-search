@@ -1,3 +1,6 @@
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +35,7 @@
 package DampenServerTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -55,7 +59,7 @@ sub setUp {
 	}
 
 	my $dir = tempdir(CLEANUP => 1);
-	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
+	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
 	print {$fh} <<'EOF';
 rate_limit:
   backend: memory
@@ -64,13 +68,13 @@ rate_limit:
   session_churn_window_seconds: 300
   session_churn_limit: 10
 EOF
-	close($fh) or die("close $dir/main.yaml: $!");
+	close($fh) or croak("close $dir/main.yaml: $!");
 
 	my $dic = Chleb::DI::Container->instance;
 	$dic->config(Chleb::DI::Config->new({ dic => $dic, path => $dir }));
 	$dic->logger(Chleb::DI::MockLogger->new());
 	$self->sut(Chleb::Server::Dampen->new({ dic => $dic }));
-	$self->sut->dic->time->set(2_000_000_000);
+	$self->sut->dic->time->setMockedTime(2_000_000_000);
 
 	return EXIT_SUCCESS;
 }

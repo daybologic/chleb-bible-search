@@ -1,3 +1,6 @@
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -67,7 +70,7 @@ sub testJsonAndHtml {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, 'application/json');
+	is($contentType, 'application/json', 'application/json is selected');
 
 	return EXIT_SUCCESS;
 }
@@ -92,7 +95,7 @@ sub testHtmlAndJson {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, 'text/html');
+	is($contentType, 'text/html', 'text/html is selected');
 
 	return EXIT_SUCCESS;
 }
@@ -105,7 +108,7 @@ sub testAcceptAnythingOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, $default);
+	is($contentType, $default, 'default is selected for */*');
 
 	return EXIT_SUCCESS;
 }
@@ -118,7 +121,7 @@ sub testAcceptJsonOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, 'application/json');
+	is($contentType, 'application/json', 'application/json is selected');
 
 	return EXIT_SUCCESS;
 }
@@ -131,7 +134,7 @@ sub testAcceptHtmlOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, 'text/html');
+	is($contentType, 'text/html', 'text/html is selected');
 
 	return EXIT_SUCCESS;
 }
@@ -144,7 +147,7 @@ sub testAcceptTextPlainOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, '');
+	is($contentType, '', 'text/plain is unhandled');
 
 	return EXIT_SUCCESS;
 }
@@ -155,7 +158,7 @@ sub testAcceptDefault {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType(undef, $default);
-	is($contentType, $default);
+	is($contentType, $default, 'default is selected without Accept');
 
 	return EXIT_SUCCESS;
 }
@@ -168,7 +171,7 @@ sub testAcceptTextAnythingOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, 'text/html');
+	is($contentType, 'text/html', 'text/* selects text/html');
 
 	return EXIT_SUCCESS;
 }
@@ -181,7 +184,7 @@ sub testAcceptApplicationAnythingOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, 'application/vnd.api+json');
+	is($contentType, 'application/vnd.api+json', 'application/* selects JSON:API');
 
 	return EXIT_SUCCESS;
 }
@@ -194,7 +197,7 @@ sub testAcceptVndApiJsonOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, 'application/vnd.api+json');
+	is($contentType, 'application/vnd.api+json', 'JSON:API is selected');
 
 	return EXIT_SUCCESS;
 }
@@ -207,7 +210,7 @@ sub testAcceptApplicationJsonOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, 'application/json');
+	is($contentType, 'application/json', 'application/json is selected');
 
 	return EXIT_SUCCESS;
 }
@@ -220,7 +223,7 @@ sub testAcceptApplicationTypoOnly {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, '');
+	is($contentType, '', 'invalid application media type is unhandled');
 
 	return EXIT_SUCCESS;
 }
@@ -233,7 +236,7 @@ sub testOnlyUnhandled {
 
 	my $default = $self->uniqueStr();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $default);
-	is($contentType, '');
+	is($contentType, '', 'unhandled media type is rejected');
 
 	return EXIT_SUCCESS;
 }

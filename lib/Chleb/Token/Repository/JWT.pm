@@ -31,6 +31,7 @@
 package Chleb::Token::Repository::JWT;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Token::Repository::Base';
@@ -158,27 +159,28 @@ sub load {
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->debug($evalError);
-		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken unrecognized via ' . __PACKAGE__);
+		croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken unrecognized via ' . __PACKAGE__));
 	}
 
 	my $token;
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$token = Chleb::Token->fromJWTClaims($data, {
 			dic       => $self->dic,
 			_repo     => $self->repo,
 			_source   => $self,
 			_value    => $value,
 		});
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error($evalError);
-		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data');
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data'));
 	} elsif ($token->major != $Chleb::Token::DATA_VERSION_MAJOR) {
 		$self->dic->logger->error(sprintf('Version mismatch in %s, (store %d, expect %d), stale data?', $token->toString(), $token->major, $Chleb::Token::DATA_VERSION_MAJOR));
-		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Sorry, the token went stale because of a version mismatch, remove your sessionToken cookie and you'll get a new one");
+		croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Sorry, the token went stale because of a version mismatch, remove your sessionToken cookie and you'll get a new one"));
 	} elsif ($token->expired) {
-		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__);
+		croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__));
 	}
 
 	$token->dirty(0);
@@ -213,9 +215,9 @@ this repository.
 
 sub _valueValidate {
 	my ($self, $value) = @_;
-	return 1 if (defined($value) && $value =~ m/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+	return 1 if (defined($value) && $value =~ m{ ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$ }x);
 
-	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be JWT');
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be JWT'));
 }
 
 =back
@@ -255,18 +257,18 @@ the supported algorithm and, when present, the expected type.
 sub __decode {
 	my ($self, $value) = @_;
 
-	my ($encodedHeader, $encodedPayload, $encodedSignature) = split(m/\./, $value, 3);
+	my ($encodedHeader, $encodedPayload, $encodedSignature) = split(m{ \. }x, $value, 3);
 	my $signingInput = join('.', $encodedHeader, $encodedPayload);
 	my $expectedSignature = $self->__signature($signingInput);
-	die('JWT signature mismatch') unless (__secureCompare($encodedSignature, $expectedSignature));
+	croak('JWT signature mismatch') unless (__secureCompare($encodedSignature, $expectedSignature));
 
 	my $header = $self->__json->decode($self->__base64urlDecode($encodedHeader));
-	die('JWT algorithm mismatch') unless ($header->{alg} eq $ALGORITHM);
-	die('JWT type mismatch') unless (!defined($header->{typ}) || $header->{typ} eq $TYPE);
+	croak('JWT algorithm mismatch') unless ($header->{alg} eq $ALGORITHM);
+	croak('JWT type mismatch') if (defined($header->{typ}) && $header->{typ} ne $TYPE);
 
 	my $payload = $self->__json->decode($self->__base64urlDecode($encodedPayload));
-	die('JWT missing iat') unless (defined($payload->{iat}));
-	die('JWT missing exp') unless (defined($payload->{exp}));
+	croak('JWT missing iat') unless (defined($payload->{iat}));
+	croak('JWT missing exp') unless (defined($payload->{exp}));
 
 	return $payload;
 }
@@ -292,7 +294,7 @@ Encodes raw data using unpadded base64url encoding.
 sub __base64urlEncode {
 	my ($self, $data) = @_;
 	my $encoded = encode_base64url($data);
-	$encoded =~ s/=+\z//;
+	$encoded =~ s{=+\z}{}x;
 	return $encoded;
 }
 
@@ -315,7 +317,8 @@ Builds the JSON encoder/decoder used by L</__json>.
 
 =cut
 
-sub __makeJson {
+# Invoked by Moose as the lazy builder for the __json attribute.
+sub __makeJson { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return JSON::PP->new->canonical->utf8->allow_nonref;
 }
@@ -326,31 +329,32 @@ Loads and validates the JWT signing secret from configuration.
 
 =cut
 
-sub __makeSecret {
+# Invoked by Moose as the lazy builder for the __secret attribute.
+sub __makeSecret { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $config = $self->dic->config->get('session_tokens', 'backend_jwt', { secret => undef });
 	my $secret = $config->{secret};
-	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'session_tokens.backend_jwt.secret must be configured')
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'session_tokens.backend_jwt.secret must be configured'))
 	    unless (defined($secret) && length($secret));
 
 	return $secret;
 }
 
-=item C<__secureCompare($left, $right)>
+=item C<__secureCompare($leftValue, $rightValue)>
 
 Compares two strings without returning early after the first differing byte.
 
 =cut
 
 sub __secureCompare {
-	my ($left, $right) = @_;
-	return 0 unless (defined($left) && defined($right));
-	return 0 unless (length($left) == length($right));
+	my ($leftValue, $rightValue) = @_;
+	return 0 unless (defined($leftValue) && defined($rightValue));
+	return 0 unless (length($leftValue) == length($rightValue));
 
 	my $diff = 0;
-	for (my $i = 0; $i < length($left); $i++) {
-		$diff |= ord(substr($left, $i, 1)) ^ ord(substr($right, $i, 1));
+	for (my $i = 0; $i < length($leftValue); $i++) {
+		$diff |= ord(substr($leftValue, $i, 1)) ^ ord(substr($rightValue, $i, 1));
 	}
 
 	return $diff == 0;

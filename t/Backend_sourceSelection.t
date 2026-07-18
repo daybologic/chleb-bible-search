@@ -1,3 +1,8 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +37,7 @@
 package BackendSourceSelectionTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -57,11 +63,11 @@ sub setUp {
 	$self->{__original_cwd} = getcwd();
 
 	my $root = tempdir(CLEANUP => 1);
-	mkdir($root . '/data') or die("mkdir $root/data failed: $!");
-	mkdir($root . '/cache') or die("mkdir $root/cache failed: $!");
+	mkdir($root . '/data') or croak("mkdir $root/data failed: $!");
+	mkdir($root . '/cache') or croak("mkdir $root/cache failed: $!");
 	$self->__makeSourceFile($root . '/data', 'core.sqlite.gz', ['asv', 'kjv']);
 	$self->__makeSourceFile($root . '/data', 'kjv.sqlite.gz', ['kjv']);
-	chdir($root) or die("chdir $root failed: $!");
+	chdir($root) or croak("chdir $root failed: $!");
 
 	$self->sut(Chleb::Bible::Backend->new({
 		bible    => Chleb::Bible->new({ translation => 'kjv' }),
@@ -104,10 +110,10 @@ sub testLocalDataDirWinsWithoutGeneratedSqlite {
 	my ($self) = @_;
 
 	my $root = tempdir(CLEANUP => 1);
-	mkdir($root . '/data') or die("mkdir $root/data failed: $!");
-	mkdir($root . '/data/static') or die("mkdir $root/data/static failed: $!");
+	mkdir($root . '/data') or croak("mkdir $root/data failed: $!");
+	mkdir($root . '/data/static') or croak("mkdir $root/data/static failed: $!");
 
-	chdir($root) or die("chdir $root failed: $!");
+	chdir($root) or croak("chdir $root failed: $!");
 	my $backend = bless({}, 'Chleb::Bible::Backend');
 	is($backend->__makeDataDir(), 'data', 'source checkout data dir wins even before generated SQLite exists');
 
@@ -132,8 +138,8 @@ sub __makeSourceFile {
 	}
 	$dbh->disconnect();
 
-	gzip($sqlitePath => $dir . '/' . $fileName) or die("gzip failed: $GzipError");
-	unlink($sqlitePath) or die("unlink $sqlitePath failed: $!");
+	gzip($sqlitePath => $dir . '/' . $fileName) or croak("gzip failed: $GzipError");
+	unlink($sqlitePath) or croak("unlink $sqlitePath failed: $!");
 
 	return;
 }

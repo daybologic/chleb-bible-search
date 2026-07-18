@@ -1,3 +1,7 @@
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -545,9 +549,10 @@ sub testCoerceAndTrim {
 	my $mode = $Chleb::Utils::SecureString::MODE_COERCE | $Chleb::Utils::SecureString::MODE_TRIM;
 
 	my $sut;
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$sut = Chleb::Utils::SecureString::detaint($inputValue, $mode);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		diag($evalError->toString());
@@ -576,9 +581,10 @@ sub testCoercePermitAndTrim {
 	my $mode = $Chleb::Utils::SecureString::MODE_COERCE | $Chleb::Utils::SecureString::MODE_PERMIT | $Chleb::Utils::SecureString::MODE_TRIM;
 
 	my $sut;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$sut = Chleb::Utils::SecureString::detaint($inputValue, $mode);
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		diag($evalError->toString());
@@ -607,9 +613,10 @@ sub testCoerceAndPermit {
 	my $mode = $Chleb::Utils::SecureString::MODE_COERCE | $Chleb::Utils::SecureString::MODE_PERMIT;
 
 	my $sut;
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$sut = Chleb::Utils::SecureString::detaint($inputValue, $mode);
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		diag($evalError->toString());

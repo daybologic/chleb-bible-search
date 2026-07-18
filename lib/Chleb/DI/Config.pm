@@ -31,6 +31,7 @@
 package Chleb::DI::Config;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Bible::Base';
@@ -94,11 +95,11 @@ sub BUILD {
 	my ($self) = @_;
 
 	if (!-d $self->path) {
-		die("Config path is not a directory: " . $self->path);
+		croak("Config path is not a directory: " . $self->path);
 	}
 
 	if (!-e $self->path . '/main.yaml') {
-		die("No config available (" . $self->path . '/main.yaml)');
+		croak("No config available (" . $self->path . '/main.yaml)');
 	}
 
 	return;
@@ -116,7 +117,13 @@ sub get {
 	my ($self, $section, $key, $default, $isBoolean) = @_;
 
 	my $defaultUsed = 0;
-	my $value = $self->__get($section, $key, $default, $isBoolean, \$defaultUsed);
+	my $value = $self->__get({
+		section      => $section,
+		key          => $key,
+		default      => $default,
+		isBoolean    => $isBoolean,
+		pDefaultUsed => \$defaultUsed,
+	});
 	my $valuePrintable = (defined($value) && ref($value)) ? (Dumper $value) : $value;
 	my $defaultPrintable = (defined($default) && ref($default)) ? (Dumper $default) : $default;
 	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $valuePrintable, $defaultPrintable);
@@ -144,7 +151,8 @@ file list from C<__configPaths> and recursively merges each file that exists.
 
 =cut
 
-sub __makeData {
+# Invoked by Moose as the lazy builder for the __data attribute.
+sub __makeData { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my $data = { };
 
@@ -156,7 +164,7 @@ sub __makeData {
 	return $data;
 }
 
-=item C<__get($section, $key, $default, $isBoolean, $pDefaultUsed)>
+=item C<__get($args)>
 
 Internal implementation for C<get>.  It performs the actual section/key lookup,
 fills missing keys in nested hashes from hash defaults, applies boolean parsing
@@ -165,7 +173,9 @@ when requested, and reports whether the outer default was used.
 =cut
 
 sub __get {
-	my ($self, $section, $key, $default, $isBoolean, $pDefaultUsed) = @_;
+	my ($self, $args) = @_;
+	my ($section, $key, $default, $isBoolean, $pDefaultUsed) =
+		@{$args}{qw(section key default isBoolean pDefaultUsed)};
 
 	if (defined($self->__data->{$section}->{$key})) {
 		my $value = $self->__data->{$section}->{$key};

@@ -1,3 +1,8 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -149,9 +154,10 @@ sub testIncomplete {
 	my $check = sub {
 		my ($input) = @_;
 
-		eval {
+		my $evalOk1; $evalOk1 = eval {
 			Chleb::Server::MediaType->parseAcceptHeader($input);
-		};
+			1;
+		} or $evalOk1 = 0;
 
 		if (my $evalError = $EVAL_ERROR) {
 			my $description = 'Accept: incomplete spec';
@@ -188,9 +194,10 @@ sub testIllegal {
 	my $check = sub {
 		my ($input) = @_;
 
-		eval {
+		my $evalOk2; $evalOk2 = eval {
 			Chleb::Server::MediaType->parseAcceptHeader($input);
-		};
+			1;
+		} or $evalOk2 = 0;
 
 		if (my $evalError = $EVAL_ERROR) {
 			my $description = 'Accept: wildcard misused';
@@ -358,9 +365,10 @@ sub testMalformed {
 
 	my $input = 'text/plain,application/xhtml+xml,*/*;q=0.8,application/xml;q=0.9;application/json;q=100';
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		Chleb::Server::MediaType->parseAcceptHeader($input);
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		my $description = 'Accept: Validation failed for \'Num\' with value';
@@ -385,9 +393,10 @@ sub testOverPrecision {
 
 	my $input = 'text/html;q=8.005001';
 
-	eval {
+	my $evalOk4; $evalOk4 = eval {
 		Chleb::Server::MediaType->parseAcceptHeader($input);
-	};
+		1;
+	} or $evalOk4 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		my $description = 'Accept: weight (qValue) precisions are limited to 3 digits';
@@ -412,9 +421,10 @@ sub testNegative {
 
 	my $input = 'text/html;q=-0.1';
 
-	eval {
+	my $evalOk5; $evalOk5 = eval {
 		Chleb::Server::MediaType->parseAcceptHeader($input);
-	};
+		1;
+	} or $evalOk5 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		my $description = 'Accept: negative qValue, -0.100';

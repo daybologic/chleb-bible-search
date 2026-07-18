@@ -127,7 +127,7 @@ sub dampenSession {
 	return 0;
 }
 
-=item C<dampenChurn($ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit)>
+=item C<dampenChurn($args)>
 
 Applies the session-token churn limit by tracking distinct token values recently
 seen from an IP address.
@@ -138,7 +138,9 @@ allowed.
 =cut
 
 sub dampenChurn {
-	my ($self, $ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit) = @_;
+	my ($self, $args) = @_;
+	my ($ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit) =
+		@{$args}{qw(ipAddress tokenValue currentTime churnWindow churnLimit)};
 	my $cutoff = $currentTime - $churnWindow;
 
 	my $entries = $self->__sessionsByIp->{$ipAddress} //= [];
@@ -149,7 +151,11 @@ sub dampenChurn {
 		push(@{$entries}, [ $tokenValue, $currentTime ]);
 	}
 
-	my $distinctTokens = scalar(keys %{{ map { $_->[0] => 1 } @{$entries} }});
+	my %distinct;
+	for my $entry (@{$entries}) {
+		$distinct{$entry->[0]} = 1;
+	}
+	my $distinctTokens = scalar(keys %distinct);
 	return $distinctTokens > $churnLimit ? 1 : 0;
 }
 

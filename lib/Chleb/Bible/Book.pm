@@ -51,7 +51,8 @@ use Chleb::Exception;
 use HTTP::Status qw(:constants);
 use Chleb::Type::Testament;
 use Readonly;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
+use Carp qw(croak);
 
 =head1 ATTRIBUTES
 
@@ -176,9 +177,9 @@ sub getVerseByOrdinal {
 	$ordinal = $self->verseCount if ($ordinal == -1);
 
 	my $bookVerseKey = join(':', $self->bible->translation, $self->shortNameRaw, $ordinal);
-	if (my $verseKey = $self->bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
-		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
-		if (my $text = $self->bible->__backend->getVerseDataByKey($verseKey)) {
+	if (my $verseKey = $self->bible->getVerseKeyByBookVerseKey($bookVerseKey)) {
+		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $verseKey, 4);
+		if (my $text = $self->bible->getVerseDataByKey($verseKey)) {
 			my $chapter = $self->getChapterByOrdinal($chapterNumber);
 			return Chleb::Bible::Verse->new({
 				book    => $self,
@@ -187,11 +188,11 @@ sub getVerseByOrdinal {
 				text    => $text,
 			});
 		} else {
-			die "I don't think you can reach this";
+			croak("I don't think you can reach this");
 		}
 	}
 
-	die(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
+	croak(sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
 }
 
 =item C<getNext()>
@@ -235,7 +236,7 @@ sub search {
 	my @verses;
 
 	my $qtext = $query->text;
-	$qtext =~ s/^\s+|\s+$//g;
+	$qtext =~ s/^\s+|\s+$//gx;
 
 	my @rx;
 	if ($query->wholeword) {
@@ -244,12 +245,12 @@ sub search {
 		my $phrase = quotemeta($qtext);
 
 		# Boundary: start/end OR a char that is NOT [\w'-]
-		$rx[0] = qr/(?<![\w'-])$phrase(?![\w'-])/i;
+		$rx[0] = qr/(?<![\w'-])$phrase(?![\w'-])/ix;
 	} else {
 		# Extract words including internal apostrophes/hyphens
-		my @words = ($qtext =~ /[\w]+(?:['-][\w]+)*/g);
+		my @words = ($qtext =~ /[\w]+(?:['-][\w]+)*/gx);
 
-		@rx = map { qr/\Q$_\E/i } @words;
+		@rx = map { qr/\Q$_\E/ix } @words;
 	}
 
 	CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
@@ -257,10 +258,7 @@ sub search {
 
 		for (my $verseOrdinal = 1; $verseOrdinal <= $chapter->verseCount; $verseOrdinal++) {
 			my $verseKey = $self->__makeVerseKey($chapterOrdinal, $verseOrdinal);
-			# TODO: You shouldn't access __backend here
-			# but you need some more methods in the library to avoid it
-			# Perhaps have a getVerseByKey in _library?
-			my $text = $self->bible->__backend->getVerseDataByKey($verseKey);
+			my $text = $self->bible->getVerseDataByKey($verseKey);
 
 			my $doPush;
 			if ($query->wholeword) {
@@ -278,10 +276,10 @@ sub search {
 
 			if ($doPush) {
 				push(@verses, Chleb::Bible::Verse->new({
-					book	=> $self,
-					chapter	=> $chapter,
-					ordinal	=> $verseOrdinal,
-					text	=> $text,
+                                        book    => $self,
+                                        chapter => $chapter,
+                                        ordinal => $verseOrdinal,
+                                        text    => $text,
 				}));
 
 				last CHAPTER if (scalar(@verses) >= $query->limit);
@@ -364,7 +362,7 @@ sub getChapterByOrdinal {
 		if ($args->{nonFatal}) {
 			return;
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Chapter %d not found in %s', $ordinal, $self->toString()));
+				croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Chapter %d not found in %s', $ordinal, $self->toString())));
 		}
 	}
 
@@ -387,14 +385,14 @@ sub equals {
 	my ($self, $otherBook) = @_;
 
 	my $notABook = sub {
-		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Not a book, in Book/equals()');
+			croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Not a book, in Book/equals()'));
 	};
 
 	$notABook->() unless (defined($otherBook));
 
 	if (my $otherBookObject = blessed($otherBook)) {
 		if ($otherBookObject->isa('Chleb::Bible::Book')) {
-			return 1 if ($self->_cmpAddress($self, $otherBook));
+			return 1 if (refaddr($self) == refaddr($otherBook));
 			return ($self->equals($otherBook->shortNameRaw));
 		}
 
@@ -405,7 +403,7 @@ sub equals {
 
 	return 1 if ($self->shortNameRaw eq $shortName);
 
-	if ($shortName =~ m/^(\d)(\w+)$/) {
+	if ($shortName =~ m{ ^(\d)(\w+)$ }x) {
 		$shortName = "$1\u$2";
 	} else {
 		$shortName = "\u$shortName";

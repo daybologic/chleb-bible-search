@@ -1,3 +1,7 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,13 +36,14 @@
 package FakeMemcached;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 sub new {
 	my ($class, $args) = @_;
 	return bless({ data => {}, down => $args->{down} // 0 }, $class);
 }
 
-sub set {
+sub set { ## no critic (NamingConventions::ProhibitAmbiguousNames)
 	my ($self, $key, $value) = @_;
 	return if ($self->{down});
 	$self->{data}->{$key} = $value;
@@ -112,13 +117,13 @@ sub setUp {
 	my ($self) = @_;
 
 	my $dir = tempdir(CLEANUP => 1);
-	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
+	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
 	print {$fh} <<'EOF';
 rate_limit:
   backend_memcached:
     prefix: test:dampen
 EOF
-	close($fh) or die("close $dir/main.yaml: $!");
+	close($fh) or croak("close $dir/main.yaml: $!");
 
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));
@@ -164,10 +169,10 @@ sub testChurnCounter {
 		client => FakeMemcached->new({}),
 	});
 
-	is($store->dampenChurn('192.0.2.2', 'token-1', 2_000_000_000, 300, 2), 0, 'first distinct token is allowed');
-	is($store->dampenChurn('192.0.2.2', 'token-2', 2_000_000_000, 300, 2), 0, 'second distinct token is allowed');
-	is($store->dampenChurn('192.0.2.2', 'token-2', 2_000_000_000, 300, 2), 0, 'repeat token is not counted again');
-	is($store->dampenChurn('192.0.2.2', 'token-3', 2_000_000_000, 300, 2), 1, 'third distinct token is denied');
+	is($store->dampenChurn({ ipAddress => '192.0.2.2', tokenValue => 'token-1', currentTime => 2_000_000_000, churnWindow => 300, churnLimit => 2 }), 0, 'first distinct token is allowed');
+	is($store->dampenChurn({ ipAddress => '192.0.2.2', tokenValue => 'token-2', currentTime => 2_000_000_000, churnWindow => 300, churnLimit => 2 }), 0, 'second distinct token is allowed');
+	is($store->dampenChurn({ ipAddress => '192.0.2.2', tokenValue => 'token-2', currentTime => 2_000_000_000, churnWindow => 300, churnLimit => 2 }), 0, 'repeat token is not counted again');
+	is($store->dampenChurn({ ipAddress => '192.0.2.2', tokenValue => 'token-3', currentTime => 2_000_000_000, churnWindow => 300, churnLimit => 2 }), 1, 'third distinct token is denied');
 
 	return EXIT_SUCCESS;
 }
@@ -191,7 +196,7 @@ sub testDampenFallsBackToMemory {
 	my ($self) = @_;
 	my $sut = Chleb::Server::Dampen->new({ dic => $self->dic });
 	$sut->__sharedStore(FakeUnavailableStore->new());
-	$sut->dic->time->set(2_000_000_000);
+	$sut->dic->time->setMockedTime(2_000_000_000);
 
 	is($sut->dampen('192.0.2.4'), 0, 'first request falls back and is allowed');
 	is($sut->dampen('192.0.2.4'), 1, 'second request falls back and is denied');

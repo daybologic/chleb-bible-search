@@ -1,3 +1,5 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +34,7 @@
 package main;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
@@ -40,14 +43,17 @@ my $runtimeDirectory = 'chleb-bible-search';
 my $servicePath = 'etc/chleb-bible-search.service';
 my $dirsPath = 'debian/chleb-bible-search-core.dirs';
 
-open(my $fh, '<', $servicePath) or die("Cannot open $servicePath: $!");
+open(my $fh, '<', $servicePath) or croak("Cannot open $servicePath: $!");
 my @lines = <$fh>;
 close($fh);
 
-my @runtimeDirectories = map {
-	my ($value) = m/\ARuntimeDirectory=(.+)\z/;
-	$value;
-} grep { m/\ARuntimeDirectory=/ } map { chomp; $_ } @lines;
+my @runtimeDirectories;
+foreach my $line (@lines) {
+	chomp($line);
+	next unless ($line =~ m/\ARuntimeDirectory=/);
+	my ($value) = $line =~ m/\ARuntimeDirectory=(.+)\z/;
+	push(@runtimeDirectories, $value);
+}
 
 is_deeply(
 	\@runtimeDirectories,
@@ -55,11 +61,14 @@ is_deeply(
 	"systemd creates /run/$runtimeDirectory for the FastCGI socket"
 );
 
-open($fh, '<', $dirsPath) or die("Cannot open $dirsPath: $!");
+open($fh, '<', $dirsPath) or croak("Cannot open $dirsPath: $!");
 @lines = <$fh>;
 close($fh);
 
-my @volatileDirs = grep { m{\A/var/run/} } map { chomp; $_ } @lines;
+foreach my $line (@lines) {
+	chomp($line);
+}
+my @volatileDirs = grep { m{\A/var/run/} } @lines;
 is_deeply(
 	\@volatileDirs,
 	[],

@@ -1,3 +1,7 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +36,7 @@
 package BackendSharedCacheStorableTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -60,11 +65,11 @@ sub setUp {
 	$self->{__original_cwd} = getcwd();
 
 	my $root = tempdir(CLEANUP => 1);
-	mkdir($root . '/data') or die("mkdir $root/data failed: $ERRNO");
-	mkdir($root . '/cache') or die("mkdir $root/cache failed: $ERRNO");
+	mkdir($root . '/data') or croak("mkdir $root/data failed: $ERRNO");
+	mkdir($root . '/cache') or croak("mkdir $root/cache failed: $ERRNO");
 	$self->root($root);
 	$self->__makeSourceFile($self->__sourcePath(), ['kjv']);
-	chdir($root) or die("chdir $root failed: $ERRNO");
+	chdir($root) or croak("chdir $root failed: $ERRNO");
 
 	Chleb::DI::Container->instance->logger(Chleb::DI::MockLogger->new());
 	$self->sut($self->__makeBackend('kjv'));
@@ -88,8 +93,8 @@ sub testPersistsAcrossBackendInstances {
 	ok($self->sut->__sharedCacheSet('unit', 'alpha', { answer => 42 }), 'shared cache set succeeds');
 	ok(-f $self->__sharedCachePath(), 'shared cache file exists');
 
-	my $second = $self->__makeBackend('kjv');
-	is_deeply($second->__sharedCacheGet('unit', 'alpha'), { answer => 42 },
+	my $secondBackend = $self->__makeBackend('kjv');
+	is_deeply($secondBackend->__sharedCacheGet('unit', 'alpha'), { answer => 42 },
 		'second backend instance reads value from shared cache file');
 
 	return EXIT_SUCCESS;
@@ -116,14 +121,14 @@ sub testSentimentPersistsAcrossBackendInstances {
 		tones   => [ 'praise', 'trust' ],
 	}, 'sentiment loads from SQLite');
 
-	my $second = $self->__makeBackend('kjv');
-	is_deeply($second->__sharedCacheGet('sentiment', 'kjv'), [
+	my $secondBackend = $self->__makeBackend('kjv');
+	is_deeply($secondBackend->__sharedCacheGet('sentiment', 'kjv'), [
 		{
 			emotion => 'joy',
 			tones   => [ 'trust', 'praise' ],
 		},
 	], 'sentiment array is stored in the shared cache');
-	is_deeply($second->getSentimentByOrdinal(1), {
+	is_deeply($secondBackend->getSentimentByOrdinal(1), {
 		emotion => 'joy',
 		tones   => [ 'praise', 'trust' ],
 	}, 'second backend reads sentiment through shared cache');
@@ -140,7 +145,7 @@ sub testStaleSourceMetadataInvalidatesTranslation {
 		'value is available before source metadata changes');
 
 	my $future = time() + 60;
-	utime($future, $future, $self->__sourcePath()) or die("utime failed: $ERRNO");
+	utime($future, $future, $self->__sourcePath()) or croak("utime failed: $ERRNO");
 	is($self->__makeBackend('kjv')->__sharedCacheGet('unit', 'stale'), undef,
 		'value is ignored after source metadata changes');
 
@@ -151,9 +156,9 @@ sub testCorruptSharedCacheIsIgnored {
 	my ($self) = @_;
 	plan tests => 2;
 
-	open(my $fh, '>', $self->__sharedCachePath()) or die("open shared cache failed: $ERRNO");
+	open(my $fh, '>', $self->__sharedCachePath()) or croak("open shared cache failed: $ERRNO");
 	print {$fh} "not a storable file\n";
-	close($fh) or die("close shared cache failed: $ERRNO");
+	close($fh) or croak("close shared cache failed: $ERRNO");
 
 	my $backend = $self->__makeBackend('kjv');
 	is($backend->__sharedCacheGet('unit', 'missing'), undef, 'corrupt shared cache is ignored');
@@ -201,8 +206,8 @@ sub __makeSourceFile {
 	}
 	$dbh->disconnect();
 
-	gzip($sqlitePath => $path) or die("gzip failed: $GzipError");
-	unlink($sqlitePath) or die("unlink $sqlitePath failed: $ERRNO");
+	gzip($sqlitePath => $path) or croak("gzip failed: $GzipError");
+	unlink($sqlitePath) or croak("unlink $sqlitePath failed: $ERRNO");
 
 	return;
 }

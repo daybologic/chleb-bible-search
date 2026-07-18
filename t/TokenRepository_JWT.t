@@ -1,3 +1,8 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +37,7 @@
 package TokenRepository_JWTTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
@@ -60,19 +66,19 @@ sub setUp {
 
 	my $dir = tempdir(CLEANUP => 1);
 	make_path($dir);
-	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
+	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
 	print {$fh} <<'EOF';
 session_tokens:
   backend_jwt:
     secret: unit-test-secret
   ttl: 1800
 EOF
-	close($fh) or die("close $dir/main.yaml: $!");
+	close($fh) or croak("close $dir/main.yaml: $!");
 
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));
 	$self->dic->logger(Chleb::DI::MockLogger->new());
-	$self->dic->time->set(2_000_000_000);
+	$self->dic->time->setMockedTime(2_000_000_000);
 	$self->sut(Chleb::Token::Repository::JWT->new({ dic => $self->dic }));
 
 	return EXIT_SUCCESS;
@@ -137,11 +143,12 @@ sub testLoadTampered {
 
 	my $token = $self->sut->create();
 	my $value = $token->value;
-	substr($value, -1, 1) = substr($value, -1, 1) eq 'a' ? 'b' : 'a';
+	substr($value, -1, 1, substr($value, -1, 1) eq 'a' ? 'b' : 'a');
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->load($value);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),
@@ -163,9 +170,10 @@ sub testLoadExpired {
 	$token->expires($self->dic->time->get() - 1);
 	$self->sut->save($token);
 
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$self->sut->load($token->value);
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),
@@ -183,9 +191,10 @@ sub testLoadInvalidFormat {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$self->sut->load($self->uniqueStr());
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),
@@ -209,9 +218,10 @@ sub testLoadLegacyClaims {
 	$payload->{created} = delete($payload->{iat});
 	$payload->{expires} = delete($payload->{exp});
 
-	eval {
+	my $evalOk4; $evalOk4 = eval {
 		$self->sut->load(__makeJWT($payload));
-	};
+		1;
+	} or $evalOk4 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),
@@ -229,14 +239,16 @@ sub __makeJWT {
 	my ($payload) = @_;
 
 	my $json = JSON::PP->new->canonical->utf8;
-	my $signingInput = join('.', map {
-		my $encoded = encode_base64url($json->encode($_));
-		$encoded =~ s/=+\z//;
-		$encoded;
-	} ({
+	my @encodedPayload;
+	foreach my $part ({
 		alg => 'HS256',
 		typ => 'JWT',
-	}, $payload));
+	}, $payload) {
+		my $encoded = encode_base64url($json->encode($part));
+		$encoded =~ s/=+\z//;
+		push(@encodedPayload, $encoded);
+	}
+	my $signingInput = join('.', @encodedPayload);
 
 	my $signature = encode_base64url(hmac_sha256($signingInput, 'unit-test-secret'));
 	$signature =~ s/=+\z//;

@@ -1,3 +1,7 @@
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -63,7 +67,7 @@ sub setUp {
 
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->configPaths(['etc-local']);
-	$self->dic->time->set(2_000_000_000);
+	$self->dic->time->setMockedTime(2_000_000_000);
 	$self->sut(Chleb::Token::Repository::Local->new({ dic => $self->dic }));
 	$self->__mockLogger();
 
@@ -130,9 +134,10 @@ sub testSaveLoad {
 		plan tests => 2;
 
 		my $token;
-		eval {
+		my $evalOk1; $evalOk1 = eval {
 			$self->sut->load($value);
-		};
+			1;
+		} or $evalOk1 = 0;
 
 		if (my $evalError = $EVAL_ERROR) {
 			cmp_deeply($evalError, all(
@@ -158,9 +163,10 @@ sub testLoadNotFound {
 	plan tests => 2;
 
 	my $token;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$token = $self->sut->load('a6b2934af53fbfa4c42266765075c4fd7b602345089a5aa825c9117847535aa6');
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	my $evalError = $EVAL_ERROR;
 	ok(!$evalError, 'no exception thrown');
@@ -175,9 +181,10 @@ sub testLoadNotInvalidHash {
 	plan tests => 2;
 
 	my $token;
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$token = $self->sut->load($self->uniqueStr());
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

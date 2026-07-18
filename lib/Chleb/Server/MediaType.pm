@@ -32,6 +32,7 @@ package Chleb::Server::MediaType;
 use Moose;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -110,43 +111,44 @@ sub parseAcceptHeader {
 		$dic->logger->trace("Accept header: '$str'");
 	}
 
-	$str =~ s/\s+//g; # remove all whitespace
-	my @types = split(m@,@, lc($str));
+	$str =~ s{\s+}{}gx; # remove all whitespace
+	my @types = split(m@,@x, lc($str));
 	my @items = ( );
 	foreach my $typeAndQ (@types) {
-		my ($type, $qValue) = split(m@;@, $typeAndQ, 2);
-		my @parts = split(m@/@, $type, 2);
+		my ($type, $qValue) = split(m@;@x, $typeAndQ, 2);
+		my @parts = split(m@/@x, $type, 2);
 
-		if ($qValue && $qValue =~ m/^q=(.*)$/) {
+		if ($qValue && $qValue =~ m{ ^q=(.*)$ }x) {
 			$qValue = $1;
 		} else {
 			$qValue = 1.0;
 		}
 
-		eval {
+		my $evalOk1; $evalOk1 = eval {
 			push(@items, Chleb::Server::MediaType::Item->new({
 				major => $parts[0],
 				minor => $parts[1],
 				weight => $qValue,
 			}));
-		};
+			1;
+		} or $evalOk1 = 0;
 
 		if (my $evalError = $EVAL_ERROR) {
 			if (my $className = blessed($evalError)) {
 				if ($className eq 'Moose::Exception::ValidationFailedForTypeConstraint') {
-					die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, __extractMessageFromMooseException($evalError))
+					croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, __extractMessageFromMooseException($evalError)));
 				} elsif ($evalError->isa('Chleb::Exception')) {
-					die($evalError);
+					croak($evalError);
 				} else {
-					die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, $className);
+					croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, $className));
 				}
 			} else { # older Moose versions
 				chomp($evalError);
-				die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Accept: ${evalError}");
+				croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Accept: ${evalError}"));
 			}
 		}
 
-		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: wildcard misused')
+		croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: wildcard misused'))
 		    if ($items[-1]->major eq '*' && $items[-1]->minor ne '*');
 	}
 
@@ -266,7 +268,7 @@ sub __resolveObject {
 
 sub __extractMessageFromMooseException {
 	my ($exception) = @_;
-	my $message = (split(m/:/, $exception->message))[1];
+	my $message = (split(m{ : }x, $exception->message))[1];
 	return "Accept:${message}";
 }
 

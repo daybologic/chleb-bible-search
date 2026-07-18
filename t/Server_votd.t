@@ -1,3 +1,10 @@
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -942,9 +949,10 @@ sub testHtmlPreservesExplicitTranslationOrder {
 sub testRedirectV2 {
 	my ($self) = @_;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->__votd({ redirect => 1, version => 2 });
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
@@ -964,10 +972,11 @@ sub testRedirectV2 {
 sub testRedirectV1 {
 	my ($self) = @_;
 
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		my $when = '2021-10-30T21:36:26+0000';
 		$self->sut->__votd({ redirect => 1, version => 1, when => $when });
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

@@ -31,6 +31,7 @@
 package Chleb::Bible::Backend;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Bible::Base';
@@ -178,7 +179,7 @@ sub __makeCachePath {
 	my $needsRefresh = (!-f $path || $cacheMTime < $sourceMTime);
 
 	if (!$needsRefresh) {
-		eval {
+		my $evalOk1; $evalOk1 = eval {
 			my $dbh = DBI->connect(
 				"dbi:SQLite:dbname=${path}",
 				q{},
@@ -191,14 +192,15 @@ sub __makeCachePath {
 			my ($badOrdinal) = $dbh->selectrow_array('SELECT 1 FROM verse WHERE ordinal_relative_to_chapter = 0 LIMIT 1');
 			$needsRefresh = 1 if ($badOrdinal);
 			$dbh->disconnect();
-		};
+			1;
+		} or $evalOk1 = 0;
 		if (my $evalError = $EVAL_ERROR) {
 			$self->dic->logger->warn("Cache refresh probe failed for " . $self->cachePath . ": $evalError");
 			$needsRefresh = 1;
 		}
 	}
 
-	unless (!$needsRefresh) {
+	if ($needsRefresh) {
 		gunzip $self->compressedPath => $path
 		   or die("gunzip \"" . $self->compressedPath . "\" failed: $GunzipError\n");
 	}
@@ -225,7 +227,7 @@ sub BUILD {
 	my ($self) = @_;
 
 	if ($self->__fsck() != EXIT_SUCCESS) {
-		die(sprintf("'%s' is corrupt or otherwise cannot be handled", $self->cachePath));
+		croak(sprintf("'%s' is corrupt or otherwise cannot be handled", $self->cachePath));
 	}
 
 	return;
@@ -246,7 +248,8 @@ sub resetForkUnsafeHandles {
 	$self->flushSharedCache();
 
 	if (my $dbh = delete $self->{data}) {
-		eval { $dbh->disconnect(); };
+		my $disconnectOk;
+		$disconnectOk = eval { $dbh->disconnect(); 1; } or $disconnectOk = 0;
 	}
 
 	return;
@@ -277,8 +280,8 @@ SQL
 			shortNameRaw => $shortNameRaw,
 			longName     => $self->__bookLongName($shortNameRaw),
 			chapterCount => $row->{chapter_count} + 0,
-			verseCount   => $self->__bookVerseCount($row->{id}),
-			testament    => $row->{testament},
+				verseCount   => $self->__bookVerseCount($row->{id}),
+				testament    => $row->{testament},
 		};
 		$bookIndex++;
 	}
@@ -306,7 +309,7 @@ sub __makeBooksFromRows {
 
 sub getOrdinalByVerseKey {
 	my ($self, $key) = @_;
-	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $key, 4);
+	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $key, 4);
 	return 0 unless (defined($verseNumber));
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseOrdinalCache->{$cacheKey} if (exists($self->__verseOrdinalCache->{$cacheKey}));
@@ -385,7 +388,7 @@ SQL
 	return unless ($row);
 	my $key = join(':', @$row);
 	$self->__verseKeyCache->{join(':', $translation, $ordinal)} = $key;
-	my ($mappedTranslation, $mappedBookShortName, $mappedChapterNumber, $mappedVerseNumber) = split(m/:/, $key, 4);
+	my ($mappedTranslation, $mappedBookShortName, $mappedChapterNumber, $mappedVerseNumber) = split(m{ : }x, $key, 4);
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{__ordinalToKey}->{$ordinal} = $key;
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{$mappedBookShortName}->{$mappedChapterNumber}->{$mappedVerseNumber} = $ordinal;
 	$self->__sharedCacheSet('versekey', $cacheKey, $key);
@@ -394,7 +397,7 @@ SQL
 
 sub getVerseDataByKey {
 	my ($self, $key) = @_;
-	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $key, 4);
+	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $key, 4);
 	return unless (defined($verseNumber));
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseTextCache->{$cacheKey} if (exists($self->__verseTextCache->{$cacheKey}));
@@ -485,7 +488,7 @@ sub __primeChapterOrdinals {
 	my $translation = $self->bible->translation;
 	my $firstVerseOrdinal = $rows->[0]->{verse_ordinal} + 0;
 	my $base = $self->getOrdinalByVerseKey(join(':', $translation, $bookShortName, $chapterNumber, $firstVerseOrdinal));
-	return unless (defined($base) && $base > 0);
+	return if (!defined($base) || $base <= 0);
 
 	for (my $i = 0; $i < scalar(@$rows); $i++) {
 		my $verseOrdinal = $rows->[$i]->{verse_ordinal} + 0;
@@ -537,7 +540,7 @@ SQL
 
 sub getVerseKeyByBookVerseKey {
 	my ($self, $key) = @_;
-	my ($translation, $bookShortName, $ordinal) = split(m/:/, $key, 3);
+	my ($translation, $bookShortName, $ordinal) = split(m{ : }x, $key, 3);
 	return unless (defined($ordinal));
 	my $cacheKey = join(':', $translation, $bookShortName, $ordinal);
 	return $self->__verseKeyByBookCache->{$cacheKey} if (exists($self->__verseKeyByBookCache->{$cacheKey}));
@@ -645,7 +648,7 @@ sub __sentimentByOrdinal {
 	my ($self, $ordinal) = @_;
 	$ordinal = $self->__verseCount() + $ordinal + 1 if ($ordinal < 0);
 	my $data = $self->__sentimentData();
-	return unless ($ordinal >= 1 && $ordinal <= scalar(@$data));
+	return if ($ordinal < 1 || $ordinal > scalar(@$data));
 	return $data->[$ordinal - 1];
 }
 
@@ -776,7 +779,8 @@ exist, cannot be read, or is stale for this code's cache format.
 
 =cut
 
-sub __makeSharedCache {
+# Invoked by Moose as the lazy builder for the __sharedCache attribute.
+sub __makeSharedCache { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return $self->__withSharedCacheLock(LOCK_SH, sub {
 		return $self->__readSharedCacheFile();
@@ -790,7 +794,8 @@ directory.
 
 =cut
 
-sub __makeSharedCachePath {
+# Invoked by Moose as the lazy builder for the __sharedCachePath attribute.
+sub __makeSharedCachePath { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return join('/', $self->cacheDir, $SHARED_CACHE_FILE);
 }
@@ -888,9 +893,10 @@ sub __readSharedCacheFile {
 	return $self->__emptySharedCache() unless (-f $path);
 
 	my $cache;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$cache = retrieve($path);
-	};
+		1;
+	} or $evalOk2 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->warn("Cannot load backend shared cache from $path: $evalError");
 		return $self->__emptySharedCache();
@@ -912,14 +918,15 @@ sub __writeSharedCacheFile {
 	my ($tempHandle, $tempPath) = tempfile(DIR => $self->cacheDir, UNLINK => 0);
 	my $ok = 1;
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		binmode($tempHandle, ':raw');
 		nstore_fd($cache, $tempHandle);
 		$tempHandle->flush() if ($tempHandle->can('flush'));
-		$tempHandle->sync() or die("sync failed: $ERRNO");
-		close($tempHandle) or die("close($tempPath) failed: $ERRNO");
-		rename($tempPath, $path) or die("rename($tempPath -> $path) failed: $ERRNO");
-	};
+		$tempHandle->sync() or croak("sync failed: $ERRNO");
+		close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
+		rename($tempPath, $path) or croak("rename($tempPath -> $path) failed: $ERRNO");
+		1;
+	} or $evalOk3 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$ok = 0;
 		$self->dic->logger->warn("Cannot store backend shared cache to $path: $evalError");
@@ -1047,7 +1054,7 @@ sub __validateVersion {
 	my ($version) = $self->__selectrowArray($self->data, 'SELECT version FROM master LIMIT 1');
 	# Until we reach version 1.0.0 of the package (stable release), we only accept the exact correct version of the file!
 	# this gives us more flexibility to make changes.
-	if (defined($version) && length($version) <= 5 && $version =~ m/^\d+$/) {
+	if (defined($version) && length($version) <= 5 && $version =~ m{ ^\d+$ }x) {
 		if ($version == $FILE_VERSION) {
 			return EXIT_SUCCESS;
 		} else {
@@ -1085,7 +1092,7 @@ sub __makeCacheDir {
 		return $path if (-d $path);
 	}
 
-	die('No cache dir available');
+	croak('No cache dir available');
 }
 
 sub __bibleFileName {
