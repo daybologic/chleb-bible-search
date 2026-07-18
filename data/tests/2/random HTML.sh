@@ -37,3 +37,7 @@ page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/rand
 
 mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "$page" | sed -E 's#.*>([^<]+)</div>#\1#')
 [[ "${translations[*]}" == 'asv kjv' ]]
+
+orderedPage=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/random Accept:text/html translations==kjv,asv)
+mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "$orderedPage" | sed -E 's#.*>([^<]+)</div>#\1#')
+[[ "${translations[*]}" == 'kjv asv' ]]

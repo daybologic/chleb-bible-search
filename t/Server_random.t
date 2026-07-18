@@ -372,13 +372,17 @@ sub test_json_api_media_type {
 
 sub test_html_translation_order {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
 	my $html = $self->sut->__random({ accept => $mediaType, translations => ['all'], version => 2 });
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
 	is_deeply(\@translations, [ 'asv', 'kjv' ], 'random HTML sorts translations lexically');
+
+	$html = $self->sut->__random({ accept => $mediaType, translations => ['kjv', 'asv'], version => 2 });
+	@translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+	is_deeply(\@translations, [ 'kjv', 'asv' ], 'random HTML preserves explicit translation order');
 
 	return EXIT_SUCCESS;
 }

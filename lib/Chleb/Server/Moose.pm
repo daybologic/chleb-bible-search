@@ -1456,7 +1456,7 @@ sub __verseToHtml {
 	my $pageTitle = "Chleb Bible Search - ${title}";
 
 	my $output = '';
-	foreach my $translation (sort(@translationOrder)) {
+	foreach my $translation (@translationOrder) {
 		my $section = $translationSections{$translation};
 		my $sentiments = '';
 		my %toneSeen;

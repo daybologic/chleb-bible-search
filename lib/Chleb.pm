@@ -42,7 +42,6 @@ use Data::Dumper;
 use Digest::CRC qw(crc32);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
-use List::Util qw(shuffle);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
@@ -156,7 +155,6 @@ sub random {
 	$self->dic->logger->trace('Looking for testament: ' . $testament->toString());
 
 	my (@bible) = $self->__getBible($args);
-	@bible = shuffle(@bible);
 
 	my ($verse, $verseOrdinal);
 	my $seed = rand($PID + $bible[0]->verseCount);
@@ -382,9 +380,10 @@ sub __fixTranslationsParam {
 				last TRANSLATION;
 			}
 		}
-		my %uniqueTranslations = map { $_ => 1 } @$translations;
-		$translations = [ sort(keys(%uniqueTranslations)) ]; # ensure order is predictable
-		$args->{translations} = $translations; # update after unique/sort
+		my %seenTranslation;
+		my @uniqueTranslations = grep { !$seenTranslation{$_}++ } @$translations;
+		$translations = \@uniqueTranslations; # remove duplicates while preserving order
+		$args->{translations} = $translations;
 		$args->{translation} = $translations->[0]; # populate legacy
 	}
 

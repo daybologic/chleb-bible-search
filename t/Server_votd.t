@@ -498,7 +498,7 @@ sub testV2_translations_kjv_asv {
 
 	my $when = '2024-10-30T21:36:26+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['kjv', 'asv'] });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['asv', 'kjv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -916,6 +916,25 @@ sub testHtmlSortsTranslations {
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
 	is_deeply(\@translations, [ 'asv', 'kjv' ], 'VOTD HTML sorts translations lexically');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlPreservesExplicitTranslationOrder {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => ['kjv', 'asv'],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'kjv', 'asv' ], 'VOTD HTML preserves explicit translation order');
 
 	return EXIT_SUCCESS;
 }

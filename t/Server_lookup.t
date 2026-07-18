@@ -371,18 +371,18 @@ sub testHtmlListsTranslationsSeparately {
 	shift(@cards);
 
 	is(scalar(@cards), 2, 'each translation has its own card');
-	is_deeply(\@translations, [ 'asv', 'kjv' ], 'each translation has its own label');
-	like($cards[0], qr{<div class="translation">asv</div>}s, 'ASV label is in the first card');
-	like($cards[0], qr{<blockquote>\s*For many are called, but few chosen\.\s*</blockquote>}s, 'ASV text is in the first card');
-	like($cards[0], qr{<span class="tag tag-color-\d+">neutral</span> <span class="tag tag-color-\d+">instruction</span>}s, 'ASV sentiments are in the first card');
-	like($cards[1], qr{<div class="translation">kjv</div>}s, 'KJV label is in the second card');
-	like($cards[1], qr{<blockquote>\s*For many are called, but few \[are\] chosen\.\s*</blockquote>}s, 'KJV text is in the second card');
-	like($cards[1], qr{<span class="tag tag-color-\d+">neutral</span>\s*</blockquote>}s, 'KJV sentiments are in the second card');
+	is_deeply(\@translations, [ 'kjv', 'asv' ], 'each translation has its requested label order');
+	like($cards[0], qr{<div class="translation">kjv</div>}s, 'KJV label is in the first card');
+	like($cards[0], qr{<blockquote>\s*For many are called, but few \[are\] chosen\.\s*</blockquote>}s, 'KJV text is in the first card');
+	like($cards[0], qr{<span class="tag tag-color-\d+">neutral</span>\s*</blockquote>}s, 'KJV sentiments are in the first card');
+	like($cards[1], qr{<div class="translation">asv</div>}s, 'ASV label is in the second card');
+	like($cards[1], qr{<blockquote>\s*For many are called, but few chosen\.\s*</blockquote>}s, 'ASV text is in the second card');
+	like($cards[1], qr{<span class="tag tag-color-\d+">neutral</span> <span class="tag tag-color-\d+">instruction</span>}s, 'ASV sentiments are in the second card');
 
 	return EXIT_SUCCESS;
 }
 
-sub testHtmlSortsReversedTranslationInput {
+sub testHtmlPreservesReversedTranslationInput {
 	my ($self) = @_;
 	plan tests => 1;
 
@@ -400,7 +400,7 @@ sub testHtmlSortsReversedTranslationInput {
 	my $html = $self->sut->__verseToHtml(\@verse, \@json, 3);
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
-	is_deeply(\@translations, [ 'asv', 'kjv' ], 'HTML sorts reversed renderer input lexically');
+	is_deeply(\@translations, [ 'kjv', 'asv' ], 'HTML preserves reversed renderer input');
 
 	return EXIT_SUCCESS;
 }

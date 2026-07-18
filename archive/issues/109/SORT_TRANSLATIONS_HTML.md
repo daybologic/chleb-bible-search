@@ -2,13 +2,13 @@
 
 ## Fault
 
-When an HTML verse page contained multiple translations, such as `asv` and
-`kjv`, the cards were not guaranteed to appear in lexical order.  The HTML
-renderer received verse data in an order determined by the request/backend
-path and used that order directly when creating the cards.  As a result, the
-same multi-translation page could present the cards in different orders,
-making it harder to read translations side by side or track them while moving
-through verses.
+When an HTML verse page requested all translations, such as `asv` and `kjv`,
+the cards were not guaranteed to appear in lexical order.  The random-verse
+path shuffled the selected Bible objects before creating its multi-translation
+verse, and the HTML renderer used that order directly when creating cards.  As
+a result, the same page could present the cards in different orders, making it
+harder to read translations side by side or track them while moving through
+verses.
 
 The problem affected the shared HTML verse renderer used by lookup, random
 verse, and verse-of-the-day pages.  JSON/API output was not the problem and
@@ -16,14 +16,17 @@ does not need to be reordered by this fix.
 
 ## Fix
 
-`Chleb::Server::Moose::__verseToHtml` still groups verse data by translation as
-before, preserving each translation's complete text and sentiment data.  Just
-before rendering the cards, it now sorts the collected translation identifiers
-lexically.  This makes the rendered card order deterministic, so `asv` appears
-before `kjv` regardless of the input order.
+Translation normalization now removes duplicates while preserving explicit
+request order.  The reserved `all` value expands to the canonical lexical
+list, `asv` followed by `kjv`.  The random path no longer shuffles translation
+objects, so the normalized order reaches the shared HTML renderer unchanged.
+`Chleb::Server::Moose::__verseToHtml` groups and renders cards in that order.
 
-The sort is applied only at the HTML rendering boundary.  Navigation links,
-translation selection, and JSON response ordering are unchanged.
+Consequently, `translations=all` renders `asv` before `kjv`, while an explicit
+request such as `translations=kjv,asv` renders `kjv` before `asv`.
+
+The ordering policy applies consistently to HTML and JSON response data.
+Navigation links and translation selection remain unchanged.
 
 ## Regression Coverage
 
