@@ -63,7 +63,8 @@ sub toString {
 	return $part[-1];
 }
 
-sub _valueValidate {
+# Called by Local and Redis through inherited method dispatch.
+sub _valueValidate { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $value) = @_;
 	return 1 if ($value =~ m{ ^[0-9a-f]{64}$ }x);
 
