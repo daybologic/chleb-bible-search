@@ -96,7 +96,8 @@ sub __markDirty {
 	return;
 }
 
-sub _generate {
+# Invoked by Moose as the lazy builder for the value attribute.
+sub _generate { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $sha = Digest::SHA->new(256);
