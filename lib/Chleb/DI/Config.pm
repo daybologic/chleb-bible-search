@@ -117,7 +117,13 @@ sub get {
 	my ($self, $section, $key, $default, $isBoolean) = @_;
 
 	my $defaultUsed = 0;
-	my $value = $self->__get($section, $key, $default, $isBoolean, \$defaultUsed);
+	my $value = $self->__get({
+		section      => $section,
+		key          => $key,
+		default      => $default,
+		isBoolean    => $isBoolean,
+		pDefaultUsed => \$defaultUsed,
+	});
 	my $valuePrintable = (defined($value) && ref($value)) ? (Dumper $value) : $value;
 	my $defaultPrintable = (defined($default) && ref($default)) ? (Dumper $default) : $default;
 	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $valuePrintable, $defaultPrintable);
@@ -157,7 +163,7 @@ sub __makeData {
 	return $data;
 }
 
-=item C<__get($section, $key, $default, $isBoolean, $pDefaultUsed)>
+=item C<__get($args)>
 
 Internal implementation for C<get>.  It performs the actual section/key lookup,
 fills missing keys in nested hashes from hash defaults, applies boolean parsing
@@ -166,7 +172,9 @@ when requested, and reports whether the outer default was used.
 =cut
 
 sub __get {
-	my ($self, $section, $key, $default, $isBoolean, $pDefaultUsed) = @_;
+	my ($self, $args) = @_;
+	my ($section, $key, $default, $isBoolean, $pDefaultUsed) =
+		@{$args}{qw(section key default isBoolean pDefaultUsed)};
 
 	if (defined($self->__data->{$section}->{$key})) {
 		my $value = $self->__data->{$section}->{$key};
