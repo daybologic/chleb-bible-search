@@ -139,9 +139,10 @@ sub load {
 	$self->_valueValidate($value);
 
 	my $data = [ ];
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$data = $self->do->hmget($value, @{ Chleb::Token::TO_JSON() });
-	};
+		1;
+	} or $evalOk1 = 0;
 	my $evalError = $EVAL_ERROR;
 
 	my @fieldNames = @{ Chleb::Token::TO_JSON() };
@@ -163,7 +164,7 @@ sub load {
 	}
 
 	my $token;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$token = Chleb::Token->new({
 			dic       => $self->dic,
 			_repo     => $self->repo,
@@ -177,7 +178,8 @@ sub load {
 			now       => $data->{created},
 			userAgent => $data->{userAgent},
 		});
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error($evalError);
@@ -202,10 +204,11 @@ and if it is new, we will set the expiry time to ensure it is automagically evic
 sub save {
 	my ($self, $token) = @_;
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$self->do->hmset($token->value, %{ $token->TO_JSON() }); # TODO: Don't send undirty keys, for a speed improvement
 		$self->do->expireat($token->value, $token->expires) if ($token->isNew);
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token');
@@ -233,9 +236,10 @@ sub __buildRedis {
 	my ($self, $server) = @_;
 
 	my $redis;
-	eval {
+	my $evalOk4; $evalOk4 = eval {
 		$redis = $REDIS_CLASS->new(server => $server);
-	};
+		1;
+	} or $evalOk4 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "Failed to connect to $server: $evalError");

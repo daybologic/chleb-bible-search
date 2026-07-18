@@ -87,14 +87,15 @@ sub load {
 
 	my $data;
 	my $filePath = $self->__getFilePath($value);
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$data = retrieve($filePath);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		my $errNum = $ERRNO;
 		my $errStr = strerror($errNum);
-		if ($evalError =~ m{ :[ ]$errStr }x) {
+		if ($evalError =~ m{ :[ ]\Q$errStr\E }x) {
 			return; # not found
 		}
 
@@ -107,7 +108,7 @@ sub load {
 	}
 
 	my $token;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$token = Chleb::Token->new({
 			dic       => $self->dic,
 			_repo     => $self->repo,
@@ -121,7 +122,8 @@ sub load {
 			now       => $data->{created},
 			userAgent => $data->{userAgent},
 		});
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error($evalError);
@@ -141,9 +143,10 @@ sub save {
 
 	my $filePath = $self->__getFilePath($token->value);
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		__store($token->TO_JSON(), $filePath);
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error(sprintf("Failed to store %s in %s to '%s': %s",

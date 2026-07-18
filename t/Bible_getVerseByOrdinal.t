@@ -140,9 +140,10 @@ sub testOutOfBounds {
 
 	my @bible = $self->sut->__getBible();
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$bible[0]->getVerseByOrdinal(31_103);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

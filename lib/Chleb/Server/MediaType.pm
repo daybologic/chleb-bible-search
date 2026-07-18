@@ -123,13 +123,14 @@ sub parseAcceptHeader {
 			$qValue = 1.0;
 		}
 
-		eval {
+		my $evalOk1; $evalOk1 = eval {
 			push(@items, Chleb::Server::MediaType::Item->new({
 				major => $parts[0],
 				minor => $parts[1],
 				weight => $qValue,
 			}));
-		};
+			1;
+		} or $evalOk1 = 0;
 
 		if (my $evalError = $EVAL_ERROR) {
 			if (my $className = blessed($evalError)) {

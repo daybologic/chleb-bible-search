@@ -98,9 +98,10 @@ sub __checkWrongObject {
 	my ($self, $object) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->equals($object);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	my $expectDescription = 'Not a book, in Book/equals()';
 	if (my $evalError = $EVAL_ERROR) {

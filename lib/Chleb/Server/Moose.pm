@@ -154,9 +154,10 @@ sub warmup {
 	# restarts and late-spawned workers.
 	my @bibles = $self->__library->__getBible({ translations => ['all'] });
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s) in master process', scalar(@bibles)));
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->__warmBackendCaches();
-	};
+		1;
+	} or $evalOk1 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->warn("Backend cache warmup failed: $evalError");
 	}
@@ -1984,9 +1985,10 @@ sub handleSessionToken {
 		$sessionToken->ipAddress($ipAddress);
 		$sessionToken->userAgent($userAgent);
 
-		eval {
+		my $evalOk2; $evalOk2 = eval {
 			$tokenRepo->save($sessionToken); # save via all configured backends
-		};
+			1;
+		} or $evalOk2 = 0;
 		if (my $exception = $EVAL_ERROR) {
 			Chleb::Server::Dancer2::handleException($exception);
 		}
@@ -1998,9 +2000,10 @@ sub handleSessionToken {
 	}
 
 	$self->dic->logger->trace("Got session token '$sessionToken' from client");
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$sessionToken = $tokenRepo->load($sessionToken);
-	};
+		1;
+	} or $evalOk3 = 0;
 	if (my $exception = $EVAL_ERROR) {
 		Chleb::Server::Dancer2::handleException($exception);
 	}
@@ -2041,9 +2044,10 @@ sub handleSessionToken {
 	}
 
 	if ($sessionToken->dirty) {
-		eval {
+		my $evalOk4; $evalOk4 = eval {
 			$tokenRepo->save($sessionToken); # save via all configured backends
-		};
+			1;
+		} or $evalOk4 = 0;
 		if (my $exception = $EVAL_ERROR) {
 			Chleb::Server::Dancer2::handleException($exception);
 		}

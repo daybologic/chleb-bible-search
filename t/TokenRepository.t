@@ -70,9 +70,10 @@ sub testRedisLoadFailureRaisesChlebException {
 	local $INC{'Chleb/Token/Repository/Redis.pm'};
 	delete($INC{'Chleb/Token/Repository/Redis.pm'});
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->repo('Redis');
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),
@@ -105,9 +106,10 @@ sub testRedisUnavailableWithoutClientModule {
 		local ${'Chleb::Token::Repository::Redis::REDIS_CLASS'};
 
 		my $repo = $self->sut->repo('Redis');
-		eval {
+		my $evalOk2; $evalOk2 = eval {
 			$repo->do();
-		};
+			1;
+		} or $evalOk2 = 0;
 		$evalError = $EVAL_ERROR;
 	}
 

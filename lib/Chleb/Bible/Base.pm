@@ -65,11 +65,12 @@ sub _resolveISO8601 {
 	$self->dic->logger->trace("parsing date string '$iso8601'");
 
 	my $format = DateTime::Format::Strptime->new(pattern => '%FT%T%z');
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$iso8601 = $format->parse_datetime($iso8601);
-	};
+		1;
+	} or $evalOk1 = 0;
 
-	if (my $evalError = $EVAL_ERROR) {
+	if (!$evalOk1 || (my $evalError = $EVAL_ERROR)) {
 		die('Unsupported ISO-8601 time format: ' . $evalError);
 	}
 

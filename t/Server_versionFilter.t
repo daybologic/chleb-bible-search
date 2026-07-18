@@ -82,9 +82,10 @@ sub testTrap {
 sub __checkTrap {
 	my ($self, $version) = @_;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->($version, 2, 5);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		my $description = "endpoint version must be between 2 and 5, you said ${version}";

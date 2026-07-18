@@ -162,14 +162,15 @@ sub load {
 	}
 
 	my $token;
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$token = Chleb::Token->fromJWTClaims($data, {
 			dic       => $self->dic,
 			_repo     => $self->repo,
 			_source   => $self,
 			_value    => $value,
 		});
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error($evalError);

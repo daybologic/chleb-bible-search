@@ -333,9 +333,10 @@ sub test_not_found {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->__lookup({ book => 'Acts', chapter => 29, verse => 1, translations => [ 'kjv' ] });
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

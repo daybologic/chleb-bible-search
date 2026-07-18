@@ -139,9 +139,10 @@ sub testLoadTampered {
 	my $value = $token->value;
 	substr($value, -1, 1) = substr($value, -1, 1) eq 'a' ? 'b' : 'a';
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->load($value);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),
@@ -163,9 +164,10 @@ sub testLoadExpired {
 	$token->expires($self->dic->time->get() - 1);
 	$self->sut->save($token);
 
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$self->sut->load($token->value);
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),
@@ -183,9 +185,10 @@ sub testLoadInvalidFormat {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$self->sut->load($self->uniqueStr());
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),
@@ -209,9 +212,10 @@ sub testLoadLegacyClaims {
 	$payload->{created} = delete($payload->{iat});
 	$payload->{expires} = delete($payload->{exp});
 
-	eval {
+	my $evalOk4; $evalOk4 = eval {
 		$self->sut->load(__makeJWT($payload));
-	};
+		1;
+	} or $evalOk4 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),

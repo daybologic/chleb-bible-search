@@ -133,9 +133,10 @@ sub testFail {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->__getBible('blah');
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

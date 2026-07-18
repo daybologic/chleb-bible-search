@@ -235,10 +235,11 @@ fallback warning if the module or client cannot be created.
 sub __makeClient {
 	my ($self) = @_;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		require Cache::Memcached;
 		Cache::Memcached->import();
-	};
+		1;
+	} or $evalOk1 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->__warnUnavailable("Cannot load Cache::Memcached for dampening: $evalError");
 		return;
@@ -249,12 +250,13 @@ sub __makeClient {
 	$servers = [ $servers ] unless (ref($servers) eq 'ARRAY');
 
 	my $client;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$client = Cache::Memcached->new({
 			servers => $servers,
 			compress_threshold => 10_000,
 		});
-	};
+		1;
+	} or $evalOk2 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->__warnUnavailable("Cannot create memcached client for dampening: $evalError");
 		return;
@@ -298,9 +300,10 @@ sub __call {
 	my ($self, $method, @args) = @_;
 
 	my $result;
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$result = $self->__client()->$method(@args);
-	};
+		1;
+	} or $evalOk3 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->__available(0);
 		$self->__warnUnavailable("memcached dampening operation failed: $evalError");

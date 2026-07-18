@@ -178,7 +178,7 @@ sub __makeCachePath {
 	my $needsRefresh = (!-f $path || $cacheMTime < $sourceMTime);
 
 	if (!$needsRefresh) {
-		eval {
+		my $evalOk1; $evalOk1 = eval {
 			my $dbh = DBI->connect(
 				"dbi:SQLite:dbname=${path}",
 				q{},
@@ -191,7 +191,8 @@ sub __makeCachePath {
 			my ($badOrdinal) = $dbh->selectrow_array('SELECT 1 FROM verse WHERE ordinal_relative_to_chapter = 0 LIMIT 1');
 			$needsRefresh = 1 if ($badOrdinal);
 			$dbh->disconnect();
-		};
+			1;
+		} or $evalOk1 = 0;
 		if (my $evalError = $EVAL_ERROR) {
 			$self->dic->logger->warn("Cache refresh probe failed for " . $self->cachePath . ": $evalError");
 			$needsRefresh = 1;
@@ -246,7 +247,8 @@ sub resetForkUnsafeHandles {
 	$self->flushSharedCache();
 
 	if (my $dbh = delete $self->{data}) {
-		eval { $dbh->disconnect(); };
+		my $disconnectOk;
+		$disconnectOk = eval { $dbh->disconnect(); 1; } or $disconnectOk = 0;
 	}
 
 	return;
@@ -277,8 +279,8 @@ SQL
 			shortNameRaw => $shortNameRaw,
 			longName     => $self->__bookLongName($shortNameRaw),
 			chapterCount => $row->{chapter_count} + 0,
-			verseCount   => $self->__bookVerseCount($row->{id}),
-			testament    => $row->{testament},
+				verseCount   => $self->__bookVerseCount($row->{id}),
+				testament    => $row->{testament},
 		};
 		$bookIndex++;
 	}
@@ -888,9 +890,10 @@ sub __readSharedCacheFile {
 	return $self->__emptySharedCache() unless (-f $path);
 
 	my $cache;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$cache = retrieve($path);
-	};
+		1;
+	} or $evalOk2 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->warn("Cannot load backend shared cache from $path: $evalError");
 		return $self->__emptySharedCache();
@@ -912,14 +915,15 @@ sub __writeSharedCacheFile {
 	my ($tempHandle, $tempPath) = tempfile(DIR => $self->cacheDir, UNLINK => 0);
 	my $ok = 1;
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		binmode($tempHandle, ':raw');
 		nstore_fd($cache, $tempHandle);
 		$tempHandle->flush() if ($tempHandle->can('flush'));
 		$tempHandle->sync() or die("sync failed: $ERRNO");
 		close($tempHandle) or die("close($tempPath) failed: $ERRNO");
 		rename($tempPath, $path) or die("rename($tempPath -> $path) failed: $ERRNO");
-	};
+		1;
+	} or $evalOk3 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$ok = 0;
 		$self->dic->logger->warn("Cannot store backend shared cache to $path: $evalError");

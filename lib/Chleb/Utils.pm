@@ -312,9 +312,10 @@ sub parseIntoType {
 	}
 
 	my $output;
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$output = $outputType->new({ value => $value });
-	};
+		1;
+	} or $evalOk1 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		die(Chleb::Utils::TypeParserException->raise(
 			undef,

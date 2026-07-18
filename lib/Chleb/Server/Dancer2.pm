@@ -183,9 +183,10 @@ sub __preferredWholeword {
 	return 0 unless (defined($wholeword) && length($wholeword) > 0);
 
 	my $preferredWholeword = 0;
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$preferredWholeword = Chleb::Utils::boolean('wholeword', $wholeword, 0);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	return $EVAL_ERROR ? 0 : $preferredWholeword;
 }
@@ -349,10 +350,11 @@ sub __detaint {
 	my ($value, $name) = @_;
 
 	my $detainted;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		my $mode = $Chleb::Utils::SecureString::MODE_TRAP;
 		$detainted = Chleb::Utils::SecureString::detaint($value, $mode, $name)->value;
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -444,7 +446,7 @@ get '/:version/random' => sub {
 	);
 
 	my $result;
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__random({
 			accept => $accept,
@@ -455,7 +457,8 @@ get '/:version/random' => sub {
  			redirect => $redirect,
 			form => 0,
 		});
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -489,7 +492,7 @@ get '/1/votd' => sub {
 	);
 
 	my $result;
-	eval {
+	my $evalOk4; $evalOk4 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__votd({
 			accept       => $accept,
@@ -500,7 +503,8 @@ get '/1/votd' => sub {
 			testament   => $testament,
 			form        => 0,
 		});
-	};
+		1;
+	} or $evalOk4 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -528,7 +532,7 @@ get '/2/votd' => sub {
 	);
 
 	my $result;
-	eval {
+	my $evalOk5; $evalOk5 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__votd({
 			accept       => $accept,
@@ -540,7 +544,8 @@ get '/2/votd' => sub {
 			testament    => $testament,
 			form         => 0,
 		});
-	};
+		1;
+	} or $evalOk5 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -594,7 +599,7 @@ get '/1/lookup/:book/:chapter' => sub {
 	);
 
 	my $result;
-	eval {
+	my $evalOk6; $evalOk6 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
 			accept       => $accept,
@@ -603,7 +608,8 @@ get '/1/lookup/:book/:chapter' => sub {
 			translations => $translations,
 			form         => 0,
 		});
-	};
+		1;
+	} or $evalOk6 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -636,7 +642,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	);
 
 	my $result;
-	eval {
+	my $evalOk7; $evalOk7 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
 			accept       => $accept,
@@ -646,7 +652,8 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 			verse        => $verse,
 			form         => 0,
 		});
-	};
+		1;
+	} or $evalOk7 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -694,7 +701,7 @@ get '/1/search' => sub {
 	my $result = '';
 	my $resultHash;
 	if ($term) {
-		eval {
+		my $evalOk8; $evalOk8 = eval {
 			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 			($result, $resultHash) = $server->__search({
 				accept    => $accept,
@@ -705,7 +712,8 @@ get '/1/search' => sub {
 				term      => $term,
 				wholeword => $wholeword,
 			});
-		};
+			1;
+		} or $evalOk8 = 0;
 
 		if (my $exception = $EVAL_ERROR) {
 			handleException($exception);
@@ -773,12 +781,13 @@ get '/1/ping' => sub {
 	my $accept;
 
 	my $ping;
-	eval {
+	my $evalOk9; $evalOk9 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$ping = $server->__ping({
 			accept => $accept,
 		});
-	};
+		1;
+	} or $evalOk9 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -806,12 +815,13 @@ get '/1/version' => sub {
 	my $accept;
 
 	my $version;
-	eval {
+	my $evalOk10; $evalOk10 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$version = $server->__version({
 			accept => $accept,
 		});
-	};
+		1;
+	} or $evalOk10 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -841,12 +851,13 @@ get '/1/uptime' => sub {
 	my $accept;
 
 	my $result;
-	eval {
+	my $evalOk11; $evalOk11 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__uptime({
 			accept => $accept,
 		});
-	};
+		1;
+	} or $evalOk11 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);
@@ -874,12 +885,13 @@ get '/1/info' => sub {
 	my $accept;
 
 	my $result;
-	eval {
+	my $evalOk12; $evalOk12 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__info({
 			accept => $accept,
 		});
-	};
+		1;
+	} or $evalOk12 = 0;
 
 	if (my $exception = $EVAL_ERROR) {
 		handleException($exception);

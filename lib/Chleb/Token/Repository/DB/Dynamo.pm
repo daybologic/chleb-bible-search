@@ -78,10 +78,11 @@ sub save {
 	my ($self, $token) = @_;
 
 	my $filePath = $self->__getFilePath($token->value);
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		# TODO: We're not storing anything useful aside the token
 		store($token->TO_JSON(), $filePath);
-	};
+		1;
+	} or $evalOk1 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error(sprintf("Failed to store %s in %s to '%s': %s",
 		    $token->toString(), __PACKAGE__, $filePath, $evalError));
