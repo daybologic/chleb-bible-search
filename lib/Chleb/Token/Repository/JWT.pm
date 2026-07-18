@@ -213,7 +213,7 @@ this repository.
 
 sub _valueValidate {
 	my ($self, $value) = @_;
-	return 1 if (defined($value) && $value =~ m/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/);
+	return 1 if (defined($value) && $value =~ m{ ^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$ }x);
 
 	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be JWT');
 }
@@ -255,7 +255,7 @@ the supported algorithm and, when present, the expected type.
 sub __decode {
 	my ($self, $value) = @_;
 
-	my ($encodedHeader, $encodedPayload, $encodedSignature) = split(m/\./, $value, 3);
+	my ($encodedHeader, $encodedPayload, $encodedSignature) = split(m{ \. }x, $value, 3);
 	my $signingInput = join('.', $encodedHeader, $encodedPayload);
 	my $expectedSignature = $self->__signature($signingInput);
 	die('JWT signature mismatch') unless (__secureCompare($encodedSignature, $expectedSignature));
@@ -292,7 +292,7 @@ Encodes raw data using unpadded base64url encoding.
 sub __base64urlEncode {
 	my ($self, $data) = @_;
 	my $encoded = encode_base64url($data);
-	$encoded =~ s/=+\z//;
+	$encoded =~ s{=+\z}{}x;
 	return $encoded;
 }
 

@@ -94,7 +94,7 @@ sub load {
 	if (my $evalError = $EVAL_ERROR) {
 		my $errNum = $ERRNO;
 		my $errStr = strerror($errNum);
-		if ($evalError =~ m/: $errStr/) {
+		if ($evalError =~ m{ :[ ]$errStr }x) {
 			return; # not found
 		}
 

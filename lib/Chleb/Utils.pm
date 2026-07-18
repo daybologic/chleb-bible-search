@@ -125,14 +125,14 @@ sub forceArray {
 			foreach my $subItem (@$unknown) {
 				if (defined($subItem)) {
 					$noObjects->($subItem);
-					push(@output, split(m/,/, $subItem));
+					push(@output, split(m{ , }x, $subItem));
 				} else {
 					push(@output, $subItem);
 				}
 			}
 			next;
 		}
-		push(@output, split(m/,/, $unknown));
+		push(@output, split(m{ , }x, $unknown));
 	}
 
 	return \@output;
@@ -227,7 +227,7 @@ sub boolean {
 			return 1 if ($v eq $trueValues);
 		}
 
-		return ($v =~ m/^enable/);
+		return ($v =~ m{ ^enable }x);
 	};
 
 	my $isFalse = sub {
@@ -237,7 +237,7 @@ sub boolean {
 			return 1 if ($v eq $falseValues);
 		}
 
-		return ($v =~ m/^disable/);
+		return ($v =~ m{ ^disable }x);
 	};
 
 	# Let's run this block first so we trap invalid defaults even when they aren't used
@@ -257,8 +257,8 @@ sub boolean {
 	if (defined($value)) {
 		my $trim = sub {
 			my ($v) = @_;
-			$v =~ s/^\s+//;
-			$v =~ s/\s+$//;
+			$v =~ s{^\s+}{}x;
+			$v =~ s{\s+$}{}x;
 			return $v;
 		};
 

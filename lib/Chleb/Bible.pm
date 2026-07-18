@@ -45,6 +45,7 @@ Object representing one translation of The Holy Bible
 
 extends 'Chleb::Bible::Base';
 
+use Carp qw(croak);
 use Digest::CRC qw(crc32);
 use HTTP::Status qw(:constants);
 use List::Util qw(shuffle);
@@ -184,7 +185,7 @@ sub getBookByShortName {
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
-		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
+		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg));
 	}
 
 	return;
@@ -223,7 +224,7 @@ sub getBookByLongName {
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
-		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
+		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg));
 	}
 
 	return;
@@ -253,8 +254,8 @@ sub getBookByOrdinal {
 		if ($args->{nonFatal}) {
 			return;
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Book ordinal %d out of range, there are %d books in the bible',
-			    $ordinal, $self->bookCount));
+			croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Book ordinal %d out of range, there are %d books in the bible',
+			    $ordinal, $self->bookCount)));
 		}
 	}
 
@@ -280,7 +281,7 @@ sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
 	if (my $verseKey = $self->__backend->getVerseKeyByOrdinal($ordinal)) {
-		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
+		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $verseKey, 4);
 		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
 			if (my $book = $self->getBookByShortName($bookShortName, $args)) {
 				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
@@ -293,11 +294,11 @@ sub getVerseByOrdinal {
 				});
 			}
 		} else {
-			die "I don't think you can reach this";
+		croak("I don't think you can reach this");
 		}
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf("Verse %d not found in '%s'", $ordinal, $self->translation));
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf("Verse %d not found in '%s'", $ordinal, $self->translation)));
 }
 
 =item C<$newSearchQuery(@args)>
@@ -425,6 +426,50 @@ sub TO_JSON {
 		translation          => $self->translation,
 		verse_count          => $self->verseCount+0,
 	};
+}
+
+=item C<getVerseDataByKey($key)>
+
+Return verse text for a canonical verse key.
+
+=cut
+
+sub getVerseDataByKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getVerseDataByKey($key);
+}
+
+=item C<getVerseKeyByBookVerseKey($key)>
+
+Return a canonical verse key for a book-relative verse key.
+
+=cut
+
+sub getVerseKeyByBookVerseKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getVerseKeyByBookVerseKey($key);
+}
+
+=item C<getChapterVerseDataByKey($bookShortName, $chapterOrdinal)>
+
+Return the verse data for a chapter.
+
+=cut
+
+sub getChapterVerseDataByKey {
+	my ($self, $bookShortName, $chapterOrdinal) = @_;
+	return $self->__backend->getChapterVerseDataByKey($bookShortName, $chapterOrdinal);
+}
+
+=item C<getBookInfoByShortName($bookShortName)>
+
+Return metadata for a book identified by its short name.
+
+=cut
+
+sub getBookInfoByShortName {
+	my ($self, $bookShortName) = @_;
+	return $self->__backend->getBookInfoByShortName($bookShortName);
 }
 
 =back

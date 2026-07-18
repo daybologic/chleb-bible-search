@@ -1002,7 +1002,7 @@ C<1> fall back to the default search result limit.
 sub __searchLimit {
 	my ($limit) = @_;
 
-	return $SEARCH_RESULTS_LIMIT unless (defined($limit) && $limit =~ m/\A[0-9]+\z/);
+	return $SEARCH_RESULTS_LIMIT unless (defined($limit) && $limit =~ m{ \A[0-9]+\z }x);
 	$limit = int($limit);
 	return $SEARCH_RESULTS_LIMIT if ($limit < 1);
 	return $limit;
@@ -1021,7 +1021,7 @@ C<1> resolve to the first page.
 sub __searchPage {
 	my ($page) = @_;
 
-	return 1 unless (defined($page) && $page =~ m/\A-?[0-9]+\z/);
+	return 1 unless (defined($page) && $page =~ m{ \A-?[0-9]+\z }x);
 	$page = int($page);
 	return $page < 1 ? 1 : $page;
 }
@@ -1040,7 +1040,7 @@ fall back to the default search result limit.
 sub __searchPerPage {
 	my ($perPage) = @_;
 
-	return $SEARCH_RESULTS_LIMIT unless (defined($perPage) && $perPage =~ m/\A[0-9]+\z/);
+	return $SEARCH_RESULTS_LIMIT unless (defined($perPage) && $perPage =~ m{ \A[0-9]+\z }x);
 	$perPage = int($perPage);
 	return $SEARCH_RESULTS_LIMIT if ($perPage < 1);
 	return $SEARCH_RESULTS_MAX_PAGE_SIZE if ($perPage > $SEARCH_RESULTS_MAX_PAGE_SIZE);
@@ -1365,9 +1365,9 @@ sub __verseNavigationLink {
 	return '' unless ($link);
 
 	my $selfLink = $json->{links}->{self} || '';
-	if ($selfLink =~ m/(\?.*)\z/) {
+	if ($selfLink =~ m{ (\?.*)\z }x) {
 		my $query = $1;
-		$link =~ s/\?.*\z//;
+		$link =~ s{\?.*\z}{}x;
 		$link .= $query;
 	}
 
@@ -1549,9 +1549,9 @@ sub __verseToHtml {
 	my $thisChapter = $json->[0]->{data}->[0]->{links}->{first};
 	$self->dic->logger->trace("Link kludge in effect (pre): ${thisChapter}");
 	my $thisChapter_KLUDGE = $thisChapter;
-	$thisChapter_KLUDGE =~ s@/1(?=\?)@@; # TODO: This is a kludge, the JSON should provide it somehow.
+	$thisChapter_KLUDGE =~ s@/1(?=\?)@@x; # TODO: This is a kludge, the JSON should provide it somehow.
 	if ($thisChapter_KLUDGE eq $thisChapter) {
-		$thisChapter_KLUDGE =~ s@/1$@@; # TODO: This is a kludge, the JSON should provide it somehow.
+		$thisChapter_KLUDGE =~ s@/1$@@x; # TODO: This is a kludge, the JSON should provide it somehow.
 	}
 	$self->dic->logger->trace("Link kludge in effect (post): ${thisChapter_KLUDGE}");
 	my $settingsLink = '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-label="Settings">'
@@ -1610,15 +1610,15 @@ sub __makeBooks {
 		));
 	}
 
-	my $html='<form action="/1/lookup" method="GET">
-		<select name="book">
-	';
+        my $html='<form action="/1/lookup" method="GET">
+                <select name="book">
+        ';
 
-	$html .= join("\r\n", @options)
-	    . '</select>
-		<input type="hidden" name="chapter" value="1">
-		<button>→</button>
-	</form>';
+        $html .= join("\r\n", @options)
+            . '</select>
+                <input type="hidden" name="chapter" value="1">
+                <button>→</button>
+        </form>';
 
 	return $html;
 }
@@ -1733,7 +1733,7 @@ parameters unchanged.
 
 sub __replaceSearchLinkPage {
 	my ($link, $page) = @_;
-	$link =~ s/([?&]page=)[^&]*/$1$page/;
+	$link =~ s{([?&]page=)[^&]*}{$1$page}x;
 	return $link;
 }
 

@@ -54,7 +54,7 @@ sub isLogged {
 
 	my $result = 0;
 	foreach my $msg (@{ $self->__messages }) {
-		if ($msg =~ m/$regEx/) {
+		if ($msg =~ m/$regEx/x) {
 			$result++;
 			last;
 		}

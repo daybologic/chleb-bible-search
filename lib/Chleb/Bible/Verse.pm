@@ -122,7 +122,7 @@ sub TO_JSON {
 
 sub getPath {
 	my ($self) = @_;
-	my @id = split(m@/@, $self->id);
+	my @id = split(m@/@x, $self->id);
 	shift(@id);
 	return join('/', @id);
 }

@@ -110,14 +110,14 @@ sub parseAcceptHeader {
 		$dic->logger->trace("Accept header: '$str'");
 	}
 
-	$str =~ s/\s+//g; # remove all whitespace
-	my @types = split(m@,@, lc($str));
+	$str =~ s{\s+}{}gx; # remove all whitespace
+	my @types = split(m@,@x, lc($str));
 	my @items = ( );
 	foreach my $typeAndQ (@types) {
-		my ($type, $qValue) = split(m@;@, $typeAndQ, 2);
-		my @parts = split(m@/@, $type, 2);
+		my ($type, $qValue) = split(m@;@x, $typeAndQ, 2);
+		my @parts = split(m@/@x, $type, 2);
 
-		if ($qValue && $qValue =~ m/^q=(.*)$/) {
+		if ($qValue && $qValue =~ m{ ^q=(.*)$ }x) {
 			$qValue = $1;
 		} else {
 			$qValue = 1.0;
@@ -266,7 +266,7 @@ sub __resolveObject {
 
 sub __extractMessageFromMooseException {
 	my ($exception) = @_;
-	my $message = (split(m/:/, $exception->message))[1];
+	my $message = (split(m{ : }x, $exception->message))[1];
 	return "Accept:${message}";
 }
 

@@ -144,7 +144,7 @@ sub __preferredTranslations {
 	my @supportedTranslations;
 	my %seenTranslation;
 	foreach my $translation (@translations) {
-		next unless ($translation =~ m/\A(?:asv|kjv)\z/);
+		next unless ($translation =~ m{ \A(?:asv|kjv)\z }x);
 		next if ($seenTranslation{$translation});
 
 		push(@supportedTranslations, $translation);
@@ -207,7 +207,7 @@ sub __previousSearchLimit {
 	my ($paramPresent, $paramValue, $previousSearchLimit) = @_;
 
 	if ($paramPresent) {
-		return defined($paramValue) && $paramValue =~ m/\A[0-9]+\z/ && int($paramValue) > 0
+		return defined($paramValue) && $paramValue =~ m{ \A[0-9]+\z }x && int($paramValue) > 0
 			? int($paramValue)
 			: $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 	}
@@ -217,7 +217,7 @@ sub __previousSearchLimit {
 	}
 
 	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
-		unless (defined($previousSearchLimit) && $previousSearchLimit =~ m/\A[0-9]+\z/ && int($previousSearchLimit) > 0);
+		unless (defined($previousSearchLimit) && $previousSearchLimit =~ m{ \A[0-9]+\z }x && int($previousSearchLimit) > 0);
 
 	return int($previousSearchLimit);
 }
@@ -240,7 +240,7 @@ sub __previousSearchPerPage {
 	my ($paramPresent, $paramValue, $previousSearchPerPage) = @_;
 
 	if ($paramPresent) {
-		if (defined($paramValue) && $paramValue =~ m/\A[0-9]+\z/ && int($paramValue) > 0) {
+		if (defined($paramValue) && $paramValue =~ m{ \A[0-9]+\z }x && int($paramValue) > 0) {
 			return $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE
 				if (int($paramValue) > $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE);
 
@@ -255,7 +255,7 @@ sub __previousSearchPerPage {
 	}
 
 	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
-		unless (defined($previousSearchPerPage) && $previousSearchPerPage =~ m/\A[0-9]+\z/ && int($previousSearchPerPage) > 0);
+		unless (defined($previousSearchPerPage) && $previousSearchPerPage =~ m{ \A[0-9]+\z }x && int($previousSearchPerPage) > 0);
 
 	return $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE
 		if (int($previousSearchPerPage) > $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE);
@@ -314,7 +314,7 @@ sub fetchStaticPage {
 
 					if ($lineCounter <= 10) {
 						chomp($line);
-						$line =~ s/\s*//g;
+						$line =~ s{\s*}{}gx;
 						if (lc($line) eq '<!--chlebtemplate-->') {
 							$templateMode = 1; # on
 						}

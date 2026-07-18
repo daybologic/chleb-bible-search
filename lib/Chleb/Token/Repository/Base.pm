@@ -58,13 +58,13 @@ sub save {
 
 sub toString {
 	my ($self) = @_;
-	my @part = split(m/::/, ref($self));
+	my @part = split(m{ :: }x, ref($self));
 	return $part[-1];
 }
 
 sub _valueValidate {
 	my ($self, $value) = @_;
-	return 1 if ($value =~ m/^[0-9a-f]{64}$/);
+	return 1 if ($value =~ m{ ^[0-9a-f]{64}$ }x);
 
 	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be SHA-256');
 }

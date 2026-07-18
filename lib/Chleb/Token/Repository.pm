@@ -125,7 +125,7 @@ sub __backendNames {
 	my $enabledBackends = $self->dic->config->get('session_tokens', $welp, [ 'Local' ]);
 	my @backendNames = ( );
 	foreach my $backendName (@$enabledBackends) {
-		if ($backendName =~ m/^(\w+)$/) {
+		if ($backendName =~ m{ ^(\w+)$ }x) {
 			push(@backendNames, $backendName);
 		} else {
 			die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be a single word: "'

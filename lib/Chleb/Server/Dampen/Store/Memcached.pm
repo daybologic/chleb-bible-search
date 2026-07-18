@@ -347,7 +347,7 @@ sub __warnUnavailable {
 	my ($self, $message) = @_;
 	return if ($self->__warned);
 	$self->__warned(1);
-	if ($message !~ m/falling back to per-process memory store/) {
+	if ($message !~ m{ falling[ ]back[ ]to[ ]per-process[ ]memory[ ]store }x) {
 		$message .= '; falling back to per-process memory store';
 	}
 	$self->dic->logger->warn($message);

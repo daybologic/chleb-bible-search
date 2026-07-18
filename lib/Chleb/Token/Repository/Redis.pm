@@ -256,7 +256,7 @@ sub __makeDo {
 
 	my $config = $self->dic->config->get('session_tokens', 'backend_redis', { host => $REDIS_HOST, db => $REDIS_DB });
 	my $uri = $config->{host};
-	if ($uri !~ m/:/) {
+	if ($uri !~ m{ : }x) {
 		$uri = "${uri}:${REDIS_PORT}";
 	}
 
@@ -269,7 +269,7 @@ sub __makeDo {
 
 	my $db = $config->{db};
 	if (defined($db)) {
-		if ($db =~ m/^\d+$/) {
+		if ($db =~ m{ ^\d+$ }x) {
 			$redis->select($db);
 		} else {
 			die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "db must be numerical, positive integer: '$db'");

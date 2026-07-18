@@ -65,7 +65,7 @@ The minor media type, such as 'html', or 'json'.
 subtype 'Part',
 	as 'Str',
 	where {
-		defined($_) && length($_) > 0 && m/^\S+$/ && ! m@^/+$@
+		defined($_) && length($_) > 0 && m{ ^\S+$ }x && ! m@^/+$@x
 	},
 	message {
 		'incomplete spec'
@@ -129,7 +129,7 @@ sub __triggerWeight {
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, sprintf("Accept: negative qValue, %.3f", $self->weight))
 	    if ($self->weight < 0);
 
-	my (undef, $mantissa) = split(m/\./, $self->weight);
+	my (undef, $mantissa) = split(m{ \. }x, $self->weight);
 
 	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: weight (qValue) precisions are limited to 3 digits')
 	    if (defined($mantissa) && length($mantissa) > 3);

@@ -328,15 +328,15 @@ sub __detaint {
 	}
 
 	if ($mode & $MODE_STRIP_QUOTES) {
-		$detaintedValue =~ s/"//g;
+		$detaintedValue =~ s{"}{}gx;
 		$stripped = 1;
 	}
 
 	my $preTrim = $detaintedValue;
 	if ($mode & $MODE_TRIM) {
-		$detaintedValue =~ s/^\s+//;
-		$detaintedValue =~ s/\s+$//;
-		$detaintedValue =~ s/\s+/ /g;
+		$detaintedValue =~ s{^\s+}{}x;
+		$detaintedValue =~ s{\s+$}{}x;
+		$detaintedValue =~ s{\s+}{ }gx;
 	}
 
 	return __PACKAGE__->new({

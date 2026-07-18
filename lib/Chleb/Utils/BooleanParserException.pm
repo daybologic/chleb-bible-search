@@ -44,7 +44,7 @@ sub raise {
 
 	my @caller = caller();
 	my $usingClass = $caller[0];
-	if ($usingClass =~ m/^Chleb::Utils::BooleanParser\w+Exception$/) {
+	if ($usingClass =~ m{ ^Chleb::Utils::BooleanParser\w+Exception$ }x) {
 		return $class->SUPER::raise($statusCode, $thing, { key => $key });
 	}
 

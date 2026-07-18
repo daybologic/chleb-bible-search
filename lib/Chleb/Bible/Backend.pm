@@ -306,7 +306,7 @@ sub __makeBooksFromRows {
 
 sub getOrdinalByVerseKey {
 	my ($self, $key) = @_;
-	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $key, 4);
+	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $key, 4);
 	return 0 unless (defined($verseNumber));
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseOrdinalCache->{$cacheKey} if (exists($self->__verseOrdinalCache->{$cacheKey}));
@@ -385,7 +385,7 @@ SQL
 	return unless ($row);
 	my $key = join(':', @$row);
 	$self->__verseKeyCache->{join(':', $translation, $ordinal)} = $key;
-	my ($mappedTranslation, $mappedBookShortName, $mappedChapterNumber, $mappedVerseNumber) = split(m/:/, $key, 4);
+	my ($mappedTranslation, $mappedBookShortName, $mappedChapterNumber, $mappedVerseNumber) = split(m{ : }x, $key, 4);
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{__ordinalToKey}->{$ordinal} = $key;
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{$mappedBookShortName}->{$mappedChapterNumber}->{$mappedVerseNumber} = $ordinal;
 	$self->__sharedCacheSet('versekey', $cacheKey, $key);
@@ -394,7 +394,7 @@ SQL
 
 sub getVerseDataByKey {
 	my ($self, $key) = @_;
-	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $key, 4);
+	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $key, 4);
 	return unless (defined($verseNumber));
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseTextCache->{$cacheKey} if (exists($self->__verseTextCache->{$cacheKey}));
@@ -537,7 +537,7 @@ SQL
 
 sub getVerseKeyByBookVerseKey {
 	my ($self, $key) = @_;
-	my ($translation, $bookShortName, $ordinal) = split(m/:/, $key, 3);
+	my ($translation, $bookShortName, $ordinal) = split(m{ : }x, $key, 3);
 	return unless (defined($ordinal));
 	my $cacheKey = join(':', $translation, $bookShortName, $ordinal);
 	return $self->__verseKeyByBookCache->{$cacheKey} if (exists($self->__verseKeyByBookCache->{$cacheKey}));
@@ -1047,7 +1047,7 @@ sub __validateVersion {
 	my ($version) = $self->__selectrowArray($self->data, 'SELECT version FROM master LIMIT 1');
 	# Until we reach version 1.0.0 of the package (stable release), we only accept the exact correct version of the file!
 	# this gives us more flexibility to make changes.
-	if (defined($version) && length($version) <= 5 && $version =~ m/^\d+$/) {
+	if (defined($version) && length($version) <= 5 && $version =~ m{ ^\d+$ }x) {
 		if ($version == $FILE_VERSION) {
 			return EXIT_SUCCESS;
 		} else {
