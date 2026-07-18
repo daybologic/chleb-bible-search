@@ -1,3 +1,4 @@
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -67,7 +68,8 @@ sub __ensureGeneratedData {
 		data/kjv.sqlite.gz
 	);
 
-	return unless (grep { !-f } @generatedFiles);
+	my $missingFiles = grep { !-f } @generatedFiles;
+	return if ($missingFiles == 0);
 
 	my $status = system('make', '-C', 'data');
 	die("Failed to build generated Bible data\n") if ($status != 0);
@@ -75,7 +77,7 @@ sub __ensureGeneratedData {
 	return;
 }
 
-sub _isTestComprehensive {
+sub _isTestComprehensive { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my $testComprehensive = !$ENV{TEST_QUICK};
 
 	if ($testComprehensive) {

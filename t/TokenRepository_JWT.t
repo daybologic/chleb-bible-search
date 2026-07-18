@@ -1,3 +1,8 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -138,7 +143,7 @@ sub testLoadTampered {
 
 	my $token = $self->sut->create();
 	my $value = $token->value;
-	substr($value, -1, 1) = substr($value, -1, 1) eq 'a' ? 'b' : 'a';
+	substr($value, -1, 1, substr($value, -1, 1) eq 'a' ? 'b' : 'a');
 
 	my $evalOk1; $evalOk1 = eval {
 		$self->sut->load($value);
@@ -234,14 +239,16 @@ sub __makeJWT {
 	my ($payload) = @_;
 
 	my $json = JSON::PP->new->canonical->utf8;
-	my $signingInput = join('.', map {
-		my $encoded = encode_base64url($json->encode($_));
-		$encoded =~ s/=+\z//;
-		$encoded;
-	} ({
+	my @encodedPayload;
+	foreach my $part ({
 		alg => 'HS256',
 		typ => 'JWT',
-	}, $payload));
+	}, $payload) {
+		my $encoded = encode_base64url($json->encode($part));
+		$encoded =~ s/=+\z//;
+		push(@encodedPayload, $encoded);
+	}
+	my $signingInput = join('.', @encodedPayload);
 
 	my $signature = encode_base64url(hmac_sha256($signingInput, 'unit-test-secret'));
 	$signature =~ s/=+\z//;

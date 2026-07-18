@@ -1,3 +1,7 @@
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -54,7 +58,7 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(\&Chleb::Server::Moose::__versionFilter);
+	$self->sut(\&Chleb::Server::Moose::__versionFilter); ## no critic (Variables::ProtectPrivateVars)
 
 	return EXIT_SUCCESS;
 }

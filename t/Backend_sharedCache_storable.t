@@ -1,3 +1,7 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -89,8 +93,8 @@ sub testPersistsAcrossBackendInstances {
 	ok($self->sut->__sharedCacheSet('unit', 'alpha', { answer => 42 }), 'shared cache set succeeds');
 	ok(-f $self->__sharedCachePath(), 'shared cache file exists');
 
-	my $second = $self->__makeBackend('kjv');
-	is_deeply($second->__sharedCacheGet('unit', 'alpha'), { answer => 42 },
+	my $secondBackend = $self->__makeBackend('kjv');
+	is_deeply($secondBackend->__sharedCacheGet('unit', 'alpha'), { answer => 42 },
 		'second backend instance reads value from shared cache file');
 
 	return EXIT_SUCCESS;
@@ -117,14 +121,14 @@ sub testSentimentPersistsAcrossBackendInstances {
 		tones   => [ 'praise', 'trust' ],
 	}, 'sentiment loads from SQLite');
 
-	my $second = $self->__makeBackend('kjv');
-	is_deeply($second->__sharedCacheGet('sentiment', 'kjv'), [
+	my $secondBackend = $self->__makeBackend('kjv');
+	is_deeply($secondBackend->__sharedCacheGet('sentiment', 'kjv'), [
 		{
 			emotion => 'joy',
 			tones   => [ 'trust', 'praise' ],
 		},
 	], 'sentiment array is stored in the shared cache');
-	is_deeply($second->getSentimentByOrdinal(1), {
+	is_deeply($secondBackend->getSentimentByOrdinal(1), {
 		emotion => 'joy',
 		tones   => [ 'praise', 'trust' ],
 	}, 'second backend reads sentiment through shared cache');

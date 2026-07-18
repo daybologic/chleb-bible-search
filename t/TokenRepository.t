@@ -1,3 +1,8 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -68,7 +73,7 @@ sub testRedisLoadFailureRaisesChlebException {
 		    if ($filename eq 'Chleb/Token/Repository/Redis.pm');
 		return;
 	}, @INC);
-	local $INC{'Chleb/Token/Repository/Redis.pm'};
+	local $INC{'Chleb/Token/Repository/Redis.pm'} = $INC{'Chleb/Token/Repository/Redis.pm'};
 	delete($INC{'Chleb/Token/Repository/Redis.pm'});
 
 	my $evalOk1; $evalOk1 = eval {
@@ -98,13 +103,14 @@ sub testRedisUnavailableWithoutClientModule {
 		    if ($filename eq 'Redis/Fast.pm' || $filename eq 'Redis.pm');
 		return;
 	}, @INC);
-	local @INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)};
+	local @INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)}
+		= @INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)};
 	delete(@INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)});
 
 	my $evalError;
 	{
-		no strict qw(refs);
-		local ${'Chleb::Token::Repository::Redis::REDIS_CLASS'};
+		local $Chleb::Token::Repository::Redis::REDIS_CLASS
+			= $Chleb::Token::Repository::Redis::REDIS_CLASS;
 
 		my $repo = $self->sut->repo('Redis');
 		my $evalOk2; $evalOk2 = eval {

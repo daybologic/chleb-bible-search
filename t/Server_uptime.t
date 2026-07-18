@@ -1,3 +1,8 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -137,10 +142,7 @@ sub testUptimeConfiguredFile {
 	my $dir = tempdir(CLEANUP => 1);
 	my $path = "$dir/startup.txt";
 	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
-	print {$fh} <<EOF;
-server:
-  uptime_file: $path
-EOF
+	print {$fh} "server:\n  uptime_file: $path\n";
 	close($fh) or croak("close $dir/main.yaml: $!");
 
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));
@@ -155,7 +157,7 @@ EOF
 	my $before = $self->dic->time->get();
 	{
 		open($fh, '>', $path) or croak("open $path: $!");
-		print {$fh} $before - 42 . "\n";
+		print {$fh} ($before - 42) . "\n";
 		close($fh) or croak("close $path: $!");
 	}
 
