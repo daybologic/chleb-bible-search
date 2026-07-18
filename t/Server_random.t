@@ -42,6 +42,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::Dancer2;
 use Chleb::Server::Moose;
 use Test::Deep qw(all array_each cmp_deeply isa methods re ignore);
 use Test::More 0.96;
@@ -369,10 +370,23 @@ sub test_json_api_media_type {
 	return EXIT_SUCCESS;
 }
 
+sub test_html_translation_order {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__random({ accept => $mediaType, translations => ['all'], version => 2 });
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv', 'kjv' ], 'random HTML sorts translations lexically');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;
 use warnings;
 
-exit(RandomServerTests->new->run());
+exit(RandomServerTests->new->run(n => ($ENV{TEST_QUICK} ? 1 : 5)));
