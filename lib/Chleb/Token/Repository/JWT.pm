@@ -339,20 +339,20 @@ sub __makeSecret {
 	return $secret;
 }
 
-=item C<__secureCompare($left, $right)>
+=item C<__secureCompare($leftValue, $rightValue)>
 
 Compares two strings without returning early after the first differing byte.
 
 =cut
 
 sub __secureCompare {
-	my ($left, $right) = @_;
-	return 0 unless (defined($left) && defined($right));
-	return 0 unless (length($left) == length($right));
+	my ($leftValue, $rightValue) = @_;
+	return 0 unless (defined($leftValue) && defined($rightValue));
+	return 0 unless (length($leftValue) == length($rightValue));
 
 	my $diff = 0;
-	for (my $i = 0; $i < length($left); $i++) {
-		$diff |= ord(substr($left, $i, 1)) ^ ord(substr($right, $i, 1));
+	for (my $i = 0; $i < length($leftValue); $i++) {
+		$diff |= ord(substr($leftValue, $i, 1)) ^ ord(substr($rightValue, $i, 1));
 	}
 
 	return $diff == 0;
