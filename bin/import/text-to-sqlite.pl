@@ -50,8 +50,9 @@ Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 14;
 
 Readonly my %TRANSLATION_META => (
-	kjv => { year => 1611, language => 'en' },
-	asv => { year => 1901, language => 'en' },
+	kjv      => { year => 1611, language => 'en' },
+	asv      => { year => 1901, language => 'en' },
+	pickthall => { year => 1930, language => 'en' },
 );
 
 Readonly my %BOOK_ORDINAL => (
@@ -121,6 +122,11 @@ Readonly my %BOOK_ORDINAL => (
 	'3John' => 64,
 	Jude  => 65,
 	Rev   => 66,
+	Quran => 1,
+);
+
+Readonly my %BOOK_TESTAMENT => (
+	Quran => 'O',
 );
 
 my %bookKeys = ( );
@@ -312,6 +318,20 @@ SQL
 	return;
 }
 
+sub __neutralSentiment {
+	my ($translation) = @_;
+
+	my $fileName = join('/', $DATA_DIR, __inputFromTranslation($translation));
+	my $fh = IO::File->new($fileName, 'r')
+	    or die(sprintf("Failed to open '%s' -- %s", $fileName, $ERRNO));
+
+	my $verseCount = 0;
+	$verseCount++ while (<$fh>);
+	$fh->close();
+
+	return [ map { { emotion => 'neutral', tones => [ ] } } 1 .. $verseCount ];
+}
+
 my %idCounters = ( );
 sub __uuid {
 	my ($domain) = @_;
@@ -407,7 +427,7 @@ SQL
 	my $bookKey = join(':', $translation, $bookShortName);
 	unless ($bookKeys{$bookKey}) {
 		my $ordinal = $BOOK_ORDINAL{$bookShortName} or die("Missing ordinal for '$bookShortName'");
-		my $testament = $ordinal > $OT_COUNT ? 'N' : 'O';
+		my $testament = $BOOK_TESTAMENT{$bookShortName} // ($ordinal > $OT_COUNT ? 'N' : 'O');
 		my $id = __uuid('book');
 
 		my $chapterCount = 0; # populated after load by __populateCounts()
@@ -493,6 +513,9 @@ sub getSentiment {
 		$text = do { local $/; <$fh> };
 		$fh = undef;
 	}
+
+	return __neutralSentiment($translation)
+	    if ($translation eq 'pickthall' && !defined($text));
 
 	my $data = decode_json($text);
 	die("Sentiment data for $translation is incomplete") unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == 31_102);
