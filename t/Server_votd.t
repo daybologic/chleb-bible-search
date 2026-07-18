@@ -908,6 +908,26 @@ sub testHtmlNavigationKeepsAllTranslations {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlNavigationPersistsExpandedState {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+	});
+
+	like($html, qr{var moreNavigationCookieName = 'moreNavigation';}, 'HTML uses a navigation-state cookie');
+	like($html, qr{moreNavigation\.open = readCookie\(moreNavigationCookieName\) === 'true';}, 'HTML restores the navigation state from the cookie');
+	like($html, qr{writeCookie\(moreNavigationCookieName, moreNavigation\.open \? 'true' : 'false'\);}, 'HTML saves the navigation state to the cookie');
+	like($html, qr{summary\.textContent = moreNavigation\.open \? 'Less navigation' : 'More navigation';}, 'HTML updates the navigation label when toggled');
+
+	return EXIT_SUCCESS;
+}
+
 sub testHtmlSortsTranslations {
 	my ($self) = @_;
 	plan tests => 1;
