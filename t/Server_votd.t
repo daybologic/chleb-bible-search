@@ -498,7 +498,7 @@ sub testV2_translations_kjv_asv {
 
 	my $when = '2024-10-30T21:36:26+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['kjv', 'asv'] });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['asv', 'kjv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -897,6 +897,44 @@ sub testHtmlNavigationKeepsAllTranslations {
 	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/7\?translations=all">prev verse</a>}, 'previous verse keeps all translations');
 	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/9\?translations=all">next verse</a>}, 'next verse keeps all translations');
 	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/8\?translations=all">permalink</a>}, 'permalink keeps all translations');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlSortsTranslations {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => ['all'],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv', 'kjv' ], 'VOTD HTML sorts translations lexically');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlPreservesExplicitTranslationOrder {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => ['kjv', 'asv'],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'kjv', 'asv' ], 'VOTD HTML preserves explicit translation order');
 
 	return EXIT_SUCCESS;
 }
