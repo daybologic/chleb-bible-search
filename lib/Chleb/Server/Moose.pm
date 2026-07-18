@@ -364,7 +364,8 @@ sub __isJsonContentType {
 	);
 }
 
-sub __lookup {
+# Called by the Dancer2 routing layer.
+sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
@@ -441,7 +442,8 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 =cut
 
-sub __random {
+# Called by the Dancer2 routing layer.
+sub __random { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
 	my $version = __versionFilter($params->{version}, 1, 2);
@@ -526,7 +528,8 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 =cut
 
-sub __votd {
+# Called by the Dancer2 routing layer.
+sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
 	my $version = $params->{version} || 1;
@@ -618,7 +621,8 @@ L<https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search>.
 
 =cut
 
-sub __ping {
+# Called by the Dancer2 routing layer.
+sub __ping { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 	$params ||= {};
 	my %hash = __makeJsonApi();
@@ -675,7 +679,8 @@ disabled by the server administrator, or potentially, for any other reason.
 
 =cut
 
-sub __version {
+# Called by the Dancer2 routing layer.
+sub __version { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 	$params ||= {};
 	my %hash = __makeJsonApi();
@@ -781,7 +786,8 @@ Returns a C<JSON:API> structure suitable for returning the server uptime.
 
 =cut
 
-sub __uptime {
+# Called by the Dancer2 routing layer.
+sub __uptime { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 	$params ||= {};
 	my %hash = __makeJsonApi();
@@ -863,7 +869,8 @@ The text the user is searching for (critereon).
 
 =cut
 
-sub __search {
+# Called by the Dancer2 routing layer.
+sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $search) = @_;
 
 	my $limit = __searchLimit($search->{limit});
@@ -1112,7 +1119,8 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 =cut
 
-sub __info {
+# Called by the Dancer2 routing layer.
+sub __info { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
 	my $startTiming = Time::HiRes::time();

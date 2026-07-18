@@ -198,7 +198,8 @@ short-lived key.
 
 =cut
 
-sub __makeAvailable {
+# Invoked by Moose as the lazy builder for the __available attribute.
+sub __makeAvailable { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	return 0 unless ($self->__client());
@@ -234,7 +235,8 @@ fallback warning if the module or client cannot be created.
 
 =cut
 
-sub __makeClient {
+# Invoked by Moose as the lazy builder for the __clientObject attribute.
+sub __makeClient { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $evalOk1; $evalOk1 = eval {
@@ -335,7 +337,8 @@ uses C<chleb:dampen> when the setting is absent.
 
 =cut
 
-sub __makePrefix {
+# Invoked by Moose as the lazy builder for the __prefix attribute.
+sub __makePrefix { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my $config = $self->dic->config->get('rate_limit', 'backend_memcached', {});
 	return $config->{prefix} // 'chleb:dampen';

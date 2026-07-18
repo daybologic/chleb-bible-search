@@ -224,7 +224,8 @@ Unknown backends are logged and treated as C<memory>.
 
 =cut
 
-sub __makeSharedStore {
+# Invoked by Moose as the lazy builder for the __sharedStore attribute.
+sub __makeSharedStore { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $backend = $self->dic->config->get('rate_limit', 'backend', 'memory');

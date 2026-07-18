@@ -151,7 +151,8 @@ file list from C<__configPaths> and recursively merges each file that exists.
 
 =cut
 
-sub __makeData {
+# Invoked by Moose as the lazy builder for the __data attribute.
+sub __makeData { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my $data = { };
 

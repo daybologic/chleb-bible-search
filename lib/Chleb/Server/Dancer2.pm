@@ -72,7 +72,7 @@ sub _cookie {
 	return cookie(@args);
 }
 
-sub _request {
+sub _request { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my (@args) = @_;
 	return request(@args);
 }

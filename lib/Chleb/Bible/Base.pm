@@ -49,7 +49,8 @@ sub __makeDIContainer {
 	return Chleb::DI::Container->instance;
 }
 
-sub _resolveISO8601 {
+# Used by Chleb and Base tests through inherited private dispatch.
+sub _resolveISO8601 { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $iso8601) = @_;
 
 	$iso8601 ||= DateTime->now; # The default is the current time

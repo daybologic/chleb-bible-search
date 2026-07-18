@@ -105,7 +105,8 @@ sub _generate { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	return $sha->add($PID, $time, rand($time))->hexdigest;
 }
 
-sub _makeShortValue {
+# Invoked by Moose as the lazy builder for the shortValue attribute.
+sub _makeShortValue { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return substr($self->value, 0, 12);
 }

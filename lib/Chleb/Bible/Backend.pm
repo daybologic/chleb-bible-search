@@ -779,7 +779,8 @@ exist, cannot be read, or is stale for this code's cache format.
 
 =cut
 
-sub __makeSharedCache {
+# Invoked by Moose as the lazy builder for the __sharedCache attribute.
+sub __makeSharedCache { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return $self->__withSharedCacheLock(LOCK_SH, sub {
 		return $self->__readSharedCacheFile();
@@ -793,7 +794,8 @@ directory.
 
 =cut
 
-sub __makeSharedCachePath {
+# Invoked by Moose as the lazy builder for the __sharedCachePath attribute.
+sub __makeSharedCachePath { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return join('/', $self->cacheDir, $SHARED_CACHE_FILE);
 }
