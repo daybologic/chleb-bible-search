@@ -264,7 +264,7 @@ sub __decode {
 
 	my $header = $self->__json->decode($self->__base64urlDecode($encodedHeader));
 	croak('JWT algorithm mismatch') unless ($header->{alg} eq $ALGORITHM);
-	croak('JWT type mismatch') unless (!defined($header->{typ}) || $header->{typ} eq $TYPE);
+	croak('JWT type mismatch') if (defined($header->{typ}) && $header->{typ} ne $TYPE);
 
 	my $payload = $self->__json->decode($self->__base64urlDecode($encodedPayload));
 	croak('JWT missing iat') unless (defined($payload->{iat}));
