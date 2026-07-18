@@ -1574,7 +1574,8 @@ sub __verseHtmlData {
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
 		my $bookName = $attributes->{book};
-		my $bookNameRaw = $rawBookNameMap{$bookName};
+		my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
+		my $bookNameRaw = $rawBookNameMap{$bookName} // $thisVerse->book->shortNameRaw;
 		my $chapter = $attributes->{chapter};
 		my $verseOrdinal = $attributes->{ordinal};
 		my $translation = $attributes->{translation};
@@ -1589,6 +1590,7 @@ sub __verseHtmlData {
 				emotion => $attributes->{emotion},
 				html => '',
 				last_continues => 0,
+				reference => sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal),
 				tones => [],
 				verse_count => 0,
 			};
@@ -1605,7 +1607,6 @@ sub __verseHtmlData {
 
 		$section->{html} .= $attributes->{text};
 
-		my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
 		$section->{last_continues} = $thisVerse->continues ? 1 : 0;
 		foreach my $tone (@{ $attributes->{tones} }) {
 			push(@{ $section->{tones} }, $tone);
@@ -1644,7 +1645,7 @@ sub __verseHtmlCards {
 		$output .= "\t\t\t\t\t\t<div class=\"card\">\n";
 		$output .= "\t\t\t\t\t\t\t<div class=\"subtitle\">$pageTitle</div>\n";
 		$output .= "\n";
-		$output .= "\t\t\t\t\t\t\t<h1>$data->{reference}</h1>\n";
+		$output .= "\t\t\t\t\t\t\t<h1>$section->{reference}</h1>\n";
 		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translation</div>\n";
 		$output .= "\n";
 		$output .= "\t\t\t\t\t\t\t<div>\n";

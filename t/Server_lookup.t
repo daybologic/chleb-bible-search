@@ -414,6 +414,28 @@ sub testHtmlPreservesReversedTranslationInput {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlUsesEachTranslationReference {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @verse = (
+		$self->sut->__library->fetch('Genesis', 1, 1, { translations => ['kjv'] }),
+		$self->sut->__library->fetch('Quran', 1, 1, { translations => ['pickthall'] }),
+	);
+	my $cache = { };
+	my @json = map {
+		Chleb::Server::Moose::__verseToJsonApi($_, { translations => ['all'] }, $cache)
+	} @verse;
+	push(@{ $json[0]->{data} }, $json[1]->{data}->[0]);
+
+	my $html = $self->sut->__verseToHtml(\@verse, \@json, 3);
+	my @references = $html =~ m{<h1>([^<]+)</h1>}g;
+
+	is_deeply(\@references, [ 'Gen 1:1', 'Quran 1:1' ], 'HTML uses each translation reference');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
