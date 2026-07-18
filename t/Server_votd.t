@@ -901,6 +901,25 @@ sub testHtmlNavigationKeepsAllTranslations {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlSortsTranslations {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => ['all'],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv', 'kjv' ], 'VOTD HTML sorts translations lexically');
+
+	return EXIT_SUCCESS;
+}
+
 sub testRedirectV2 {
 	my ($self) = @_;
 
