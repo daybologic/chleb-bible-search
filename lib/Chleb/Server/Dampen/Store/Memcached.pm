@@ -157,7 +157,7 @@ sub dampenSession {
 	return $count > $maxRequests ? 1 : 0;
 }
 
-=item C<dampenChurn($ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit)>
+=item C<dampenChurn($args)>
 
 Applies the session-token churn limit for an IP address.  Distinct token values
 are tracked with C<add>, and a separate counter records how many unique tokens
@@ -169,7 +169,9 @@ allowed, or C<undef> when the shared store is unavailable.
 =cut
 
 sub dampenChurn {
-	my ($self, $ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit) = @_;
+	my ($self, $args) = @_;
+	my ($ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit) =
+		@{$args}{qw(ipAddress tokenValue currentTime churnWindow churnLimit)};
 	return unless ($self->available);
 
 	my $bucket = int($currentTime / $churnWindow);

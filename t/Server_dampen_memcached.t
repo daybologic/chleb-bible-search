@@ -165,10 +165,10 @@ sub testChurnCounter {
 		client => FakeMemcached->new({}),
 	});
 
-	is($store->dampenChurn('192.0.2.2', 'token-1', 2_000_000_000, 300, 2), 0, 'first distinct token is allowed');
-	is($store->dampenChurn('192.0.2.2', 'token-2', 2_000_000_000, 300, 2), 0, 'second distinct token is allowed');
-	is($store->dampenChurn('192.0.2.2', 'token-2', 2_000_000_000, 300, 2), 0, 'repeat token is not counted again');
-	is($store->dampenChurn('192.0.2.2', 'token-3', 2_000_000_000, 300, 2), 1, 'third distinct token is denied');
+	is($store->dampenChurn({ ipAddress => '192.0.2.2', tokenValue => 'token-1', currentTime => 2_000_000_000, churnWindow => 300, churnLimit => 2 }), 0, 'first distinct token is allowed');
+	is($store->dampenChurn({ ipAddress => '192.0.2.2', tokenValue => 'token-2', currentTime => 2_000_000_000, churnWindow => 300, churnLimit => 2 }), 0, 'second distinct token is allowed');
+	is($store->dampenChurn({ ipAddress => '192.0.2.2', tokenValue => 'token-2', currentTime => 2_000_000_000, churnWindow => 300, churnLimit => 2 }), 0, 'repeat token is not counted again');
+	is($store->dampenChurn({ ipAddress => '192.0.2.2', tokenValue => 'token-3', currentTime => 2_000_000_000, churnWindow => 300, churnLimit => 2 }), 1, 'third distinct token is denied');
 
 	return EXIT_SUCCESS;
 }

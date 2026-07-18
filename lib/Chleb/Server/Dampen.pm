@@ -180,7 +180,13 @@ sub dampenChurn {
 	my $churnLimit  = $self->dic->config->get('rate_limit', 'session_churn_limit',          10);
 	my $currentTime = $self->dic->time->get();
 
-	if ($self->__checkStore('dampenChurn', $ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit)) {
+	if ($self->__checkStore('dampenChurn', {
+		ipAddress    => $ipAddress,
+		tokenValue   => $tokenValue,
+		currentTime  => $currentTime,
+		churnWindow  => $churnWindow,
+		churnLimit   => $churnLimit,
+	})) {
 		$self->dic->logger->warn(sprintf(
 			'IP %s burned through more than %d session tokens in %ds, denying',
 			$ipAddress, $churnLimit, $churnWindow,
