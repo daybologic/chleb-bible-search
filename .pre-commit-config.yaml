@@ -6,6 +6,11 @@ repos:
         entry: bin/git/hooks/run-trap-goose.sh
         language: system
         pass_filenames: false
+      - id: text-final-newline
+        name: text files end with newline
+        entry: bin/git/hooks/run-text-final-newline.sh
+        language: system
+        types: [text]
       - id: run-perlcritic
         name: perlcritic
         entry: bin/git/hooks/run-perlcritic.sh

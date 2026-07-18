@@ -30,6 +30,7 @@
 
 package Chleb::Bible::Base;
 use Moose;
+use Carp qw(croak);
 
 use Chleb::DI::Container;
 
@@ -57,7 +58,7 @@ sub _resolveISO8601 {
 			$self->dic->logger->error('NULL in _resolveISO8601!') unless (defined($iso8601));
 			return $iso8601;
 		} else {
-			die('Unsupported blessed time format');
+			croak('Unsupported blessed time format');
 		}
 	}
 
@@ -71,7 +72,7 @@ sub _resolveISO8601 {
 	} or $evalOk1 = 0;
 
 	if (!$evalOk1 || (my $evalError = $EVAL_ERROR)) {
-		die('Unsupported ISO-8601 time format: ' . $evalError);
+		croak('Unsupported ISO-8601 time format: ' . $evalError);
 	}
 
 	$self->dic->logger->error('NULL in _resolveISO8601!') unless (defined($iso8601));

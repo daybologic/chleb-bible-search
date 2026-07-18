@@ -1,6 +1,7 @@
 package Chleb::Utils;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -109,9 +110,9 @@ sub forceArray {
 
 	my $noObjects = sub {
 		my ($item) = @_;
-		die('no blessed object support') if (blessed($item));
-		die('no CODE support') if (ref($item) eq 'CODE');
-		die('no HASH support') if (ref($item) eq 'HASH');
+		croak('no blessed object support') if (blessed($item));
+		croak('no CODE support') if (ref($item) eq 'CODE');
+		croak('no HASH support') if (ref($item) eq 'HASH');
 	};
 
 	my @output = ( );
@@ -150,10 +151,10 @@ sub removeArrayEmptyItems {
 
 	return [ ] unless (defined($arrayRef));
 
-	die('no blessed object support') if (blessed($arrayRef));
-	die('no CODE support') if (ref($arrayRef) eq 'CODE');
-	die('no HASH support') if (ref($arrayRef) eq 'HASH');
-	die('$arrayRef must be an ARRAY ref') if (ref($arrayRef) ne 'ARRAY');
+	croak('no blessed object support') if (blessed($arrayRef));
+	croak('no CODE support') if (ref($arrayRef) eq 'CODE');
+	croak('no HASH support') if (ref($arrayRef) eq 'HASH');
+	croak('$arrayRef must be an ARRAY ref') if (ref($arrayRef) ne 'ARRAY');
 
 	my @filtered = ( );
 	my $filteredCount = 0;
@@ -246,7 +247,7 @@ sub boolean {
 		if ($isTrue->($defaultValue)) {
 			$defaultValueReturned = 1;
 		} elsif (!$isFalse->($defaultValue)) {
-			die(Chleb::Utils::BooleanParserSystemException->raise(
+			croak(Chleb::Utils::BooleanParserSystemException->raise(
 				undef,
 				"Illegal default value: '$defaultValue' for key '$key'",
 				$key,
@@ -269,7 +270,7 @@ sub boolean {
 			return 1 if ($isTrue->($value));
 			return 0 if ($isFalse->($value));
 
-			die(Chleb::Utils::BooleanParserUserException->raise(
+			croak(Chleb::Utils::BooleanParserUserException->raise(
 				undef,
 				"Illegal user-supplied value: '$value' for key '$key'",
 				$key,
@@ -281,7 +282,7 @@ sub boolean {
 
 	return $defaultValueReturned if (defined($defaultValue)); # Apply default, if supplied/available
 
-	die(Chleb::Utils::BooleanParserUserException->raise(
+	croak(Chleb::Utils::BooleanParserUserException->raise(
 		undef,
 		"Mandatory value for key '$key' not supplied",
 		$key,
@@ -295,13 +296,13 @@ sub boolean {
 sub parseIntoType {
 	my ($outputType, $name, $value, $default) = @_;
 
-	die(Chleb::Utils::TypeParserException->raise(
+	croak(Chleb::Utils::TypeParserException->raise(
 		HTTP_INTERNAL_SERVER_ERROR,
 		'No name supplied in call to parseIntoType()',
 		undef,
 	)) if (!defined($name) || length($name) == 0);
 
-	die(Chleb::Utils::TypeParserException->raise(
+	croak(Chleb::Utils::TypeParserException->raise(
 		HTTP_INTERNAL_SERVER_ERROR,
 		sprintf("No default value supplied for '%s'", $name),
 		$name,
@@ -317,7 +318,7 @@ sub parseIntoType {
 		1;
 	} or $evalOk1 = 0;
 	if (my $evalError = $EVAL_ERROR) {
-		die(Chleb::Utils::TypeParserException->raise(
+		croak(Chleb::Utils::TypeParserException->raise(
 			undef,
 			sprintf("Illegal value '%s' for '%s'", $value, $name),
 			$name,

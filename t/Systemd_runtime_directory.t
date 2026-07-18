@@ -32,6 +32,7 @@
 package main;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
@@ -40,7 +41,7 @@ my $runtimeDirectory = 'chleb-bible-search';
 my $servicePath = 'etc/chleb-bible-search.service';
 my $dirsPath = 'debian/chleb-bible-search-core.dirs';
 
-open(my $fh, '<', $servicePath) or die("Cannot open $servicePath: $!");
+open(my $fh, '<', $servicePath) or croak("Cannot open $servicePath: $!");
 my @lines = <$fh>;
 close($fh);
 
@@ -55,7 +56,7 @@ is_deeply(
 	"systemd creates /run/$runtimeDirectory for the FastCGI socket"
 );
 
-open($fh, '<', $dirsPath) or die("Cannot open $dirsPath: $!");
+open($fh, '<', $dirsPath) or croak("Cannot open $dirsPath: $!");
 @lines = <$fh>;
 close($fh);
 

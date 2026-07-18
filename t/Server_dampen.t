@@ -32,6 +32,7 @@
 package DampenServerTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -55,7 +56,7 @@ sub setUp {
 	}
 
 	my $dir = tempdir(CLEANUP => 1);
-	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
+	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
 	print {$fh} <<'EOF';
 rate_limit:
   backend: memory
@@ -64,7 +65,7 @@ rate_limit:
   session_churn_window_seconds: 300
   session_churn_limit: 10
 EOF
-	close($fh) or die("close $dir/main.yaml: $!");
+	close($fh) or croak("close $dir/main.yaml: $!");
 
 	my $dic = Chleb::DI::Container->instance;
 	$dic->config(Chleb::DI::Config->new({ dic => $dic, path => $dir }));

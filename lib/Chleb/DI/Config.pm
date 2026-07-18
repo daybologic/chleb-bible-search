@@ -31,6 +31,7 @@
 package Chleb::DI::Config;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Bible::Base';
@@ -94,11 +95,11 @@ sub BUILD {
 	my ($self) = @_;
 
 	if (!-d $self->path) {
-		die("Config path is not a directory: " . $self->path);
+		croak("Config path is not a directory: " . $self->path);
 	}
 
 	if (!-e $self->path . '/main.yaml') {
-		die("No config available (" . $self->path . '/main.yaml)');
+		croak("No config available (" . $self->path . '/main.yaml)');
 	}
 
 	return;

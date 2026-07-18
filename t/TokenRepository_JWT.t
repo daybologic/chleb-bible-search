@@ -32,6 +32,7 @@
 package TokenRepository_JWTTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
@@ -60,14 +61,14 @@ sub setUp {
 
 	my $dir = tempdir(CLEANUP => 1);
 	make_path($dir);
-	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
+	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
 	print {$fh} <<'EOF';
 session_tokens:
   backend_jwt:
     secret: unit-test-secret
   ttl: 1800
 EOF
-	close($fh) or die("close $dir/main.yaml: $!");
+	close($fh) or croak("close $dir/main.yaml: $!");
 
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));

@@ -32,6 +32,7 @@ package Chleb::Server::MediaType;
 use Moose;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -135,19 +136,19 @@ sub parseAcceptHeader {
 		if (my $evalError = $EVAL_ERROR) {
 			if (my $className = blessed($evalError)) {
 				if ($className eq 'Moose::Exception::ValidationFailedForTypeConstraint') {
-					die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, __extractMessageFromMooseException($evalError))
+					croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, __extractMessageFromMooseException($evalError)));
 				} elsif ($evalError->isa('Chleb::Exception')) {
-					die($evalError);
+					croak($evalError);
 				} else {
-					die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, $className);
+					croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, $className));
 				}
 			} else { # older Moose versions
 				chomp($evalError);
-				die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Accept: ${evalError}");
+				croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Accept: ${evalError}"));
 			}
 		}
 
-		die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: wildcard misused')
+		croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: wildcard misused'))
 		    if ($items[-1]->major eq '*' && $items[-1]->minor ne '*');
 	}
 

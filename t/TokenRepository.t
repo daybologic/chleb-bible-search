@@ -32,6 +32,7 @@
 package TokenRepositoryTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
@@ -144,9 +145,9 @@ sub testRedisFastPreferredWhenAvailable {
 sub __writeFile {
 	my ($path, $content) = @_;
 
-	open(my $fh, '>', $path) or die("open $path: $ERRNO");
+	open(my $fh, '>', $path) or croak("open $path: $ERRNO");
 	print $fh $content;
-	close($fh) or die("close $path: $ERRNO");
+	close($fh) or croak("close $path: $ERRNO");
 
 	return;
 }

@@ -32,6 +32,7 @@
 package Chleb::Server::Dancer2;
 use strict;
 use warnings;
+use Carp qw(croak);
 use utf8;
 binmode STDOUT, ":encoding(UTF-8)";
 use Dancer2 0.2;
@@ -341,7 +342,7 @@ sub serveStaticPage {
 }
 
 sub __configSetPublicDir {
-	die('Moose server must be initialized') unless ($server);
+	croak('Moose server must be initialized') unless ($server);
 	set public_dir => $server->dic->config->get('Dancer2', 'public_dir', 'data/static/public');
 	return;
 }

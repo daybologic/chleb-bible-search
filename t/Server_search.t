@@ -32,6 +32,7 @@
 package SearchServerTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -553,7 +554,7 @@ sub __resultsSummary {
 		return $included->{attributes} if ($included->{type} eq 'results_summary');
 	}
 
-	die('results summary not found');
+	croak('results summary not found');
 }
 
 __PACKAGE__->meta->make_immutable;

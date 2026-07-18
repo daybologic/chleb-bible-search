@@ -32,6 +32,7 @@
 package UtilsRemoveArrayEmptyItemsTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
@@ -47,7 +48,7 @@ use Test::Exception;
 use Test::More 0.96;
 
 my $uncallable = sub {
-	die('CODE was executed!');
+	croak('CODE was executed!');
 };
 
 sub testNothing {

@@ -31,6 +31,7 @@
 package Chleb::Token::Repository::DB::Dynamo;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Token::Repository::Base';
@@ -62,7 +63,7 @@ sub load {
 	my $data;
 
 	if (my $evalError = $EVAL_ERROR || !$data) {
-		die Chleb::Exception->raise(HTTP_FORBIDDEN, 'Token not recognized via ' . __PACKAGE__);
+		croak(Chleb::Exception->raise(HTTP_FORBIDDEN, 'Token not recognized via ' . __PACKAGE__));
 		# TODO logger?
 	}
 
@@ -87,7 +88,7 @@ sub save {
 		$self->dic->logger->error(sprintf("Failed to store %s in %s to '%s': %s",
 		    $token->toString(), __PACKAGE__, $filePath, $evalError));
 
-		die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token');
+		croak(Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token'));
 	}
 
 	return;

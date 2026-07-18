@@ -31,6 +31,7 @@
 package Chleb::Bible::Search::Query;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 use Moose::Util::TypeConstraints;
 
@@ -103,7 +104,7 @@ sub run {
 	my $evalError = $EVAL_ERROR;
 	$backend->deferSharedCacheWrites(0);
 	$backend->flushSharedCache();
-	die($evalError) if ($evalError);
+	croak($evalError) if ($evalError);
 
 	splice(@verses, $self->limit);
 

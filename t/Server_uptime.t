@@ -32,6 +32,7 @@
 package UptimeServerTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -135,12 +136,12 @@ sub testUptimeConfiguredFile {
 
 	my $dir = tempdir(CLEANUP => 1);
 	my $path = "$dir/startup.txt";
-	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
+	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
 	print {$fh} <<EOF;
 server:
   uptime_file: $path
 EOF
-	close($fh) or die("close $dir/main.yaml: $!");
+	close($fh) or croak("close $dir/main.yaml: $!");
 
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));
 	$self->dic->time->set(2_000_000_000);
@@ -153,9 +154,9 @@ EOF
 
 	my $before = $self->dic->time->get();
 	{
-		open($fh, '>', $path) or die("open $path: $!");
+		open($fh, '>', $path) or croak("open $path: $!");
 		print {$fh} $before - 42 . "\n";
-		close($fh) or die("close $path: $!");
+		close($fh) or croak("close $path: $!");
 	}
 
 	my $uptime = $sut->__getUptime();

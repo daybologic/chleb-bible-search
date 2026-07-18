@@ -31,6 +31,7 @@
 package Chleb::Token::Repository;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Bible::Base';
@@ -45,7 +46,7 @@ use HTTP::Status qw(:constants);
 sub repo {
 	my ($self, $name) = @_;
 
-	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be specified')
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be specified'))
 	    unless (defined($name));
 
 	my %repositories = (
@@ -58,13 +59,13 @@ sub repo {
 	if (exists $repositories{$name}) {
 		if ($name eq 'Redis') {
 			eval { require Chleb::Token::Repository::Redis; 1 } or
-			    die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "Failed to load ${name}: ${EVAL_ERROR}");
+			    croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "Failed to load ${name}: ${EVAL_ERROR}"));
 		}
 		my $class = $repositories{$name};
 		return $class->new(repo => $self);
 	}
 
-	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "'${name}' is not a known token repository backend");
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "'${name}' is not a known token repository backend"));
 }
 
 sub create {
@@ -76,7 +77,7 @@ sub create {
 		$token = $backend->create();
 	}
 
-	die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "No configured backend within '$keyName' created a token")
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "No configured backend within '$keyName' created a token"))
 	    unless ($token);
 
 	return $token;
@@ -92,7 +93,7 @@ sub load {
 		$self->dic->logger->debug("Session token '$tokenValue' not found via " . $backend->toString());
 	}
 
-	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Session token '$tokenValue' not found")
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Session token '$tokenValue' not found"))
 	    unless ($token);
 
 	return $token;
@@ -128,8 +129,8 @@ sub __backendNames {
 		if ($backendName =~ m{ ^(\w+)$ }x) {
 			push(@backendNames, $backendName);
 		} else {
-			die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be a single word: "'
-			    . $backendName . '"');
+			croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Backend name must be a single word: "'
+			    . $backendName . '"'));
 		}
 	}
 

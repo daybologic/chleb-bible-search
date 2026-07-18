@@ -32,6 +32,7 @@
 package ConfigGetTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -233,9 +234,9 @@ YAML
 sub __writeConfigFile {
 	my ($path, $content) = @_;
 
-	open(my $fh, '>', $path) or die("open $path: $ERRNO");
-	print {$fh} $content or die("print $path: $ERRNO");
-	close($fh) or die("close $path: $ERRNO");
+	open(my $fh, '>', $path) or croak("open $path: $ERRNO");
+	print {$fh} $content or croak("print $path: $ERRNO");
+	close($fh) or croak("close $path: $ERRNO");
 
 	return;
 }

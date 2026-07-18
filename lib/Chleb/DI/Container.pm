@@ -31,6 +31,7 @@
 package Chleb::DI::Container;
 use MooseX::Singleton;
 use Moose;
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -202,7 +203,7 @@ sub _makeConfig {
 		return Chleb::DI::Config->new({ dic => $self, path => $dirName });
 	}
 
-	die("No config available ($configFileName)");
+	croak("No config available ($configFileName)");
 }
 
 =item C<_makeExclusions()>

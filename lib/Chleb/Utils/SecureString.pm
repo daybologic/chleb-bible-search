@@ -1,6 +1,7 @@
 package Chleb::Utils::SecureString;
 use strict;
 use warnings;
+use Carp qw(croak);
 use utf8;
 
 =head1 NAME
@@ -226,10 +227,10 @@ sub __checkMode {
 		return $mode if (($mode & $checkMode) == $checkMode);
 	}
 
-	return die Chleb::Exception->raise(
+	return croak(Chleb::Exception->raise(
 		HTTP_INTERNAL_SERVER_ERROR,
 		"Illegal mode $mode in call to Chleb::Utils::SecureString/detaint",
-	);
+	));
 }
 
 =item C<__detaint($value, $mode, $name)>
@@ -244,7 +245,7 @@ sub __detaint {
 	$name = '$value' unless (defined($name));
 
 	if (!defined($value)) {
-		die(Chleb::Utils::TypeParserException->raise(
+		croak(Chleb::Utils::TypeParserException->raise(
 			undef,
 			sprintf(
 				"$name (<undef>) in call to %s/detaint, should be a %s or scalar (Str)",
@@ -257,7 +258,7 @@ sub __detaint {
 			return $value unless ($value->tainted); # shortcut because we know it's safe
 			$value = $value->value;
 		} else {
-			die(Chleb::Utils::TypeParserException->raise(
+			croak(Chleb::Utils::TypeParserException->raise(
 				undef,
 				sprintf(
 					"Wrong $name ref type (%s) in call to %s/detaint, should be a %s or scalar (Str)",
@@ -269,7 +270,7 @@ sub __detaint {
 	}
 
 	if (length($value) > $MAX_TEXT_LENGTH) {
-		die(Chleb::Utils::TypeParserException->raise(
+		croak(Chleb::Utils::TypeParserException->raise(
 			undef,
 			sprintf(
 				'%s exceeds maximum length (%d/%d)',
@@ -312,7 +313,7 @@ sub __detaint {
 			if ($mode & $MODE_PERMIT) {
 				$stripped = 1; # drop character silently
 			} else {
-				die Chleb::Utils::TypeParserException->raise(
+				croak(Chleb::Utils::TypeParserException->raise(
 					undef,
 					sprintf(
 						'%s contains illegal character 0x%x at position %d of %d',
@@ -322,7 +323,7 @@ sub __detaint {
 						scalar(@chars),
 					),
 					$value,
-				);
+				));
 			}
 		}
 	}

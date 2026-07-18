@@ -32,6 +32,7 @@ package Chleb::Server::MediaType::Item;
 use Moose;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 use HTTP::Status qw(:constants);
 
@@ -126,12 +127,12 @@ including zero, if not we die with a L<Chleb::Exception>.
 sub __triggerWeight {
 	my ($self) = @_;
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, sprintf("Accept: negative qValue, %.3f", $self->weight))
+	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, sprintf("Accept: negative qValue, %.3f", $self->weight)))
 	    if ($self->weight < 0);
 
 	my (undef, $mantissa) = split(m{ \. }x, $self->weight);
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: weight (qValue) precisions are limited to 3 digits')
+	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Accept: weight (qValue) precisions are limited to 3 digits'))
 	    if (defined($mantissa) && length($mantissa) > 3);
 
 	return;

@@ -32,6 +32,7 @@
 package BackendSharedCacheStorableTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -60,11 +61,11 @@ sub setUp {
 	$self->{__original_cwd} = getcwd();
 
 	my $root = tempdir(CLEANUP => 1);
-	mkdir($root . '/data') or die("mkdir $root/data failed: $ERRNO");
-	mkdir($root . '/cache') or die("mkdir $root/cache failed: $ERRNO");
+	mkdir($root . '/data') or croak("mkdir $root/data failed: $ERRNO");
+	mkdir($root . '/cache') or croak("mkdir $root/cache failed: $ERRNO");
 	$self->root($root);
 	$self->__makeSourceFile($self->__sourcePath(), ['kjv']);
-	chdir($root) or die("chdir $root failed: $ERRNO");
+	chdir($root) or croak("chdir $root failed: $ERRNO");
 
 	Chleb::DI::Container->instance->logger(Chleb::DI::MockLogger->new());
 	$self->sut($self->__makeBackend('kjv'));
@@ -140,7 +141,7 @@ sub testStaleSourceMetadataInvalidatesTranslation {
 		'value is available before source metadata changes');
 
 	my $future = time() + 60;
-	utime($future, $future, $self->__sourcePath()) or die("utime failed: $ERRNO");
+	utime($future, $future, $self->__sourcePath()) or croak("utime failed: $ERRNO");
 	is($self->__makeBackend('kjv')->__sharedCacheGet('unit', 'stale'), undef,
 		'value is ignored after source metadata changes');
 
@@ -151,9 +152,9 @@ sub testCorruptSharedCacheIsIgnored {
 	my ($self) = @_;
 	plan tests => 2;
 
-	open(my $fh, '>', $self->__sharedCachePath()) or die("open shared cache failed: $ERRNO");
+	open(my $fh, '>', $self->__sharedCachePath()) or croak("open shared cache failed: $ERRNO");
 	print {$fh} "not a storable file\n";
-	close($fh) or die("close shared cache failed: $ERRNO");
+	close($fh) or croak("close shared cache failed: $ERRNO");
 
 	my $backend = $self->__makeBackend('kjv');
 	is($backend->__sharedCacheGet('unit', 'missing'), undef, 'corrupt shared cache is ignored');
@@ -201,8 +202,8 @@ sub __makeSourceFile {
 	}
 	$dbh->disconnect();
 
-	gzip($sqlitePath => $path) or die("gzip failed: $GzipError");
-	unlink($sqlitePath) or die("unlink $sqlitePath failed: $ERRNO");
+	gzip($sqlitePath => $path) or croak("gzip failed: $GzipError");
+	unlink($sqlitePath) or croak("unlink $sqlitePath failed: $ERRNO");
 
 	return;
 }

@@ -32,6 +32,7 @@
 package FakeMemcached;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 sub new {
 	my ($class, $args) = @_;
@@ -112,13 +113,13 @@ sub setUp {
 	my ($self) = @_;
 
 	my $dir = tempdir(CLEANUP => 1);
-	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
+	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
 	print {$fh} <<'EOF';
 rate_limit:
   backend_memcached:
     prefix: test:dampen
 EOF
-	close($fh) or die("close $dir/main.yaml: $!");
+	close($fh) or croak("close $dir/main.yaml: $!");
 
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));

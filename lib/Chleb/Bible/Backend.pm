@@ -31,6 +31,7 @@
 package Chleb::Bible::Backend;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Bible::Base';
@@ -226,7 +227,7 @@ sub BUILD {
 	my ($self) = @_;
 
 	if ($self->__fsck() != EXIT_SUCCESS) {
-		die(sprintf("'%s' is corrupt or otherwise cannot be handled", $self->cachePath));
+		croak(sprintf("'%s' is corrupt or otherwise cannot be handled", $self->cachePath));
 	}
 
 	return;
@@ -919,9 +920,9 @@ sub __writeSharedCacheFile {
 		binmode($tempHandle, ':raw');
 		nstore_fd($cache, $tempHandle);
 		$tempHandle->flush() if ($tempHandle->can('flush'));
-		$tempHandle->sync() or die("sync failed: $ERRNO");
-		close($tempHandle) or die("close($tempPath) failed: $ERRNO");
-		rename($tempPath, $path) or die("rename($tempPath -> $path) failed: $ERRNO");
+		$tempHandle->sync() or croak("sync failed: $ERRNO");
+		close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
+		rename($tempPath, $path) or croak("rename($tempPath -> $path) failed: $ERRNO");
 		1;
 	} or $evalOk3 = 0;
 	if (my $evalError = $EVAL_ERROR) {
@@ -1089,7 +1090,7 @@ sub __makeCacheDir {
 		return $path if (-d $path);
 	}
 
-	die('No cache dir available');
+	croak('No cache dir available');
 }
 
 sub __bibleFileName {

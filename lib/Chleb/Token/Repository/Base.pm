@@ -31,6 +31,7 @@
 package Chleb::Token::Repository::Base;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Bible::Base';
@@ -45,15 +46,15 @@ has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, lazy 
 has _ttl => (is => 'ro', isa => 'Int', required => 1, lazy => 1, default => \&__makeTtl);
 
 sub create {
-	die('create must be overridden');
+	croak('create must be overridden');
 }
 
 sub load {
-	die('load must be overridden');
+	croak('load must be overridden');
 }
 
 sub save {
-	die('save must be overridden');
+	croak('save must be overridden');
 }
 
 sub toString {
@@ -66,7 +67,7 @@ sub _valueValidate {
 	my ($self, $value) = @_;
 	return 1 if ($value =~ m{ ^[0-9a-f]{64}$ }x);
 
-	die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be SHA-256');
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The sessionToken format must be SHA-256'));
 }
 
 sub __makeRepo {

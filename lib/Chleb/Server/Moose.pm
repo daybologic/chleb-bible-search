@@ -32,6 +32,7 @@
 package Chleb::Server::Moose;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 use utf8;
 binmode STDOUT, ":encoding(UTF-8)";
@@ -413,10 +414,10 @@ sub __lookup {
 
 	if (__isJsonContentType($contentType)) {
 		if ($params->{form}) {
-			die Chleb::Exception->raise(
+			croak(Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
 				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-			);
+			));
 		}
 
 		return \@json;
@@ -424,10 +425,10 @@ sub __lookup {
 		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
 }
 
 =item C<__random($params)>
@@ -448,7 +449,7 @@ sub __random {
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
-	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'random redirect is only supported on version 1')
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'random redirect is only supported on version 1'))
 	    if ($redirect && $version > 1);
 
 	my $verse = $self->__library->random($params);
@@ -481,14 +482,14 @@ sub __random {
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 			return $self->__verseToHtml($verse, \@json, $FUNCTION_RANDOM);
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+			croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
 		}
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_TEMPORARY_REDIRECT,
 		'/1/lookup/' . join('/', lc($verse->book->shortName), $verse->chapter->ordinal, $verse->ordinal),
-	) if ($redirect);
+	)) if ($redirect);
 
 	my $json = __verseToJsonApi($verse, $params);
 	$json->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
@@ -499,19 +500,19 @@ sub __random {
 
 	if (__isJsonContentType($contentType)) {
 		if ($params->{form}) {
-			die Chleb::Exception->raise(
+			croak(Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
 				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-			);
+			));
 		}
 
 		return $json;
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
 
 }
 
@@ -533,7 +534,7 @@ sub __votd {
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
-	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1'))
 	    if ($redirect && $version > 1);
 
 	my $verse = $self->__library->votd($params);
@@ -564,10 +565,10 @@ sub __votd {
 
 		if (__isJsonContentType($contentType)) {
 			if ($params->{form}) {
-				die Chleb::Exception->raise(
+				croak(Chleb::Exception->raise(
 					HTTP_BAD_REQUEST,
 					"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-				);
+				));
 			}
 
 			return $json[0];
@@ -576,14 +577,14 @@ sub __votd {
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 			return $self->__verseToHtml($verse, \@json, $FUNCTION_VOTD);
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+			croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
 		}
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_TEMPORARY_REDIRECT,
 		'/1/lookup/' . join('/', lc($verse->book->shortName), $verse->chapter->ordinal, $verse->ordinal),
-	) if ($redirect);
+	)) if ($redirect);
 
 	my $json = __verseToJsonApi($verse, $params);
 	$json->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
@@ -594,19 +595,19 @@ sub __votd {
 
 	if (__isJsonContentType($contentType)) {
 		if ($params->{form}) {
-			die Chleb::Exception->raise(
+			croak(Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
 				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-			);
+			));
 		}
 
 		return $json;
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
 }
 
 =item C<__ping()>
@@ -643,10 +644,10 @@ sub __ping {
 		return __pingToHtml(\%attributes);
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
 }
 
 sub __pingToHtml {
@@ -714,10 +715,10 @@ sub __version {
 		return __versionToHtml(\%attributes);
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
 }
 
 sub __versionToHtml {
@@ -808,7 +809,7 @@ sub __uptime {
 		return __uptimeToHtml($uptime, $uptimeText);
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
 }
 
 sub __uptimeToHtml {
@@ -975,10 +976,10 @@ sub __search {
 
 	if (__isJsonContentType($contentType)) {
 		if ($search->{form}) {
-			die Chleb::Exception->raise(
+			croak(Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
 				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-			);
+			));
 		}
 
 		return (\%hash, \%hash);
@@ -987,7 +988,7 @@ sub __search {
 		return ($html, \%hash);
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
 }
 
 =item C<__searchLimit($limit)>
@@ -1197,7 +1198,7 @@ sub __info {
 		return __infoToHtml(\%hash);
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here');
+	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here'));
 }
 
 =item C<__getUptime()>
@@ -1753,7 +1754,7 @@ sub __linkToVerse {
 
 		foreach my $option (keys(%$options)) {
 			next if ($knownOptions{$option});
-			die('unknown option -- ' . $option);
+			croak('unknown option -- ' . $option);
 		}
 	}
 
@@ -1901,7 +1902,7 @@ sub __versionFilter {
 	my ($version, $minimum, $maximum) = @_;
 
 	$version = int($version);
-	die Chleb::Exception->raise(HTTP_BAD_REQUEST, "endpoint version must be between $minimum and $maximum, you said $version")
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "endpoint version must be between $minimum and $maximum, you said $version"))
 	    if ($version < $minimum || $version > $maximum);
 
 	return $version;
