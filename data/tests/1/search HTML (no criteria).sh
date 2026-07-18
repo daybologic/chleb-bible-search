@@ -35,3 +35,6 @@ page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/sear
 
 grep -q '<button type="button" id="search-home">Home</button>' <<< "$page"
 grep -q "window.location.href = '/';" <<< "$page"
+grep -q '<select id="translations" name="translations">' <<< "$page"
+grep -q '<select id="book" name="book" disabled>' <<< "$page"
+grep -q 'populateBooks' <<< "$page"

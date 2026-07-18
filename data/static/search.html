@@ -11,7 +11,19 @@
 				<input type="hidden" id="wholeword_present" name="wholeword_present" value="true">
 			</div>
 
-			<!-- FIXME: Restore book, testament, translation options -->
+			<div class="form-group">
+				<label for="translations">Translation</label>
+				<select id="translations" name="translations">
+					<option value="">Default</option>
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="book">Book</label>
+				<select id="book" name="book" disabled>
+					<option value="">---</option>
+				</select>
+			</div>
 
 			<div class="form-group">
 				<label for="limit">Limit</label>
@@ -42,6 +54,8 @@
 				var wholeword = document.getElementById('wholeword');
 				var limit = document.getElementById('limit');
 				var perPage = document.getElementById('per_page');
+				var translation = document.getElementById('translations');
+				var book = document.getElementById('book');
 				var params = new URLSearchParams(window.location.search);
 
 				function readCookie(name) {
@@ -63,6 +77,80 @@
 						+ '; Max-Age=31536000; Path=/; SameSite=Lax';
 				}
 
+				function preferredTranslation() {
+					var requested = params.get('translations');
+					if (requested) {
+						return requested.split(',')[0];
+					}
+
+					var preferred = readCookie('preferredTranslation').split(',')[0];
+					return preferred === 'default' || preferred === 'all' ? '' : preferred;
+				}
+
+				function populateBooks(booksByTranslation) {
+					var selected = translation.value;
+					book.innerHTML = '<option value="">---</option>';
+					book.disabled = !selected || !booksByTranslation[selected];
+					if (book.disabled) {
+						return;
+					}
+
+					var selectedBook = params.get('book') || '';
+					var books = booksByTranslation[selected];
+					for (var i = 0; i < books.length; i++) {
+						var option = document.createElement('option');
+						option.value = books[i].shortName;
+						option.textContent = books[i].name;
+						option.selected = books[i].shortName === selectedBook;
+						book.appendChild(option);
+					}
+				}
+
+				function loadTranslations() {
+					fetch('/1/info', { headers: { Accept: 'application/vnd.api+json' } })
+						.then(function (response) {
+							if (!response.ok) {
+								throw new Error('Unable to load translation information');
+							}
+							return response.json();
+						})
+						.then(function (json) {
+							var booksByTranslation = {};
+							var bibles = json.included || [];
+							for (var i = 0; i < bibles.length; i++) {
+								if (bibles[i].type !== 'bible') {
+									continue;
+								}
+								var attributes = bibles[i].attributes;
+								var books = [];
+								for (var bookIndex = 0; bookIndex < attributes.book_names_short.length; bookIndex++) {
+									books.push({
+										name: attributes.book_names_short_raw[bookIndex],
+										shortName: attributes.book_names_short[bookIndex]
+									});
+								}
+								booksByTranslation[attributes.translation] = books;
+								var option = document.createElement('option');
+								option.value = attributes.translation;
+								option.textContent = attributes.translation.toUpperCase();
+								translation.appendChild(option);
+							}
+
+							var preferred = preferredTranslation();
+							if (preferred && booksByTranslation[preferred]) {
+								translation.value = preferred;
+							}
+							populateBooks(booksByTranslation);
+							translation.addEventListener('change', function () {
+								params.delete('book');
+								populateBooks(booksByTranslation);
+							});
+						})
+						.catch(function () {
+							book.disabled = true;
+						});
+				}
+
 				if (!params.has('wholeword') && !params.has('wholeword_present')) {
 					wholeword.checked = readCookie(wholewordCookieName) === 'true';
 				}
@@ -80,6 +168,8 @@
 						perPage.value = previousSearchPerPage;
 					}
 				}
+
+				loadTranslations();
 
 				form.addEventListener('submit', function () {
 					writeCookie(wholewordCookieName, wholeword.checked ? 'true' : 'false');

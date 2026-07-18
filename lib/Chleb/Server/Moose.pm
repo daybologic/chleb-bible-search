@@ -917,13 +917,19 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my @queries;
 	if (scalar(@translations) > 0) {
 		foreach my $translation (@translations) {
-			push(@queries, $self->__library->newSearchQuery(
+			my %queryParams = (
 				text => $search->{term},
 				translations => [$translation],
-			)->setLimit($limit)->setWholeword($wholeword));
+			);
+			$queryParams{bookShortName} = $search->{book}
+				if (defined($search->{book}) && length($search->{book}) > 0);
+			push(@queries, $self->__library->newSearchQuery(%queryParams)->setLimit($limit)->setWholeword($wholeword));
 		}
 	} else {
-		push(@queries, $self->__library->newSearchQuery($search->{term}));
+		my %queryParams = (text => $search->{term});
+		$queryParams{bookShortName} = $search->{book}
+			if (defined($search->{book}) && length($search->{book}) > 0);
+		push(@queries, $self->__library->newSearchQuery(%queryParams));
 		$queries[0]->setLimit($limit)->setWholeword($wholeword);
 	}
 
@@ -1023,6 +1029,7 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		limit       => $limit,
 		page        => $page,
 		per_page    => $perPage,
+		book        => $search->{book},
 		term        => $query->text,
 		translations => \@translations,
 		total_pages => $totalPages,
@@ -1159,6 +1166,7 @@ sub __searchPageLink {
 		'page=' . uri_escape($page),
 		'per_page=' . uri_escape($params->{per_page}),
 	);
+	push(@parts, 'book=' . uri_escape($params->{book})) if (defined($params->{book}) && length($params->{book}) > 0);
 	if (ref($params->{translations}) eq 'ARRAY' && scalar(@{ $params->{translations} }) > 0) {
 		push(@parts, 'translations=' . uri_escape(join(',', @{ $params->{translations} })));
 	}

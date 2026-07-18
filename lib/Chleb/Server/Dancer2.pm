@@ -769,6 +769,7 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 		getCookie('preferredTranslation'),
 		[ $server->__library->availableTranslations() ],
 	);
+	my $book = getParam('book');
 
 	my $result = '';
 	my $resultHash;
@@ -783,6 +784,7 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 				per_page  => $perPage,
 				term      => $term,
 				translations => $translations,
+				book      => $book,
 				wholeword => $wholeword,
 			});
 			1;
