@@ -159,7 +159,8 @@ sub save {
 	return;
 }
 
-sub _makeDir {
+# Invoked by Moose as the lazy builder for the dir attribute.
+sub _makeDir { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my $config = $self->dic->config->get('session_tokens', 'backend_local', { dir => $DIR_LOCAL });
 	return $config->{dir};
@@ -187,7 +188,8 @@ sub __getFilePath {
 	return $return;
 }
 
-sub __makeDynamic {
+# Invoked by Moose as the lazy builder for the __dynamic attribute.
+sub __makeDynamic { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my $key = 'dynamic_mkdir';
 	my $config = $self->dic->config->get('session_tokens', 'backend_local', { $key => 1 });

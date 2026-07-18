@@ -317,7 +317,8 @@ Builds the JSON encoder/decoder used by L</__json>.
 
 =cut
 
-sub __makeJson {
+# Invoked by Moose as the lazy builder for the __json attribute.
+sub __makeJson { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return JSON::PP->new->canonical->utf8->allow_nonref;
 }
@@ -328,7 +329,8 @@ Loads and validates the JWT signing secret from configuration.
 
 =cut
 
-sub __makeSecret {
+# Invoked by Moose as the lazy builder for the __secret attribute.
+sub __makeSecret { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $config = $self->dic->config->get('session_tokens', 'backend_jwt', { secret => undef });
