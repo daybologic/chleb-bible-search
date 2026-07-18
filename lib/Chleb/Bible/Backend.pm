@@ -200,7 +200,7 @@ sub __makeCachePath {
 		}
 	}
 
-	unless (!$needsRefresh) {
+	if ($needsRefresh) {
 		gunzip $self->compressedPath => $path
 		   or die("gunzip \"" . $self->compressedPath . "\" failed: $GunzipError\n");
 	}
@@ -488,7 +488,7 @@ sub __primeChapterOrdinals {
 	my $translation = $self->bible->translation;
 	my $firstVerseOrdinal = $rows->[0]->{verse_ordinal} + 0;
 	my $base = $self->getOrdinalByVerseKey(join(':', $translation, $bookShortName, $chapterNumber, $firstVerseOrdinal));
-	return unless (defined($base) && $base > 0);
+	return if (!defined($base) || $base <= 0);
 
 	for (my $i = 0; $i < scalar(@$rows); $i++) {
 		my $verseOrdinal = $rows->[$i]->{verse_ordinal} + 0;
@@ -648,7 +648,7 @@ sub __sentimentByOrdinal {
 	my ($self, $ordinal) = @_;
 	$ordinal = $self->__verseCount() + $ordinal + 1 if ($ordinal < 0);
 	my $data = $self->__sentimentData();
-	return unless ($ordinal >= 1 && $ordinal <= scalar(@$data));
+	return if ($ordinal < 1 || $ordinal > scalar(@$data));
 	return $data->[$ordinal - 1];
 }
 
