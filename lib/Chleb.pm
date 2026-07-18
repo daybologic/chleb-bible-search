@@ -190,7 +190,14 @@ sub random {
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
-		@bible = grep { $_->verseCount >= $verseOrdinal } @bible; # remove translations without enough verses
+		my $verseAvailable = 1;
+		foreach my $candidateBible (@bible) {
+			if ($candidateBible->verseCount < $verseOrdinal) {
+				$verseAvailable = 0;
+				last;
+			}
+		}
+		next unless ($verseAvailable);
 
 		next unless ($self->__isTestamentMatch($verse, $testament));
 
@@ -270,7 +277,14 @@ sub votd {
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
-		@bible = grep { $_->verseCount >= $verseOrdinal } @bible; # remove translations without enough verses
+		my $verseAvailable = 1;
+		foreach my $candidateBible (@bible) {
+			if ($candidateBible->verseCount < $verseOrdinal) {
+				$verseAvailable = 0;
+				last;
+			}
+		}
+		next unless ($verseAvailable);
 
 		next unless ($self->__isTestamentMatch($verse, $testament));
 

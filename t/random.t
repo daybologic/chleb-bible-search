@@ -80,6 +80,19 @@ sub test {
 	return EXIT_SUCCESS;
 }
 
+sub testMultipleTranslationsRetryUnavailableVerse {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $verses = $self->sut->random({ version => 2, translations => ['kjv', 'pickthall'] });
+
+	is(scalar(@{ $verses }), 2, 'random returns both requested translations');
+	cmp_ok($verses->[1]->ordinal, '<=', $self->sut->bibles('pickthall')->verseCount,
+		'random retries until the verse is available in every translation');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
