@@ -136,7 +136,7 @@ sub __preferredTranslations {
 		$preferredTranslation = $preferredTranslation->value;
 	}
 
-	return [] unless (defined($preferredTranslation) && length($preferredTranslation) > 0);
+	return [] if (!defined($preferredTranslation) || length($preferredTranslation) == 0);
 
 	my @translations = @{ Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray($preferredTranslation)) };
 	return [] if (grep { $_ eq 'default' } @translations);
@@ -181,7 +181,7 @@ sub __preferredWholeword {
 		$wholeword = $wholeword->value;
 	}
 
-	return 0 unless (defined($wholeword) && length($wholeword) > 0);
+	return 0 if (!defined($wholeword) || length($wholeword) == 0);
 
 	my $preferredWholeword = 0;
 	my $evalOk1; $evalOk1 = eval {
@@ -218,8 +218,9 @@ sub __previousSearchLimit {
 		$previousSearchLimit = $previousSearchLimit->value;
 	}
 
-	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
-		unless (defined($previousSearchLimit) && $previousSearchLimit =~ m{ \A[0-9]+\z }x && int($previousSearchLimit) > 0);
+	if (!defined($previousSearchLimit) || $previousSearchLimit !~ m{ \A[0-9]+\z }x || int($previousSearchLimit) <= 0) {
+		return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	}
 
 	return int($previousSearchLimit);
 }
@@ -256,8 +257,9 @@ sub __previousSearchPerPage {
 		$previousSearchPerPage = $previousSearchPerPage->value;
 	}
 
-	return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT
-		unless (defined($previousSearchPerPage) && $previousSearchPerPage =~ m{ \A[0-9]+\z }x && int($previousSearchPerPage) > 0);
+	if (!defined($previousSearchPerPage) || $previousSearchPerPage !~ m{ \A[0-9]+\z }x || int($previousSearchPerPage) <= 0) {
+		return $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
+	}
 
 	return $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE
 		if (int($previousSearchPerPage) > $Chleb::Server::Moose::SEARCH_RESULTS_MAX_PAGE_SIZE);
