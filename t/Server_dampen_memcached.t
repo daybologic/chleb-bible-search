@@ -192,7 +192,7 @@ sub testDampenFallsBackToMemory {
 	my ($self) = @_;
 	my $sut = Chleb::Server::Dampen->new({ dic => $self->dic });
 	$sut->__sharedStore(FakeUnavailableStore->new());
-	$sut->dic->time->set(2_000_000_000);
+	$sut->dic->time->setMockedTime(2_000_000_000);
 
 	is($sut->dampen('192.0.2.4'), 0, 'first request falls back and is allowed');
 	is($sut->dampen('192.0.2.4'), 1, 'second request falls back and is denied');

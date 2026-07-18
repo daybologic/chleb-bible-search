@@ -63,7 +63,7 @@ sub setUp {
 
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->configPaths(['etc-local']);
-	$self->dic->time->set(2_000_000_000);
+	$self->dic->time->setMockedTime(2_000_000_000);
 	$self->sut(Chleb::Token::Repository::Local->new({ dic => $self->dic }));
 	$self->__mockLogger();
 

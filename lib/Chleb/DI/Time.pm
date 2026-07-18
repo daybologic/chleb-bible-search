@@ -40,7 +40,7 @@ Chleb::DI::Time - mockable wall-clock time
 =head1 DESCRIPTION
 
 Central wall-clock service for code which would otherwise call C<time> or
-C<sleep> directly.  Tests may pin time with C<set()>; once pinned, C<get()>
+C<sleep> directly.  Tests may pin time with C<setMockedTime()>; once pinned, C<get()>
 returns only the pinned value and C<sleep()> advances it without waiting.
 
 =cut
@@ -63,13 +63,13 @@ sub get {
 	return CORE::time();
 }
 
-=item C<set($value)>
+=item C<setMockedTime($value)>
 
 Sets and returns the mocked time value.
 
 =cut
 
-sub set {
+sub setMockedTime {
 	my ($self, $value) = @_;
 	return $self->__value($value);
 }

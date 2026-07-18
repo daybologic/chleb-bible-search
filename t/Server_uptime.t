@@ -58,7 +58,7 @@ sub setUp {
 	}
 
 	$self->sut(Chleb::Server::Moose->new());
-	$self->sut->dic->time->set(undef);
+	$self->sut->dic->time->setMockedTime(undef);
 
 	return EXIT_SUCCESS;
 }
@@ -144,7 +144,7 @@ EOF
 	close($fh) or croak("close $dir/main.yaml: $!");
 
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));
-	$self->dic->time->set(2_000_000_000);
+	$self->dic->time->setMockedTime(2_000_000_000);
 	$self->unmock(ref($self->sut), '__getUptime');
 	my $sut = Chleb::Server::Moose->new({ dic => $self->dic });
 	ok(!-f $path, 'configured uptime file is not created during construction');

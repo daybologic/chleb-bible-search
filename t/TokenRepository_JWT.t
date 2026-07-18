@@ -73,7 +73,7 @@ EOF
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->config(Chleb::DI::Config->new({ dic => $self->dic, path => $dir }));
 	$self->dic->logger(Chleb::DI::MockLogger->new());
-	$self->dic->time->set(2_000_000_000);
+	$self->dic->time->setMockedTime(2_000_000_000);
 	$self->sut(Chleb::Token::Repository::JWT->new({ dic => $self->dic }));
 
 	return EXIT_SUCCESS;
