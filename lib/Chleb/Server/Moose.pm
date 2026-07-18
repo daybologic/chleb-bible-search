@@ -210,6 +210,54 @@ sub __library {
 	return $self->{__library};
 }
 
+=item C<__warmBackendVerse($args)>
+
+Prime the backend caches for one verse and update warmup progress.  The
+C<$args> hash reference contains C<bible>, C<book>, C<chapterOrdinal>,
+C<verse>, C<verseIndex>, C<verseCount>, C<processedVerses>, C<totalVerses>,
+and C<lastPercent>.
+
+=cut
+
+sub __warmBackendVerse {
+	my ($self, $args) = @_;
+	my $bible = $args->{bible};
+	my $book = $args->{book};
+	my $chapterOrdinal = $args->{chapterOrdinal};
+	my $verse = $args->{verse};
+	my $verseOrdinal = $verse->{verse_ordinal} + 0;
+	my $verseKey = join(':', $bible->translation, $book->shortNameRaw, $chapterOrdinal, $verseOrdinal);
+	my $bookVerseKey = join(':', $bible->translation, $book->shortNameRaw, $verse->{book_ordinal} + 0);
+
+	$bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey);
+	$bible->__backend->getVerseDataByKey($verseKey);
+	$bible->__backend->getOrdinalByVerseKey($verseKey);
+	${ $args->{processedVerses} }++;
+	return if (
+		$args->{verseIndex} != 1
+		&& $args->{verseIndex} != $args->{verseCount}
+		&& ($args->{verseIndex} % 1000) != 0
+	);
+
+	my $overallPercent = ($args->{totalVerses} > 0)
+		? int((100 * ${ $args->{processedVerses} }) / $args->{totalVerses})
+		: 100;
+	my $progressPercent = int($overallPercent / 10) * 10;
+	return if ($progressPercent == ${ $args->{lastPercent} });
+
+	${ $args->{lastPercent} } = $progressPercent;
+	$self->dic->logger->trace(sprintf(
+		'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
+		$progressPercent,
+		$bible->translation,
+		$book->shortNameRaw,
+		$chapterOrdinal,
+		$verseOrdinal,
+	));
+
+	return;
+}
+
 sub __warmBackendCaches {
 	my ($self, $warmBible) = @_;
 	my $startTiming = Time::HiRes::time();
@@ -262,28 +310,17 @@ sub __warmBackendCaches {
 				my $verseIndex = 0;
 				foreach my $verse (@verses) {
 					$verseIndex++;
-					my $verseOrdinal = $verse->{verse_ordinal} + 0;
-					my $verseKey = join(':', $bible->translation, $book->shortNameRaw, $chapterOrdinal, $verseOrdinal);
-					my $bookVerseKey = join(':', $bible->translation, $book->shortNameRaw, $verse->{book_ordinal} + 0);
-					$bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey);
-					$bible->__backend->getVerseDataByKey($verseKey);
-					$bible->__backend->getOrdinalByVerseKey($verseKey);
-					$processedVerses++;
-					if ($verseIndex == 1 || $verseIndex == $verseCount || ($verseIndex % 1000) == 0) {
-						my $overallPercent = ($totalVerses > 0) ? int((100 * $processedVerses) / $totalVerses) : 100;
-						my $progressPercent = int($overallPercent / 10) * 10;
-						if ($progressPercent != $lastPercent) {
-							$lastPercent = $progressPercent;
-							$self->dic->logger->trace(sprintf(
-								'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
-								$progressPercent,
-								$bible->translation,
-								$book->shortNameRaw,
-								$chapterOrdinal,
-								$verseOrdinal,
-							));
-						}
-					}
+					$self->__warmBackendVerse({
+						bible           => $bible,
+						book            => $book,
+						chapterOrdinal  => $chapterOrdinal,
+						verse           => $verse,
+						verseIndex      => $verseIndex,
+						verseCount      => $verseCount,
+						processedVerses => \$processedVerses,
+						totalVerses     => $totalVerses,
+						lastPercent     => \$lastPercent,
+					});
 				}
 			}
 		}
@@ -384,30 +421,21 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
 	}
 
+	my %pickVerseByType = (
+		next  => sub { return $verse[0]->getNext() },
+		prev  => sub { return $verse[0]->getPrev() },
+		first => sub { return $verse[0]->chapter->getVerseByOrdinal(1) },
+		last  => sub {
+			my $chapterVerseCount = $verse[0]->chapter->verseCount;
+			return $verse[0]->chapter->getVerseByOrdinal($chapterVerseCount);
+		},
+	);
+
 	foreach my $type (qw(next prev first last)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
 
-		my $pickVerse;
-		if ($type eq 'prev') {
-			if (my $prevVerse = $verse[0]->getPrev()) {
-				$pickVerse = $prevVerse;
-			} else {
-				next;
-			}
-		} elsif ($type eq 'next') {
-			if (my $nextVerse = $verse[0]->getNext()) {
-				$pickVerse = $nextVerse;
-			} else {
-				next;
-			}
-		} elsif ($type eq 'first') {
-			$pickVerse = $verse[0]->chapter->getVerseByOrdinal(1);
-		} elsif ($type eq 'last') {
-			my $chapterVerseCount = $verse[0]->chapter->verseCount;
-			$pickVerse = $verse[0]->chapter->getVerseByOrdinal($chapterVerseCount);
-		} else {
-			$pickVerse = $verse[0]->id;
-		}
+		my $pickVerse = $pickVerseByType{$type}->();
+		next unless ($pickVerse);
 
 		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath())
 		    . Chleb::Utils::queryParamsHelper($params);
