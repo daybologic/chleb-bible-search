@@ -295,6 +295,20 @@ sub handleException {
 	return send_error($exception, 500);
 }
 
+=head1 __isTemplateMarker($line)
+
+Return true when a source line is the case-insensitive Chleb template marker.
+Whitespace is ignored to preserve the existing template syntax handling.
+
+=cut
+
+sub __isTemplateMarker {
+	my ($line) = @_;
+	chomp($line);
+	$line =~ s{\s*}{}gx;
+	return lc($line) eq '<!--chlebtemplate-->';
+}
+
 sub fetchStaticPage {
 	my ($name, $templateParams) = @_;
 	my $html = '';
@@ -305,26 +319,21 @@ sub fetchStaticPage {
 		if (my $file = IO::File->new($filePath, '<:encoding(UTF-8)')) {
 			my $templateMode = 0; # off
 			my $lineCounter = 0;
-			while (my $line = $file->getline()) {
-				$lineCounter++;
+				while (my $line = $file->getline()) {
+					$lineCounter++;
 
-				if ($templateMode) {
-					$templateProcessor = Chleb::TemplateProcessor->new({ params => $templateParams })
-					    unless ($templateProcessor);
+					if ($templateMode) {
+						$templateProcessor = Chleb::TemplateProcessor->new({ params => $templateParams })
+						    unless ($templateProcessor);
 
-					$html .= $templateProcessor->byLine($line);
-				} else {
-					$html .= $line;
-
-					if ($lineCounter <= 10) {
-						chomp($line);
-						$line =~ s{\s*}{}gx;
-						if (lc($line) eq '<!--chlebtemplate-->') {
-							$templateMode = 1; # on
-						}
+						$html .= $templateProcessor->byLine($line);
+						next;
 					}
+
+					$html .= $line;
+					next if ($lineCounter > 10);
+					$templateMode = 1 if (__isTemplateMarker($line)); # on
 				}
-			}
 
 			$file->close();
 			return $html;
