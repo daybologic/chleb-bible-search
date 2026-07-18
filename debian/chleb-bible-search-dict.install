@@ -1,1 +1,2 @@
 data/*.bin.gz /usr/share/chleb-bible-search/
+data/*.sqlite.gz /usr/share/chleb-bible-search/

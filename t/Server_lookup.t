@@ -1,3 +1,10 @@
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -43,6 +50,7 @@ use English qw(-no_match_vars);
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::Dancer2;
 use Chleb::Server::Moose;
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
 use Test::More 0.96;
@@ -289,13 +297,53 @@ sub test_translation_all {
 	return EXIT_SUCCESS;
 }
 
+sub testWarmupPrimesSentimentCache {
+	my ($self) = @_;
+	plan tests => 5;
+
+	my $dic = Chleb::DI::Container->instance();
+	my $previousLogger = $dic->logger;
+	my $logger = Chleb::DI::MockLogger->new();
+	$dic->logger($logger);
+
+	my ($bible) = $self->sut->__library->__getBible({ translations => [ 'kjv' ] });
+	$self->sut->__warmBackendCaches($bible);
+
+	my $before = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+	my $bookInfoBefore = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
+	my $verseCountBefore = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	$self->sut->__lookup({
+		accept => $mediaType,
+		book => 'Acts',
+		chapter => 2,
+		verse => 1,
+	});
+	my $after = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+	my $bookInfoAfter = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
+	my $verseCountAfter = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
+	my $translationWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation kjv in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
+	my $allWarmupFinished = scalar(grep { /\QAll backend cache warmup finished in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
+
+	is($after, $before, 'lookup does not reload sentiment after warmup');
+	is($bookInfoAfter, $bookInfoBefore, 'lookup does not reload book info after warmup');
+	is($verseCountAfter, $verseCountBefore, 'lookup does not reload verse counts after warmup');
+	ok($translationWarmupFinished > 0, 'warmup logs per-translation msec');
+	ok($allWarmupFinished > 0, 'warmup logs overall msec');
+
+	$dic->logger($previousLogger);
+
+	return EXIT_SUCCESS;
+}
+
 sub test_not_found {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->__lookup({ book => 'Acts', chapter => 29, verse => 1, translations => [ 'kjv' ] });
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
@@ -309,6 +357,58 @@ sub test_not_found {
 	} else {
 		fail('No exception raised, as was expected');
 	}
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlListsTranslationsSeparately {
+	my ($self) = @_;
+	plan tests => 8;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'Matthew',
+		chapter => 22,
+		verse => 14,
+		translations => [ 'kjv', 'asv' ],
+	});
+
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+	my @cards = split(m{<div class="card">}, $html);
+	shift(@cards);
+
+	is(scalar(@cards), 2, 'each translation has its own card');
+	is_deeply(\@translations, [ 'kjv', 'asv' ], 'each translation has its requested label order');
+	like($cards[0], qr{<div class="translation">kjv</div>}s, 'KJV label is in the first card');
+	like($cards[0], qr{<blockquote>\s*For many are called, but few \[are\] chosen\.\s*</blockquote>}s, 'KJV text is in the first card');
+	like($cards[0], qr{<span class="tag tag-color-\d+">neutral</span>\s*</blockquote>}s, 'KJV sentiments are in the first card');
+	like($cards[1], qr{<div class="translation">asv</div>}s, 'ASV label is in the second card');
+	like($cards[1], qr{<blockquote>\s*For many are called, but few chosen\.\s*</blockquote>}s, 'ASV text is in the second card');
+	like($cards[1], qr{<span class="tag tag-color-\d+">neutral</span> <span class="tag tag-color-\d+">instruction</span>}s, 'ASV sentiments are in the second card');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlPreservesReversedTranslationInput {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @verse = (
+		$self->sut->__library->fetch('Matthew', 22, 14, { translations => ['kjv'] }),
+		$self->sut->__library->fetch('Matthew', 22, 14, { translations => ['asv'] }),
+	);
+	my $cache = { };
+	my @json = map {
+		Chleb::Server::Moose::__verseToJsonApi($_, { translations => ['all'] }, $cache)
+	} @verse;
+	push(@{ $json[0]->{data} }, $json[1]->{data}->[0]);
+	$json[0]->{links}->{self} = '/1/lookup/mat/22/14?translations=all';
+
+	my $html = $self->sut->__verseToHtml(\@verse, \@json, 3);
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'kjv', 'asv' ], 'HTML preserves reversed renderer input');
 
 	return EXIT_SUCCESS;
 }

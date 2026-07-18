@@ -31,6 +31,7 @@
 package Chleb::Token::Repository::Local;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Token::Repository::Base';
@@ -87,27 +88,28 @@ sub load {
 
 	my $data;
 	my $filePath = $self->__getFilePath($value);
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$data = retrieve($filePath);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		my $errNum = $ERRNO;
 		my $errStr = strerror($errNum);
-		if ($evalError =~ m/: $errStr/) {
-			return undef; # not found
+		if ($evalError =~ m{ :[ ]\Q$errStr\E }x) {
+			return; # not found
 		}
 
 		$self->dic->logger->error($evalError);
-		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken unrecognized via ' . __PACKAGE__);
+		croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken unrecognized via ' . __PACKAGE__));
 	} elsif (!$data) {
-		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Session token is an empty file');
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Session token is an empty file'));
 	} else {
 		$self->dic->logger->trace(Dumper $data);
 	}
 
 	my $token;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$token = Chleb::Token->new({
 			dic       => $self->dic,
 			_repo     => $self->repo,
@@ -121,16 +123,17 @@ sub load {
 			now       => $data->{created},
 			userAgent => $data->{userAgent},
 		});
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error($evalError);
-		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data'); # This should not happen!
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data')); # This should not happen!
 	} elsif ($token->major != $Chleb::Token::DATA_VERSION_MAJOR) {
 		$self->dic->logger->error(sprintf('Version mismatch in %s, (store %d, expect %d), stale data?', $token->toString(), $token->major, $Chleb::Token::DATA_VERSION_MAJOR));
-		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Sorry, the token went stale because of a version mismatch, remove your sessionToken cookie and you'll get a new one");
+		croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Sorry, the token went stale because of a version mismatch, remove your sessionToken cookie and you'll get a new one"));
 	} elsif ($token->expired) {
-		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__);
+		croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__));
 	}
 
 	return $token;
@@ -141,21 +144,23 @@ sub save {
 
 	my $filePath = $self->__getFilePath($token->value);
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		__store($token->TO_JSON(), $filePath);
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->error(sprintf("Failed to store %s in %s to '%s': %s",
 		    $token->toString(), __PACKAGE__, $filePath, $evalError));
 
-		die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token');
+		croak(Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token'));
 	}
 
 	return;
 }
 
-sub _makeDir {
+# Invoked by Moose as the lazy builder for the dir attribute.
+sub _makeDir { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my $config = $self->dic->config->get('session_tokens', 'backend_local', { dir => $DIR_LOCAL });
 	return $config->{dir};
@@ -173,7 +178,7 @@ sub __getFilePath {
 		for my $p (@part) {
 			$path .= "/$p";
 			if (!mkdir($path, 0700) && $ERRNO != EEXIST) {
-				die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, "mkdir $path: $ERRNO");
+				croak(Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, "mkdir $path: $ERRNO"));
 			}
 		}
 	}
@@ -183,7 +188,8 @@ sub __getFilePath {
 	return $return;
 }
 
-sub __makeDynamic {
+# Invoked by Moose as the lazy builder for the __dynamic attribute.
+sub __makeDynamic { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my $key = 'dynamic_mkdir';
 	my $config = $self->dic->config->get('session_tokens', 'backend_local', { $key => 1 });
@@ -220,7 +226,7 @@ sub __store {
 
 	# 1) Acquire NFS-safe exclusive lock for read-modify-write sequences
 	my $lock = File::NFSLock->new("$filePath.lock", 'EX', 30, 5)
-	    or die("Failed to acquire lock on $filePath: $!");
+	    or croak("Failed to acquire lock on $filePath: $!");
 
 	# 2) Write to temp in same dir
 	my ($tmpfh, $tmpname) = tempfile(DIR => dirname($filePath), UNLINK => 0);
@@ -229,11 +235,11 @@ sub __store {
 
 	# 3) Durability: flush and fsync
 	$tmpfh->flush() if ($tmpfh->can('flush'));
-	$tmpfh->sync() or die("sync failed: $!");
-	close($tmpfh) or die("close(tmp) failed: $!");
+	$tmpfh->sync() or croak("sync failed: $!");
+	close($tmpfh) or croak("close(tmp) failed: $!");
 
 	# 4) Atomic replace
-	rename($tmpname, $filePath) or die("rename($tmpname -> $filePath) failed: $!");
+	rename($tmpname, $filePath) or croak("rename($tmpname -> $filePath) failed: $!");
 
 	# Optionally sync the directory for stronger durability on crashes
 	if (open(my $dh, '<', dirname($filePath))) {

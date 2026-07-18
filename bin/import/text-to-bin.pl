@@ -122,6 +122,7 @@ sub main {
 		while (my $line = <$fh>) {
 			my @bookData = split(m/;/, $line);
 			my ($bookShortName, undef, $bookLongName) = @bookData;
+			$bookLongName =~ s/;\z// if (defined($bookLongName));
 			$bookNameMap{$bookShortName} = $bookLongName;
 			$bookShortNames[++$bookIndex] = $bookShortName;
 			$bookShortNameToOrdinal{$bookShortName} = $bookIndex + 1;

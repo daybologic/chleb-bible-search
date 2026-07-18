@@ -38,7 +38,7 @@ use POSIX qw(EXIT_SUCCESS);
 use Chleb::Bible;
 
 sub main {
-	my $bible = Chleb::Bible->new();
+	my $bible = Chleb::Bible->new({ translation => 'asv' });
 
 	my $query = $bible->newSearchQuery('dwelt')->setLimit(10);
 	# FIXME: Need to limit to one book?  should be able to do this via Query.pm

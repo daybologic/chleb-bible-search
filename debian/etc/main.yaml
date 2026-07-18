@@ -29,10 +29,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 server:
-  admin_email: example@example.org
-  admin_name: Unknown
   children: 30
-  domain: chleb-api.example.org
+  uptime_file: /var/run/chleb-bible-search/startup.txt
 votd_exclude:
   terms:
     - fornication
@@ -47,26 +45,15 @@ votd_exclude:
     - Kefir 50:1
     - Rev 1000:11
     - Deu 22:21
-features:
-  facebook: on
-  sessions: off
-  version: on
+rate_limit:
+  backend: memcached
+  backend_memcached:
+    servers:
+      - 127.0.0.1:11211
+    prefix: chleb:dampen
+  session_window_seconds: 60    # rolling window size for session token holders
+  session_max_requests: 100     # max requests within that window
+  session_churn_window_seconds: 300  # lookback window for token-churn detection
+  session_churn_limit: 10       # distinct tokens from one IP before denying
 Dancer2:
   public_dir: /usr/share/chleb-bible-search/public
-session_tokens:
-  backend_local:
-    dir: /var/lib/chleb-bible-search/sessions
-    dynamic_mkdir: true
-  backend_redis:
-    db: 1
-    host: localhost:6379
-  load_order:
-    - Local
-#   - Redis
-  save_order:
-#   - Redis
-    - Local
-  ttl: 10800
-facebook:
-  groupname: Chleb Bible Search (1268737414574145)
-  url: https://www.facebook.com/share/g/17D2hgSmGK/?mibextid=wwXIfr

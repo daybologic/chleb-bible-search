@@ -91,7 +91,7 @@ sub getPrev {
 		return $self->chapter->getVerseByOrdinal($self->ordinal - 1, { nonFatal => 1 });
 	}
 
-	return undef;
+	return;
 }
 
 sub equals {
@@ -122,7 +122,7 @@ sub TO_JSON {
 
 sub getPath {
 	my ($self) = @_;
-	my @id = split(m@/@, $self->id);
+	my @id = split(m@/@x, $self->id);
 	shift(@id);
 	return join('/', @id);
 }
@@ -162,12 +162,12 @@ sub __makeTones {
 
 sub __makeSentiment {
 	my ($self) = @_;
-	return $self->book->bible->__backend->getSentimentByOrdinal($self->ordinalAbsolute);
+	return $self->book->bible->getSentimentByOrdinal($self->ordinalAbsolute);
 }
 
 sub __makeOrdinalAbsolute {
 	my ($self) = @_;
-	return $self->book->bible->__backend->getOrdinalByVerseKey($self->key);
+	return $self->book->bible->getOrdinalByVerseKey($self->key);
 }
 
 sub __makeKey {

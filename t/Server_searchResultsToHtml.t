@@ -1,3 +1,9 @@
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -71,6 +77,47 @@ sub testEmpty {
 
 	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'fetchStaticPage');
 	cmp_deeply($mockCalls, [['no_results']], "calls to fetchStaticPage for 'no_results'") or diag(explain($mockCalls));
+
+	return EXIT_SUCCESS;
+}
+
+sub testResultsTable {
+	my ($self) = @_;
+	plan tests => 7;
+
+	my %json = (
+		data => [
+			{
+				attributes => {
+					book => 'gen',
+					chapter => 1,
+					ordinal => 1,
+					text => 'In the beginning God created the heaven and the earth.',
+					title => "Result 1/1 from Chleb Bible Search 'beginning'",
+				},
+			},
+		],
+		included => [
+			{
+				type => 'book',
+				attributes => {
+					short_name => 'gen',
+					short_name_raw => 'Gen',
+				},
+			},
+		],
+	);
+
+	my $html = Chleb::Server::Moose::__searchResultsToHtml(\%json);
+	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, 'home link is present by default');
+	like($html, qr{<table class="info-table">}, 'search results use info table');
+	like($html, qr{<th>Result</th>}, 'result header is present');
+	like($html, qr{<th>Verse</th>}, 'verse header is present');
+	like($html, qr{<a href="/1/lookup/gen/1/1">Gen \[1:1\]</a>}, 'verse link is present');
+	like($html, qr{<td>In the beginning God created the heaven and the earth\.</td>}, 'verse text is in a table cell');
+
+	my $htmlWithoutHome = Chleb::Server::Moose::__searchResultsToHtml(\%json, { includeHome => 0 });
+	unlike($htmlWithoutHome, qr{<a class="vn-link vn-home" href="/">home</a>}, 'home link can be suppressed');
 
 	return EXIT_SUCCESS;
 }

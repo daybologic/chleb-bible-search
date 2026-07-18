@@ -1,3 +1,4 @@
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -51,12 +52,32 @@ has dic => (isa => 'Chleb::DI::Container', is => 'ro', lazy => 1, default => sub
 sub setUp {
 	my ($self, %params) = @_;
 
+	$self->__ensureGeneratedData();
 	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
 
-sub _isTestComprehensive {
+sub __ensureGeneratedData {
+	my ($self) = @_;
+	my @generatedFiles = qw(
+		data/asv.bin.gz
+		data/asv.sqlite.gz
+		data/core.sqlite.gz
+		data/kjv.bin.gz
+		data/kjv.sqlite.gz
+	);
+
+	my $missingFiles = grep { !-f } @generatedFiles;
+	return if ($missingFiles == 0);
+
+	my $status = system('make', '-C', 'data');
+	die("Failed to build generated Bible data\n") if ($status != 0);
+
+	return;
+}
+
+sub _isTestComprehensive { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my $testComprehensive = !$ENV{TEST_QUICK};
 
 	if ($testComprehensive) {

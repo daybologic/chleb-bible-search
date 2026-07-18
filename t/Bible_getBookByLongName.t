@@ -1,3 +1,8 @@
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -76,9 +81,10 @@ sub testNotFound {
 
 	my @bible = $self->sut->__getBible();
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$bible[0]->getBookByLongName('Genesia');
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

@@ -45,6 +45,7 @@ Object representing one translation of The Holy Bible
 
 extends 'Chleb::Bible::Base';
 
+use Carp qw(croak);
 use Digest::CRC qw(crc32);
 use HTTP::Status qw(:constants);
 use List::Util qw(shuffle);
@@ -184,10 +185,10 @@ sub getBookByShortName {
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
-		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
+		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg));
 	}
 
-	return undef;
+	return;
 }
 
 =item C<getBookByLongName($longName, [$args])>
@@ -223,10 +224,10 @@ sub getBookByLongName {
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
-		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
+		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg));
 	}
 
-	return undef;
+	return;
 }
 
 =item C<getBookByOrdinal($ordinal, [$args])>
@@ -251,10 +252,10 @@ sub getBookByOrdinal {
 
 	if ($ordinal > $self->bookCount) {
 		if ($args->{nonFatal}) {
-			return undef;
+			return;
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Book ordinal %d out of range, there are %d books in the bible',
-			    $ordinal, $self->bookCount));
+			croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Book ordinal %d out of range, there are %d books in the bible',
+			    $ordinal, $self->bookCount)));
 		}
 	}
 
@@ -280,7 +281,7 @@ sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
 	if (my $verseKey = $self->__backend->getVerseKeyByOrdinal($ordinal)) {
-		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
+		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $verseKey, 4);
 		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
 			if (my $book = $self->getBookByShortName($bookShortName, $args)) {
 				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
@@ -293,11 +294,11 @@ sub getVerseByOrdinal {
 				});
 			}
 		} else {
-			die "I don't think you can reach this";
+		croak("I don't think you can reach this");
 		}
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf("Verse %d not found in '%s'", $ordinal, $self->translation));
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf("Verse %d not found in '%s'", $ordinal, $self->translation)));
 }
 
 =item C<$newSearchQuery(@args)>
@@ -385,15 +386,27 @@ sub fetch {
 
 	$book = $self->resolveBook($book);
 	my $chapter = $book->getChapterByOrdinal($chapterOrdinal);
-	my $verse = $chapter->getVerseByOrdinal($verseOrdinal);
+	my $result;
+	if (defined($verseOrdinal)) {
+		$result = $chapter->getVerseByOrdinal($verseOrdinal);
+	} else {
+		$result = $chapter->getVerses();
+	}
 
 	my $endTiming = Time::HiRes::time();
 	my $msec = int(1000 * ($endTiming - $startTiming));
 
-	$self->dic->logger->debug(sprintf('%s sought in %dms', $verse->toString(), $msec));
-	$verse->msec($msec);
+	if (ref($result) eq 'ARRAY') {
+		foreach my $verse (@{ $result }) {
+			$verse->msec($msec);
+		}
+		$self->dic->logger->debug(sprintf('%s sought in %dms', $chapter->toString(), $msec));
+	} else {
+		$self->dic->logger->debug(sprintf('%s sought in %dms', $result->toString(), $msec));
+		$result->msec($msec);
+	}
 
-	return $verse;
+	return $result;
 }
 
 =item C<TO_JSON()>
@@ -415,6 +428,95 @@ sub TO_JSON {
 	};
 }
 
+=item C<getVerseDataByKey($key)>
+
+Return verse text for a canonical verse key.
+
+=cut
+
+sub getVerseDataByKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getVerseDataByKey($key);
+}
+
+=item C<getVerseKeyByBookVerseKey($key)>
+
+Return a canonical verse key for a book-relative verse key.
+
+=cut
+
+sub getVerseKeyByBookVerseKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getVerseKeyByBookVerseKey($key);
+}
+
+=item C<getChapterVerseDataByKey($bookShortName, $chapterOrdinal)>
+
+Return the verse data for a chapter.
+
+=cut
+
+sub getChapterVerseDataByKey {
+	my ($self, $bookShortName, $chapterOrdinal) = @_;
+	return $self->__backend->getChapterVerseDataByKey($bookShortName, $chapterOrdinal);
+}
+
+=item C<getBookInfoByShortName($bookShortName)>
+
+Return metadata for a book identified by its short name.
+
+=cut
+
+sub getBookInfoByShortName {
+	my ($self, $bookShortName) = @_;
+	return $self->__backend->getBookInfoByShortName($bookShortName);
+}
+
+=item C<getOrdinalByVerseKey($key)>
+
+Return the absolute ordinal for a canonical verse key.
+
+=cut
+
+sub getOrdinalByVerseKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getOrdinalByVerseKey($key);
+}
+
+=item C<getSentimentByOrdinal($ordinal)>
+
+Return sentiment data for an absolute verse ordinal.
+
+=cut
+
+sub getSentimentByOrdinal {
+	my ($self, $ordinal) = @_;
+	return $self->__backend->getSentimentByOrdinal($ordinal);
+}
+
+=item C<deferSharedCacheWrites($defer)>
+
+Control deferred writes to the shared backend cache while performing a grouped
+operation such as a search.
+
+=cut
+
+sub deferSharedCacheWrites {
+	my ($self, $defer) = @_;
+	return $self->__backend->deferSharedCacheWrites($defer);
+}
+
+=item C<flushSharedCache()>
+
+Flush pending writes to the shared backend cache.
+
+=cut
+
+sub flushSharedCache {
+	my ($self) = @_;
+	return $self->__backend->flushSharedCache();
+}
+
 =back
 
 =head1 PRIVATE METHODS
@@ -431,8 +533,8 @@ with a back-reference to ourselves (this object).
 sub __makeBackend {
 	my ($self) = @_;
 
-	return Chleb::Bible::Backend->new({
-		bible => $self,
+	return $self->dic->backend($self->translation, sub {
+		Chleb::Bible::Backend->new({ bible => $self });
 	});
 }
 

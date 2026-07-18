@@ -31,6 +31,7 @@
 package Chleb::DI::Container;
 use MooseX::Singleton;
 use Moose;
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -48,6 +49,7 @@ via this "DIC" so that they may be reliably replaced during the test suites.
 use Log::Log4perl;
 use Chleb::Bible::Exclusions;
 use Chleb::DI::Config;
+use Chleb::DI::Time;
 use Chleb::Token::Repository;
 use Chleb::Utils::OSError::Mapper;
 use Readonly;
@@ -90,7 +92,10 @@ has logger => (is => 'rw', lazy => 1, builder => '_makeLogger', clearer => 'rese
 
 =item C<config>
 
-TODO
+The main runtime configuration object.  This is constructed from the first
+available directory in L</configPaths> which contains C<main.yaml>, together
+with split configuration files such as C<contact.yaml>, C<features.yaml>, and
+C<tokens.yaml>.
 
 =cut
 
@@ -98,7 +103,7 @@ has config => (is => 'rw', lazy => 1, builder => '_makeConfig');
 
 =item C<exclusions>
 
-TODO
+The shared verse-exclusion rules used by verse-of-the-day and related lookups.
 
 =cut
 
@@ -106,11 +111,21 @@ has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
 
 =item C<tokenRepo>
 
-TODO
+The session token repository facade.  It delegates to the configured token
+backend implementations.
 
 =cut
 
 has tokenRepo => (is => 'rw', lazy => 1, builder => '_makeTokenRepo');
+
+=item C<time>
+
+The mockable wall-clock service.  Code which needs epoch time or sleeping should
+use this instead of calling C<time> or C<sleep> directly.
+
+=cut
+
+has time => (is => 'rw', isa => 'Chleb::DI::Time', lazy => 1, builder => '_makeTime');
 
 =item C<errorMapper>
 
@@ -126,6 +141,8 @@ called L</_makeErrorMapper()>.
 =cut
 
 has errorMapper => (is => 'rw', lazy => 1, builder => '_makeErrorMapper');
+
+has __backendCache => (is => 'ro', isa => 'HashRef', default => sub { {} });
 
 =item C<configPaths>
 
@@ -150,7 +167,8 @@ This is the recommended approach.
 
 =cut
 
-sub _makeLogger {
+# Invoked by Moose as the lazy builder for the logger attribute.
+sub _makeLogger { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $paths = $self->__makePathsFor('log4perl.conf');
@@ -176,39 +194,54 @@ This is the recommended approach.
 
 =cut
 
-sub _makeConfig {
+# Invoked by Moose as the lazy builder for the config attribute.
+sub _makeConfig { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $configFileName = 'main.yaml';
-	my $paths = $self->__makePathsFor($configFileName);
-	foreach my $path (@$paths) {
+	foreach my $dirName (@{ $self->configPaths }) {
+		my $path = join('/', $dirName, $configFileName);
 		next unless (-e $path);
-		return Chleb::DI::Config->new({ dic => $self, path => $path });
+		return Chleb::DI::Config->new({ dic => $self, path => $dirName });
 	}
 
-	die("No config available ($configFileName)");
+	croak("No config available ($configFileName)");
 }
 
 =item C<_makeExclusions()>
 
-TODO
+The default lazy-initializer for L</exclusions>.
 
 =cut
 
-sub _makeExclusions {
+# Invoked by Moose as the lazy builder for the exclusions attribute.
+sub _makeExclusions { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return Chleb::Bible::Exclusions->new({ dic => $self });
 }
 
 =item C<_makeTokenRepo()>
 
-TODO
+The default lazy-initializer for L</tokenRepo>.
 
 =cut
 
-sub _makeTokenRepo {
+# Invoked by Moose as the lazy builder for the tokenRepo attribute.
+sub _makeTokenRepo { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return Chleb::Token::Repository->new({ dic => $self });
+}
+
+=item C<_makeTime()>
+
+The default lazy-initializer for L</time>.
+
+=cut
+
+# Invoked by Moose as the lazy builder for the time attribute.
+sub _makeTime { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	return Chleb::DI::Time->new();
 }
 
 =item C<_makeErrorMapper()>
@@ -217,7 +250,8 @@ Constructs a L<Chleb::Utils::OSError::Mapper> for L</errorMapper>.
 
 =cut
 
-sub _makeErrorMapper {
+# Invoked by Moose as the lazy builder for the errorMapper attribute.
+sub _makeErrorMapper { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return Chleb::Utils::OSError::Mapper->new({ dic => $self });
 }
@@ -244,6 +278,42 @@ sub __makePathsFor {
 	}
 
 	return \@fullPaths;
+}
+
+=back
+
+=head1 METHODS
+
+=over
+
+=item C<backend($translation, $factory)>
+
+Returns the cached L<Chleb::Bible::Backend> for C<$translation>.  On the first
+call for a given translation the C<$factory> code reference is invoked to
+construct the instance; every subsequent call within the same process returns
+the previously constructed object without decompressing or probing the cache
+file again.
+
+=cut
+
+sub backend {
+	my ($self, $translation, $factory) = @_;
+	$self->__backendCache->{$translation} //= $factory->();
+	return $self->__backendCache->{$translation};
+}
+
+=item C<clearBackendCache()>
+
+Discards all cached L<Chleb::Bible::Backend> instances.  Intended for use in
+tests that need a fresh backend (e.g. after swapping data directories or
+forcing a re-decompress).
+
+=cut
+
+sub clearBackendCache {
+	my ($self) = @_;
+	%{ $self->__backendCache } = ();
+	return;
 }
 
 =back

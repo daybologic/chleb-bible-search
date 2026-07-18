@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -28,14 +29,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-simple_boolean:
-  off_value: off
-  on_value: on
-  true_value: true
-  false_value: false
-Dancer2:
-  public_dir: data/static/public
-session_tokens:
-  backend_redis:
-    db: 5
-    host: redis-82.example.net
+set -euo pipefail
+
+scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
+
+while IFS= read -r -d '' f; do
+	"${scriptDir}/../../maint/podchecker.sh" "$f"
+done < <(find "$repoRoot/lib" -name '*.pm' -type f -print0)

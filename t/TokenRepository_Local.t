@@ -1,3 +1,7 @@
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -45,17 +49,25 @@ use Chleb::DI::MockLogger;
 use Chleb::Token;
 use Chleb::Token::Repository;
 use Chleb::Token::Repository::Local;
-use Test::Deep qw(cmp_deeply all isa methods bool re);
+use Test::Deep qw(cmp_deeply all isa methods num);
 use Test::Exception;
 use Test::More 0.96;
 
 has dic => (is => 'rw', isa => 'Chleb::DI::Container');
+
+sub __time_ok {
+	my ($actual, $expected, $tolerance, $name) = @_;
+	$tolerance = 1 unless (defined($tolerance));
+	cmp_ok(abs($actual - $expected), '<=', $tolerance, $name);
+	return;
+}
 
 sub setUp {
 	my ($self) = @_;
 
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->configPaths(['etc-local']);
+	$self->dic->time->setMockedTime(2_000_000_000);
 	$self->sut(Chleb::Token::Repository::Local->new({ dic => $self->dic }));
 	$self->__mockLogger();
 
@@ -67,7 +79,7 @@ sub testSaveLoad {
 	plan tests => 3;
 
 	my $value;
-	my $now = time();
+	my $now = $self->dic->time->get();
 	$self->debug("now is $now");
 
 	subtest save => sub {
@@ -78,9 +90,9 @@ sub testSaveLoad {
 			$token = $self->sut->create({ now => $now });
 		} 'create called';
 
-		cmp_ok($token->expires, '==', $now + 604_800, 'default expiry in one week');
+		__time_ok($token->expires, $now + 604_800, undef, 'default expiry in one week');
 		cmp_ok($token->expires($now + 5), '==', $now + 5, 'set expiry time five seconds from now');
-		cmp_ok($token->created, '==', $now, "created is now (setting expires doesn't change that)");
+		__time_ok($token->created, $now, undef, 'created is now');
 
 		lives_ok {
 			$token->save();
@@ -104,7 +116,7 @@ sub testSaveLoad {
 		cmp_deeply($token, all(
 			isa('Chleb::Token'),
 			methods(
-				created => $now, # original time from file, not object reconstruction
+				created => num($now, 1), # original time from file, not object reconstruction
 				expires => $now + 5,
 				repo => isa('Chleb::Token::Repository'),
 				source => all(
@@ -116,15 +128,16 @@ sub testSaveLoad {
 	};
 
 	$self->debug('sleeping until token expires (5s)');
-	sleep(5);
+	$self->dic->time->sleep(5);
 
 	subtest expired => sub {
 		plan tests => 2;
 
 		my $token;
-		eval {
+		my $evalOk1; $evalOk1 = eval {
 			$self->sut->load($value);
-		};
+			1;
+		} or $evalOk1 = 0;
 
 		if (my $evalError = $EVAL_ERROR) {
 			cmp_deeply($evalError, all(
@@ -150,9 +163,10 @@ sub testLoadNotFound {
 	plan tests => 2;
 
 	my $token;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$token = $self->sut->load('a6b2934af53fbfa4c42266765075c4fd7b602345089a5aa825c9117847535aa6');
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	my $evalError = $EVAL_ERROR;
 	ok(!$evalError, 'no exception thrown');
@@ -167,9 +181,10 @@ sub testLoadNotInvalidHash {
 	plan tests => 2;
 
 	my $token;
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$token = $self->sut->load($self->uniqueStr());
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

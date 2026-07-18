@@ -1,3 +1,7 @@
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -147,9 +151,10 @@ sub testBadBook {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->fetch('Mormon', 16, 18);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
@@ -171,9 +176,10 @@ sub testBadChapter {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$self->sut->fetch('Prov', 36, 1);
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
@@ -195,9 +201,10 @@ sub testBadVerse {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$self->sut->fetch('Luke', 24, 54);
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

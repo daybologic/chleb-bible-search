@@ -51,7 +51,8 @@ has expires => (is => 'rw', isa => 'Int', lazy => 1, default => sub {
 });
 
 has created => (is => 'rw', isa => 'Int', init_arg => 'now', lazy => 1, default => sub {
-	return time();
+	my ($self) = @_;
+	return $self->dic->time->get();
 });
 
 has modified => (is => 'rw', isa => 'Int', init_arg => 'now', lazy => 1, default => sub {
@@ -73,7 +74,7 @@ has repo => (is => 'ro', isa => 'Chleb::Token::Repository', required => 1, init_
 
 has source => (is => 'ro', isa => 'Chleb::Token::Repository::Base', required => 1, init_arg => '_source');
 
-has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate');
+has value => (is => 'ro', isa => 'Str', init_arg => '_value', lazy => 1, builder => '_generate', writer => '_setValue');
 
 has shortValue => (is => 'ro', isa => 'Str', init_arg => undef, lazy => 1, builder => '_makeShortValue');
 
@@ -95,14 +96,17 @@ sub __markDirty {
 	return;
 }
 
-sub _generate {
+# Invoked by Moose as the lazy builder for the value attribute.
+sub _generate { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $sha = Digest::SHA->new(256);
-	return $sha->add($PID, time(), rand(time()))->hexdigest;
+	my $time = $self->dic->time->get();
+	return $sha->add($PID, $time, rand($time))->hexdigest;
 }
 
-sub _makeShortValue {
+# Invoked by Moose as the lazy builder for the shortValue attribute.
+sub _makeShortValue { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return substr($self->value, 0, 12);
 }
@@ -122,7 +126,7 @@ sub toString {
 
 sub expired {
 	my ($self) = @_;
-	return time() >= $self->expires;
+	return $self->dic->time->get() >= $self->expires;
 }
 
 sub TO_JSON {
@@ -145,6 +149,32 @@ sub TO_JSON {
 	return \@fields unless ($self);
 	my %json = map { $_ => $self->$_ } @fields;
 	return \%json;
+}
+
+sub TO_JWT {
+	my ($self) = @_;
+
+	my %claims = map { $_ => $self->$_ } grep {
+		$_ ne 'userAgent' && $_ ne 'value'
+	} @{ TO_JSON() };
+	$claims{iat} = delete($claims{created});
+	$claims{exp} = delete($claims{expires});
+
+	return \%claims;
+}
+
+sub fromJWTClaims {
+	my ($class, $claims, $args) = @_;
+
+	return $class->new({
+		%{$args},
+		_major    => $claims->{major},
+		_minor    => $claims->{minor},
+		_version  => $claims->{version},
+		expires   => $claims->{exp},
+		ipAddress => $claims->{ipAddress} // '',
+		now       => $claims->{iat},
+	});
 }
 
 1;

@@ -1,3 +1,8 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -42,6 +47,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::Dancer2;
 use Chleb::Server::Moose;
 use Test::Deep qw(all array_each cmp_deeply isa methods re ignore);
 use Test::More 0.96;
@@ -355,10 +361,41 @@ sub test_translation_all {
 	return EXIT_SUCCESS;
 }
 
+sub test_json_api_media_type {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['kjv'], version => 1 });
+
+	is(ref($json), 'HASH', 'random JSON:API media type returns JSON structure');
+	is($json->{data}->[0]->{type}, 'verse', 'random JSON:API media type returns verse data');
+	is($json->{links}->{self}, '/1/random?translations=kjv', 'random JSON:API media type keeps self link');
+
+	return EXIT_SUCCESS;
+}
+
+sub test_html_translation_order {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__random({ accept => $mediaType, translations => ['all'], version => 2 });
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv', 'kjv' ], 'random HTML sorts translations lexically');
+
+	$html = $self->sut->__random({ accept => $mediaType, translations => ['kjv', 'asv'], version => 2 });
+	@translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+	is_deeply(\@translations, [ 'kjv', 'asv' ], 'random HTML preserves explicit translation order');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
 use strict;
 use warnings;
 
-exit(RandomServerTests->new->run());
+exit(RandomServerTests->new->run(n => ($ENV{TEST_QUICK} ? 1 : 5)));

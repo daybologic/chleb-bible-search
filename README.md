@@ -11,6 +11,10 @@ The backend Perl library is also designed to be easily integrated with applicati
 
 The service also provides a deterministic verse of the day lookup.
 
+For Debian packaging builds, `libdbi-perl` and `libdbd-sqlite3-perl` are required
+at build time so the SQLite backend can be compiled and validated, but they are
+not runtime dependencies of the installed core service package.
+
 ## Documentation
 
 For up to date documentation, please ensure you are viewing the latest copy at [GitHub](https://github.com/daybologic/chleb-bible-search/blob/master/README.md)
@@ -23,8 +27,12 @@ For API documentation, please use the documentation published at [SwaggerHub](ht
 
 ## Configuration
 
-The configuration YAML file can be found in etc/main.yaml or when installed,
-/etc/chleb-bible-search/main.yaml
+The configuration YAML files can be found in etc/ or when installed,
+/etc/chleb-bible-search/
+
+Core service settings live in main.yaml.  Administrator contact details,
+optional feature settings, and session token/JWT settings live in contact.yaml,
+features.yaml, and tokens.yaml respectively.
 
 ## Availability
 
@@ -38,15 +46,15 @@ Hosting for Chleb Bible Search source code is provided at the following sites:
   * [GitHub](https://github.com/daybologic/chleb-bible-search)
   * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search)
 
-The latest release is version 2.4.0, which is available for download at the following sites:
+The latest release is version 2.5.1, which is available for download at the following sites:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v2.4.0.tar.gz)
-  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/archive/v2.4.0.tar.gz)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v2.5.1.tar.gz)
+  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/archive/v2.5.1.tar.gz)
 
 The latest release is available as a Debian package from the following locations:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v2.4.0/chleb-bible-search_2.4.0_all.deb)
-  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v2.4.0)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v2.5.1/chleb-bible-search_2.5.1_all.deb)
+  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v2.5.1)
 
 ## Self-hosted installation
 
@@ -56,9 +64,9 @@ the service on your own equipment.  Please install the deb file, where possible,
 
 ```
 sudo dpkg -i \
-	chleb-bible-search_2.4.0_all.deb
-	chleb-bible-search-core_2.4.0_all.deb
-	chleb-bible-search-dict_2.4.0_all.deb
+	chleb-bible-search_2.5.1_all.deb
+	chleb-bible-search-core_2.5.1_all.deb
+	chleb-bible-search-dict_2.5.1_all.deb
 
 sudo apt -yf install
 sudo systemctl enable chleb-bible-search.service
@@ -130,7 +138,7 @@ You could use the dummy load point for debug hooks or logging, etc.
 Session tokens by default are stored in the (presumably) local directory:
 /var/lib/chleb-bible-search/sessions/
 
-This may be altered via the config main.yaml
+This may be altered via the config tokens.yaml
 
 Sessions will be deleted from disk every month if they are over 30 days old, nb. that means that there can be
 a fairly wide-window of up to a couple of months before a session is deleted.  This is to keep load down and
@@ -151,7 +159,7 @@ Redis support is preferred over Local!  It's much simpler, there are no Crontabs
 and they are instrinsically-safer for clustered nodes.  There is less maintenance for the administrator,
 if you are paying for a shared Redis service.
 
-All you need to do is install a Redis server on either localhost (for a single node), or edit the main.yaml
+All you need to do is install a Redis server on either localhost (for a single node), or edit the tokens.yaml
 config file to point to the shared Redis end-point.  Ensure you are pointing at the correct database number,
 which will typically be 0-15.
 
@@ -197,6 +205,8 @@ Please name your branch using this scheme:
 | rel/X.Y | released 1.0, 2.0, 2.1 etc, which contain specific tags vX.Y.Z | NO | NO |
 | refactor/&lt;description&gt; | Not features, design changes | NO | NO |
 | tests/&lt;description&gt; | Unit tests, functional tests, sanity improvements | NO | NO |
+| translation/&lt;identifier&gt; | Translation work | NO | NO |
+| ui/&lt;description&gt; | User interface changes | NO | NO |
 | &lt;user&gt;/&lt;hierarchy&gt; | Your GitHub username, followed by recognized hierarchies above | NO | YES |
 
 ### Raising issues
@@ -241,9 +251,9 @@ You will need to install all build-dependencies first.
 
 For anything involving endpoints code, especially code within [Moose.pm](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/master/item/lib/Chleb/Server/Moose.pm) or [Dancer2.pm](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/master/item/lib/Chleb/Server/Dancer2.pm), please write one or more tests under [data/tests](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/tests/httpie-1/item/data/tests).
 
-These files are a all bash shell files.  Start with [data/tests/1/template.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v2.4.0/item/data/tests/1/template.sh) and copy this. The digit at the start represents the endpoint version.
+These files are a all bash shell files.  Start with [data/tests/1/template.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v2.5.1/item/data/tests/1/template.sh) and copy this. The digit at the start represents the endpoint version.
 
-You can test this by running [bin/maint/run-functional-tests.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v2.4.0/item/bin/maint/run-functional-tests.sh) and specify the 1/name or run all the tests by specifying no parameters.
+You can test this by running [bin/maint/run-functional-tests.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v2.5.1/item/bin/maint/run-functional-tests.sh) and specify the 1/name or run all the tests by specifying no parameters.
 
 You will need to edit your /etc/hosts file to ensure that the name [chleb-api.example.org](http://chleb-api.example.org) points to your running code, and set up Nginx.  Remember this does *not* use https (TLS)!
 

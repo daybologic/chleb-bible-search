@@ -1,3 +1,10 @@
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -42,6 +49,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::Dancer2;
 use Chleb::Server::Moose;
 use English qw(-no_match_vars);
 use Test::Deep qw(all cmp_deeply isa methods re ignore);
@@ -64,7 +72,8 @@ sub test {
 	plan tests => 1;
 
 	my $when = '2024-08-23T11:49:09+0100';
-	my $json = $self->sut->__votd({ when => $when });
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__votd({ accept => $mediaType, when => $when });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -158,6 +167,21 @@ sub test {
 			self => '/1/votd',
 		},
 	}, "single verse JSON for $when") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testJsonApiMediaType {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $when = '2024-08-23T11:49:09+0100';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
+	my $json = $self->sut->__votd({ accept => $mediaType, when => $when });
+
+	is(ref($json), 'HASH', 'votd JSON:API media type returns JSON structure');
+	is($json->{data}->[0]->{type}, 'verse', 'votd JSON:API media type returns verse data');
+	is($json->{links}->{self}, '/1/votd', 'votd JSON:API media type keeps self link');
 
 	return EXIT_SUCCESS;
 }
@@ -481,7 +505,7 @@ sub testV2_translations_kjv_asv {
 
 	my $when = '2024-10-30T21:36:26+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['kjv', 'asv'] });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['asv', 'kjv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -861,12 +885,74 @@ sub testV2_translations_all {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlNavigationKeepsAllTranslations {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => ['asv', 'kjv'],
+	});
+
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv', 'kjv' ], 'HTML renders both selected translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/7\?translations=all">prev verse</a>}, 'previous verse keeps all translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/9\?translations=all">next verse</a>}, 'next verse keeps all translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/8\?translations=all">permalink</a>}, 'permalink keeps all translations');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlSortsTranslations {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => ['all'],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv', 'kjv' ], 'VOTD HTML sorts translations lexically');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlPreservesExplicitTranslationOrder {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => ['kjv', 'asv'],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'kjv', 'asv' ], 'VOTD HTML preserves explicit translation order');
+
+	return EXIT_SUCCESS;
+}
+
 sub testRedirectV2 {
 	my ($self) = @_;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->__votd({ redirect => 1, version => 2 });
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
@@ -886,10 +972,11 @@ sub testRedirectV2 {
 sub testRedirectV1 {
 	my ($self) = @_;
 
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		my $when = '2021-10-30T21:36:26+0000';
 		$self->sut->__votd({ redirect => 1, version => 1, when => $when });
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

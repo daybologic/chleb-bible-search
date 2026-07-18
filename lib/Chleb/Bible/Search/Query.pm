@@ -31,12 +31,14 @@
 package Chleb::Bible::Search::Query;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 use Moose::Util::TypeConstraints;
 
 extends 'Chleb::Bible::Base';
 
 use Data::Dumper;
+use English qw(-no_match_vars);
 use Moose::Util::TypeConstraints qw(enum);
 use Chleb::Bible::Search::Results;
 use Chleb::Utils::SecureString;
@@ -80,6 +82,7 @@ sub setWholeword {
 sub run {
 	my ($self) = @_;
 	my $startTiming = Time::HiRes::time();
+	my $bible = $self->bible;
 
 	my @booksToQuery = ( );
 	if ($self->bookShortName) {
@@ -89,11 +92,19 @@ sub run {
 	}
 
 	my @verses = ( );
-	foreach my $book (@booksToQuery) {
-		next if ($self->testament && $self->testament ne $book->testament);
-		my $bookVerses = $book->search($self);
-		push(@verses, @$bookVerses);
-	}
+	$bible->deferSharedCacheWrites(1);
+	my $evalOk1; $evalOk1 = eval {
+		foreach my $book (@booksToQuery) {
+			next if ($self->testament && $self->testament ne $book->testament);
+			my $bookVerses = $book->search($self);
+			push(@verses, @$bookVerses);
+		}
+		1;
+	} or $evalOk1 = 0;
+	my $evalError = $EVAL_ERROR;
+	$bible->deferSharedCacheWrites(0);
+	$bible->flushSharedCache();
+	croak($evalError) if ($evalError);
 
 	splice(@verses, $self->limit);
 

@@ -1,3 +1,7 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +36,7 @@
 package UtilsRemoveArrayEmptyItemsTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
@@ -47,7 +52,7 @@ use Test::Exception;
 use Test::More 0.96;
 
 my $uncallable = sub {
-	die('CODE was executed!');
+	croak('CODE was executed!');
 };
 
 sub testNothing {

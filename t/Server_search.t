@@ -1,3 +1,9 @@
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +38,7 @@
 package SearchServerTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -68,7 +75,8 @@ sub test {
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
 	my $json = $self->sut->__search({
 		accept => $mediaType,
-		limit => 5,
+		limit => 153,
+		per_page => 5,
 		term => $term,
 		wholeword => 'true',
 	});
@@ -82,7 +90,7 @@ sub test {
 				ordinal => 18,
 				text => 'And Jesus, walking by the sea of Galilee, saw two brethren, Simon called Peter, and Andrew his brother, casting a net into the sea: for they were fishers.',
 				tones => [],
-				title => "Result 1/5 from Chleb Bible Search 'peter'",
+				title => "Result 1/153 from Chleb Bible Search 'peter'",
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/4/18',
@@ -111,7 +119,7 @@ sub test {
 				ordinal => 2,
 				text => 'Now the names of the twelve apostles are these; The first, Simon, who is called Peter, and Andrew his brother; James [the son] of Zebedee, and John his brother;',
 				tones => [],
-				title => 'Result 2/5 from Chleb Bible Search \'peter\'',
+				title => 'Result 2/153 from Chleb Bible Search \'peter\'',
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/10/2',
@@ -140,7 +148,7 @@ sub test {
 				ordinal => 28,
 				text => 'And Peter answered him and said, Lord, if it be thou, bid me come unto thee on the water.',
 				tones => ['encouragement', 'trust'],
-				title => 'Result 3/5 from Chleb Bible Search \'peter\'',
+				title => 'Result 3/153 from Chleb Bible Search \'peter\'',
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/14/28',
@@ -169,7 +177,7 @@ sub test {
 				ordinal => 29,
 				text => 'And he said, Come. And when Peter was come down out of the ship, he walked on the water, to go to Jesus.',
 				tones => ['encouragement', 'trust'],
-				title => 'Result 4/5 from Chleb Bible Search \'peter\'',
+				title => 'Result 4/153 from Chleb Bible Search \'peter\'',
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/14/29',
@@ -198,7 +206,7 @@ sub test {
 				ordinal => 15,
 				text => 'Then answered Peter and said unto him, Declare unto us this parable.',
 				tones => [],
-				title => 'Result 5/5 from Chleb Bible Search \'peter\'',
+				title => 'Result 5/153 from Chleb Bible Search \'peter\'',
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/15/15',
@@ -387,28 +395,136 @@ sub test {
 				translation => 'kjv',
 				verse_count => 1_071,
 			},
-			id => 'kjv/mat',
-			relationships => {},
-			type => 'book',
-		}, {
-			attributes => {
-				count => 5,
+				id => 'kjv/mat',
+				relationships => {},
+				type => 'book',
+			}, {
+				attributes => {
+					count => 5,
+					page => 1,
+					per_page => 5,
+					total_count => 153,
+					total_pages => 31,
+				},
+				id => ignore(),
+				links => {},
+				type => 'results_summary',
+			}, {
+				attributes => {
+					msec => re(qr/^\d+$/),
 			},
-			id => ignore(),
-			links => {},
-			type => 'results_summary',
-		}, {
-			attributes => {
-				msec => re(qr/^\d+$/),
+				id => ignore(),
+				links => {},
+				type => 'stats',
+			}],
+			links => {
+				first => '/1/search?term=peter&wholeword=1&limit=153&page=1&per_page=5',
+				last => '/1/search?term=peter&wholeword=1&limit=153&page=31&per_page=5',
+				next => '/1/search?term=peter&wholeword=1&limit=153&page=2&per_page=5',
+				self => '/1/search?term=peter&wholeword=1&limit=153&page=1&per_page=5',
 			},
-			id => ignore(),
-			links => {},
-			type => 'stats',
-		}],
-		links => {
-			self => '/1/search?term=peter&wholeword=1&limit=5',
-		},
-	}, "wholeword search results for '$term'") or diag(explain($json));
+		}, "wholeword search results for '$term'") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub testSecondPage {
+	my ($self) = @_;
+	plan tests => 5;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__search({
+		accept => $mediaType,
+		limit => 153,
+		page => 2,
+		per_page => 5,
+		term => 'peter',
+		wholeword => 'true',
+	});
+	my $summary = __resultsSummary($json);
+
+	is(scalar(@{ $json->{data} }), 5, 'second page result count');
+	is($json->{data}->[0]->{id}, 'kjv/mat/16/16', 'second page first result');
+	is($json->{data}->[0]->{attributes}->{title}, 'Result 6/153 from Chleb Bible Search \'peter\'', 'second page title offset');
+	is($summary->{page}, 2, 'second page summary');
+	is_deeply($json->{links}, {
+		first => '/1/search?term=peter&wholeword=1&limit=153&page=1&per_page=5',
+		last => '/1/search?term=peter&wholeword=1&limit=153&page=31&per_page=5',
+		next => '/1/search?term=peter&wholeword=1&limit=153&page=3&per_page=5',
+		prev => '/1/search?term=peter&wholeword=1&limit=153&page=1&per_page=5',
+		self => '/1/search?term=peter&wholeword=1&limit=153&page=2&per_page=5',
+	}, 'second page pagination links');
+
+	return EXIT_SUCCESS;
+}
+
+sub testEmptyResults {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__search({
+		accept => $mediaType,
+		page => 1,
+		per_page => 5,
+		term => 'zzzznotfoundzzzz',
+	});
+	my $summary = __resultsSummary($json);
+
+	is(scalar(@{ $json->{data} }), 0, 'empty search has no data');
+	is($summary->{total_count}, 0, 'empty search total count');
+	is($summary->{total_pages}, 1, 'empty search has one logical page');
+	is_deeply($json->{links}, {
+		first => '/1/search?term=zzzznotfoundzzzz&wholeword=0&limit=50&page=1&per_page=5',
+		last => '/1/search?term=zzzznotfoundzzzz&wholeword=0&limit=50&page=1&per_page=5',
+		self => '/1/search?term=zzzznotfoundzzzz&wholeword=0&limit=50&page=1&per_page=5',
+	}, 'empty search pagination links');
+
+	return EXIT_SUCCESS;
+}
+
+sub testInvalidPageValues {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__search({
+		accept => $mediaType,
+		limit => 153,
+		page => -4,
+		per_page => 5,
+		term => 'peter',
+		wholeword => 'true',
+	});
+	my $summary = __resultsSummary($json);
+
+	is($summary->{page}, 1, 'negative page becomes first page');
+	is($json->{links}->{self}, '/1/search?term=peter&wholeword=1&limit=153&page=1&per_page=5', 'self link uses normalized page');
+	is($json->{data}->[0]->{id}, 'kjv/mat/4/18', 'normalized invalid page returns first page results');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlPaginationPreservesQuery {
+	my ($self) = @_;
+	plan tests => 5;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my ($html) = $self->sut->__search({
+		accept => $mediaType,
+		form => 1,
+		limit => 153,
+		page => 2,
+		per_page => 5,
+		term => 'peter',
+		wholeword => 'true',
+	});
+
+	like($html, qr{<nav class="pagination"}, 'HTML includes pagination nav');
+	like($html, qr{/1/search[?]term=peter&wholeword=1&limit=153&page=1&per_page=5&form=true">Previous</a>}, 'HTML previous link preserves query');
+	like($html, qr{/1/search[?]term=peter&wholeword=1&limit=153&page=3&per_page=5&form=true">Next</a>}, 'HTML next link preserves query');
+	like($html, qr{/1/search[?]term=peter&wholeword=1&limit=153&page=1&per_page=5&form=true">1</a>}, 'HTML page number preserves query');
+	like($html, qr{<strong>2</strong>}, 'HTML marks current page');
 
 	return EXIT_SUCCESS;
 }
@@ -435,6 +551,16 @@ sub testWholeWordPunctuation {
 	}
 
 	return EXIT_SUCCESS;
+}
+
+sub __resultsSummary {
+	my ($json) = @_;
+
+	foreach my $included (@{ $json->{included} }) {
+		return $included->{attributes} if ($included->{type} eq 'results_summary');
+	}
+
+	croak('results summary not found');
 }
 
 __PACKAGE__->meta->make_immutable;

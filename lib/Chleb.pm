@@ -42,7 +42,6 @@ use Data::Dumper;
 use Digest::CRC qw(crc32);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
-use List::Util qw(shuffle);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
@@ -54,14 +53,18 @@ use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 use Chleb::DI::Container;
 use Chleb::Utils;
+use Carp qw(croak);
 
 Readonly my $TRANSLATION_DEFAULT => 'kjv';
 
 has __bibles => (is => 'ro', isa => 'HashRef[Str]', lazy => 1, default => \&__makeBibles); # use 'bibles' to access
 
+# The release version is generated during the build.
+## no critic (ValuesAndExpressions::ProhibitComplexVersion)
 BEGIN {
 	our $VERSION = $Chleb::Generated::Info::VERSION;
 }
+## use critic
 
 sub BUILD {
 	my ($self) = @_;
@@ -156,7 +159,6 @@ sub random {
 	$self->dic->logger->trace('Looking for testament: ' . $testament->toString());
 
 	my (@bible) = $self->__getBible($args);
-	@bible = shuffle(@bible);
 
 	my ($verse, $verseOrdinal);
 	my $seed = rand($PID + $bible[0]->verseCount);
@@ -307,6 +309,11 @@ sub bibles {
 	return $self->__bibles->{$translation};
 }
 
+sub getBibles {
+	my ($self, $args) = @_;
+	return $self->__getBible($args);
+}
+
 sub __getBible {
 	my ($self, $args) = @_;
 
@@ -329,7 +336,7 @@ sub __getBible {
 		push(@bible, $self->bibles($translation));
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_FOUND, 'No recognized bible translations')
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, 'No recognized bible translations'))
 	    if (scalar(@bible) == 0);
 
 	return @bible;
@@ -370,7 +377,7 @@ sub __fixTranslationsParam {
 
 	if (my $translation = $args->{translation}) { # legacy
 		if ($translation eq 'all') {
-			die ("Cannot use all in 'translation', switch code to 'translations'");
+		croak("Cannot use all in 'translation', switch code to 'translations'");
 		}
 		$args->{translations} = [ $translation ]; # convert to new style
 	}
@@ -382,9 +389,10 @@ sub __fixTranslationsParam {
 				last TRANSLATION;
 			}
 		}
-		my %uniqueTranslations = map { $_ => 1 } @$translations;
-		$translations = [ sort(keys(%uniqueTranslations)) ]; # ensure order is predictable
-		$args->{translations} = $translations; # update after unique/sort
+		my %seenTranslation;
+		my @uniqueTranslations = grep { !$seenTranslation{$_}++ } @$translations;
+		$translations = \@uniqueTranslations; # remove duplicates while preserving order
+		$args->{translations} = $translations;
 		$args->{translation} = $translations->[0]; # populate legacy
 	}
 

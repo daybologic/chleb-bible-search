@@ -3,10 +3,14 @@ Section: contrib/perl
 Priority: optional
 Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
+ libdbd-sqlite3-perl,
  libplack-perl,
 Build-Depends-Indep:
  libdatetime-perl,
  libdatetime-format-strptime-perl,
+ libcache-memcached-perl,
+ libdbd-sqlite3-perl,
+ libdbi-perl,
  libdevel-cover-perl,
  libdigest-crc-perl,
  libdigest-sha-perl,
@@ -18,7 +22,6 @@ Build-Depends-Indep:
  libmoose-perl,
  libmoosex-singleton-perl,
  libreadonly-perl,
- libredis-perl,
  libtest-deep-perl,
  libtest-exception-perl,
  libtest-mockmodule-perl,
@@ -27,6 +30,7 @@ Build-Depends-Indep:
  libtime-duration-perl,
  libuuid-tiny-perl,
  libyaml-libyaml-perl,
+ pre-commit,
 Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
@@ -39,30 +43,17 @@ Description: Chleb Bible Search - Bible Query Service (meta-package)
  linguistic data for interpreting search queries.
 
 Package: chleb-bible-search-core
-Architecture: all
+Architecture: any
 Depends: ${shlibs:Depends},
  ${misc:Depends},
  bash (>= 5.2.15-2),
  jq,
- libdatetime-perl,
- libdatetime-format-strptime-perl,
- libdigest-crc-perl,
- libdigest-sha-perl,
- libfile-nfslock-perl,
- libhttp-message-perl (>= 6.44-1),
- libjson-perl,
- libdancer2-perl,
- liblog-dispatch-filerotate-perl,
- liblog-log4perl-perl,
- libmoose-perl,
- libmoosex-singleton-perl,
- libreadonly-perl,
- libredis-perl,
- libtext-levenshteinxs-perl,
- libtime-duration-perl,
- libuuid-tiny-perl,
+ libplack-perl,
  libyaml-libyaml-perl,
  swaks,
+Recommends:
+ memcached,
+ libredis-fast-perl | libredis-perl,
 Replaces: libreligion-bible-verses-perl
 Description: Chleb Bible Search - Bible Query Service
  For further information see:

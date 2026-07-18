@@ -1,0 +1,170 @@
+<!-- Chleb Template -->
+	<main class="settings-page">
+		<section class="settings-card" aria-labelledby="settings-title">
+			<div class="settings-heading">
+				<p class="subtitle">Chleb Bible Search</p>
+				<h1 id="settings-title">Settings</h1>
+				<p>Choose how Bible passages should be displayed.</p>
+			</div>
+
+			<form id="settings-form">
+				<fieldset class="translation-options">
+					<legend>Preferred translation</legend>
+					<p class="settings-help">This preference is saved in your browser.</p>
+
+					<label class="translation-option">
+						<input type="checkbox" name="preferredTranslation" value="default">
+						<span>
+							<strong>Default</strong>
+							<small>Use the service's default translation.</small>
+						</span>
+					</label>
+
+					<label class="translation-option">
+						<input type="checkbox" name="preferredTranslation" value="all">
+						<span>
+							<strong>All</strong>
+							<small>Show every available translation.</small>
+						</span>
+					</label>
+
+					<label class="translation-option">
+						<input type="checkbox" name="preferredTranslation" value="asv">
+						<span>
+							<strong>ASV</strong>
+							<small>American Standard Version</small>
+						</span>
+					</label>
+
+					<label class="translation-option">
+						<input type="checkbox" name="preferredTranslation" value="kjv">
+						<span>
+							<strong>KJV</strong>
+							<small>King James Version</small>
+						</span>
+					</label>
+				</fieldset>
+
+				<div class="settings-actions">
+					<button type="submit">Save settings</button>
+					<button type="button" id="settings-back">Back</button>
+					<button type="button" id="settings-home">Home</button>
+				</div>
+
+				<p id="settings-status" class="settings-status" role="status" aria-live="polite"></p>
+			</form>
+		</section>
+	</main>
+
+	<script>
+		(function () {
+			'use strict';
+
+			var preferredTranslationCookieName = 'preferredTranslation';
+			var allowedTranslations = [ 'default', 'all', 'asv', 'kjv' ];
+			var form = document.getElementById('settings-form');
+			var status = document.getElementById('settings-status');
+			var back = document.getElementById('settings-back');
+			var home = document.getElementById('settings-home');
+
+			function readCookie(name) {
+				var prefix = name + '=';
+				var cookies = document.cookie.split(';');
+
+				for (var i = 0; i < cookies.length; i++) {
+					var cookie = cookies[i].trim();
+					if (cookie.indexOf(prefix) === 0) {
+						return decodeURIComponent(cookie.substring(prefix.length));
+					}
+				}
+
+				return '';
+			}
+
+			function writeCookie(name, value) {
+				document.cookie = name + '=' + encodeURIComponent(value)
+					+ '; Max-Age=31536000; Path=/; SameSite=Lax';
+			}
+
+			function readPreference() {
+				var value = readCookie(preferredTranslationCookieName);
+				var values = value.split(',').filter(function (translation) {
+					return allowedTranslations.indexOf(translation) !== -1;
+				});
+
+				if (values.indexOf('default') !== -1 || values.length === 0) {
+					return [ 'default' ];
+				}
+
+				if (values.indexOf('all') !== -1) {
+					return [ 'all' ];
+				}
+
+				return values;
+			}
+
+			function translationInputs() {
+				return form.querySelectorAll('input[name="preferredTranslation"]');
+			}
+
+			function selectPreference(values) {
+				var inputs = translationInputs();
+				for (var i = 0; i < inputs.length; i++) {
+					inputs[i].checked = values.indexOf(inputs[i].value) !== -1;
+				}
+			}
+
+			selectPreference(readPreference());
+
+			form.addEventListener('change', function (event) {
+				if (event.target.name !== 'preferredTranslation' || !event.target.checked) {
+					return;
+				}
+
+				var inputs = translationInputs();
+				for (var i = 0; i < inputs.length; i++) {
+					if (
+						(event.target.value === 'default' || event.target.value === 'all')
+						&& inputs[i] !== event.target
+					) {
+						inputs[i].checked = false;
+					} else if (
+						(event.target.value !== 'default' && event.target.value !== 'all')
+						&& (inputs[i].value === 'default' || inputs[i].value === 'all')
+					) {
+						inputs[i].checked = false;
+					}
+				}
+			});
+
+			form.addEventListener('submit', function (event) {
+				event.preventDefault();
+
+				var selected = form.querySelectorAll('input[name="preferredTranslation"]:checked');
+				var values = [];
+				for (var i = 0; i < selected.length; i++) {
+					values.push(selected[i].value);
+				}
+
+				if (values.length === 0) {
+					values = [ 'default' ];
+					selectPreference(values);
+				}
+
+				writeCookie(preferredTranslationCookieName, values.join(','));
+				status.textContent = 'Settings saved.';
+			});
+
+			back.addEventListener('click', function () {
+				if (window.history.length > 1) {
+					window.history.back();
+				} else {
+					window.location.href = '/';
+				}
+			});
+
+			home.addEventListener('click', function () {
+				window.location.href = '/';
+			});
+		}());
+	</script>

@@ -1,6 +1,7 @@
 package Chleb::Utils;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -50,7 +51,7 @@ Readonly my $MAX_TEXT_LENGTH => 120;
 
 =back
 
-=head2 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.
+=head1 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.
 
 =over
 
@@ -109,9 +110,9 @@ sub forceArray {
 
 	my $noObjects = sub {
 		my ($item) = @_;
-		die('no blessed object support') if (blessed($item));
-		die('no CODE support') if (ref($item) eq 'CODE');
-		die('no HASH support') if (ref($item) eq 'HASH');
+		croak('no blessed object support') if (blessed($item));
+		croak('no CODE support') if (ref($item) eq 'CODE');
+		croak('no HASH support') if (ref($item) eq 'HASH');
 	};
 
 	my @output = ( );
@@ -125,14 +126,14 @@ sub forceArray {
 			foreach my $subItem (@$unknown) {
 				if (defined($subItem)) {
 					$noObjects->($subItem);
-					push(@output, split(m/,/, $subItem));
+					push(@output, split(m{ , }x, $subItem));
 				} else {
 					push(@output, $subItem);
 				}
 			}
 			next;
 		}
-		push(@output, split(m/,/, $unknown));
+		push(@output, split(m{ , }x, $unknown));
 	}
 
 	return \@output;
@@ -150,10 +151,10 @@ sub removeArrayEmptyItems {
 
 	return [ ] unless (defined($arrayRef));
 
-	die('no blessed object support') if (blessed($arrayRef));
-	die('no CODE support') if (ref($arrayRef) eq 'CODE');
-	die('no HASH support') if (ref($arrayRef) eq 'HASH');
-	die('$arrayRef must be an ARRAY ref') if (ref($arrayRef) ne 'ARRAY');
+	croak('no blessed object support') if (blessed($arrayRef));
+	croak('no CODE support') if (ref($arrayRef) eq 'CODE');
+	croak('no HASH support') if (ref($arrayRef) eq 'HASH');
+	croak('$arrayRef must be an ARRAY ref') if (ref($arrayRef) ne 'ARRAY');
 
 	my @filtered = ( );
 	my $filteredCount = 0;
@@ -178,8 +179,11 @@ sub queryParamsHelper {
 
 	while (my ($k, $v) = each(%$params)) {
 		next if ($blacklist{$k});
-		$str .= ($counter == 0) ? '?' : '&';
 		$v = join(',', @$v) if (ref($v) eq 'ARRAY');
+		next if (!defined($v));
+		next if (length($v) == 0);
+
+		$str .= ($counter == 0) ? '?' : '&';
 		$v = 'all' if ($v eq 'asv,kjv' && $k eq 'translations'); # TODO: You should do this via a callback
 		$str .= "${k}=${v}";
 		$counter++;
@@ -225,7 +229,7 @@ sub boolean {
 			return 1 if ($v eq $trueValues);
 		}
 
-		return ($v =~ m/^enable/);
+		return ($v =~ m{ ^enable }x);
 	};
 
 	my $isFalse = sub {
@@ -235,7 +239,7 @@ sub boolean {
 			return 1 if ($v eq $falseValues);
 		}
 
-		return ($v =~ m/^disable/);
+		return ($v =~ m{ ^disable }x);
 	};
 
 	# Let's run this block first so we trap invalid defaults even when they aren't used
@@ -244,7 +248,7 @@ sub boolean {
 		if ($isTrue->($defaultValue)) {
 			$defaultValueReturned = 1;
 		} elsif (!$isFalse->($defaultValue)) {
-			die(Chleb::Utils::BooleanParserSystemException->raise(
+			croak(Chleb::Utils::BooleanParserSystemException->raise(
 				undef,
 				"Illegal default value: '$defaultValue' for key '$key'",
 				$key,
@@ -255,8 +259,8 @@ sub boolean {
 	if (defined($value)) {
 		my $trim = sub {
 			my ($v) = @_;
-			$v =~ s/^\s+//;
-			$v =~ s/\s+$//;
+			$v =~ s{^\s+}{}x;
+			$v =~ s{\s+$}{}x;
 			return $v;
 		};
 
@@ -267,7 +271,7 @@ sub boolean {
 			return 1 if ($isTrue->($value));
 			return 0 if ($isFalse->($value));
 
-			die(Chleb::Utils::BooleanParserUserException->raise(
+			croak(Chleb::Utils::BooleanParserUserException->raise(
 				undef,
 				"Illegal user-supplied value: '$value' for key '$key'",
 				$key,
@@ -279,7 +283,7 @@ sub boolean {
 
 	return $defaultValueReturned if (defined($defaultValue)); # Apply default, if supplied/available
 
-	die(Chleb::Utils::BooleanParserUserException->raise(
+	croak(Chleb::Utils::BooleanParserUserException->raise(
 		undef,
 		"Mandatory value for key '$key' not supplied",
 		$key,
@@ -293,13 +297,13 @@ sub boolean {
 sub parseIntoType {
 	my ($outputType, $name, $value, $default) = @_;
 
-	die(Chleb::Utils::TypeParserException->raise(
+	croak(Chleb::Utils::TypeParserException->raise(
 		HTTP_INTERNAL_SERVER_ERROR,
 		'No name supplied in call to parseIntoType()',
 		undef,
 	)) if (!defined($name) || length($name) == 0);
 
-	die(Chleb::Utils::TypeParserException->raise(
+	croak(Chleb::Utils::TypeParserException->raise(
 		HTTP_INTERNAL_SERVER_ERROR,
 		sprintf("No default value supplied for '%s'", $name),
 		$name,
@@ -310,11 +314,12 @@ sub parseIntoType {
 	}
 
 	my $output;
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$output = $outputType->new({ value => $value });
-	};
+		1;
+	} or $evalOk1 = 0;
 	if (my $evalError = $EVAL_ERROR) {
-		die(Chleb::Utils::TypeParserException->raise(
+		croak(Chleb::Utils::TypeParserException->raise(
 			undef,
 			sprintf("Illegal value '%s' for '%s'", $value, $name),
 			$name,
@@ -371,7 +376,7 @@ sub explodeHtmlFilePath {
 
 =item C<colorIndexFromWord($word)>
 
-Map a word to an integer 0–63 for color selection
+Map a word to an integer 0-63 for color selection
 
 =cut
 

@@ -1,3 +1,8 @@
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -32,6 +37,7 @@
 package TypeTestamentTests;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
@@ -140,7 +146,7 @@ sub testNotEquals {
 
 	ok(!$self->sut->equals({ }), 'HASH');
 	ok(!$self->sut->equals({ }), 'ARRAY');
-	ok(!$self->sut->equals(sub { die("Won't be called") }), 'CODE');
+	ok(!$self->sut->equals(sub { croak("Won't be called") }), 'CODE');
 
 	my $string = 'Noah';
 	ok(!$self->sut->equals(\$string), 'SCALAR');

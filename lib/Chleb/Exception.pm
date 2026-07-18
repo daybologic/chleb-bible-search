@@ -33,13 +33,17 @@ use strict;
 use warnings;
 use Moose;
 
-use HTTP::Status qw(:is);
+use HTTP::Status qw(:is status_message);
+
+use overload q{""} => 'toString', fallback => 1;
 
 has description => (is => 'ro', isa => 'Str');
 
 has statusCode => (is => 'ro', isa => 'Int', default => 200);
 
 has location => (is => 'ro', isa => 'Str');
+
+has retryAfterSeconds => (is => 'ro', isa => 'Maybe[Int]');
 
 sub raise {
 	my ($class, $statusCode, $thing, $additional) = @_;
@@ -61,9 +65,29 @@ sub raise {
 	return $class->new(\%params);
 }
 
+sub toJsonApiErrorDocument {
+	my ($self) = @_;
+
+	my $error = {
+		status => q{} . $self->statusCode,
+		title  => status_message($self->statusCode) // 'Unknown',
+		detail => $self->description,
+	};
+
+	return { errors => [ $error ] };
+}
+
 sub toString {
 	my ($self) = @_;
-	return sprintf('HTTP code %d: %s', $self->statusCode, $self->description);
+
+	my $description = 'Unknown';
+	if (defined($self->description)) {
+		$description = $self->description;
+	} elsif (my $statusMessage = status_message($self->statusCode)) {
+		$description = $statusMessage;
+	}
+
+	return sprintf('HTTP code %d: %s', $self->statusCode, $description);
 }
 
 __PACKAGE__->meta->make_immutable;
