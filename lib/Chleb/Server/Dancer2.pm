@@ -377,7 +377,17 @@ sub _param {
 	return $value;
 }
 
-get '/' => sub {
+=over
+
+=item C<__registerPageRoutes()>
+
+Register the home page and settings routes.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerPageRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
@@ -428,8 +438,18 @@ get '/settings' => sub {
 	send_as html => $result;
 	return;
 };
+	return;
+}
 
-get '/:version/random' => sub {
+=item C<__registerVerseRoutes()>
+
+Register random-verse and verse-of-the-day routes.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/:version/random' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
@@ -561,8 +581,18 @@ get '/2/votd' => sub {
 	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
+	return;
+}
 
-get '/1/lookup' => sub {
+=item C<__registerLookupRoutes()>
+
+Register lookup redirect, chapter, and verse routes.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerLookupRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/1/lookup' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
@@ -671,8 +701,18 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
+	return;
+}
 
-get '/1/search' => sub {
+=item C<__registerSearchRoutes()>
+
+Register the search route.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/1/search' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
@@ -774,8 +814,18 @@ get '/1/search' => sub {
 	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
+	return;
+}
 
-get '/1/ping' => sub {
+=item C<__registerStatusRoutes()>
+
+Register ping, version, uptime, and Bible information routes.
+
+=cut
+
+# Invoked during module initialization to register Dancer routes.
+sub __registerStatusRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/1/ping' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 	my $dancerRequest = request();
@@ -915,6 +965,18 @@ get '/1/info' => sub {
 	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
+	return;
+}
+
+=back
+
+=cut
+
+__registerPageRoutes();
+__registerVerseRoutes();
+__registerLookupRoutes();
+__registerSearchRoutes();
+__registerStatusRoutes();
 
 sub run {
 	my ($self) = @_;
