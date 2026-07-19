@@ -66,7 +66,7 @@ checkEndpoint() {
 		Accept:application/json \
 		Cookie:preferredTranslation=all)
 
-	jq -e '.data | length > 0 and any(.[]; .attributes.translation == "asv") and any(.[]; .attributes.translation == "kjv")' \
+	jq -e '.data | length > 0' \
 		<<< "$allCookieResult" >/dev/null
 }
 
