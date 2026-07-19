@@ -1,4 +1,5 @@
 ^\.git/
+^\.venv-openai/
 ^MYMETA\.
 ^blib/
 \.bak$
