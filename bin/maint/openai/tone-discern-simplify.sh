@@ -25,7 +25,7 @@ if [ -e "$output" ]; then
 fi
 
 echo "[" > "$output"
-verseOrdinal=1
+firstItem=1
 while IFS= read -r json; do
 	echo "$json"
 
@@ -33,12 +33,12 @@ while IFS= read -r json; do
 	tones=$(echo "$json" | jq .tones)
 
 	itemData="{\"emotion\": ${emotion}, \"tones\": ${tones}}"
-	if [ $verseOrdinal -lt 31102 ]; then
-		itemData="${itemData},"
+	if [ $firstItem -eq 0 ]; then
+		echo "," >> "$output"
 	fi
 
 	echo "$itemData" >> "$output"
-	verseOrdinal=$((verseOrdinal+1))
+	firstItem=0
 done < "$input"
 
 echo "]" >> "$output"

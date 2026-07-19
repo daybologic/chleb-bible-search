@@ -352,6 +352,20 @@ SQL
 sub __neutralSentiment {
 	my ($translation) = @_;
 
+	my $verseCount = __verseCountFromTranslation($translation);
+
+	return [ map { { emotion => 'neutral', tones => [ ] } } 1 .. $verseCount ];
+}
+
+=item C<__verseCountFromTranslation($translation)>
+
+Return the number of verse records in the translation's input file.
+
+=cut
+
+sub __verseCountFromTranslation {
+	my ($translation) = @_;
+
 	my $fileName = join('/', $DATA_DIR, __inputFromTranslation($translation));
 	my $fh = IO::File->new($fileName, 'r')
 	    or die(sprintf("Failed to open '%s' -- %s", $fileName, $ERRNO));
@@ -360,7 +374,7 @@ sub __neutralSentiment {
 	$verseCount++ while (<$fh>);
 	$fh->close();
 
-	return [ map { { emotion => 'neutral', tones => [ ] } } 1 .. $verseCount ];
+	return $verseCount;
 }
 
 my %idCounters = ( );
@@ -551,7 +565,9 @@ sub getSentiment {
 	    if ($translation eq 'pickthall' && !defined($text));
 
 	my $data = decode_json($text);
-	die("Sentiment data for $translation is incomplete") unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == 31_102);
+	my $verseCount = __verseCountFromTranslation($translation);
+	die("Sentiment data for $translation is incomplete")
+	    unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == $verseCount);
 
 	return $data;
 }
