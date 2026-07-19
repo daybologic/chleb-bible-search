@@ -19,7 +19,7 @@ PRIMARY_EMOTIONS = [
 
 TONES = [
     "comfort", "encouragement", "lament", "rebuke", "warning",
-    "praise", "thanksgiving", "confession", "trust", "perseverance", "instruction"
+    "praise", "thanksgiving", "confession", "trust", "perseverance", "instruction", "challenge"
 ]
 
 client = OpenAI()
@@ -87,6 +87,7 @@ For EACH verse, you must output an object with:
 Rules:
 - Only choose labels that clearly fit.
 - If no strong emotion stands out, use "neutral".
+- "challenge" is a tone, never a primary emotion.
 - "tones" can be empty if nothing fits clearly.
 - Do NOT invent new labels.
 
@@ -163,6 +164,7 @@ Return a single JSON object with:
 Rules:
 - Only choose labels that clearly fit.
 - If no strong emotion stands out, use "neutral".
+- "challenge" is a tone, never a primary emotion.
 - "tones" can be empty if nothing fits clearly.
 - Do NOT invent new labels.
 
