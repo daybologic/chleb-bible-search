@@ -621,6 +621,14 @@ sub __registerLookupRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	my $book = getParam('book') // '';
 	my $chapter = getParam('chapter') // 1;
 	my $verse = getParam('verse');
+	my $form = Chleb::Utils::boolean('form', getParam('form'), 0);
+	if ($form) {
+		my $result = fetchStaticPage('generic_head', { TITLE => 'Lookup - Chleb Bible Search' });
+		$result .= fetchStaticPage('lookup');
+		$result .= fetchStaticPage('generic_tail');
+		send_as html => $result;
+		return;
+	}
 	my $queryParams = request()->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
