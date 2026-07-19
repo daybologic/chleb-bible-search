@@ -956,6 +956,7 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 		my %attributes = ( %{ $verse->TO_JSON() } );
 		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $offset + $i + 1, $totalCount, $query->text);
+		$attributes{year} = $verse->book->bible->year();
 
 		push(@{ $hash{included} }, {
 			type => $verse->chapter->type,
@@ -1359,6 +1360,8 @@ sub __verseToJsonApi {
 	%paramsLocal = %$params if ($params);
 	$paramsLocal{translations} = [ $verse->book->bible->translation ] if ($paramsLocal{translations});
 	my $queryParams = Chleb::Utils::queryParamsHelper(\%paramsLocal);
+	my %verseAttributes = %{ $verse->TO_JSON() };
+	$verseAttributes{year} = $verse->book->bible->year();
 
 	my %links = (
 		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
@@ -1390,7 +1393,7 @@ sub __verseToJsonApi {
 	push(@{ $hash{data} }, {
 		type => $verse->type,
 		id => $verse->id,
-		attributes => $verse->TO_JSON(),
+		attributes => \%verseAttributes,
 		links => \%links,
 		relationships => {
 			chapter => {
@@ -1635,6 +1638,7 @@ sub __verseHtmlData {
 				last_continues => 0,
 				reference => sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal),
 				tones => [],
+				year => $thisVerse->book->bible->year(),
 				verse_count => 0,
 			};
 		}
@@ -1675,6 +1679,8 @@ sub __verseHtmlCards {
 	my $output = '';
 	foreach my $translation (@{ $data->{translationOrder} }) {
 		my $section = $data->{translationSections}->{$translation};
+		my $translationLabel = lc($translation);
+		$translationLabel .= sprintf(' (%d)', $section->{year}) if (defined($section->{year}));
 		my $sentiments = '';
 		my %toneSeen;
 
@@ -1689,7 +1695,7 @@ sub __verseHtmlCards {
 		$output .= "\t\t\t\t\t\t\t<div class=\"subtitle\">$pageTitle</div>\n";
 		$output .= "\n";
 		$output .= "\t\t\t\t\t\t\t<h1>$section->{reference}</h1>\n";
-		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translation</div>\n";
+		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translationLabel</div>\n";
 		$output .= "\n";
 		$output .= "\t\t\t\t\t\t\t<div>\n";
 		$output .= "\t\t\t\t\t\t\t\t<blockquote>\n";

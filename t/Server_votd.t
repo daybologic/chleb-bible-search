@@ -88,6 +88,7 @@ sub test {
 						'encouragement',
 						'trust',
 					],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/psa/55/22',
@@ -205,6 +206,7 @@ sub testV2 {
 					tones => [
 						'instruction',
 					],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/33/50',
@@ -241,6 +243,7 @@ sub testV2 {
 					ordinal => 51,
 					text => 'Speak unto the children of Israel, and say unto them, When ye are passed over Jordan into the land of Canaan;',
 					tones => ['instruction'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/33/51',
@@ -277,6 +280,7 @@ sub testV2 {
 					ordinal => 52,
 					text    => 'Then ye shall drive out all the inhabitants of the land from before you, and destroy all their pictures, and destroy all their molten images, and quite pluck down all their high places:',
 					tones => ['instruction', 'warning'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/33/52',
@@ -313,6 +317,7 @@ sub testV2 {
 					ordinal => 53,
 					text    => 'And ye shall dispossess [the inhabitants] of the land, and dwell therein: for I have given you the land to possess it.',
 					tones   => ['encouragement', 'trust'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/33/53',
@@ -416,6 +421,7 @@ sub testV2_translations_asv_asv {
 						'encouragement',
 						'prayer',
 					],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/psa/122/8',
@@ -519,6 +525,7 @@ sub testV2_translations_kjv_asv {
 						'encouragement',
 						'prayer',
 					],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/psa/122/8',
@@ -558,6 +565,7 @@ sub testV2_translations_kjv_asv {
 						'encouragement',
 						'prayer'
 					],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/psa/122/8',
@@ -658,6 +666,7 @@ sub testV2_translations_all {
 					ordinal => 8,
 					text => 'And Moses said unto Korah, Hear now, ye sons of Levi:',
 					tones => [],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/num/16/8',
@@ -694,6 +703,7 @@ sub testV2_translations_all {
 					ordinal => 9,
 					text => '[seemeth it but] a small thing unto you, that the God of Israel hath separated you from the congregation of Israel, to bring you near to himself, to do the service of the tabernacle of Jehovah, and to stand before the congregation to minister unto them;',
 					tones => ['instruction', 'warning'],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/num/16/9',
@@ -730,6 +740,7 @@ sub testV2_translations_all {
 					ordinal => 10,
 					text => 'and that he hath brought thee near, and all thy brethren the sons of Levi with thee? and seek ye the priesthood also?',
 					tones => ['instruction', 'warning'],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/num/16/10',
@@ -766,6 +777,7 @@ sub testV2_translations_all {
 					ordinal => 8,
 					text => 'And Moses said unto Korah, Hear, I pray you, ye sons of Levi:',
 					tones => ['instruction'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/16/8',
@@ -802,6 +814,7 @@ sub testV2_translations_all {
 					ordinal => 9,
 					text => '[Seemeth it but] a small thing unto you, that the God of Israel hath separated you from the congregation of Israel, to bring you near to himself to do the service of the tabernacle of the LORD, and to stand before the congregation to minister unto them?',
 					tones => ['instruction', 'rebuke'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/16/9',
@@ -900,7 +913,7 @@ sub testHtmlNavigationKeepsAllTranslations {
 
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
-	is_deeply(\@translations, [ 'asv', 'kjv' ], 'HTML renders both selected translations');
+	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'HTML renders both selected translations');
 	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/7\?translations=asv,kjv">prev verse</a>}, 'previous verse keeps selected translations');
 	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/9\?translations=asv,kjv">next verse</a>}, 'next verse keeps selected translations');
 	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/8\?translations=asv,kjv">permalink</a>}, 'permalink keeps selected translations');
@@ -922,7 +935,7 @@ sub testHtmlSortsTranslations {
 	});
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
-	is_deeply(\@translations, [ 'asv', 'kjv' ], 'VOTD HTML sorts translations lexically');
+	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'VOTD HTML sorts translations lexically');
 
 	return EXIT_SUCCESS;
 }
@@ -941,7 +954,7 @@ sub testHtmlPreservesExplicitTranslationOrder {
 	});
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
-	is_deeply(\@translations, [ 'kjv', 'asv' ], 'VOTD HTML preserves explicit translation order');
+	is_deeply(\@translations, [ 'kjv (1611)', 'asv (1901)' ], 'VOTD HTML preserves explicit translation order');
 
 	return EXIT_SUCCESS;
 }

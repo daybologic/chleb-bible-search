@@ -80,6 +80,7 @@ sub test_translation_kjv {
 					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
 					tones => array_each(re(qr/^\w+$/)), # every element must be a single non-empty word
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
@@ -179,6 +180,7 @@ sub test_translation_asv {
 					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
 					tones => array_each(re(qr/^\w+$/)), # every element must be a single non-empty word
+					year => 1901,
 					translation => 'asv',
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
@@ -278,6 +280,7 @@ sub test_translation_core {
 					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
 					tones => array_each(re(qr/^\w+$/)),
+					year => re(qr/^\d{4}$/),
 					translation => re(qr/^\w{3}$/),
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
@@ -383,11 +386,11 @@ sub test_html_translation_order {
 	my $html = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
-	is_deeply(\@translations, [ 'asv', 'kjv' ], 'random HTML sorts translations lexically');
+	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'random HTML sorts translations lexically');
 
 	$html = $self->sut->__random({ accept => $mediaType, translations => ['kjv', 'asv'], version => 2 });
 	@translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
-	is_deeply(\@translations, [ 'kjv', 'asv' ], 'random HTML preserves explicit translation order');
+	is_deeply(\@translations, [ 'kjv (1611)', 'asv (1901)' ], 'random HTML preserves explicit translation order');
 
 	return EXIT_SUCCESS;
 }

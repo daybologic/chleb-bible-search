@@ -84,6 +84,7 @@ sub test_translation_all {
 						ordinal => 1,
 						text => 'Jehovah saith unto my Lord, Sit thou at my right hand, Until I make thine enemies thy footstool.',
 						tones => ['encouragement','trust'],
+						year => 1901,
 						translation => 'asv',
 					},
 					id => 'asv/psa/110/1',
@@ -120,6 +121,7 @@ sub test_translation_all {
 						ordinal => 1,
 						text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
 						tones => ['encouragement','trust'],
+						year => 1611,
 						translation => 'kjv',
 					},
 					id => 'kjv/psa/110/1',
@@ -213,6 +215,7 @@ sub test_translation_all {
 						ordinal => 1,
 						text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
 						tones => ['encouragement','trust'],
+						year => 1611,
 						translation => 'kjv',
 					},
 					id => 'kjv/psa/110/1',
@@ -380,11 +383,11 @@ sub testHtmlListsTranslationsSeparately {
 	shift(@cards);
 
 	is(scalar(@cards), 2, 'each translation has its own card');
-	is_deeply(\@translations, [ 'kjv', 'asv' ], 'each translation has its requested label order');
-	like($cards[0], qr{<div class="translation">kjv</div>}s, 'KJV label is in the first card');
+	is_deeply(\@translations, [ 'kjv (1611)', 'asv (1901)' ], 'each translation has its requested label order');
+	like($cards[0], qr{<div class="translation">kjv \(1611\)</div>}s, 'KJV label is in the first card');
 	like($cards[0], qr{<blockquote>\s*For many are called, but few \[are\] chosen\.\s*</blockquote>}s, 'KJV text is in the first card');
 	like($cards[0], qr{<span class="tag tag-color-\d+">neutral</span>\s*</blockquote>}s, 'KJV sentiments are in the first card');
-	like($cards[1], qr{<div class="translation">asv</div>}s, 'ASV label is in the second card');
+	like($cards[1], qr{<div class="translation">asv \(1901\)</div>}s, 'ASV label is in the second card');
 	like($cards[1], qr{<blockquote>\s*For many are called, but few chosen\.\s*</blockquote>}s, 'ASV text is in the second card');
 	like($cards[1], qr{<span class="tag tag-color-\d+">neutral</span> <span class="tag tag-color-\d+">instruction</span>}s, 'ASV sentiments are in the second card');
 
@@ -409,7 +412,7 @@ sub testHtmlPreservesReversedTranslationInput {
 	my $html = $self->sut->__verseToHtml(\@verse, \@json, 3);
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
-	is_deeply(\@translations, [ 'kjv', 'asv' ], 'HTML preserves reversed renderer input');
+	is_deeply(\@translations, [ 'kjv (1611)', 'asv (1901)' ], 'HTML preserves reversed renderer input');
 
 	return EXIT_SUCCESS;
 }
@@ -417,7 +420,7 @@ sub testHtmlPreservesReversedTranslationInput {
 sub testHtmlBookSelectorUsesCurrentTranslation {
 	my ($self) = @_;
 	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
-	plan tests => 6;
+	plan tests => 7;
 
 	my ($verse) = $self->sut->__library->fetch('Quran', 1, 1, { translations => ['pickthall'] });
 	my $cache = { };
@@ -429,6 +432,8 @@ sub testHtmlBookSelectorUsesCurrentTranslation {
 		'HTML selects books from the current translation');
 	like($html, qr{<h4 class="chapter-nav-title">Surahs</h4>.*?Surah 1}s,
 		'HTML labels Pickthall navigation as Surahs');
+	like($html, qr{<div class="translation">pickthall \(1930\)</div>}s,
+		'HTML displays Pickthall year in lowercase');
 	unlike($html, qr{<button>→</button>}, 'HTML does not include a book selector submit button');
 	like($html, qr{book\.addEventListener\('change'.*?book\.form\.submit\(\);}s,
 		'HTML submits immediately when a book is selected');

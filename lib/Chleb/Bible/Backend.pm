@@ -352,6 +352,22 @@ sub getAvailableTranslations {
 	return @translations;
 }
 
+=item C<year()>
+
+Return the publication year for this translation from the SQLite source.
+
+=cut
+
+sub year {
+	my ($self) = @_;
+	my ($year) = $self->__selectrowArray(
+		$self->data,
+		'SELECT year FROM translation WHERE code = ?',
+		$self->bible->translation,
+	);
+	return defined($year) ? $year + 0 : undef;
+}
+
 sub getOrdinalByVerseKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $key, 4);

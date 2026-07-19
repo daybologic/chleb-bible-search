@@ -506,6 +506,17 @@ sub getProperty {
 	return $self->__backend->getProperty($name);
 }
 
+=item C<year()>
+
+Return the publication year for this translation from the SQLite source.
+
+=cut
+
+sub year {
+	my ($self) = @_;
+	return $self->__backend->year();
+}
+
 =item C<deferSharedCacheWrites($defer)>
 
 Control deferred writes to the shared backend cache while performing a grouped
