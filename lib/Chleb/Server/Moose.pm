@@ -1203,10 +1203,12 @@ sub __info { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 			attributes => $bible->TO_JSON(),
 		});
 		foreach my $book (@{ $bible->books }) {
-			next if (++$uniqueBookNames{ $book->shortName } > 1); # ensure book names are listed only once
-			push(@bookShortNames, $book->shortName);
-			push(@bookShortNamesRaw, $book->shortNameRaw);
-			push(@bookLongNames, $book->longName);
+			my $isNewBookName = (++$uniqueBookNames{ $book->shortName } == 1);
+			if ($isNewBookName) {
+				push(@bookShortNames, $book->shortName);
+				push(@bookShortNamesRaw, $book->shortNameRaw);
+				push(@bookLongNames, $book->longName);
+			}
 
 			push(@{ $hash{included} }, {
 				id => $book->id,
@@ -1704,17 +1706,16 @@ sub __verseHtmlCards {
 sub __makeBooks {
 	my ($self, $currentBook) = @_;
 
-	my $thisBookName;
-	if ($currentBook) {
-		$thisBookName = $currentBook->shortName;
-	} else {
-		$thisBookName = Chleb::Server::Dancer2::getParam('book');
-	}
-
-	my $books = $self->__library->info->bibles->[0]->books; # TODO: do we need info, or can we skip it somehow?
+	my $currentTranslation = $currentBook ? $currentBook->bible->translation : '';
+	my $currentBookName = $currentBook ? $currentBook->shortName : Chleb::Server::Dancer2::getParam('book');
+	my $books = $currentBook ? $currentBook->bible->books : [];
+	my @translations = $self->__library->availableTranslations();
+	my @translationOptions = map {
+		sprintf('<option value="%s"%s>%s</option>', $_, ($_ eq $currentTranslation ? ' selected' : ''), uc($_));
+	} @translations;
 	my @options = ( );
 	foreach my $book (@$books) {
-		my $isSelected = ($thisBookName eq $book->shortName);
+		my $isSelected = (defined($currentBookName) && $currentBookName eq $book->shortName);
 		push(@options, sprintf('<option value="%s"%s>%s (%d)</option>',
 			$book->shortName,
 			($isSelected ? ' selected' : ''),
@@ -1723,15 +1724,55 @@ sub __makeBooks {
 		));
 	}
 
-	my $html = "<form action=\"/1/lookup\" method=\"GET\">\n"
-		. "                <select name=\"book\">\n"
+	my $html = "<form class=\"verse-book-form\" action=\"/1/lookup\" method=\"GET\">\n"
+		. "                <select id=\"verse-nav-translation\" name=\"translations\" aria-label=\"Translation\">\n"
+		. join("\r\n", @translationOptions)
+		. "\n                </select>\n"
+		. "                <select id=\"verse-nav-book\" name=\"book\" aria-label=\"Book\">\n"
 		. '        ';
 
 	$html .= join("\r\n", @options)
 		. "</select>\n"
 		. "                <input type=\"hidden\" name=\"chapter\" value=\"1\">\n"
 		. "                <button>→</button>\n"
-		. '        </form>';
+		. "        </form>\n"
+		. "        <script>\n"
+		. "                (function () {\n"
+		. "                        var translation = document.getElementById('verse-nav-translation');\n"
+		. "                        var book = document.getElementById('verse-nav-book');\n"
+		. "                        var selectedBook = " . JSON::to_json($currentBookName // '') . ";\n"
+		. "                        var booksByTranslation = {};\n"
+		. "                        function populateBooks() {\n"
+		. "                                var books = booksByTranslation[translation.value] || [];\n"
+		. "                                book.innerHTML = '';\n"
+		. "                                books.forEach(function (item) {\n"
+		. "                                        var option = document.createElement('option');\n"
+		. "                                        option.value = item.shortName;\n"
+		. "                                        option.textContent = item.name;\n"
+		. "                                        option.selected = item.shortName === selectedBook;\n"
+		. "                                        book.appendChild(option);\n"
+		. "                                });\n"
+		. "                        }\n"
+		. "                        translation.addEventListener('change', function () {\n"
+		. "                                selectedBook = '';\n"
+		. "                                populateBooks();\n"
+		. "                        });\n"
+		. "                        fetch('/1/info', { headers: { Accept: 'application/vnd.api+json' } })\n"
+		. "                                .then(function (response) { return response.json(); })\n"
+		. "                                .then(function (json) {\n"
+		. "                                        (json.included || []).forEach(function (item) {\n"
+		. "                                                if (item.type !== 'book') { return; }\n"
+		. "                                                var attributes = item.attributes;\n"
+		. "                                                if (!booksByTranslation[attributes.translation]) { booksByTranslation[attributes.translation] = []; }\n"
+		. "                                                booksByTranslation[attributes.translation].push({\n"
+		. "                                                        name: attributes.long_name + ' (' + attributes.chapter_count + ')',\n"
+		. "                                                        shortName: attributes.short_name\n"
+		. "                                                });\n"
+		. "                                        });\n"
+		. "                                        populateBooks();\n"
+		. "                                });\n"
+		. "                }());\n"
+		. "        </script>";
 
 	return $html;
 }

@@ -414,6 +414,22 @@ sub testHtmlPreservesReversedTranslationInput {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlBookSelectorUsesCurrentTranslation {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my ($verse) = $self->sut->__library->fetch('Quran', 1, 1, { translations => ['pickthall'] });
+	my $cache = { };
+	my $json = Chleb::Server::Moose::__verseToJsonApi($verse, { translations => ['pickthall'] }, $cache);
+	my $html = $self->sut->__verseToHtml($verse, [$json], 3);
+
+	like($html, qr{<select id="verse-nav-translation" name="translations"}, 'HTML includes translation selector');
+	like($html, qr{<select id="verse-nav-book" name="book"[^>]*>.*?<option value="quran" selected>Quran \(114\)</option>}s,
+		'HTML selects books from the current translation');
+
+	return EXIT_SUCCESS;
+}
+
 sub testHtmlUsesEachTranslationReference {
 	my ($self) = @_;
 	plan tests => 1;
