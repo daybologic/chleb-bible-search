@@ -31,23 +31,21 @@
 # SUCH DAMAGE.
 
 all: \
-	asv.bin.gz \
 	asv.sqlite.gz \
 	core.sqlite.gz \
-	kjv.bin.gz \
 	kjv.sqlite.gz
 
 ifneq ($(wildcard static/pickthall.txt),)
 all: pickthall.sqlite.gz
 endif
 
-asv.bin.gz asv.sqlite.gz &: static/asv.txt ../bin/import/text-to-asv.sh ../bin/import/text-to-bin.pl ../bin/import/text-to-sqlite.pl
+asv.sqlite.gz: static/asv.txt ../bin/import/text-to-asv.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-asv.sh
 
 core.sqlite.gz : static/kjv.txt ../bin/import/text-to-core.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-core.sh
 
-kjv.bin.gz kjv.sqlite.gz &: static/kjv.txt ../bin/import/text-to-kjv.sh ../bin/import/text-to-bin.pl ../bin/import/text-to-sqlite.pl
+kjv.sqlite.gz: static/kjv.txt ../bin/import/text-to-kjv.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-kjv.sh
 
 ifneq ($(wildcard static/pickthall.txt),)

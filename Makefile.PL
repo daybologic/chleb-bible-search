@@ -75,7 +75,7 @@ invoke('bin/maint/synology.sh');
 invoke('bin/maint/git-install-local-hooks.sh') if (can_write_hooks_dir());
 invoke('bin/maint/make-legal-notices.sh');
 
-my @exeFiles = glob q('data/*.bin.gz');
+my @exeFiles = ( );
 push @exeFiles, glob q('bin/core/*.psgi');
 push @exeFiles, glob q('bin/core/*.sh');
 push @exeFiles, glob q('bin/core/*.pl');
@@ -88,9 +88,6 @@ WriteMakefile(
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
 	EXE_FILES    => \@exeFiles,
 
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
 	PREREQ_PM => {
 		'Cache::Memcached' => 0,
 		'DBI'              => 0,

@@ -57,8 +57,8 @@ Key files and directories:
 
 - `lib/Chleb/Bible.pm`: main Bible object and entry point for search, lookup,
   random, and verse-of-the-day operations.
-- `lib/Chleb/Bible/Backend.pm`: loads compressed `.bin.gz` Bible data files
-  using Storable format and caches decompressed data in `cache/`.
+- `lib/Chleb/Bible/Backend.pm`: loads compressed SQLite Bible data files and
+  caches decompressed data in `cache/`.
 - `lib/Chleb/Bible/Search/Query.pm`: query builder for whole-word matching,
   testament filtering, and book filtering. Call `->run()` to execute. Default
   limit is 50 verses.

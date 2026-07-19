@@ -61,10 +61,8 @@ sub setUp {
 sub __ensureGeneratedData {
 	my ($self) = @_;
 	my @generatedFiles = qw(
-		data/asv.bin.gz
 		data/asv.sqlite.gz
 		data/core.sqlite.gz
-		data/kjv.bin.gz
 		data/kjv.sqlite.gz
 	);
 
