@@ -97,7 +97,7 @@ sub testSuccess {
 		),
 	], 'correct bibles returned (polluted)');
 
-	@list = $self->sut->__getBible('all');
+	@list = $self->sut->__getBible({ translations => [ $self->coreTranslations() ] });
 	cmp_deeply(\@list, [
 		all(
 			isa('Chleb::Bible'),
@@ -107,11 +107,7 @@ sub testSuccess {
 			isa('Chleb::Bible'),
 			methods(translation => 'kjv'),
 		),
-		all(
-			isa('Chleb::Bible'),
-			methods(translation => 'pickthall'),
-		),
-	], 'all bibles returned');
+	], 'core bibles returned');
 
 	return EXIT_SUCCESS;
 }
@@ -134,6 +130,19 @@ sub testDefault {
 		isa('Chleb::Bible'),
 		methods(translation => 'kjv'),
 	), 'empty ARRAY: kjv');
+
+	return EXIT_SUCCESS;
+}
+
+sub testAllBiblesAreDiscoverable {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @bibles = $self->sut->__getBible('all');
+	my @actual = sort map { $_->translation() } @bibles;
+	my @expected = sort $self->sut->availableTranslations();
+
+	is_deeply(\@actual, \@expected, 'all returns every installed translation');
 
 	return EXIT_SUCCESS;
 }

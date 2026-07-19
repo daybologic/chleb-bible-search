@@ -31,7 +31,7 @@
 
 set -euo pipefail
 
-page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html translations==all)
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html translations==asv,kjv)
 
 grep -q '<link href="/style.css?v=' <<< "$page"
 ! grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"

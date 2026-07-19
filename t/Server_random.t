@@ -262,12 +262,12 @@ sub test_translation_asv {
 	return EXIT_SUCCESS;
 }
 
-sub test_translation_all {
+sub test_translation_core {
 	my ($self) = @_;
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => ['all'], version => 1 });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 1 });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -283,11 +283,11 @@ sub test_translation_all {
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
 				},
 				relationships => {
 					book => {
@@ -354,7 +354,7 @@ sub test_translation_all {
 			},
 		],
 		links => {
-			self => '/1/random?translations=all',
+			self => '/1/random?translations=asv,kjv',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
@@ -380,7 +380,7 @@ sub test_html_translation_order {
 	plan tests => 2;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
-	my $html = $self->sut->__random({ accept => $mediaType, translations => ['all'], version => 2 });
+	my $html = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
 	is_deeply(\@translations, [ 'asv', 'kjv' ], 'random HTML sorts translations lexically');

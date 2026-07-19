@@ -96,4 +96,29 @@ sub __mockLogger {
 	return;
 }
 
+=head1 coreTranslations()
+
+Return the translations which are part of the core test data set. Optional
+translations must be requested explicitly by tests which cover them.
+
+=cut
+
+sub coreTranslations {
+	return qw(asv kjv);
+}
+
+=head1 hasTranslation($translation)
+
+Return whether the generated local test data contains the requested
+translation.
+
+=cut
+
+sub hasTranslation {
+	my ($self, $translation) = @_;
+	my $library = $self->sut;
+	$library = $library->__library() if ($library->can('__library'));
+	return scalar(grep { $_ eq $translation } $library->availableTranslations()) > 0;
+}
+
 1;

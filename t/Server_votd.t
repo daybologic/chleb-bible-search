@@ -524,11 +524,11 @@ sub testV2_translations_kjv_asv {
 				id => 'asv/psa/122/8',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/psa/122/1?translations=all',
+					first => '/1/lookup/psa/122/1?translations=asv,kjv',
 					prev  => '/1/lookup/psa/122/7?translations=asv',
 					self  => '/1/lookup/psa/122/8?translations=asv',
 					next  => '/1/lookup/psa/122/9?translations=asv',
-					last  => '/1/lookup/psa/122/9?translations=all',
+					last  => '/1/lookup/psa/122/9?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -563,11 +563,11 @@ sub testV2_translations_kjv_asv {
 				id => 'kjv/psa/122/8',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/psa/122/1?translations=all',
+					first => '/1/lookup/psa/122/1?translations=asv,kjv',
 					prev  => '/1/lookup/psa/122/7?translations=kjv',
 					self  => '/1/lookup/psa/122/8?translations=kjv',
 					next  => '/1/lookup/psa/122/9?translations=kjv',
-					last  => '/1/lookup/psa/122/9?translations=all',
+					last  => '/1/lookup/psa/122/9?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -634,7 +634,7 @@ sub testV2_translations_kjv_asv {
 			},
 		],
 		links => {
-			self => '/2/votd?translations=all',
+			self => '/2/votd?translations=asv,kjv',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
@@ -647,7 +647,7 @@ sub testV2_translations_all {
 
 	my $when = '2021-10-30T21:36:26+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['all'] });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => [ $self->coreTranslations() ] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -663,11 +663,11 @@ sub testV2_translations_all {
 				id => 'asv/num/16/8',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/7?translations=asv',
 					self  => '/1/lookup/num/16/8?translations=asv',
 					next  => '/1/lookup/num/16/9?translations=asv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -699,11 +699,11 @@ sub testV2_translations_all {
 				id => 'asv/num/16/9',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/8?translations=asv',
 					self  => '/1/lookup/num/16/9?translations=asv',
 					next  => '/1/lookup/num/16/10?translations=asv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -735,11 +735,11 @@ sub testV2_translations_all {
 				id => 'asv/num/16/10',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/9?translations=asv',
 					self  => '/1/lookup/num/16/10?translations=asv',
 					next  => '/1/lookup/num/16/11?translations=asv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -771,11 +771,11 @@ sub testV2_translations_all {
 				id => 'kjv/num/16/8',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/7?translations=kjv',
 					self  => '/1/lookup/num/16/8?translations=kjv',
 					next  => '/1/lookup/num/16/9?translations=kjv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -807,11 +807,11 @@ sub testV2_translations_all {
 				id => 'kjv/num/16/9',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/8?translations=kjv',
 					self  => '/1/lookup/num/16/9?translations=kjv',
 					next  => '/1/lookup/num/16/10?translations=kjv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -878,7 +878,7 @@ sub testV2_translations_all {
 			},
 		],
 		links => {
-			self => '/2/votd?translations=all',
+			self => '/2/votd?translations=asv,kjv',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
@@ -901,9 +901,9 @@ sub testHtmlNavigationKeepsAllTranslations {
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
 	is_deeply(\@translations, [ 'asv', 'kjv' ], 'HTML renders both selected translations');
-	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/7\?translations=all">prev verse</a>}, 'previous verse keeps all translations');
-	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/9\?translations=all">next verse</a>}, 'next verse keeps all translations');
-	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/8\?translations=all">permalink</a>}, 'permalink keeps all translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/7\?translations=asv,kjv">prev verse</a>}, 'previous verse keeps selected translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/9\?translations=asv,kjv">next verse</a>}, 'next verse keeps selected translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/8\?translations=asv,kjv">permalink</a>}, 'permalink keeps selected translations');
 
 	return EXIT_SUCCESS;
 }
@@ -918,7 +918,7 @@ sub testHtmlSortsTranslations {
 		accept => $mediaType,
 		version => 2,
 		when => $when,
-		translations => ['all'],
+		translations => [ $self->coreTranslations() ],
 	});
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 

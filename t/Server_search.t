@@ -555,6 +555,7 @@ sub testWholeWordPunctuation {
 
 sub testSearchSelectedTranslation {
 	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
 	plan tests => 4;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');

@@ -98,7 +98,7 @@ sub testPride_allTranslations {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ 'all' ] });
+	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ $self->coreTranslations() ] });
 	cmp_deeply(\@verse, [
 		all(
 			isa('Chleb::Bible::Verse'),
@@ -160,7 +160,7 @@ sub testBadBook {
 		cmp_deeply($evalError, all(
 			isa('Chleb::Exception'),
 			methods(
-				description => "Long book name 'Mormon' is not a book in the bible, did you mean Amos?",
+				description => "Book 'Mormon' was not found in any requested translation",
 				location    => undef,
 				statusCode  => 404,
 			),

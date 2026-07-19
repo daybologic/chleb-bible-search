@@ -66,19 +66,19 @@ sub test {
 	plan tests => 1;
 
 	my $info = $self->sut->info();
-	cmp_deeply($info, all(
+	my @coreTranslations = $self->coreTranslations();
+	my %coreTranslation = map { $_ => 1 } @coreTranslations;
+	my @coreBibles = grep { $coreTranslation{ $_->translation } } @{ $info->bibles() };
+	my $coreInfo = Chleb::Info->new({ bibles => \@coreBibles });
+	cmp_deeply($coreInfo, all(
 		isa('Chleb::Info'),
 		methods(
-			bibles => [
+			bibles => [ map {
 				all(
 					isa('Chleb::Bible'),
-					methods(translation => 'asv'),
-				),
-				all(
-					isa('Chleb::Bible'),
-					methods(translation => 'kjv'),
-				),
-			],
+					methods(translation => $_),
+				)
+			} @coreTranslations ],
 		),
 	), 'info inspection') or diag(explain($info->toString()));
 

@@ -416,6 +416,7 @@ sub testHtmlPreservesReversedTranslationInput {
 
 sub testHtmlBookSelectorUsesCurrentTranslation {
 	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
 	plan tests => 6;
 
 	my ($verse) = $self->sut->__library->fetch('Quran', 1, 1, { translations => ['pickthall'] });
@@ -439,6 +440,7 @@ sub testHtmlBookSelectorUsesCurrentTranslation {
 
 sub testHtmlUsesEachTranslationReference {
 	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
 	plan tests => 1;
 
 	my @verse = (

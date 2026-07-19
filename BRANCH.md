@@ -162,3 +162,20 @@ Then rebuild the compressed Pickthall SQLite file:
 ```bash
 make -C data pickthall.sqlite.gz
 ```
+
+## Full test results
+
+`make test` passed the backend, Bible, cache, and other tests until it reached
+three stale expectations caused by dynamically discovering Pickthall:
+
+- `t/info.t` expects two translations but runtime discovery finds `asv`, `kjv`,
+  and `pickthall`.
+- `t/pride.t` expects the old book-specific error for `Mormon`, but lookup now
+  reports `Book 'Mormon' was not found in any requested translation`.
+- `t/Server_random.t` expects random HTML to contain only `asv` and `kjv`, but
+  it now also contains `pickthall`.
+
+The run then stalled repeatedly in the random/server portion and was
+interrupted with exit code 130. These failures appear to be test assumptions
+that still expect only two translations, rather than SQLite or Pickthall data
+ingestion failures.
