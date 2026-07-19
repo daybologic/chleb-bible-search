@@ -47,12 +47,12 @@ Readonly my $OT_COUNT => 39;
 Readonly my $DATA_DIR => 'data';
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 14;
+Readonly my $FILE_VERSION => 15;
 
 Readonly my %TRANSLATION_META => (
-	kjv      => { year => 1611, language => 'en' },
-	asv      => { year => 1901, language => 'en' },
-	pickthall => { year => 1930, language => 'en' },
+	kjv       => { year => 1611, language => 'en', properties => {} },
+	asv       => { year => 1901, language => 'en', properties => {} },
+	pickthall => { year => 1930, language => 'en', properties => { chapter_name => 'Surah', chapter_name_plural => 'Surahs' } },
 );
 
 Readonly my %BOOK_ORDINAL => (
@@ -158,6 +158,16 @@ CREATE TABLE IF NOT EXISTS translation (
 	code CHAR(8) PRIMARY KEY,
 	year INTEGER NOT NULL,
 	language CHAR(2) NOT NULL
+)
+SQL
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS properties (
+	translation CHAR(8) NOT NULL,
+	name TEXT NOT NULL,
+	value TEXT NOT NULL,
+	PRIMARY KEY (translation, name),
+	FOREIGN KEY (translation) REFERENCES translation(code)
 )
 SQL
 
@@ -296,6 +306,27 @@ SQL
 	return;
 }
 
+sub __writeProperties {
+	my ($fileHandle, $translations) = @_;
+
+	my $sth = $fileHandle->prepare(<<'SQL');
+		INSERT INTO properties (translation, name, value)
+		VALUES(?, ?, ?)
+SQL
+
+	foreach my $translation (@$translations) {
+		my $meta = $TRANSLATION_META{$translation}
+		    or die("No metadata (year/language) known for translation '$translation'");
+		foreach my $name (keys(%{ $meta->{properties} // {} })) {
+			$sth->execute($translation, $name, $meta->{properties}->{$name});
+		}
+	}
+
+	$fileHandle->commit();
+
+	return;
+}
+
 sub __writeSentiment {
 	my ($fileHandle, $translation) = @_;
 
@@ -398,12 +429,14 @@ sub main2 {
 	if ($translation eq 'core') {
 		my @translations = ('asv', 'kjv'); # TODO can we make this list dynamic somehow?  all might need to be an even bigger superset, or we might need to tag inputs from dirs
 		__writeTranslations($fileHandle, \@translations);
+		__writeProperties($fileHandle, \@translations);
 		foreach my $translation2 (@translations) {
 			__processVerses($fileHandle, $translation2);
 			__writeSentiment($fileHandle, $translation2);
 		}
 	} else {
 		__writeTranslations($fileHandle, [$translation]);
+		__writeProperties($fileHandle, [$translation]);
 		__processVerses($fileHandle, $translation);
 		__writeSentiment($fileHandle, $translation);
 	}

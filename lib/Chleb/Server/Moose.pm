@@ -1529,16 +1529,21 @@ sub __verseToHtml {
 	my $browsingLeft;
 	{
 		my $chapterLinks = '';
+		my $bible = $firstVerseObject->book->bible;
+		my $chapterName = $bible->getProperty('chapter_name');
+		my $chapterNamePlural = $bible->getProperty('chapter_name_plural') // 'Chapters';
 		foreach my $chapter (@chapters) {
 			my $classCurrent = '';
 			if ($chapter->ordinal == $firstVerseObject->chapter->ordinal) {
 				$classCurrent = 'class="current" ';
 			}
 			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s">%s %d</a><br />', $classCurrent, $chapter->getPath(),
-				$chapter->book->shortNameRaw, $chapter->ordinal);
+				(defined($chapterName) && length($chapterName) > 0 ? $chapterName : $chapter->book->shortNameRaw),
+				$chapter->ordinal);
 		}
 		$browsingLeft = Chleb::Server::Dancer2::fetchStaticPage('browsing_left', {
-			CHAPTER_LINKS => $chapterLinks,
+			CHAPTER_LINKS     => $chapterLinks,
+			CHAPTER_NAV_TITLE => $chapterNamePlural,
 		});
 	}
 

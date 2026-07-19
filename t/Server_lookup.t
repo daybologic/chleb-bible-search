@@ -416,7 +416,7 @@ sub testHtmlPreservesReversedTranslationInput {
 
 sub testHtmlBookSelectorUsesCurrentTranslation {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 6;
 
 	my ($verse) = $self->sut->__library->fetch('Quran', 1, 1, { translations => ['pickthall'] });
 	my $cache = { };
@@ -426,6 +426,8 @@ sub testHtmlBookSelectorUsesCurrentTranslation {
 	like($html, qr{<select id="verse-nav-translation" name="translations"}, 'HTML includes translation selector');
 	like($html, qr{<select id="verse-nav-book" name="book"[^>]*>.*?<option value="quran" selected>Quran \(114\)</option>}s,
 		'HTML selects books from the current translation');
+	like($html, qr{<h4 class="chapter-nav-title">Surahs</h4>.*?Surah 1}s,
+		'HTML labels Pickthall navigation as Surahs');
 	unlike($html, qr{<button>→</button>}, 'HTML does not include a book selector submit button');
 	like($html, qr{book\.addEventListener\('change'.*?book\.form\.submit\(\);}s,
 		'HTML submits immediately when a book is selected');

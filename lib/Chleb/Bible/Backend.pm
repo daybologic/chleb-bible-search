@@ -53,7 +53,7 @@ use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 14;
+Readonly my $FILE_VERSION => 15;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
 Readonly my $SHARED_CACHE_FORMAT_VERSION => 1;
 
@@ -151,6 +151,7 @@ has __chapterVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default
 has __bookVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseKeyByBookCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __propertyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __sharedCache => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeSharedCache');
 has __sharedCacheDirty => (is => 'rw', isa => 'Bool', default => 0);
 has __sharedCachePath => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeSharedCachePath');
@@ -305,6 +306,31 @@ sub __makeBooksFromRows {
 		});
 	} @{ $rows // [ ] };
 	return \@books;
+}
+
+=item C<getProperty($name)>
+
+Return a translation property from the SQLite source, or C<undef> when the
+property is not present.
+
+=cut
+
+sub getProperty {
+	my ($self, $name) = @_;
+	my $translation = $self->bible->translation;
+	return $self->__propertyCache->{$translation}->{$name}
+	    if (exists($self->__propertyCache->{$translation}->{$name}));
+
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $name);
+		SELECT value
+		  FROM properties
+		 WHERE translation = ?
+		   AND name = ?
+SQL
+	my ($value) = $sth->fetchrow_array();
+	$self->__propertyCache->{$translation}->{$name} = $value;
+
+	return $value;
 }
 
 =item C<getAvailableTranslations()>
