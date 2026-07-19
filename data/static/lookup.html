@@ -143,7 +143,7 @@
 						included.forEach(function (item) {
 							if (item.type === 'bible') {
 								var attributes = item.attributes;
-								metadata[attributes.translation] = { books: [], chapters: {} };
+								metadata[attributes.translation] = { books: [], chapters: {}, year: attributes.year };
 								for (var i = 0; i < attributes.book_names_short.length; i++) {
 									metadata[attributes.translation].books.push({
 										name: attributes.book_names_short_raw[i],
@@ -168,7 +168,11 @@
 						});
 
 						Object.keys(metadata).forEach(function (code) {
-							addOption(translation, code, code.toUpperCase());
+							var label = code.toLowerCase();
+							if (metadata[code].year) {
+								label += ' (' + metadata[code].year + ')';
+							}
+							addOption(translation, code, label);
 						});
 						var requested = (params.get('translations') || readCookie('preferredTranslation')).split(',')[0];
 						if (metadata[requested]) {

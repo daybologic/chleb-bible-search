@@ -420,7 +420,7 @@ sub testHtmlPreservesReversedTranslationInput {
 sub testHtmlBookSelectorUsesCurrentTranslation {
 	my ($self) = @_;
 	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
-	plan tests => 7;
+	plan tests => 8;
 
 	my ($verse) = $self->sut->__library->fetch('Quran', 1, 1, { translations => ['pickthall'] });
 	my $cache = { };
@@ -428,6 +428,8 @@ sub testHtmlBookSelectorUsesCurrentTranslation {
 	my $html = $self->sut->__verseToHtml($verse, [$json], 3);
 
 	like($html, qr{<select id="verse-nav-translation" name="translations"}, 'HTML includes translation selector');
+	like($html, qr{<option value="pickthall" selected>pickthall \(1930\)</option>},
+		'HTML displays the selected translation in lowercase with its year');
 	like($html, qr{<select id="verse-nav-book" name="book"[^>]*>.*?<option value="quran" selected>Quran \(114\)</option>}s,
 		'HTML selects books from the current translation');
 	like($html, qr{<h4 class="chapter-nav-title">Surahs</h4>.*?Surah 1}s,

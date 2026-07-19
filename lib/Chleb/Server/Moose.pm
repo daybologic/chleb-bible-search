@@ -1198,10 +1198,12 @@ sub __info { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my (@bookShortNames, @bookShortNamesRaw, @bookLongNames);
 	my %uniqueBookNames = ( );
 	foreach my $bible (@{ $info->bibles }) { # translations
+		my %bibleAttributes = %{ $bible->TO_JSON() };
+		$bibleAttributes{year} = $bible->year();
 		push(@{ $hash{included} }, {
 			id => $bible->id,
 			type => $bible->type,
-			attributes => $bible->TO_JSON(),
+			attributes => \%bibleAttributes,
 		});
 		foreach my $book (@{ $bible->books }) {
 			my $isNewBookName = (++$uniqueBookNames{ $book->shortName } == 1);
@@ -1722,7 +1724,10 @@ sub __makeBooks {
 	my $books = $currentBook ? $currentBook->bible->books : [];
 	my @translations = $self->__library->availableTranslations();
 	my @translationOptions = map {
-		sprintf('<option value="%s"%s>%s</option>', $_, ($_ eq $currentTranslation ? ' selected' : ''), uc($_));
+		my $label = lc($_);
+		my $year = $self->__library->bibles($_)->year();
+		$label .= sprintf(' (%d)', $year) if (defined($year));
+		sprintf('<option value="%s"%s>%s</option>', $_, ($_ eq $currentTranslation ? ' selected' : ''), $label);
 	} @translations;
 	my @options = ( );
 	foreach my $book (@$books) {

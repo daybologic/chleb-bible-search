@@ -132,7 +132,8 @@
 								booksByTranslation[attributes.translation] = books;
 								var option = document.createElement('option');
 								option.value = attributes.translation;
-								option.textContent = attributes.translation.toUpperCase();
+								option.textContent = attributes.translation.toLowerCase()
+									+ (attributes.year ? ' (' + attributes.year + ')' : '');
 								translation.appendChild(option);
 							}
 
