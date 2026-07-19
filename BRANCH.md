@@ -112,3 +112,30 @@ Pickthall, validation should use the number of verses in
 `data/static/pickthall.txt`. The existing neutral fallback may remain when an
 emotion file is absent, but a present `pickthall.json` should be required and
 validated normally.
+
+## Installing the OpenAI Python package
+
+Create a virtual environment from the repository root and install the
+official Python SDK:
+
+```bash
+python3 -m venv .venv-openai
+. .venv-openai/bin/activate
+python -m pip install --upgrade pip
+python -m pip install openai
+```
+
+Configure the API key in the shell before running the analyzer:
+
+```bash
+export OPENAI_API_KEY='your-api-key'
+```
+
+Pickthall can then be processed directly from its Chleb text input:
+
+```bash
+python bin/maint/openai/tone-discern.py \
+  --translation pickthall \
+  --input data/static/pickthall.txt \
+  --output /tmp/pickthall-tagged.jsonl
+```
