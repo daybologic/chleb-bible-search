@@ -109,9 +109,8 @@ Before this can work, two Bible-specific assumptions must be removed:
 
 Both should derive the expected count from the translation input. For
 Pickthall, validation should use the number of verses in
-`data/static/pickthall.txt`. The existing neutral fallback may remain when an
-emotion file is absent, but a present `pickthall.json` should be required and
-validated normally.
+`data/static/pickthall.txt`. An emotion file is required and must be validated
+normally; missing sentiment data must not silently become neutral data.
 
 ## Installing the OpenAI Python package
 
@@ -138,4 +137,28 @@ python bin/maint/openai/tone-discern.py \
   --translation pickthall \
   --input data/static/pickthall.txt \
   --output /tmp/pickthall-tagged.jsonl
+```
+
+## Distilling Pickthall sentiment data
+
+Once `data/static/emotion/pickthall.jsonl` exists, convert it to the compact
+positional JSON format expected by the SQLite ingester:
+
+```bash
+./bin/maint/openai/tone-discern-simplify.sh \
+  -i data/static/emotion/pickthall.jsonl \
+  -o data/static/emotion/pickthall.json \
+  > /tmp/pickthall-simplify.log
+```
+
+Verify that the output contains all 6,236 Pickthall verses:
+
+```bash
+jq 'length' data/static/emotion/pickthall.json
+```
+
+Then rebuild the compressed Pickthall SQLite file:
+
+```bash
+make -C data pickthall.sqlite.gz
 ```

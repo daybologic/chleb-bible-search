@@ -349,14 +349,6 @@ SQL
 	return;
 }
 
-sub __neutralSentiment {
-	my ($translation) = @_;
-
-	my $verseCount = __verseCountFromTranslation($translation);
-
-	return [ map { { emotion => 'neutral', tones => [ ] } } 1 .. $verseCount ];
-}
-
 =item C<__verseCountFromTranslation($translation)>
 
 Return the number of verse records in the translation's input file.
@@ -560,9 +552,6 @@ sub getSentiment {
 		$text = do { local $/; <$fh> };
 		$fh = undef;
 	}
-
-	return __neutralSentiment($translation)
-	    if ($translation eq 'pickthall' && !defined($text));
 
 	my $data = decode_json($text);
 	my $verseCount = __verseCountFromTranslation($translation);
