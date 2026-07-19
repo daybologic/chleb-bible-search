@@ -9,7 +9,7 @@ from openai import OpenAI
 INPUT_FILE = "bible_verses.json"
 OUTPUT_FILE = "bible_verses_tagged.jsonl"  # one JSON verse per line
 BATCH_SIZE = 25
-MODEL = "gpt-4.1-mini"  # good quality & cheap; change if you like
+MODEL = "gpt-5.4-mini"  # current mini model for high-volume workloads
 
 # Define the labels you want
 PRIMARY_EMOTIONS = [
