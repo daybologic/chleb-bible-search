@@ -67,3 +67,9 @@ Depends: chleb-bible-search-core (= ${binary:Version})
 Description: Chleb Bible Search - Core Dictionaries
  This package contains the dictionary data used by the Chleb Bible Search service.
  It includes linguistic data for interpreting search queries.
+
+Package: chleb-bible-search-dict-pickthall
+Architecture: all
+Depends: chleb-bible-search-core (= ${binary:Version})
+Description: Chleb Bible Search - Pickthall translation
+ This package contains the Pickthall translation data for the Chleb Bible Search service.
