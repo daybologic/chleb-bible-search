@@ -1723,12 +1723,7 @@ sub __makeBooks {
 	my $currentBookName = $currentBook ? $currentBook->shortName : Chleb::Server::Dancer2::getParam('book');
 	my $books = $currentBook ? $currentBook->bible->books : [];
 	my @translations = $self->__library->availableTranslations();
-	my @translationOptions = map {
-		my $label = lc($_);
-		my $year = $self->__library->bibles($_)->year();
-		$label .= sprintf(' (%d)', $year) if (defined($year));
-		sprintf('<option value="%s"%s>%s</option>', $_, ($_ eq $currentTranslation ? ' selected' : ''), $label);
-	} @translations;
+	my @translationOptions = map { $self->__makeTranslationOption($_, $currentTranslation) } @translations;
 	my @options = ( );
 	foreach my $book (@$books) {
 		my $isSelected = (defined($currentBookName) && $currentBookName eq $book->shortName);
@@ -1805,6 +1800,24 @@ sub __makeBooks {
 		. "        </script>";
 
 	return $html;
+}
+
+=item C<__makeTranslationOption($translation, $currentTranslation)>
+
+Return one verse-navigation translation C<option>, including its lowercase
+label and publication year.
+
+=cut
+
+sub __makeTranslationOption {
+	my ($self, $translation, $currentTranslation) = @_;
+
+	my $label = lc($translation);
+	my $year = $self->__library->bibles($translation)->year();
+	$label .= sprintf(' (%d)', $year) if (defined($year));
+
+	return sprintf('<option value="%s"%s>%s</option>', $translation,
+		($translation eq $currentTranslation ? ' selected' : ''), $label);
 }
 
 sub __searchResultsToHtml {
