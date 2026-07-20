@@ -181,7 +181,7 @@ sub random {
 
 	my (@bible) = $self->__getBible($args);
 
-	my ($verse, $verseOrdinal);
+	my ($verse, $verseOrdinal, @verses);
 	my $seed = rand($PID + $bible[0]->verseCount);
 	for (my $offset = 0; $offset > -1; $offset++) {
 		$seed = crc32($seed + $offset);
@@ -191,11 +191,15 @@ sub random {
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
 		my $verseAvailable = 1;
-		foreach my $candidateBible (@bible) {
-			if ($candidateBible->verseCount < $verseOrdinal) {
+		@verses = ($verse);
+		for (my $candidateI = 1; $candidateI < scalar(@bible); $candidateI++) {
+			my $candidateBible = $bible[$candidateI];
+			my $candidateVerse = $self->__getRelatedRandomVerse($candidateBible, $verse, $verseOrdinal, $args);
+			unless ($candidateVerse) {
 				$verseAvailable = 0;
 				last;
 			}
+			push(@verses, $candidateVerse);
 		}
 		next unless ($verseAvailable);
 
@@ -210,12 +214,8 @@ sub random {
 	my $msecAll = 0;
 	# handle ARRAY verses where more than one compound Verse may be returned
 	if ($version && looks_like_number($version) && $version == 2) {
-		$verse = [ $verse ]; # make it an ARRAY
+		$verse = \@verses;
 		for (my $bibleTranslationOrdinal = 0; $bibleTranslationOrdinal < scalar(@bible); $bibleTranslationOrdinal++) {
-			if ($bibleTranslationOrdinal > 0) {
-				push(@$verse, $bible[$bibleTranslationOrdinal]->getVerseByOrdinal($verseOrdinal, $args));
-			}
-
 			my $endTiming = Time::HiRes::time();
 			my $msec = int(1000 * ($endTiming - $startTiming));
 			$verse->[0]->msec($msec);
@@ -268,7 +268,7 @@ sub votd {
 	$when = $self->_resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
-	my ($verse, $verseOrdinal);
+	my ($verse, $verseOrdinal, @verses);
 	for (my $offset = 0; $offset > -1; $offset++) {
 		my $seed = crc32($when->epoch + $offset);
 		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
@@ -278,11 +278,15 @@ sub votd {
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
 		my $verseAvailable = 1;
-		foreach my $candidateBible (@bible) {
-			if ($candidateBible->verseCount < $verseOrdinal) {
+		@verses = ($verse);
+		for (my $candidateI = 1; $candidateI < scalar(@bible); $candidateI++) {
+			my $candidateBible = $bible[$candidateI];
+			my $candidateVerse = $self->__getRelatedRandomVerse($candidateBible, $verse, $verseOrdinal, $args);
+			unless ($candidateVerse) {
 				$verseAvailable = 0;
 				last;
 			}
+			push(@verses, $candidateVerse);
 		}
 		next unless ($verseAvailable);
 
@@ -302,12 +306,8 @@ sub votd {
 	my $msecAll = 0;
 	# handle ARRAY verses where more than one compound Verse may be returned
 	if ($version && looks_like_number($version) && $version == 2) {
-		$verse = [ $verse ]; # make it an ARRAY
+		$verse = \@verses;
 		for (my $bibleTranslationOrdinal = 0; $bibleTranslationOrdinal < scalar(@bible); $bibleTranslationOrdinal++) {
-			if ($bibleTranslationOrdinal > 0) {
-				push(@$verse, $bible[$bibleTranslationOrdinal]->getVerseByOrdinal($verseOrdinal, $args));
-			}
-
 			my $endTiming = Time::HiRes::time();
 			my $msec = int(1000 * ($endTiming - $startTiming));
 			$verse->[0]->msec($msec);
@@ -446,6 +446,28 @@ sub __makeAvailableTranslations {
 	my ($self) = @_;
 	my $bible = $self->bibles($TRANSLATION_DEFAULT);
 	return [ $bible->__backend->getAvailableTranslations() ];
+}
+
+=item C<__getRelatedRandomVerse($bible, $anchorVerse, $verseOrdinal, $args)>
+
+Return the corresponding random verse from another translation.  Translations
+which contain the anchor book use its chapter and verse reference; translations
+with a different canon fall back to their own verse ordinal.
+
+=cut
+
+sub __getRelatedRandomVerse {
+	my ($self, $bible, $anchorVerse, $verseOrdinal, $args) = @_;
+
+	my $book = $bible->getBookByShortName($anchorVerse->book->shortName, { nonFatal => 1 });
+	if ($book) {
+		my $chapter = $book->getChapterByOrdinal($anchorVerse->chapter->ordinal, { nonFatal => 1 });
+		return if (!$chapter);
+		return $chapter->getVerseByOrdinal($anchorVerse->ordinal, { nonFatal => 1 });
+	}
+
+	return if ($bible->verseCount < $verseOrdinal);
+	return $bible->getVerseByOrdinal($verseOrdinal, $args);
 }
 
 sub __isTestamentMatch {
