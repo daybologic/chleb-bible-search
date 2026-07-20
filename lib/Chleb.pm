@@ -214,24 +214,28 @@ sub random {
 	my $msecAll = 0;
 	# handle ARRAY verses where more than one compound Verse may be returned
 	if ($version && looks_like_number($version) && $version == 2) {
-		$verse = \@verses;
+		my @expandedVerses;
 		for (my $bibleTranslationOrdinal = 0; $bibleTranslationOrdinal < scalar(@bible); $bibleTranslationOrdinal++) {
+			my $translationVerse = $verses[$bibleTranslationOrdinal];
+			push(@expandedVerses, $translationVerse);
 			my $endTiming = Time::HiRes::time();
 			my $msec = int(1000 * ($endTiming - $startTiming));
-			$verse->[0]->msec($msec);
+			$translationVerse->msec($msec);
 			$msecAll += $msec;
 
-			while ($verse->[-1]->continues) {
-				push(@$verse, $verse->[-1]->getNext());
+			while ($translationVerse->continues) {
+				$translationVerse = $translationVerse->getNext();
+				push(@expandedVerses, $translationVerse);
 				$endTiming = Time::HiRes::time();
 				$msec = int(1000 * ($endTiming - $startTiming));
-				$verse->[-1]->msec($msec);
+				$translationVerse->msec($msec);
 				$msecAll += $msec;
 				$startTiming = Time::HiRes::time();
 			}
 
 			$startTiming = Time::HiRes::time();
 		}
+		$verse = \@expandedVerses;
 	} else {
 		my $endTiming = Time::HiRes::time();
 		$msecAll = int(1000 * ($endTiming - $startTiming));
@@ -277,6 +281,18 @@ sub votd {
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
+		next unless ($self->__isTestamentMatch($verse, $testament));
+
+		if ($parental && $verse->parental) {
+			$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
+			next;
+		}
+
+		while ($verse->previous && $verse->previous->continues) {
+			# look upwards until we are not on a continuation, to give increased context
+			$verse = $verse->previous;
+		}
+
 		my $verseAvailable = 1;
 		@verses = ($verse);
 		for (my $candidateI = 1; $candidateI < scalar(@bible); $candidateI++) {
@@ -288,17 +304,7 @@ sub votd {
 			}
 			push(@verses, $candidateVerse);
 		}
-		next unless ($verseAvailable);
-
-		next unless ($self->__isTestamentMatch($verse, $testament));
-
-		last if (!$parental || !$verse->parental);
-		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
-	}
-
-	while ($verse->previous && $verse->previous->continues) {
-		# look upwards until we are not on a continuation, to give increased context
-		$verse = $verse->previous;
+		last if ($verseAvailable);
 	}
 
 	$self->dic->logger->debug($verse->toString());
@@ -306,24 +312,28 @@ sub votd {
 	my $msecAll = 0;
 	# handle ARRAY verses where more than one compound Verse may be returned
 	if ($version && looks_like_number($version) && $version == 2) {
-		$verse = \@verses;
+		my @expandedVerses;
 		for (my $bibleTranslationOrdinal = 0; $bibleTranslationOrdinal < scalar(@bible); $bibleTranslationOrdinal++) {
+			my $translationVerse = $verses[$bibleTranslationOrdinal];
+			push(@expandedVerses, $translationVerse);
 			my $endTiming = Time::HiRes::time();
 			my $msec = int(1000 * ($endTiming - $startTiming));
-			$verse->[0]->msec($msec);
+			$translationVerse->msec($msec);
 			$msecAll += $msec;
 
-			while ($verse->[-1]->continues) {
-				push(@$verse, $verse->[-1]->getNext());
+			while ($translationVerse->continues) {
+				$translationVerse = $translationVerse->getNext();
+				push(@expandedVerses, $translationVerse);
 				$endTiming = Time::HiRes::time();
 				$msec = int(1000 * ($endTiming - $startTiming));
-				$verse->[-1]->msec($msec);
+				$translationVerse->msec($msec);
 				$msecAll += $msec;
 				$startTiming = Time::HiRes::time() unless (defined($startTiming));
 			}
 
 			$startTiming = Time::HiRes::time() unless (defined($startTiming));
 		}
+		$verse = \@expandedVerses;
 	} else {
 		my $endTiming = Time::HiRes::time();
 		$msecAll = int(1000 * ($endTiming - $startTiming));
