@@ -351,6 +351,12 @@ sub getBibles {
 	return $self->__getBible($args);
 }
 
+=head1 PRIVATE METHODS
+
+=over
+
+=cut
+
 sub __getBible {
 	my ($self, $args) = @_;
 
@@ -495,6 +501,10 @@ sub __ensureSecureString {
 
 	return $input;
 }
+
+=back
+
+=cut
 
 __PACKAGE__->meta->make_immutable;
 

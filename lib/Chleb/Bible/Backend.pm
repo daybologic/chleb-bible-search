@@ -158,6 +158,12 @@ has __sharedCachePath => (is => 'ro', isa => 'Str', lazy => 1, builder => '__mak
 has __sharedCacheWriteDeferred => (is => 'rw', isa => 'Bool', default => 0);
 has __sourceMetadata => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 
+=head1 PRIVATE METHODS
+
+=over
+
+=cut
+
 sub __makeCompressedPath {
 	my ($self) = @_;
 	return $self->__makeSourceCompressedPath();
@@ -223,6 +229,14 @@ sub __makeData {
 		}
 	);
 }
+
+=back
+
+=head1 METHODS
+
+=over
+
+=cut
 
 sub BUILD {
 	my ($self) = @_;
@@ -497,6 +511,12 @@ SQL
 	return $text;
 }
 
+=item C<getChapterVerseDataByKey($bookShortName, $chapterNumber)>
+
+TODO
+
+=cut
+
 sub getChapterVerseDataByKey {
 	my ($self, $bookShortName, $chapterNumber) = @_;
 	my $cacheKey = join(':', $self->bible->translation, $bookShortName, $chapterNumber);
@@ -528,6 +548,14 @@ SQL
 	return $rows;
 }
 
+=back
+
+=cut
+
+=head1 PRIVATE METHODS
+
+=over
+
 =item C<__primeChapterOrdinals($bookShortName, $chapterNumber, $rows)>
 
 Populate the global absolute-ordinal caches for every verse of a chapter in one
@@ -537,8 +565,10 @@ the rest by position.  This lets subsequent per-verse getOrdinalByVerseKey() cal
 made while rendering a whole chapter hit the local cache instead of issuing one
 shared-cache lookup (or SQLite window query) per verse.
 
-C<$rows> is the ARRAY ref returned by L</getChapterVerseDataByKey>, ordered by
-C<verse_ordinal>.
+<$rows> is the ARRAY ref returned by L</getChapterVerseDataByKey($bookShortName, $chapterNumber)>,
+ordered by C<verse_ordinal>.
+
+=back
 
 =cut
 
@@ -757,6 +787,10 @@ SQL
 	return $self->__sentimentCache->{$translation};
 }
 
+=head1  PRIVATE METHODS
+
+=over
+
 =item C<__sharedCacheGet($kind, $key)>
 
 Return a value from the Storable-backed shared cache for this translation, or
@@ -778,7 +812,7 @@ sub __sharedCacheGet {
 
 Store a value in the shared cache for this translation.  By default this also
 flushes C<shared.bin> immediately; callers doing many writes can defer those
-flushes with L</deferSharedCacheWrites>.
+flushes with L</deferSharedCacheWrites($defer)>.
 
 =cut
 
@@ -1274,6 +1308,8 @@ sub __prepareSelect {
 Inspect a compressed SQLite source file and return cached metadata describing
 the translations it contains. This is used at startup to map translations to
 the best available source file without relying on filenames alone.
+
+=back
 
 =cut
 
