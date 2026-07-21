@@ -44,8 +44,8 @@ grep -q '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-l
 grep -q '<span class="vn-settings-icon" aria-hidden="true">⚙</span>' <<< "$page"
 
 mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "$page" | sed -E 's#.*>([^<]+)</div>#\1#')
-[[ "${translations[*]}" == 'asv kjv' ]]
+[[ "${translations[*]}" == 'asv (1901) kjv (1611)' ]]
 
 orderedPage=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html translations==kjv,asv)
 mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "$orderedPage" | sed -E 's#.*>([^<]+)</div>#\1#')
-[[ "${translations[*]}" == 'kjv asv' ]]
+[[ "${translations[*]}" == 'kjv (1611) asv (1901)' ]]
