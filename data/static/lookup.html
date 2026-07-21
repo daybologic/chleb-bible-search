@@ -5,32 +5,33 @@
 			<div class="form-group">
 				<label for="lookup-translations">Translation</label>
 				<select id="lookup-translations" name="translations" required>
-					<option value="">Choose a translation</option>
+					__LOOKUP_TRANSLATIONS__
 				</select>
 			</div>
 
 			<div class="form-group">
 				<label for="lookup-book">Book</label>
-				<select id="lookup-book" name="book" required disabled>
-					<option value="">Choose a book</option>
+				<select id="lookup-book" name="book" required __LOOKUP_BOOK_DISABLED__>
+					__LOOKUP_BOOKS__
 				</select>
 			</div>
 
 			<div class="form-group">
 				<label for="lookup-chapter">Chapter</label>
-				<select id="lookup-chapter" name="chapter" required disabled>
-					<option value="">Choose a chapter</option>
+				<select id="lookup-chapter" name="chapter" required __LOOKUP_CHAPTER_DISABLED__>
+					__LOOKUP_CHAPTERS__
 				</select>
 			</div>
 
 			<div class="form-group">
 				<label for="lookup-verse">Verse</label>
-				<select id="lookup-verse" name="verse" required disabled>
-					<option value="">Choose a verse</option>
+				<select id="lookup-verse" name="verse" required __LOOKUP_VERSE_DISABLED__>
+					__LOOKUP_VERSES__
 				</select>
 			</div>
 
-			<button type="submit">Look up</button>
+			<input type="hidden" name="form" value="true">
+			<button type="submit" name="submit" value="lookup">Look up</button>
 			<button type="button" id="lookup-home">Home</button>
 		</form>
 
@@ -140,6 +141,9 @@
 					.then(function (json) {
 						var metadata = {};
 						var included = json.included || [];
+						for (var optionIndex = translation.options.length - 1; optionIndex >= 1; optionIndex--) {
+							translation.removeChild(translation.options[optionIndex]);
+						}
 						included.forEach(function (item) {
 							if (item.type === 'bible') {
 								var attributes = item.attributes;
@@ -195,9 +199,7 @@
 							populateVerses(metadata);
 						});
 					})
-					.catch(function () {
-						translation.disabled = true;
-					});
+					.catch(function () {});
 
 				home.addEventListener('click', function () { window.location.href = '/'; });
 			}());

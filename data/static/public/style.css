@@ -387,10 +387,15 @@ label {
 
 input[type="text"],
 select {
+	box-sizing: border-box;
 	width: 100%;
+	min-height: 2.5em;
 	padding: .7em;
 	border: 1px solid #ccc;
 	border-radius: 8px;
+	background-color: #fff;
+	color: #000;
+	font-size: 1em;
 }
 
 button {
@@ -602,7 +607,8 @@ button:hover {
 }
 
 .verse-nav select {
-	max-width: 14rem;
+	max-width: 28rem;
+	border-radius: 8px;
 }
 
 .verse-nav-more {

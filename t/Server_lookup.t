@@ -420,7 +420,7 @@ sub testHtmlPreservesReversedTranslationInput {
 sub testHtmlBookSelectorUsesCurrentTranslation {
 	my ($self) = @_;
 	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
-	plan tests => 8;
+	plan tests => 9;
 
 	my ($verse) = $self->sut->__library->fetch('Quran', 1, 1, { translations => ['pickthall'] });
 	my $cache = { };
@@ -436,10 +436,11 @@ sub testHtmlBookSelectorUsesCurrentTranslation {
 		'HTML labels Pickthall navigation as Surahs');
 	like($html, qr{<div class="translation">pickthall \(1930\)</div>}s,
 		'HTML displays Pickthall year in lowercase');
-	unlike($html, qr{<button>→</button>}, 'HTML does not include a book selector submit button');
-	like($html, qr{book\.addEventListener\('change'.*?book\.form\.submit\(\);}s,
+	unlike($html, qr{<button>→</button>}, 'HTML does not include the old arrow button');
+	like($html, qr{<button type="submit">Select</button>}, 'HTML includes a manual selector submit button');
+	like($html, qr{book\.addEventListener\('change'.*?if \(!isKindleBrowser\).*?book\.form\.submit\(\);}s,
 		'HTML submits immediately when a book is selected');
-	like($html, qr{translation\.addEventListener\('change'.*?submitFirstBook\(\).*?book\.form\.submit\(\);}s,
+	like($html, qr{var isKindleBrowser = /Kindle\|Silk/i.*?translation\.addEventListener\('change'.*?if \(booksLoaded && !isKindleBrowser\) \{ submitFirstBook\(\); \}.*?if \(translationChangePending && !isKindleBrowser\) \{ submitFirstBook\(\); \}}s,
 		'HTML navigates to the first book when a translation is selected');
 
 	return EXIT_SUCCESS;
