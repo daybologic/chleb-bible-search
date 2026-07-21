@@ -512,7 +512,7 @@ sub testInvalidPageValues {
 
 sub testHtmlPaginationPreservesQuery {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 7;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
 	my ($html) = $self->sut->__search({
@@ -526,6 +526,10 @@ sub testHtmlPaginationPreservesQuery {
 	});
 
 	like($html, qr{<nav class="pagination"}, 'HTML includes pagination nav');
+	like($html, qr{<th>Result</th>\s*<th>Translation</th>\s*<th>Verse</th>}s,
+		'HTML places the translation column between result and verse');
+	like($html, qr{<td>Result 6/153 from Chleb Bible Search 'peter'</td>\s*<td>kjv</td>}s,
+		'HTML renders the translation from the JSON result attributes');
 	like($html, qr{/1/search[?]term=peter&wholeword=1&limit=153&page=1&per_page=5&form=true">Previous</a>}, 'HTML previous link preserves query');
 	like($html, qr{/1/search[?]term=peter&wholeword=1&limit=153&page=3&per_page=5&form=true">Next</a>}, 'HTML next link preserves query');
 	like($html, qr{/1/search[?]term=peter&wholeword=1&limit=153&page=1&per_page=5&form=true">1</a>}, 'HTML page number preserves query');

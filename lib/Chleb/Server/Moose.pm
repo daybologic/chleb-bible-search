@@ -1845,6 +1845,7 @@ sub __searchResultsToHtml {
 	$text .= "<table class=\"info-table\">\r\n";
 	$text .= "<tr>\r\n";
 	$text .= "<th>Result</th>\r\n";
+	$text .= "<th>Translation</th>\r\n";
 	$text .= "<th>Verse</th>\r\n";
 	$text .= "<th>Text</th>\r\n";
 	$text .= "</tr>\r\n";
@@ -1864,6 +1865,7 @@ sub __searchResultsToHtml {
 
 		$text .= "<tr>\r\n";
 		$text .= sprintf("<td>%s</td>\r\n", $attributes->{title});
+		$text .= sprintf("<td>%s</td>\r\n", $attributes->{translation});
 		$text .= sprintf("<td>%s</td>\r\n", $linkToVerse);
 		$text .= sprintf("<td>%s</td>\r\n", $attributes->{text});
 		$text .= "</tr>\r\n";
