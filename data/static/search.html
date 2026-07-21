@@ -15,6 +15,7 @@
 				<label for="translations">Translation</label>
 				<select id="translations" name="translations">
 					<option value="">Default</option>
+					<option value="all">---</option>
 				</select>
 			</div>
 
@@ -116,6 +117,7 @@
 						})
 						.then(function (json) {
 							var booksByTranslation = {};
+							booksByTranslation.all = [];
 							var bibles = json.included || [];
 							for (var i = 0; i < bibles.length; i++) {
 								if (bibles[i].type !== 'bible') {
@@ -130,6 +132,12 @@
 									});
 								}
 								booksByTranslation[attributes.translation] = books;
+								for (var allBookIndex = 0; allBookIndex < books.length; allBookIndex++) {
+									var allBook = books[allBookIndex];
+									if (!booksByTranslation.all.some(function (item) { return item.shortName === allBook.shortName; })) {
+										booksByTranslation.all.push(allBook);
+									}
+								}
 								var option = document.createElement('option');
 								option.value = attributes.translation;
 								option.textContent = attributes.translation.toLowerCase()
