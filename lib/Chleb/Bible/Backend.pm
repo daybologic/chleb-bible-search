@@ -761,10 +761,16 @@ SQL
 	return $sentiment;
 }
 
+=head1 METHODS
+
+=over
+
 =item C<primeSentimentCache()>
 
 Load all sentiment data for this translation into the local and shared caches.
 The caller may defer shared-cache writes when loading several translations.
+
+=back
 
 =cut
 
