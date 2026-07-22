@@ -311,7 +311,7 @@ sub testWarmupPrimesSentimentCache {
 
 	$self->sut->__warmBackendCaches();
 
-	my $before = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+	my $before = scalar(grep { /\QSELECT sentiment.sentiment, sentiment.kind\E/ } @{ $logger->__messages });
 	my $bookInfoBefore = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountBefore = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
@@ -321,7 +321,7 @@ sub testWarmupPrimesSentimentCache {
 		chapter => 2,
 		verse => 1,
 	});
-	my $after = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+	my $after = scalar(grep { /\QSELECT sentiment.sentiment, sentiment.kind\E/ } @{ $logger->__messages });
 	my $bookInfoAfter = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountAfter = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $translationWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation kjv in\E \d+ \Qmsec\E/ } @{ $logger->__messages });

@@ -131,7 +131,7 @@ sub __makeSourceFile {
 		AutoCommit => 1,
 	});
 	$dbh->do('CREATE TABLE master (sig CHAR(36) NOT NULL, version INTEGER NOT NULL, built_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)');
-	$dbh->do(q{INSERT INTO master (sig, version) VALUES ('178d4220-2531-11f1-8c59-ab2e7e0be878', 16)});
+	$dbh->do(q{INSERT INTO master (sig, version) VALUES ('178d4220-2531-11f1-8c59-ab2e7e0be878', 17)});
 	$dbh->do('CREATE TABLE translation (code TEXT NOT NULL)');
 	$dbh->do('CREATE TABLE properties (translation TEXT NOT NULL, name TEXT NOT NULL, value TEXT NOT NULL)');
 	foreach my $translation (@{ $translations }) {

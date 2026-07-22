@@ -46,14 +46,13 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use File::Temp qw(tempfile);
 use Readonly;
 use DBI;
-use JSON qw(decode_json);
 use Storable qw(nstore_fd retrieve);
 use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 16;
+Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
 Readonly my $SHARED_CACHE_FORMAT_VERSION => 1;
 
@@ -716,7 +715,7 @@ sub getSentimentByVerseKey {
 	my $sentiment;
 	if (defined($verseNumber)) {
 		my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $bookShortName, $chapterNumber, $verseNumber);
-			SELECT sentiment.emotion, sentiment.tones
+			SELECT sentiment.sentiment, sentiment.kind
 			  FROM sentiment
 			  JOIN verse ON verse.id = sentiment.verse_id
 			  JOIN book ON book.id = verse.book_id
@@ -725,13 +724,23 @@ sub getSentimentByVerseKey {
 			   AND book.code = ?
 			   AND chapter.ordinal = ?
 			   AND verse.ordinal_relative_to_chapter = ?
+			 ORDER BY CASE sentiment.kind WHEN 'emotion' THEN 0 ELSE 1 END,
+			          sentiment.sentiment
 SQL
-		if (my $row = $sth->fetchrow_hashref()) {
-			$sentiment = {
-				emotion => $row->{emotion},
-				tones   => decode_json($row->{tones}),
-			};
+		my $found = 0;
+		$sentiment = {
+			emotion => 'neutral',
+			tones   => [ ],
+		};
+		while (my $row = $sth->fetchrow_hashref()) {
+			$found = 1;
+			if ($row->{kind} eq 'emotion') {
+				$sentiment->{emotion} = $row->{sentiment};
+			} else {
+				push(@{ $sentiment->{tones} }, $row->{sentiment});
+			}
 		}
+		$sentiment = undef unless ($found);
 	}
 
 	my $emotion = 'neutral';

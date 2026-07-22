@@ -47,7 +47,7 @@ Readonly my $OT_COUNT => 39;
 Readonly my $DATA_DIR => 'data';
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 16;
+Readonly my $FILE_VERSION => 17;
 
 Readonly my %TRANSLATION_META => (
 	kjv       => { year => 1611, language => 'en', properties => {} },
@@ -215,9 +215,9 @@ SQL
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS sentiment (
 	verse_id INTEGER NOT NULL,
-	emotion TEXT NOT NULL,
-	tones TEXT NOT NULL,
-	PRIMARY KEY (verse_id),
+	sentiment TEXT NOT NULL,
+	kind TEXT NOT NULL CHECK (kind IN ('emotion', 'tone')),
+	PRIMARY KEY (verse_id, kind, sentiment),
 	FOREIGN KEY (verse_id) REFERENCES verse(id)
 )
 SQL
@@ -233,6 +233,7 @@ sub __createIndexes {
 	# these cover the remaining hot lookups.
 	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_verse_book ON verse(book_id, ordinal_relative_to_book)');
 	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_book_trans ON book(translation, ordinal)');
+	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_sentiment_kind_value ON sentiment(kind, sentiment)');
 
 	$fileHandle->commit();
 
@@ -343,15 +344,17 @@ SQL
 	    unless (scalar(@{ $sentiment }) == scalar(@{ $verseRows }));
 
 	my $sth = $fileHandle->prepare(<<'SQL');
-		INSERT INTO sentiment (verse_id, emotion, tones)
+		INSERT INTO sentiment (verse_id, sentiment, kind)
 		VALUES(?, ?, ?)
 SQL
 
 	for (my $i = 0; $i < scalar(@{ $sentiment }); $i++) {
 		my $entry = $sentiment->[$i];
 		my $emotion = $entry->{emotion} // 'neutral';
-		my $tones = encode_json($entry->{tones} // [ ]);
-		$sth->execute($verseRows->[$i]->{id}, $emotion, $tones);
+		$sth->execute($verseRows->[$i]->{id}, $emotion, 'emotion');
+		foreach my $tone (@{ $entry->{tones} // [ ] }) {
+			$sth->execute($verseRows->[$i]->{id}, $tone, 'tone');
+		}
 	}
 
 	$fileHandle->commit();
