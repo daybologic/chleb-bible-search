@@ -47,7 +47,7 @@ Readonly my $OT_COUNT => 39;
 Readonly my $DATA_DIR => 'data';
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 15;
+Readonly my $FILE_VERSION => 16;
 
 Readonly my %TRANSLATION_META => (
 	kjv       => { year => 1611, language => 'en', properties => {} },
@@ -214,11 +214,11 @@ SQL
 
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS sentiment (
-	translation CHAR(8) NOT NULL,
-	ordinal INTEGER NOT NULL,
+	verse_id INTEGER NOT NULL,
 	emotion TEXT NOT NULL,
 	tones TEXT NOT NULL,
-	PRIMARY KEY (translation, ordinal)
+	PRIMARY KEY (verse_id),
+	FOREIGN KEY (verse_id) REFERENCES verse(id)
 )
 SQL
 
@@ -331,17 +331,27 @@ sub __writeSentiment {
 	my ($fileHandle, $translation) = @_;
 
 	my $sentiment = getSentiment($translation);
+	my $verseRows = $fileHandle->selectall_arrayref(<<'SQL', { Slice => {} }, $translation);
+		SELECT verse.id
+		  FROM verse
+		  JOIN book ON book.id = verse.book_id
+		  JOIN chapter ON chapter.id = verse.chapter_id
+		 WHERE book.translation = ?
+		 ORDER BY book.ordinal, chapter.ordinal, verse.ordinal_relative_to_chapter
+SQL
+	die("Sentiment data for $translation does not match the verse data\n")
+	    unless (scalar(@{ $sentiment }) == scalar(@{ $verseRows }));
+
 	my $sth = $fileHandle->prepare(<<'SQL');
-		INSERT INTO sentiment (translation, ordinal, emotion, tones)
-		VALUES(?, ?, ?, ?)
+		INSERT INTO sentiment (verse_id, emotion, tones)
+		VALUES(?, ?, ?)
 SQL
 
-	my $ordinal = 0;
-	foreach my $entry (@{ $sentiment }) {
-		$ordinal++;
+	for (my $i = 0; $i < scalar(@{ $sentiment }); $i++) {
+		my $entry = $sentiment->[$i];
 		my $emotion = $entry->{emotion} // 'neutral';
 		my $tones = encode_json($entry->{tones} // [ ]);
-		$sth->execute($translation, $ordinal, $emotion, $tones);
+		$sth->execute($verseRows->[$i]->{id}, $emotion, $tones);
 	}
 
 	$fileHandle->commit();

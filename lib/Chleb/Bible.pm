@@ -494,6 +494,17 @@ sub getSentimentByOrdinal {
 	return $self->__backend->getSentimentByOrdinal($ordinal);
 }
 
+=item C<getSentimentByVerseKey($key)>
+
+Return sentiment data for the canonical verse key.
+
+=cut
+
+sub getSentimentByVerseKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getSentimentByVerseKey($key);
+}
+
 =item C<getProperty($name)>
 
 Return a property for this translation from the SQLite source, or C<undef>

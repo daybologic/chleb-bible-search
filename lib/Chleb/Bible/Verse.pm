@@ -43,8 +43,6 @@ has emotion => (is => 'ro', isa => 'Str', required => 1, lazy => 1, default => \
 
 has ordinal => (is => 'ro', isa => 'Int', required => 1);
 
-has ordinalAbsolute => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeOrdinalAbsolute);
-
 has text => (is => 'ro', isa => 'Str', required => 1);
 
 has tones => (is => 'ro', isa => 'ArrayRef[Str]', required => 1, lazy => 1, default => \&__makeTones);
@@ -162,12 +160,7 @@ sub __makeTones {
 
 sub __makeSentiment {
 	my ($self) = @_;
-	return $self->book->bible->getSentimentByOrdinal($self->ordinalAbsolute);
-}
-
-sub __makeOrdinalAbsolute {
-	my ($self) = @_;
-	return $self->book->bible->getOrdinalByVerseKey($self->key);
+	return $self->book->bible->getSentimentByVerseKey($self->key);
 }
 
 sub __makeKey {

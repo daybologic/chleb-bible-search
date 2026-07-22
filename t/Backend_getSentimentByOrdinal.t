@@ -82,6 +82,18 @@ sub testSuccess_kjv {
 	return EXIT_SUCCESS;
 }
 
+sub testVerseKey_kjv {
+	my ($self) = @_;
+	plan tests => 1;
+
+	cmp_deeply($self->sut->getSentimentByVerseKey('kjv:Gen:1:1'), {
+		emotion => 'neutral',
+		tones   => [ ],
+	}, 'sentiment lookup uses the verse key');
+
+	return EXIT_SUCCESS;
+}
+
 sub testFailure_asv {
 	my ($self) = @_;
 	$self->__checkFailure();

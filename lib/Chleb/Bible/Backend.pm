@@ -53,7 +53,7 @@ use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 15;
+Readonly my $FILE_VERSION => 16;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
 Readonly my $SHARED_CACHE_FORMAT_VERSION => 1;
 
@@ -691,28 +691,65 @@ SQL
 sub getSentimentByOrdinal {
 	my ($self, $ordinal) = @_;
 
-	if (!defined($ordinal)) {
-		$self->dic->logger->warn('ordinal undefined! Converted to 0 - fix your code');
-		$ordinal = 0;
+	my $verseKey = $self->getVerseKeyByOrdinal($ordinal);
+	return $self->getSentimentByVerseKey($verseKey) if (defined($verseKey));
+
+	my $ordinalLabel = defined($ordinal) ? $ordinal : '<undef>';
+	$self->dic->logger->warn("No verse for sentiment ordinal $ordinalLabel");
+	return {
+		emotion => 'neutral',
+		tones   => [ ],
+	};
+}
+
+sub getSentimentByVerseKey {
+	my ($self, $verseKey) = @_;
+
+	my $cacheKey = $verseKey // '';
+	return $self->__sentimentCache->{$cacheKey} if (exists($self->__sentimentCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('sentiment', $cacheKey)) {
+		$self->__sentimentCache->{$cacheKey} = $cached;
+		return $cached;
 	}
 
-	$self->dic->logger->warn('sentiment ARRAYs are ordinal-based (starting index 1, not 0)')
-	    if ($ordinal == 0);
+	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $cacheKey, 4);
+	my $sentiment;
+	if (defined($verseNumber)) {
+		my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $bookShortName, $chapterNumber, $verseNumber);
+			SELECT sentiment.emotion, sentiment.tones
+			  FROM sentiment
+			  JOIN verse ON verse.id = sentiment.verse_id
+			  JOIN book ON book.id = verse.book_id
+			  JOIN chapter ON chapter.id = verse.chapter_id
+			 WHERE book.translation = ?
+			   AND book.code = ?
+			   AND chapter.ordinal = ?
+			   AND verse.ordinal_relative_to_chapter = ?
+SQL
+		if (my $row = $sth->fetchrow_hashref()) {
+			$sentiment = {
+				emotion => $row->{emotion},
+				tones   => decode_json($row->{tones}),
+			};
+		}
+	}
 
-	my $sentiment = $self->__sentimentByOrdinal($ordinal);
 	my $emotion = 'neutral';
 	my $tones = [ ];
 	if ($sentiment) {
 		$emotion = $sentiment->{emotion} if (defined($sentiment->{emotion}));
 		$tones = [ sort @{ $sentiment->{tones} } ] if (defined($sentiment->{tones}));
 	} else {
-		$self->dic->logger->warn("No sentiment entry for verse at ordinal $ordinal");
+		$self->dic->logger->warn("No sentiment entry for verse $cacheKey");
 	}
 
-	return {
+	$sentiment = {
 		emotion => $emotion,
 		tones   => $tones,
 	};
+	$self->__sentimentCache->{$cacheKey} = $sentiment;
+	$self->__sharedCacheSet('sentiment', $cacheKey, $sentiment);
+	return $sentiment;
 }
 
 sub getVerseCount {
@@ -735,14 +772,6 @@ sub __bookVerseCount {
 	return $count;
 }
 
-sub __sentimentByOrdinal {
-	my ($self, $ordinal) = @_;
-	$ordinal = $self->__verseCount() + $ordinal + 1 if ($ordinal < 0);
-	my $data = $self->__sentimentData();
-	return if ($ordinal < 1 || $ordinal > scalar(@$data));
-	return $data->[$ordinal - 1];
-}
-
 sub __verseCount {
 	my ($self) = @_;
 	my $translation = $self->bible->translation;
@@ -757,34 +786,6 @@ sub __verseCount {
 	$self->__bookInfoCache->{$cacheKey} = $count;
 	$self->__sharedCacheSet('versecount', $cacheKey, $count);
 	return $count;
-}
-
-sub __sentimentData {
-	my ($self) = @_;
-	my $translation = $self->bible->translation;
-	return $self->__sentimentCache->{$translation} if ($self->__sentimentCache->{$translation});
-
-	if (my $cached = $self->__sharedCacheGet('sentiment', $translation)) {
-		$self->__sentimentCache->{$translation} = $cached;
-		return $cached;
-	}
-
-	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation);
-		SELECT emotion, tones
-		  FROM sentiment
-		 WHERE translation = ?
-		 ORDER BY ordinal
-SQL
-	my @sentiment;
-	while (my $row = $sth->fetchrow_hashref()) {
-		push(@sentiment, {
-			emotion => $row->{emotion},
-			tones   => decode_json($row->{tones}),
-		});
-	}
-	$self->__sentimentCache->{$translation} = \@sentiment;
-	$self->__sharedCacheSet('sentiment', $translation, \@sentiment);
-	return $self->__sentimentCache->{$translation};
 }
 
 =head1  PRIVATE METHODS
