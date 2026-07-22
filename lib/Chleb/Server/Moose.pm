@@ -1455,6 +1455,24 @@ sub __verseNavigationLink {
 	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
 }
 
+=item C<__verseNavigationQuery($json)>
+
+Return the query string from the JSON response's self link for use by
+navigation links which are otherwise specific to HTML presentation.
+
+=cut
+
+sub __verseNavigationQuery {
+	my ($json) = @_;
+
+	my $selfLink = $json->{links}->{self} || '';
+	if ($selfLink =~ m{ (\?.*)\z }x) {
+		return $1;
+	}
+
+	return '';
+}
+
 =item C<__verseToHtml($verse, $json, $function)>
 
 Render a verse response as the HTML verse page, including translation cards and
@@ -1491,25 +1509,26 @@ sub __verseToHtml {
 
 	my $firstVerseObject = $verse;
 	$firstVerseObject = $firstVerseObject->[0] if (ref($firstVerseObject) eq 'ARRAY');
+	my $navigationQuery = __verseNavigationQuery($json->[0]);
 
 	my $prevBookLink = '';
 	if (my $prevBook = $firstVerseObject->book->getPrev()) {
-		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1">prev book</a>';
+		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1' . $navigationQuery . '">prev book</a>';
 	}
 
 	my $prevChapterLink = '';
 	if (my $prevChapter = $firstVerseObject->chapter->getPrev()) {
-		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '">prev chapter</a>';
+		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . $navigationQuery . '">prev chapter</a>';
 	}
 
 	my $nextBookLink = '';
 	if (my $nextBook = $firstVerseObject->book->getNext()) {
-		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1">next book</a>';
+		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1' . $navigationQuery . '">next book</a>';
 	}
 
 	my $nextChapterLink = '';
 	if (my $nextChapter = $firstVerseObject->chapter->getNext()) {
-		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '">next chapter</a>';
+		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . $navigationQuery . '">next chapter</a>';
 	}
 
 	my $lastChapterLink = '';
@@ -1526,10 +1545,10 @@ sub __verseToHtml {
 
 	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
 		my $lastChapter = $chapters[-1];
-		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>';
+		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . $navigationQuery . '">last chapter</a>';
 	}
 
-	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
+	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1' . $navigationQuery . '">%s</a>';
 
 	my $browsingLeft;
 	{
@@ -1542,7 +1561,7 @@ sub __verseToHtml {
 			if ($chapter->ordinal == $firstVerseObject->chapter->ordinal) {
 				$classCurrent = 'class="current" ';
 			}
-			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s">%s %d</a><br />', $classCurrent, $chapter->getPath(),
+			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s%s">%s %d</a><br />', $classCurrent, $chapter->getPath(), $navigationQuery,
 				(defined($chapterName) && length($chapterName) > 0 ? $chapterName : $chapter->book->shortNameRaw),
 				$chapter->ordinal);
 		}
@@ -1650,7 +1669,8 @@ sub __verseHtmlData {
 			$section->{html} .= '<br /><br />' unless ($section->{last_continues});
 			$section->{html} .= "\r\n";
 			$section->{html} .= '<sup class="versenum">';
-			$section->{html} .= sprintf('<a href="/1/lookup/%s/%d/%d">', $bookName, $chapter, $verseOrdinal);
+			my $verseLink = $json->[0]->{data}->[$verseIndex]->{links}->{self};
+			$section->{html} .= sprintf('<a href="%s">', $verseLink);
 			$section->{html} .= "${verseOrdinal} </a></sup>";
 		}
 

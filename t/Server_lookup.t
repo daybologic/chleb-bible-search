@@ -469,6 +469,29 @@ sub testHtmlUsesEachTranslationReference {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlLookupLinksPreserveTranslation {
+	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'Quran',
+		chapter => 1,
+		translations => ['pickthall'],
+	});
+
+	like($html, qr{<a href="/1/lookup/quran/1/7\?translations=pickthall">7 </a>},
+		'verse links preserve their JSON translation context');
+	like($html, qr{href="/1/lookup/quran/2\?translations=pickthall">next chapter</a>},
+		'headline navigation preserves the JSON translation context');
+	like($html, qr{href="/1/lookup/quran/1\?translations=pickthall">Surah 1</a>},
+		'chapter navigation preserves the JSON translation context');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
