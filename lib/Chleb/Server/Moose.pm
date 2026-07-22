@@ -294,8 +294,7 @@ sub __warmBackendCaches {
 			'Backend cache warmup translation %s priming sentiment cache',
 			$bible->translation,
 		));
-		my $firstBook = $bible->books->[0];
-		$bible->__backend->getSentimentByVerseKey(join(':', $bible->translation, $firstBook->shortNameRaw, 1, 1));
+		$bible->__backend->primeSentimentCache();
 		my @books = shuffle(@{ $bible->books() });
 		foreach my $book (@books) {
 			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->shortNameRaw);

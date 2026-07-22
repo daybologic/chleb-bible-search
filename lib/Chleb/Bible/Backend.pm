@@ -761,6 +761,54 @@ SQL
 	return $sentiment;
 }
 
+=item C<primeSentimentCache()>
+
+Load all sentiment data for this translation into the local and shared caches.
+The caller may defer shared-cache writes when loading several translations.
+
+=cut
+
+sub primeSentimentCache {
+	my ($self) = @_;
+	my $translation = $self->bible->translation;
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation);
+		SELECT book.code,
+		       chapter.ordinal AS chapter_ordinal,
+		       verse.ordinal_relative_to_chapter AS verse_ordinal,
+		       sentiment.sentiment,
+		       sentiment.kind
+		  FROM sentiment
+		  JOIN verse ON verse.id = sentiment.verse_id
+		  JOIN book ON book.id = verse.book_id
+		  JOIN chapter ON chapter.id = verse.chapter_id
+		 WHERE book.translation = ?
+		 ORDER BY book.ordinal, chapter.ordinal, verse.ordinal_relative_to_chapter,
+		          CASE sentiment.kind WHEN 'emotion' THEN 0 ELSE 1 END,
+		          sentiment.sentiment
+SQL
+	my %sentimentByKey;
+	while (my $row = $sth->fetchrow_hashref()) {
+		my $key = join(':', $translation, $row->{code}, $row->{chapter_ordinal}, $row->{verse_ordinal});
+		$sentimentByKey{$key} //= {
+			emotion => 'neutral',
+			tones   => [ ],
+		};
+		if ($row->{kind} eq 'emotion') {
+			$sentimentByKey{$key}->{emotion} = $row->{sentiment};
+		} else {
+			push(@{ $sentimentByKey{$key}->{tones} }, $row->{sentiment});
+		}
+	}
+
+	foreach my $key (keys(%sentimentByKey)) {
+		$sentimentByKey{$key}->{tones} = [ sort @{ $sentimentByKey{$key}->{tones} } ];
+		$self->__sentimentCache->{$key} = $sentimentByKey{$key};
+		$self->__sharedCacheSet('sentiment', $key, $sentimentByKey{$key});
+	}
+
+	return scalar(keys(%sentimentByKey));
+}
+
 sub getVerseCount {
 	my ($self) = @_;
 	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');

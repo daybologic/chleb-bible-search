@@ -134,6 +134,25 @@ sub testSentimentPersistsAcrossBackendInstances {
 	return EXIT_SUCCESS;
 }
 
+sub testPrimeSentimentCache {
+	my ($self) = @_;
+	plan tests => 3;
+
+	$self->sut->deferSharedCacheWrites(1);
+	is($self->sut->primeSentimentCache(), 1, 'all sentiment rows are loaded for the translation');
+	is_deeply($self->sut->__sentimentCache->{'kjv:Gen:1:1'}, {
+		emotion => 'joy',
+		tones   => [ 'praise', 'trust' ],
+	}, 'sentiment is loaded into the local cache');
+	$self->sut->deferSharedCacheWrites(0);
+	is_deeply($self->sut->__sharedCacheGet('sentiment', 'kjv:Gen:1:1'), {
+		emotion => 'joy',
+		tones   => [ 'praise', 'trust' ],
+	}, 'sentiment is loaded into the shared cache');
+
+	return EXIT_SUCCESS;
+}
+
 sub testStaleSourceMetadataInvalidatesTranslation {
 	my ($self) = @_;
 	plan tests => 2;

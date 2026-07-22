@@ -302,7 +302,7 @@ sub test_translation_all {
 
 sub testWarmupPrimesSentimentCache {
 	my ($self) = @_;
-	plan tests => 6;
+	plan tests => 7;
 
 	my $dic = Chleb::DI::Container->instance();
 	my $previousLogger = $dic->logger;
@@ -311,7 +311,7 @@ sub testWarmupPrimesSentimentCache {
 
 	$self->sut->__warmBackendCaches();
 
-	my $before = scalar(grep { /\QSELECT sentiment.sentiment, sentiment.kind\E/ } @{ $logger->__messages });
+	my $before = scalar(keys(%{ $self->sut->__library->bibles('kjv')->__backend->__sentimentCache }));
 	my $bookInfoBefore = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountBefore = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
@@ -321,13 +321,14 @@ sub testWarmupPrimesSentimentCache {
 		chapter => 2,
 		verse => 1,
 	});
-	my $after = scalar(grep { /\QSELECT sentiment.sentiment, sentiment.kind\E/ } @{ $logger->__messages });
+	my $after = scalar(keys(%{ $self->sut->__library->bibles('kjv')->__backend->__sentimentCache }));
 	my $bookInfoAfter = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountAfter = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $translationWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation kjv in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 	my $pickthallWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation pickthall in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 	my $allWarmupFinished = scalar(grep { /\QAll backend cache warmup finished in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 
+	ok($before > 0, 'warmup loads sentiment data');
 	is($after, $before, 'lookup does not reload sentiment after warmup');
 	is($bookInfoAfter, $bookInfoBefore, 'lookup does not reload book info after warmup');
 	is($verseCountAfter, $verseCountBefore, 'lookup does not reload verse counts after warmup');
