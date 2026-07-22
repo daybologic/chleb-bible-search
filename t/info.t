@@ -63,7 +63,7 @@ sub setUp {
 
 sub test {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $info = $self->sut->info();
 	my @coreTranslations = $self->coreTranslations();
@@ -81,6 +81,7 @@ sub test {
 			} @coreTranslations ],
 		),
 	), 'info inspection') or diag(explain($info->toString()));
+	is($coreInfo->toString(), sprintf('info about %d translations', scalar(@coreTranslations)), 'info description uses translation terminology');
 
 	return EXIT_SUCCESS;
 }
