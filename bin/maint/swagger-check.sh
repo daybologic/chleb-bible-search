@@ -29,4 +29,8 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-npx @redocly/cli lint --extends=recommended swagger.yaml
+if [ "$#" -eq 0 ]; then
+	set -- swagger.yaml
+fi
+
+npx @redocly/cli lint --extends=recommended "$@"
