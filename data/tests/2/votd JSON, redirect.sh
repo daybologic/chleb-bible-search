@@ -29,9 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+set -uo pipefail
 
-echo '❌ TODO this test needs further work; but the code seems to respond correctly (JSON), 400'
-exit 0
-
-http --check-status GET chleb-api.example.org/2/votd Accept:application/json redirect==true
+http --check-status GET chleb-api.example.org/2/votd Accept:application/json redirect==true >/dev/null 2>&1
+[[ $? -eq 4 ]]
