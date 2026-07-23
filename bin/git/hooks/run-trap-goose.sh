@@ -29,23 +29,23 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
-
-dir="${repoRoot}/lib/"
-
-if [ ! -d "$dir" ]; then
-	>&2 echo "Error: Directory $dir does not exist or is inaccessible."
-	exit 1
+if [ "$#" -eq 0 ]; then
+	exit 0
 fi
 
-# Reject common corruption patterns in lib/
-# - markdown fences
-# - file headers like "### /path/file"
-# - line-number prefixes like "123: "
-if grep -R -n -E '^(###\s+/|```|[0-9]+:\s)' "$dir" >/dev/null 2>&1; then
-	echo "Error: Detected Goose-style corruption in lib/ (headers, fences, or line numbers)."
-	exit 1
-fi
+for file in "$@"; do
+	case "$file" in
+		lib/*)
+			# Reject common corruption patterns in lib/:
+			# - markdown fences
+			# - file headers like "### /path/file"
+			# - line-number prefixes like "123: "
+			if grep -n -E '^(###\s+/|```|[0-9]+:\s)' "$file" >/dev/null 2>&1; then
+				echo "Error: Detected Goose-style corruption in $file (headers, fences, or line numbers)."
+				exit 1
+			fi
+			;;
+	esac
+done
 
 exit 0
