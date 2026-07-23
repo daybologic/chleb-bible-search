@@ -2241,7 +2241,10 @@ sub handleSessionToken {
 		));
 	}
 
-	if ($self->__damper->dampenSession($sessionToken->value)) {
+	if ($self->__damper->dampenSession(
+		$sessionToken->value,
+		$sessionToken->source->isa('Chleb::Token::Repository::JWT'),
+	)) {
 		my $retryAfterSeconds = $self->dic->config->get('rate_limit', 'session_window_seconds', 60);
 		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 			HTTP_TOO_MANY_REQUESTS,

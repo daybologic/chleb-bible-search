@@ -90,6 +90,30 @@ has dirty => (is => 'rw', isa => 'Bool', default => 0);
 
 has isNew => (is => 'rw', isa => 'Bool', default => 1);
 
+=head1 METHODS
+
+=over
+
+=item C<logValue($value, $isJWT)>
+
+Returns a short value suitable for logging. JWT values are represented by the
+first 12 hexadecimal characters from their SHA-256 digest; other token values
+retain their existing first 12 characters.
+
+=back
+
+=cut
+
+sub logValue {
+	my ($class, $value, $isJWT) = @_;
+
+	if ($isJWT) {
+		return substr(Digest::SHA::sha256_hex($value), 0, 12);
+	}
+
+	return substr($value, 0, 12);
+}
+
 sub __markDirty {
 	my ($self) = @_;
 	$self->dirty(1);
@@ -108,7 +132,7 @@ sub _generate { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 # Invoked by Moose as the lazy builder for the shortValue attribute.
 sub _makeShortValue { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
-	return substr($self->value, 0, 12);
+	return $self->logValue($self->value, $self->source->isa('Chleb::Token::Repository::JWT'));
 }
 
 sub save {

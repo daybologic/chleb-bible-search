@@ -48,6 +48,7 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Dampen;
+use Digest::SHA qw(sha256_hex);
 use File::Temp qw(tempdir);
 use Test::More 0.96;
 
@@ -106,11 +107,14 @@ sub testSessionWindowAllows {
 sub testSessionWindowDenies {
 	my ($self) = @_;
 
-	my $token = 'token-deny-test';
+	my $token = 'eyJhbGciOiJIUzI1NiJ9.eyJpYXQiOjF9.signature';
 	for (1..100) {
-		$self->sut->dampenSession($token);
+		$self->sut->dampenSession($token, 1);
 	}
-	is($self->sut->dampenSession($token), 1, 'request over limit is denied');
+	is($self->sut->dampenSession($token, 1), 1, 'request over limit is denied');
+	$self->sut->dic->logger->isLogged(
+		qr/Session @{[substr(sha256_hex($token), 0, 12)]} exceeded 100 requests in 60s window, denying/,
+	);
 
 	return EXIT_SUCCESS;
 }
