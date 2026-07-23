@@ -48,6 +48,9 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Dampen;
+use Chleb::Token;
+use Chleb::Token::Repository;
+use Digest::SHA qw(sha256_hex);
 use File::Temp qw(tempdir);
 use Test::More 0.96;
 
@@ -93,7 +96,7 @@ sub testIpDampenDeniesSameSecond {
 sub testSessionWindowAllows {
 	my ($self) = @_;
 
-	my $token = 'token-allow-test';
+	my $token = $self->__makeToken('token-allow-test');
 	my $allowed = 1;
 	for (my $requestI = 1; $requestI <= 100; $requestI++) {
 		$allowed &&= ($self->sut->dampenSession($token) == 0);
@@ -106,11 +109,14 @@ sub testSessionWindowAllows {
 sub testSessionWindowDenies {
 	my ($self) = @_;
 
-	my $token = 'token-deny-test';
+	my $token = $self->__makeToken('eyJhbGciOiJIUzI1NiJ9.eyJpYXQiOjF9.signature', 1);
 	for (1..100) {
 		$self->sut->dampenSession($token);
 	}
 	is($self->sut->dampenSession($token), 1, 'request over limit is denied');
+	$self->sut->dic->logger->isLogged(
+		qr/Session @{[substr(sha256_hex($token->value), 0, 12)]} exceeded 100 requests in 60s window, denying/,
+	);
 
 	return EXIT_SUCCESS;
 }
@@ -118,7 +124,7 @@ sub testSessionWindowDenies {
 sub testSessionWindowExpiry {
 	my ($self) = @_;
 
-	my $token = 'token-expiry-test';
+	my $token = $self->__makeToken('token-expiry-test');
 	for (1..100) {
 		$self->sut->dampenSession($token);
 	}
@@ -126,6 +132,17 @@ sub testSessionWindowExpiry {
 	is($self->sut->dampenSession($token), 0, 'expired timestamps are pruned and request is allowed');
 
 	return EXIT_SUCCESS;
+}
+
+sub __makeToken {
+	my ($self, $value, $isJWT) = @_;
+	my $repo = Chleb::Token::Repository->new({ dic => $self->sut->dic });
+	my $source = $repo->repo($isJWT ? 'JWT' : 'Local');
+	return Chleb::Token->new({
+		_repo => $repo,
+		_source => $source,
+		_value => $value,
+	});
 }
 
 sub testChurnAllows {

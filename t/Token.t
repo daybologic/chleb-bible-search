@@ -48,6 +48,7 @@ use Chleb::DI::MockLogger;
 use Chleb::Token;
 use Chleb::Token::Repository;
 use Chleb::Token::Repository::Dummy;
+use Digest::SHA qw(sha256_hex);
 use Test::Deep qw(cmp_deeply all isa methods bool re shallow);
 use Test::Exception;
 use Test::More 0.96;
@@ -97,6 +98,17 @@ sub testInitWithValue {
 	$self->__readOnlyValueCheck($self->uniqueStr());
 
 	is($self->sut->value, $value, 'value is still set correctly');
+
+	return EXIT_SUCCESS;
+}
+
+sub testLogValue {
+	plan tests => 3;
+
+	my $jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJpYXQiOjF9.signature';
+	is(Chleb::Token->logValue($jwt, 1), substr(sha256_hex($jwt), 0, 12), 'JWT log value is a truncated SHA-256 digest');
+	is(Chleb::Token->logValue('token-plain'), 'token-plain', 'non-JWT log value is unchanged');
+	is(Chleb::Token->logValue('one.two.three'), 'one.two.thre', 'non-JWT dotted value is unchanged');
 
 	return EXIT_SUCCESS;
 }
