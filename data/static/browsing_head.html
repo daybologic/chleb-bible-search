@@ -32,4 +32,44 @@
 			__LAST_VERSE_URL__
 		</div>
 	</details>
+
+	<script>
+		(function () {
+			'use strict';
+
+			var moreNavigationCookieName = 'moreNavigation';
+			var moreNavigation = document.querySelector('.verse-nav-more');
+			var summary = moreNavigation.querySelector('summary');
+
+			function readCookie(name) {
+				var prefix = name + '=';
+				var cookies = document.cookie.split(';');
+
+				for (var i = 0; i < cookies.length; i++) {
+					var cookie = cookies[i].trim();
+					if (cookie.indexOf(prefix) === 0) {
+						return decodeURIComponent(cookie.substring(prefix.length));
+					}
+				}
+
+				return '';
+			}
+
+			function writeCookie(name, value) {
+				document.cookie = name + '=' + encodeURIComponent(value)
+					+ '; Max-Age=31536000; Path=/; SameSite=Lax';
+			}
+
+			function updateSummary() {
+				summary.textContent = moreNavigation.open ? 'Less navigation' : 'More navigation';
+			}
+
+			moreNavigation.open = readCookie(moreNavigationCookieName) === 'true';
+			updateSummary();
+			moreNavigation.addEventListener('toggle', function () {
+				writeCookie(moreNavigationCookieName, moreNavigation.open ? 'true' : 'false');
+				updateSummary();
+			});
+		}());
+	</script>
 </nav>
