@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (2E0EOL),
 # All rights reserved.
@@ -30,10 +30,6 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-set -eu
-
-translation=asv
-name=$translation
-
-bin/import/text-to-sqlite.pl -t $translation -n $name
-gzip -f "data/${translation}.sqlite"
+for f in quran_pickthall_json/chapter_*.json; do
+	jq -e 'any(.[]; . == "")' "$f" >/dev/null && echo "EMPTY AYAH IN $f"
+done

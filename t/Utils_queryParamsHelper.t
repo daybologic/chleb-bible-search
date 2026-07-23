@@ -1,8 +1,3 @@
-## no critic (RegularExpressions::ProhibitComplexRegexes)
-## no critic (RegularExpressions::RequireExtendedFormatting)
-## no critic (Modules::RequireEndWithOne)
-## no critic (Modules::RequireFilenameMatchesPackage)
-## no critic (Modules::ProhibitMultiplePackages)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -35,6 +30,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Utils_queryParamsHelperTests;
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
 use strict;
 use warnings;
 use Moose;
@@ -64,7 +64,7 @@ sub testEffectiveValues {
 	plan tests => 3;
 
 	is(Chleb::Utils::queryParamsHelper({ translations => ['asv'] }), '?translations=asv', 'single translation');
-	is(Chleb::Utils::queryParamsHelper({ translations => ['asv', 'kjv'] }), '?translations=all', 'all translations shortcut');
+	is(Chleb::Utils::queryParamsHelper({ translations => ['asv', 'kjv'] }), '?translations=asv,kjv', 'translation list is preserved');
 	like(Chleb::Utils::queryParamsHelper({ testament => 'old', translations => ['kjv'] }), qr/\A\?(?:testament=old&translations=kjv|translations=kjv&testament=old)\z/, 'multiple values are joined correctly');
 
 	return EXIT_SUCCESS;

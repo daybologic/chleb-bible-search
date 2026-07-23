@@ -48,6 +48,7 @@ Pass this object to Plack to launch the server!
 =cut
 
 use Chleb::Bible::Search::Query;
+use Chleb;
 use Chleb::Server::Moose;
 use Chleb::TemplateProcessor;
 use Chleb::Utils::OSError::Mapper;
@@ -109,7 +110,7 @@ sub __setJsonResponseContentType {
 	return;
 }
 
-=head1 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation)
+=head1 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation, $availableTranslations)
 
 Resolves the translation filters for a request which supports preferred
 translations.
@@ -121,17 +122,17 @@ parameter, which resolves to no translation filter rather than falling back to
 the cookie.
 
 When the request parameter is absent, C<$preferredTranslation> may be either a
-cookie object with a C<value()> method or its scalar value.  The supported
-C<asv> and C<kjv> preferences may be stored singly or as a comma-separated
-list, and are returned as an array reference.  The C<all> preference is also
-supported.  The C<default> preference, missing values, and unsupported values
-return an empty array reference so that normal lookup translation selection
-applies.
+cookie object with a C<value()> method or its scalar value.  Available
+translation codes are supplied in C<$availableTranslations>; when omitted,
+they are discovered from the local source data.  The C<all> preference is
+also supported.  The C<default> preference, missing values, and unsupported
+values return an empty array reference so that normal lookup translation
+selection applies.
 
 =cut
 
 sub __preferredTranslations {
-	my ($paramPresent, $paramValue, $preferredTranslation) = @_;
+	my ($paramPresent, $paramValue, $preferredTranslation, $availableTranslations) = @_;
 
 	if ($paramPresent) {
 		return Chleb::Utils::removeArrayEmptyItems(Chleb::Utils::forceArray($paramValue));
@@ -147,10 +148,12 @@ sub __preferredTranslations {
 	return [] if (grep { $_ eq 'default' } @translations);
 	return [ 'all' ] if (grep { $_ eq 'all' } @translations);
 
+	$availableTranslations //= [ Chleb->new()->availableTranslations() ];
+	my %available = map { $_ => 1 } @{ $availableTranslations };
 	my @supportedTranslations;
 	my %seenTranslation;
 	foreach my $translation (@translations) {
-		next unless ($translation =~ m{ \A(?:asv|kjv)\z }x);
+		next unless ($available{$translation});
 		next if ($seenTranslation{$translation});
 
 		push(@supportedTranslations, $translation);
@@ -158,6 +161,259 @@ sub __preferredTranslations {
 	}
 
 	return \@supportedTranslations;
+}
+
+=head1 __htmlEscape($value)
+
+Escape a value before inserting it into an HTML document.
+
+=cut
+
+sub __htmlEscape {
+	my ($value) = @_;
+
+	$value = '' unless (defined($value));
+	$value =~ s{&}{&amp;}gx;
+	$value =~ s{<}{&lt;}gx;
+	$value =~ s{>}{&gt;}gx;
+	$value =~ s{"}{&quot;}gx;
+	$value =~ s{'}{&#39;}gx;
+
+	return $value;
+}
+
+=head1 __searchFormOptions($bibles, $translations, $selectedBook)
+
+Build the translation and book option markup for the search form.  The
+options are rendered by the server so the form remains usable in browsers
+which cannot execute the progressive-enhancement JavaScript.
+
+=cut
+
+sub __searchFormOptions {
+	my ($bibles, $translations, $selectedBook) = @_;
+
+	my $selectedTranslation = scalar(@$translations) > 0 ? $translations->[0] : '';
+	my $translationOptions = '<option value=""' . ($selectedTranslation eq '' ? ' selected' : '') . ">Default</option>\n";
+	$translationOptions .= '<option value="all"' . ($selectedTranslation eq 'all' ? ' selected' : '') . ">---</option>\n";
+
+	my %booksByTranslation;
+	my @allBooks;
+	my %allBookNames;
+	foreach my $bible (@$bibles) {
+		my $translation = $bible->translation;
+		my @books = @{ $bible->books };
+		$booksByTranslation{$translation} = \@books;
+
+		foreach my $book (@books) {
+			next if ($allBookNames{$book->shortName});
+			$allBookNames{$book->shortName} = 1;
+			push(@allBooks, $book);
+		}
+
+		my $label = lc($translation);
+		my $year = $bible->year();
+		$label .= " ($year)" if (defined($year));
+		$translationOptions .= sprintf(
+			"<option value=\"%s\"%s>%s</option>\n",
+			__htmlEscape($translation),
+			$selectedTranslation eq $translation ? ' selected' : '',
+			__htmlEscape($label),
+		);
+	}
+
+	my $bookTranslation = $selectedTranslation;
+	$bookTranslation = 'kjv' if (length($bookTranslation) == 0);
+	my @books = $bookTranslation eq 'all'
+		? @allBooks
+		: @{ $booksByTranslation{$bookTranslation} || [] };
+	my $bookOptions = '<option value="">---</option>\n';
+	foreach my $book (@books) {
+		$bookOptions .= sprintf(
+			"<option value=\"%s\"%s>%s</option>\n",
+			__htmlEscape($book->shortName),
+			defined($selectedBook) && $selectedBook eq $book->shortName ? ' selected' : '',
+			__htmlEscape($book->shortNameRaw),
+		);
+	}
+
+	return {
+		SEARCH_BOOKS => $bookOptions,
+		SEARCH_BOOK_DISABLED => scalar(@books) > 0 ? '' : 'disabled',
+		SEARCH_TRANSLATIONS => $translationOptions,
+	};
+}
+
+=head1 __lookupTranslationOptions($bibles, $selectedTranslation)
+
+Build the translation options and lookup map for the lookup form.
+
+=cut
+
+sub __lookupTranslationOptions {
+	my ($bibles, $selectedTranslation) = @_;
+
+	my $options = '<option value=""' . ($selectedTranslation eq '' ? ' selected' : '') . ">Choose a translation</option>\n";
+	my %biblesByTranslation;
+	foreach my $bible (@$bibles) {
+		my $translation = $bible->translation;
+		$biblesByTranslation{$translation} = $bible;
+
+		my $label = lc($translation);
+		my $year = $bible->year();
+		$label .= " ($year)" if (defined($year));
+		$options .= sprintf(
+			"<option value=\"%s\"%s>%s</option>\n",
+			__htmlEscape($translation),
+			$selectedTranslation eq $translation ? ' selected' : '',
+			__htmlEscape($label),
+		);
+	}
+
+	return { bibles => \%biblesByTranslation, html => $options };
+}
+
+=head1 __lookupBookOptions($bible, $selectedBook)
+
+Build the book options and return the selected book object for the lookup
+form.
+
+=cut
+
+sub __lookupBookOptions {
+	my ($bible, $selectedBook) = @_;
+
+	my $options = '<option value="">Choose a book</option>\n';
+	my $selectedBookObject;
+	my @books = $bible ? @{ $bible->books } : ( );
+	foreach my $book (@books) {
+		my $isSelected = defined($selectedBook) && $selectedBook eq $book->shortName;
+		$selectedBookObject = $book if ($isSelected);
+		$options .= sprintf(
+			"<option value=\"%s\"%s>%s</option>\n",
+			__htmlEscape($book->shortName),
+			$isSelected ? ' selected' : '',
+			__htmlEscape($book->shortNameRaw),
+		);
+	}
+
+	return { book => $selectedBookObject, count => scalar(@books), html => $options };
+}
+
+=head1 __lookupChapterOptions($book, $selectedChapter)
+
+Build the chapter options and return the selected chapter object for the
+lookup form.
+
+=cut
+
+sub __lookupChapterOptions {
+	my ($book, $selectedChapter) = @_;
+
+	my $options = '<option value="">Choose a chapter</option>\n';
+	my $selectedChapterObject;
+	my @chapters;
+	if ($book) {
+		for (my $ordinal = 1; $ordinal <= $book->chapterCount; $ordinal++) {
+			my $chapter = $book->getChapterByOrdinal($ordinal, { nonFatal => 1 });
+			push(@chapters, $chapter) if ($chapter);
+		}
+	}
+
+	foreach my $chapter (@chapters) {
+		my $isSelected = defined($selectedChapter) && $selectedChapter eq $chapter->ordinal;
+		$selectedChapterObject = $chapter if ($isSelected);
+		$options .= sprintf(
+			"<option value=\"%s\"%s>%s</option>\n",
+			__htmlEscape($chapter->ordinal),
+			$isSelected ? ' selected' : '',
+			__htmlEscape($chapter->ordinal),
+		);
+	}
+
+	return { chapter => $selectedChapterObject, count => scalar(@chapters), html => $options };
+}
+
+=head1 __lookupVerseOptions($chapter, $selectedVerse)
+
+Build the verse options for the lookup form.
+
+=cut
+
+sub __lookupVerseOptions {
+	my ($chapter, $selectedVerse) = @_;
+
+	my $options = '<option value="">Choose a verse</option>\n';
+	my $verseCount = $chapter ? $chapter->verseCount : 0;
+	for (my $ordinal = 1; $ordinal <= $verseCount; $ordinal++) {
+		my $isSelected = defined($selectedVerse) && $selectedVerse eq $ordinal;
+		$options .= sprintf(
+			"<option value=\"%s\"%s>%s</option>\n",
+			$ordinal,
+			$isSelected ? ' selected' : '',
+			$ordinal,
+		);
+	}
+
+	return { count => $verseCount, html => $options };
+}
+
+=head1 __lookupFormOptions($bibles, $translations, $book, $chapter, $verse)
+
+Build the dependent translation, book, chapter, and verse option markup for
+the lookup form.  This permits the form to advance one selection at a time
+through ordinary HTTP requests when JavaScript is unavailable.
+
+=cut
+
+sub __lookupFormOptions {
+	my ($bibles, $translations, $book, $chapter, $verse) = @_;
+
+	my $selectedTranslation = scalar(@$translations) > 0 ? $translations->[0] : '';
+	$selectedTranslation = '' if ($selectedTranslation eq 'all');
+	my $translationData = __lookupTranslationOptions($bibles, $selectedTranslation);
+	my $bookData = __lookupBookOptions($translationData->{bibles}->{$selectedTranslation}, $book);
+	my $chapterData = __lookupChapterOptions($bookData->{book}, $chapter);
+	my $verseData = __lookupVerseOptions($chapterData->{chapter}, $verse);
+
+	return {
+		LOOKUP_BOOKS => $bookData->{html},
+		LOOKUP_BOOK_DISABLED => $bookData->{count} > 0 ? '' : 'disabled',
+		LOOKUP_CHAPTERS => $chapterData->{html},
+		LOOKUP_CHAPTER_DISABLED => $chapterData->{count} > 0 ? '' : 'disabled',
+		LOOKUP_TRANSLATIONS => $translationData->{html},
+		LOOKUP_VERSES => $verseData->{html},
+		LOOKUP_VERSE_DISABLED => $verseData->{count} > 0 ? '' : 'disabled',
+	};
+}
+
+=head1 __lookupNavigationUrl($translations, $book)
+
+Return the redirect URL for the verse-page translation and book selector.
+Invalid or unavailable books are replaced with the first book in the selected
+translation so the selector remains usable without JavaScript.
+
+=cut
+
+sub __lookupNavigationUrl {
+	my ($translations, $book) = @_;
+
+	my $translation = scalar(@$translations) > 0 ? $translations->[0] : 'kjv';
+	my @bibles = $server->__library->getBibles({ translations => [$translation] });
+	my $bible = $bibles[0];
+	my $selectedBook = '';
+	if ($bible) {
+		foreach my $bookObject (@{ $bible->books }) {
+			if (defined($book) && $book eq $bookObject->shortName) {
+				$selectedBook = $book;
+				last;
+			}
+		}
+		$selectedBook = $bible->books->[0]->shortName if (length($selectedBook) == 0);
+	}
+
+	my $translationQuery = Chleb::Utils::queryParamsHelper({ translations => [$translation] });
+	return "/1/lookup/${selectedBook}/1${translationQuery}";
 }
 
 =head1 __preferredWholeword($paramPresent, $paramValue, $wholeword)
@@ -480,6 +736,7 @@ sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubr
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
@@ -526,6 +783,7 @@ get '/1/votd' => sub {
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
@@ -566,6 +824,7 @@ get '/2/votd' => sub {
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
@@ -613,14 +872,35 @@ sub __registerLookupRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	$server->handleSessionToken();
 
 	my $book = getParam('book') // '';
-	my $chapter = getParam('chapter') // 1;
+	my $chapter = getParam('chapter');
 	my $verse = getParam('verse');
+	my $form = Chleb::Utils::boolean('form', getParam('form'), 0);
 	my $queryParams = request()->params('query');
 	my $translations = __preferredTranslations(
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
+	my $navigation = Chleb::Utils::boolean('navigation', getParam('navigation'), 0);
+	if ($navigation) {
+		redirect __lookupNavigationUrl($translations, $book), 307;
+		return;
+	}
+	my $submit = getParam('submit') // '';
+	my $complete = length($book) > 0
+		&& defined($chapter) && length($chapter) > 0
+		&& defined($verse) && length($verse) > 0;
+	if (($form && $submit ne 'lookup') || !$complete) {
+		my @lookupFormBibles = $server->__library->getBibles({ translations => ['all'] });
+		my $lookupFormOptions = __lookupFormOptions(\@lookupFormBibles, $translations, $book, $chapter, $verse);
+		my $result = fetchStaticPage('generic_head', { TITLE => 'Lookup - Chleb Bible Search' });
+		$result .= fetchStaticPage('lookup', $lookupFormOptions);
+		$result .= fetchStaticPage('generic_tail');
+		send_as html => $result;
+		return;
+	}
+	$chapter //= 1;
 	my $translationQuery = Chleb::Utils::queryParamsHelper({ translations => $translations });
 
 	if (defined($verse) && length($verse) > 0) {
@@ -643,6 +923,7 @@ get '/1/lookup/:book/:chapter' => sub {
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
@@ -686,6 +967,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 		exists($queryParams->{translations}),
 		getParam('translations'),
 		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
 	);
 
 	my $result;
@@ -754,6 +1036,13 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 		getParam('per_page'),
 		getCookie('previousSearchPerPage'),
 	);
+	my $translations = __preferredTranslations(
+		exists($queryParams->{translations}),
+		getParam('translations'),
+		getCookie('preferredTranslation'),
+		[ $server->__library->availableTranslations() ],
+	);
+	my $book = getParam('book');
 
 	my $result = '';
 	my $resultHash;
@@ -767,6 +1056,8 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 				page      => $page,
 				per_page  => $perPage,
 				term      => $term,
+				translations => $translations,
+				book      => $book,
 				wholeword => $wholeword,
 			});
 			1;
@@ -788,8 +1079,11 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 		} else {
 			$title = "$PROJECT: No results for '$term'";
 		}
+		my @searchFormBibles = $server->__library->getBibles({ translations => ['all'] });
+		my $searchFormOptions = __searchFormOptions(\@searchFormBibles, $translations, $book);
 
 		my %templateParams = (
+			%$searchFormOptions,
 			SEARCH_LIMIT_DEFAULT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT,
 			SEARCH_LIMIT_MAX => 2_000, # What's reasonable?  It isn't enforced by the backend anyway
 			SEARCH_LIMIT_VALUE => $limit,

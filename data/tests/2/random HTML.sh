@@ -31,13 +31,13 @@
 
 set -euo pipefail
 
-page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/random Accept:text/html translations==all)
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/random Accept:text/html translations==asv,kjv)
 
 ! grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
 
 mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "$page" | sed -E 's#.*>([^<]+)</div>#\1#')
-[[ "${translations[*]}" == 'asv kjv' ]]
+[[ "${translations[*]}" == 'asv (1901) kjv (1611)' ]]
 
 orderedPage=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/random Accept:text/html translations==kjv,asv)
 mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "$orderedPage" | sed -E 's#.*>([^<]+)</div>#\1#')
-[[ "${translations[*]}" == 'kjv asv' ]]
+[[ "${translations[*]}" == 'kjv (1611) asv (1901)' ]]

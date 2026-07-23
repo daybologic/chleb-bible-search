@@ -46,14 +46,13 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use File::Temp qw(tempfile);
 use Readonly;
 use DBI;
-use JSON qw(decode_json);
 use Storable qw(nstore_fd retrieve);
 use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 14;
+Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
 Readonly my $SHARED_CACHE_FORMAT_VERSION => 1;
 
@@ -151,11 +150,18 @@ has __chapterVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default
 has __bookVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __verseKeyByBookCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+has __propertyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 has __sharedCache => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeSharedCache');
 has __sharedCacheDirty => (is => 'rw', isa => 'Bool', default => 0);
 has __sharedCachePath => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeSharedCachePath');
 has __sharedCacheWriteDeferred => (is => 'rw', isa => 'Bool', default => 0);
 has __sourceMetadata => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=head1 PRIVATE METHODS
+
+=over
+
+=cut
 
 sub __makeCompressedPath {
 	my ($self) = @_;
@@ -222,6 +228,14 @@ sub __makeData {
 		}
 	);
 }
+
+=back
+
+=head1 METHODS
+
+=over
+
+=cut
 
 sub BUILD {
 	my ($self) = @_;
@@ -305,6 +319,66 @@ sub __makeBooksFromRows {
 		});
 	} @{ $rows // [ ] };
 	return \@books;
+}
+
+=item C<getProperty($name)>
+
+Return a translation property from the SQLite source, or C<undef> when the
+property is not present.
+
+=cut
+
+sub getProperty {
+	my ($self, $name) = @_;
+	my $translation = $self->bible->translation;
+	return $self->__propertyCache->{$translation}->{$name}
+	    if (exists($self->__propertyCache->{$translation}->{$name}));
+
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $name);
+		SELECT value
+		  FROM properties
+		 WHERE translation = ?
+		   AND name = ?
+SQL
+	my ($value) = $sth->fetchrow_array();
+	$self->__propertyCache->{$translation}->{$name} = $value;
+
+	return $value;
+}
+
+=item C<getAvailableTranslations()>
+
+Return translation codes found in the available compressed SQLite source files.
+
+=cut
+
+sub getAvailableTranslations {
+	my ($self) = @_;
+
+	my %translations;
+	foreach my $sourceFile ($self->__sourceFilesInPath($self->dataDir)) {
+		my $meta = $self->__sourceMetadata->{$sourceFile} //= $self->__inspectSourceFile($sourceFile);
+		$translations{$_} = 1 foreach (keys(%{ $meta->{translations} }));
+	}
+
+	my @translations = sort(keys(%translations));
+	return @translations;
+}
+
+=item C<year()>
+
+Return the publication year for this translation from the SQLite source.
+
+=cut
+
+sub year {
+	my ($self) = @_;
+	my ($year) = $self->__selectrowArray(
+		$self->data,
+		'SELECT year FROM translation WHERE code = ?',
+		$self->bible->translation,
+	);
+	return defined($year) ? $year + 0 : undef;
 }
 
 sub getOrdinalByVerseKey {
@@ -436,6 +510,12 @@ SQL
 	return $text;
 }
 
+=item C<getChapterVerseDataByKey($bookShortName, $chapterNumber)>
+
+TODO
+
+=cut
+
 sub getChapterVerseDataByKey {
 	my ($self, $bookShortName, $chapterNumber) = @_;
 	my $cacheKey = join(':', $self->bible->translation, $bookShortName, $chapterNumber);
@@ -467,6 +547,14 @@ SQL
 	return $rows;
 }
 
+=back
+
+=cut
+
+=head1 PRIVATE METHODS
+
+=over
+
 =item C<__primeChapterOrdinals($bookShortName, $chapterNumber, $rows)>
 
 Populate the global absolute-ordinal caches for every verse of a chapter in one
@@ -476,8 +564,10 @@ the rest by position.  This lets subsequent per-verse getOrdinalByVerseKey() cal
 made while rendering a whole chapter hit the local cache instead of issuing one
 shared-cache lookup (or SQLite window query) per verse.
 
-C<$rows> is the ARRAY ref returned by L</getChapterVerseDataByKey>, ordered by
-C<verse_ordinal>.
+<$rows> is the ARRAY ref returned by L</getChapterVerseDataByKey($bookShortName, $chapterNumber)>,
+ordered by C<verse_ordinal>.
+
+=back
 
 =cut
 
@@ -600,28 +690,129 @@ SQL
 sub getSentimentByOrdinal {
 	my ($self, $ordinal) = @_;
 
-	if (!defined($ordinal)) {
-		$self->dic->logger->warn('ordinal undefined! Converted to 0 - fix your code');
-		$ordinal = 0;
+	my $verseKey = $self->getVerseKeyByOrdinal($ordinal);
+	return $self->getSentimentByVerseKey($verseKey) if (defined($verseKey));
+
+	my $ordinalLabel = defined($ordinal) ? $ordinal : '<undef>';
+	$self->dic->logger->warn("No verse for sentiment ordinal $ordinalLabel");
+	return {
+		emotion => 'neutral',
+		tones   => [ ],
+	};
+}
+
+sub getSentimentByVerseKey {
+	my ($self, $verseKey) = @_;
+
+	my $cacheKey = $verseKey // '';
+	return $self->__sentimentCache->{$cacheKey} if (exists($self->__sentimentCache->{$cacheKey}));
+	if (my $cached = $self->__sharedCacheGet('sentiment', $cacheKey)) {
+		$self->__sentimentCache->{$cacheKey} = $cached;
+		return $cached;
 	}
 
-	$self->dic->logger->warn('sentiment ARRAYs are ordinal-based (starting index 1, not 0)')
-	    if ($ordinal == 0);
+	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $cacheKey, 4);
+	my $sentiment;
+	if (defined($verseNumber)) {
+		my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $bookShortName, $chapterNumber, $verseNumber);
+			SELECT sentiment.sentiment, sentiment.kind
+			  FROM sentiment
+			  JOIN verse ON verse.id = sentiment.verse_id
+			  JOIN book ON book.id = verse.book_id
+			  JOIN chapter ON chapter.id = verse.chapter_id
+			 WHERE book.translation = ?
+			   AND book.code = ?
+			   AND chapter.ordinal = ?
+			   AND verse.ordinal_relative_to_chapter = ?
+			 ORDER BY CASE sentiment.kind WHEN 'emotion' THEN 0 ELSE 1 END,
+			          sentiment.sentiment
+SQL
+		my $found = 0;
+		$sentiment = {
+			emotion => 'neutral',
+			tones   => [ ],
+		};
+		while (my $row = $sth->fetchrow_hashref()) {
+			$found = 1;
+			if ($row->{kind} eq 'emotion') {
+				$sentiment->{emotion} = $row->{sentiment};
+			} else {
+				push(@{ $sentiment->{tones} }, $row->{sentiment});
+			}
+		}
+		$sentiment = undef unless ($found);
+	}
 
-	my $sentiment = $self->__sentimentByOrdinal($ordinal);
 	my $emotion = 'neutral';
 	my $tones = [ ];
 	if ($sentiment) {
 		$emotion = $sentiment->{emotion} if (defined($sentiment->{emotion}));
 		$tones = [ sort @{ $sentiment->{tones} } ] if (defined($sentiment->{tones}));
 	} else {
-		$self->dic->logger->warn("No sentiment entry for verse at ordinal $ordinal");
+		$self->dic->logger->warn("No sentiment entry for verse $cacheKey");
 	}
 
-	return {
+	$sentiment = {
 		emotion => $emotion,
 		tones   => $tones,
 	};
+	$self->__sentimentCache->{$cacheKey} = $sentiment;
+	$self->__sharedCacheSet('sentiment', $cacheKey, $sentiment);
+	return $sentiment;
+}
+
+=head1 METHODS
+
+=over
+
+=item C<primeSentimentCache()>
+
+Load all sentiment data for this translation into the local and shared caches.
+The caller may defer shared-cache writes when loading several translations.
+
+=back
+
+=cut
+
+sub primeSentimentCache {
+	my ($self) = @_;
+	my $translation = $self->bible->translation;
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation);
+		SELECT book.code,
+		       chapter.ordinal AS chapter_ordinal,
+		       verse.ordinal_relative_to_chapter AS verse_ordinal,
+		       sentiment.sentiment,
+		       sentiment.kind
+		  FROM sentiment
+		  JOIN verse ON verse.id = sentiment.verse_id
+		  JOIN book ON book.id = verse.book_id
+		  JOIN chapter ON chapter.id = verse.chapter_id
+		 WHERE book.translation = ?
+		 ORDER BY book.ordinal, chapter.ordinal, verse.ordinal_relative_to_chapter,
+		          CASE sentiment.kind WHEN 'emotion' THEN 0 ELSE 1 END,
+		          sentiment.sentiment
+SQL
+	my %sentimentByKey;
+	while (my $row = $sth->fetchrow_hashref()) {
+		my $key = join(':', $translation, $row->{code}, $row->{chapter_ordinal}, $row->{verse_ordinal});
+		$sentimentByKey{$key} //= {
+			emotion => 'neutral',
+			tones   => [ ],
+		};
+		if ($row->{kind} eq 'emotion') {
+			$sentimentByKey{$key}->{emotion} = $row->{sentiment};
+		} else {
+			push(@{ $sentimentByKey{$key}->{tones} }, $row->{sentiment});
+		}
+	}
+
+	foreach my $key (keys(%sentimentByKey)) {
+		$sentimentByKey{$key}->{tones} = [ sort @{ $sentimentByKey{$key}->{tones} } ];
+		$self->__sentimentCache->{$key} = $sentimentByKey{$key};
+		$self->__sharedCacheSet('sentiment', $key, $sentimentByKey{$key});
+	}
+
+	return scalar(keys(%sentimentByKey));
 }
 
 sub getVerseCount {
@@ -644,14 +835,6 @@ sub __bookVerseCount {
 	return $count;
 }
 
-sub __sentimentByOrdinal {
-	my ($self, $ordinal) = @_;
-	$ordinal = $self->__verseCount() + $ordinal + 1 if ($ordinal < 0);
-	my $data = $self->__sentimentData();
-	return if ($ordinal < 1 || $ordinal > scalar(@$data));
-	return $data->[$ordinal - 1];
-}
-
 sub __verseCount {
 	my ($self) = @_;
 	my $translation = $self->bible->translation;
@@ -668,33 +851,9 @@ sub __verseCount {
 	return $count;
 }
 
-sub __sentimentData {
-	my ($self) = @_;
-	my $translation = $self->bible->translation;
-	return $self->__sentimentCache->{$translation} if ($self->__sentimentCache->{$translation});
+=head1  PRIVATE METHODS
 
-	if (my $cached = $self->__sharedCacheGet('sentiment', $translation)) {
-		$self->__sentimentCache->{$translation} = $cached;
-		return $cached;
-	}
-
-	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation);
-		SELECT emotion, tones
-		  FROM sentiment
-		 WHERE translation = ?
-		 ORDER BY ordinal
-SQL
-	my @sentiment;
-	while (my $row = $sth->fetchrow_hashref()) {
-		push(@sentiment, {
-			emotion => $row->{emotion},
-			tones   => decode_json($row->{tones}),
-		});
-	}
-	$self->__sentimentCache->{$translation} = \@sentiment;
-	$self->__sharedCacheSet('sentiment', $translation, \@sentiment);
-	return $self->__sentimentCache->{$translation};
-}
+=over
 
 =item C<__sharedCacheGet($kind, $key)>
 
@@ -717,7 +876,7 @@ sub __sharedCacheGet {
 
 Store a value in the shared cache for this translation.  By default this also
 flushes C<shared.bin> immediately; callers doing many writes can defer those
-flushes with L</deferSharedCacheWrites>.
+flushes with L</deferSharedCacheWrites($defer)>.
 
 =cut
 
@@ -1213,6 +1372,8 @@ sub __prepareSelect {
 Inspect a compressed SQLite source file and return cached metadata describing
 the translations it contains. This is used at startup to map translations to
 the best available source file without relying on filenames alone.
+
+=back
 
 =cut
 

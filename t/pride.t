@@ -1,7 +1,3 @@
-## no critic (Modules::RequireEndWithOne)
-## no critic (Modules::RequireFilenameMatchesPackage)
-## no critic (Modules::ProhibitMultiplePackages)
-## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -34,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package PrideTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -98,7 +98,7 @@ sub testPride_allTranslations {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ 'all' ] });
+	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ $self->coreTranslations() ] });
 	cmp_deeply(\@verse, [
 		all(
 			isa('Chleb::Bible::Verse'),
@@ -160,7 +160,7 @@ sub testBadBook {
 		cmp_deeply($evalError, all(
 			isa('Chleb::Exception'),
 			methods(
-				description => "Long book name 'Mormon' is not a book in the bible, did you mean Amos?",
+				description => "Book 'Mormon' was not found in any requested translation",
 				location    => undef,
 				statusCode  => 404,
 			),

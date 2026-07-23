@@ -294,7 +294,7 @@ sub __warmBackendCaches {
 			'Backend cache warmup translation %s priming sentiment cache',
 			$bible->translation,
 		));
-		$bible->__backend->getSentimentByOrdinal(1);
+		$bible->__backend->primeSentimentCache();
 		my @books = shuffle(@{ $bible->books() });
 		foreach my $book (@books) {
 			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->shortNameRaw);
@@ -910,10 +910,40 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($search->{accept}, $CONTENT_TYPE_DEFAULT);
 
-	my $query = $self->__library->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
-	my $results = $query->run();
-	my $totalCount = $results->count;
-	my @pageVerses = @{ $results->verses };
+	my @translations = @{ $search->{translations} || [] };
+	if (grep { $_ eq 'all' } @translations) {
+		@translations = $self->__library->availableTranslations();
+	}
+	my @queries;
+	if (scalar(@translations) > 0) {
+		foreach my $translation (@translations) {
+			my %queryParams = (
+				text => $search->{term},
+				translations => [$translation],
+			);
+			$queryParams{bookShortName} = $search->{book}
+				if (defined($search->{book}) && length($search->{book}) > 0);
+			push(@queries, $self->__library->newSearchQuery(%queryParams)->setLimit($limit)->setWholeword($wholeword));
+		}
+	} else {
+		my %queryParams = (text => $search->{term});
+		$queryParams{bookShortName} = $search->{book}
+			if (defined($search->{book}) && length($search->{book}) > 0);
+		push(@queries, $self->__library->newSearchQuery(%queryParams));
+		$queries[0]->setLimit($limit)->setWholeword($wholeword);
+	}
+
+	my @allVerses;
+	my $resultsMsec = 0;
+	foreach my $query (@queries) {
+		my $results = $query->run();
+		push(@allVerses, @{ $results->verses });
+		$resultsMsec += $results->msec;
+	}
+	splice(@allVerses, $limit);
+	my $query = $queries[0];
+	my $totalCount = scalar(@allVerses);
+	my @pageVerses = @allVerses;
 	splice(@pageVerses, 0, $offset);
 	splice(@pageVerses, $perPage);
 	my $pageCount = scalar(@pageVerses);
@@ -926,6 +956,7 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 		my %attributes = ( %{ $verse->TO_JSON() } );
 		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $offset + $i + 1, $totalCount, $query->text);
+		$attributes{year} = $verse->book->bible->year();
 
 		push(@{ $hash{included} }, {
 			type => $verse->chapter->type,
@@ -988,7 +1019,7 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 			type => 'stats',
 			id => uuid_to_string(create_uuid()),
 			attributes => {
-				msec => int($results->msec),
+				msec => int($resultsMsec),
 			},
 			links => { },
 		},
@@ -999,7 +1030,9 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		limit       => $limit,
 		page        => $page,
 		per_page    => $perPage,
+		book        => $search->{book},
 		term        => $query->text,
+		translations => \@translations,
 		total_pages => $totalPages,
 		wholeword   => $wholeword,
 	);
@@ -1134,6 +1167,10 @@ sub __searchPageLink {
 		'page=' . uri_escape($page),
 		'per_page=' . uri_escape($params->{per_page}),
 	);
+	push(@parts, 'book=' . uri_escape($params->{book})) if (defined($params->{book}) && length($params->{book}) > 0);
+	if (ref($params->{translations}) eq 'ARRAY' && scalar(@{ $params->{translations} }) > 0) {
+		push(@parts, 'translations=' . uri_escape(join(',', @{ $params->{translations} })));
+	}
 	push(@parts, 'form=true') if ($params->{form});
 
 	return '/1/search?' . join('&', @parts);
@@ -1161,16 +1198,20 @@ sub __info { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my (@bookShortNames, @bookShortNamesRaw, @bookLongNames);
 	my %uniqueBookNames = ( );
 	foreach my $bible (@{ $info->bibles }) { # translations
+		my %bibleAttributes = %{ $bible->TO_JSON() };
+		$bibleAttributes{year} = $bible->year();
 		push(@{ $hash{included} }, {
 			id => $bible->id,
 			type => $bible->type,
-			attributes => $bible->TO_JSON(),
+			attributes => \%bibleAttributes,
 		});
 		foreach my $book (@{ $bible->books }) {
-			next if (++$uniqueBookNames{ $book->shortName } > 1); # ensure book names are listed only once
-			push(@bookShortNames, $book->shortName);
-			push(@bookShortNamesRaw, $book->shortNameRaw);
-			push(@bookLongNames, $book->longName);
+			my $isNewBookName = (++$uniqueBookNames{ $book->shortName } == 1);
+			if ($isNewBookName) {
+				push(@bookShortNames, $book->shortName);
+				push(@bookShortNamesRaw, $book->shortNameRaw);
+				push(@bookLongNames, $book->longName);
+			}
 
 			push(@{ $hash{included} }, {
 				id => $book->id,
@@ -1321,6 +1362,8 @@ sub __verseToJsonApi {
 	%paramsLocal = %$params if ($params);
 	$paramsLocal{translations} = [ $verse->book->bible->translation ] if ($paramsLocal{translations});
 	my $queryParams = Chleb::Utils::queryParamsHelper(\%paramsLocal);
+	my %verseAttributes = %{ $verse->TO_JSON() };
+	$verseAttributes{year} = $verse->book->bible->year();
 
 	my %links = (
 		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
@@ -1352,7 +1395,7 @@ sub __verseToJsonApi {
 	push(@{ $hash{data} }, {
 		type => $verse->type,
 		id => $verse->id,
-		attributes => $verse->TO_JSON(),
+		attributes => \%verseAttributes,
 		links => \%links,
 		relationships => {
 			chapter => {
@@ -1412,6 +1455,24 @@ sub __verseNavigationLink {
 	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
 }
 
+=item C<__verseNavigationQuery($json)>
+
+Return the query string from the JSON response's self link for use by
+navigation links which are otherwise specific to HTML presentation.
+
+=cut
+
+sub __verseNavigationQuery {
+	my ($json) = @_;
+
+	my $selfLink = $json->{links}->{self} || '';
+	if ($selfLink =~ m{ (\?.*)\z }x) {
+		return $1;
+	}
+
+	return '';
+}
+
 =item C<__verseToHtml($verse, $json, $function)>
 
 Render a verse response as the HTML verse page, including translation cards and
@@ -1448,25 +1509,26 @@ sub __verseToHtml {
 
 	my $firstVerseObject = $verse;
 	$firstVerseObject = $firstVerseObject->[0] if (ref($firstVerseObject) eq 'ARRAY');
+	my $navigationQuery = __verseNavigationQuery($json->[0]);
 
 	my $prevBookLink = '';
 	if (my $prevBook = $firstVerseObject->book->getPrev()) {
-		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1">prev book</a>';
+		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1' . $navigationQuery . '">prev book</a>';
 	}
 
 	my $prevChapterLink = '';
 	if (my $prevChapter = $firstVerseObject->chapter->getPrev()) {
-		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '">prev chapter</a>';
+		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . $navigationQuery . '">prev chapter</a>';
 	}
 
 	my $nextBookLink = '';
 	if (my $nextBook = $firstVerseObject->book->getNext()) {
-		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1">next book</a>';
+		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1' . $navigationQuery . '">next book</a>';
 	}
 
 	my $nextChapterLink = '';
 	if (my $nextChapter = $firstVerseObject->chapter->getNext()) {
-		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '">next chapter</a>';
+		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . $navigationQuery . '">next chapter</a>';
 	}
 
 	my $lastChapterLink = '';
@@ -1483,24 +1545,29 @@ sub __verseToHtml {
 
 	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
 		my $lastChapter = $chapters[-1];
-		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>';
+		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . $navigationQuery . '">last chapter</a>';
 	}
 
-	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
+	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1' . $navigationQuery . '">%s</a>';
 
 	my $browsingLeft;
 	{
 		my $chapterLinks = '';
+		my $bible = $firstVerseObject->book->bible;
+		my $chapterName = $bible->getProperty('chapter_name');
+		my $chapterNamePlural = $bible->getProperty('chapter_name_plural') // 'Chapters';
 		foreach my $chapter (@chapters) {
 			my $classCurrent = '';
 			if ($chapter->ordinal == $firstVerseObject->chapter->ordinal) {
 				$classCurrent = 'class="current" ';
 			}
-			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s">%s %d</a><br />', $classCurrent, $chapter->getPath(),
-				$chapter->book->shortNameRaw, $chapter->ordinal);
+			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s%s">%s %d</a><br />', $classCurrent, $chapter->getPath(), $navigationQuery,
+				(defined($chapterName) && length($chapterName) > 0 ? $chapterName : $chapter->book->shortNameRaw),
+				$chapter->ordinal);
 		}
 		$browsingLeft = Chleb::Server::Dancer2::fetchStaticPage('browsing_left', {
-			CHAPTER_LINKS => $chapterLinks,
+			CHAPTER_LINKS     => $chapterLinks,
+			CHAPTER_NAV_TITLE => $chapterNamePlural,
 		});
 	}
 
@@ -1574,7 +1641,8 @@ sub __verseHtmlData {
 	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
 		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
 		my $bookName = $attributes->{book};
-		my $bookNameRaw = $rawBookNameMap{$bookName};
+		my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
+		my $bookNameRaw = $rawBookNameMap{$bookName} // $thisVerse->book->shortNameRaw;
 		my $chapter = $attributes->{chapter};
 		my $verseOrdinal = $attributes->{ordinal};
 		my $translation = $attributes->{translation};
@@ -1589,7 +1657,9 @@ sub __verseHtmlData {
 				emotion => $attributes->{emotion},
 				html => '',
 				last_continues => 0,
+				reference => sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal),
 				tones => [],
+				year => $thisVerse->book->bible->year(),
 				verse_count => 0,
 			};
 		}
@@ -1599,13 +1669,13 @@ sub __verseHtmlData {
 			$section->{html} .= '<br /><br />' unless ($section->{last_continues});
 			$section->{html} .= "\r\n";
 			$section->{html} .= '<sup class="versenum">';
-			$section->{html} .= sprintf('<a href="/1/lookup/%s/%d/%d">', $bookName, $chapter, $verseOrdinal);
+			my $verseLink = $json->[0]->{data}->[$verseIndex]->{links}->{self};
+			$section->{html} .= sprintf('<a href="%s">', $verseLink);
 			$section->{html} .= "${verseOrdinal} </a></sup>";
 		}
 
 		$section->{html} .= $attributes->{text};
 
-		my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
 		$section->{last_continues} = $thisVerse->continues ? 1 : 0;
 		foreach my $tone (@{ $attributes->{tones} }) {
 			push(@{ $section->{tones} }, $tone);
@@ -1631,6 +1701,8 @@ sub __verseHtmlCards {
 	my $output = '';
 	foreach my $translation (@{ $data->{translationOrder} }) {
 		my $section = $data->{translationSections}->{$translation};
+		my $translationLabel = lc($translation);
+		$translationLabel .= sprintf(' (%d)', $section->{year}) if (defined($section->{year}));
 		my $sentiments = '';
 		my %toneSeen;
 
@@ -1644,8 +1716,8 @@ sub __verseHtmlCards {
 		$output .= "\t\t\t\t\t\t<div class=\"card\">\n";
 		$output .= "\t\t\t\t\t\t\t<div class=\"subtitle\">$pageTitle</div>\n";
 		$output .= "\n";
-		$output .= "\t\t\t\t\t\t\t<h1>$data->{reference}</h1>\n";
-		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translation</div>\n";
+		$output .= "\t\t\t\t\t\t\t<h1>$section->{reference}</h1>\n";
+		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translationLabel</div>\n";
 		$output .= "\n";
 		$output .= "\t\t\t\t\t\t\t<div>\n";
 		$output .= "\t\t\t\t\t\t\t\t<blockquote>\n";
@@ -1667,17 +1739,14 @@ sub __verseHtmlCards {
 sub __makeBooks {
 	my ($self, $currentBook) = @_;
 
-	my $thisBookName;
-	if ($currentBook) {
-		$thisBookName = $currentBook->shortName;
-	} else {
-		$thisBookName = Chleb::Server::Dancer2::getParam('book');
-	}
-
-	my $books = $self->__library->info->bibles->[0]->books; # TODO: do we need info, or can we skip it somehow?
+	my $currentTranslation = $currentBook ? $currentBook->bible->translation : '';
+	my $currentBookName = $currentBook ? $currentBook->shortName : Chleb::Server::Dancer2::getParam('book');
+	my $books = $currentBook ? $currentBook->bible->books : [];
+	my @translations = $self->__library->availableTranslations();
+	my @translationOptions = map { $self->__makeTranslationOption($_, $currentTranslation) } @translations;
 	my @options = ( );
 	foreach my $book (@$books) {
-		my $isSelected = ($thisBookName eq $book->shortName);
+		my $isSelected = (defined($currentBookName) && $currentBookName eq $book->shortName);
 		push(@options, sprintf('<option value="%s"%s>%s (%d)</option>',
 			$book->shortName,
 			($isSelected ? ' selected' : ''),
@@ -1686,17 +1755,92 @@ sub __makeBooks {
 		));
 	}
 
-	my $html = "<form action=\"/1/lookup\" method=\"GET\">\n"
-		. "                <select name=\"book\">\n"
+	my $html = "<form class=\"verse-book-form\" action=\"/1/lookup\" method=\"GET\">\n"
+		. "                <select id=\"verse-nav-translation\" name=\"translations\" aria-label=\"Translation\">\n"
+		. join("\r\n", @translationOptions)
+		. "\n                </select>\n"
+		. "                <select id=\"verse-nav-book\" name=\"book\" aria-label=\"Book\">\n"
 		. '        ';
 
 	$html .= join("\r\n", @options)
 		. "</select>\n"
 		. "                <input type=\"hidden\" name=\"chapter\" value=\"1\">\n"
-		. "                <button>→</button>\n"
-		. '        </form>';
+		. "                <input type=\"hidden\" name=\"navigation\" value=\"1\">\n"
+		. "                <button type=\"submit\">Select</button>\n"
+		. "        </form>\n"
+		. "        <script>\n"
+		. "                (function () {\n"
+		. "                        var translation = document.getElementById('verse-nav-translation');\n"
+		. "                        var book = document.getElementById('verse-nav-book');\n"
+		. "                        var selectedBook = " . JSON::to_json($currentBookName // '') . ";\n"
+		. "                        var isKindleBrowser = /Kindle|Silk/i.test(navigator.userAgent || '');\n"
+		. "                        var booksByTranslation = {};\n"
+		. "                        var booksLoaded = false;\n"
+		. "                        var translationChangePending = false;\n"
+		. "                        function populateBooks() {\n"
+		. "                                var books = booksByTranslation[translation.value] || [];\n"
+		. "                                book.innerHTML = '';\n"
+		. "                                books.forEach(function (item) {\n"
+		. "                                        var option = document.createElement('option');\n"
+		. "                                        option.value = item.shortName;\n"
+		. "                                        option.textContent = item.name;\n"
+		. "                                        option.selected = item.shortName === selectedBook;\n"
+		. "                                        book.appendChild(option);\n"
+		. "                                });\n"
+		. "                        }\n"
+		. "                        function submitFirstBook() {\n"
+		. "                                if (book.options.length > 0) {\n"
+		. "                                        book.selectedIndex = 0;\n"
+		. "                                        book.form.submit();\n"
+		. "                                }\n"
+		. "                        }\n"
+		. "                        translation.addEventListener('change', function () {\n"
+		. "                                selectedBook = '';\n"
+		. "                                translationChangePending = true;\n"
+		. "                                populateBooks();\n"
+		. "                                if (booksLoaded && !isKindleBrowser) { submitFirstBook(); }\n"
+		. "                        });\n"
+		. "                        book.addEventListener('change', function () {\n"
+		. "                                if (!isKindleBrowser) { book.form.submit(); }\n"
+		. "                        });\n"
+		. "                        fetch('/1/info', { headers: { Accept: 'application/vnd.api+json' } })\n"
+		. "                                .then(function (response) { return response.json(); })\n"
+		. "                                .then(function (json) {\n"
+		. "                                        (json.included || []).forEach(function (item) {\n"
+		. "                                                if (item.type !== 'book') { return; }\n"
+		. "                                                var attributes = item.attributes;\n"
+		. "                                                if (!booksByTranslation[attributes.translation]) { booksByTranslation[attributes.translation] = []; }\n"
+		. "                                                booksByTranslation[attributes.translation].push({\n"
+		. "                                                        name: attributes.long_name + ' (' + attributes.chapter_count + ')',\n"
+		. "                                                        shortName: attributes.short_name\n"
+		. "                                                });\n"
+		. "                                        });\n"
+		. "                                        booksLoaded = true;\n"
+		. "                                        populateBooks();\n"
+		. "                                        if (translationChangePending && !isKindleBrowser) { submitFirstBook(); }\n"
+		. "                                });\n"
+		. "                }());\n"
+		. "        </script>";
 
 	return $html;
+}
+
+=item C<__makeTranslationOption($translation, $currentTranslation)>
+
+Return one verse-navigation translation C<option>, including its lowercase
+label and publication year.
+
+=cut
+
+sub __makeTranslationOption {
+	my ($self, $translation, $currentTranslation) = @_;
+
+	my $label = lc($translation);
+	my $year = $self->__library->bibles($translation)->year();
+	$label .= sprintf(' (%d)', $year) if (defined($year));
+
+	return sprintf('<option value="%s"%s>%s</option>', $translation,
+		($translation eq $currentTranslation ? ' selected' : ''), $label);
 }
 
 sub __searchResultsToHtml {
@@ -1724,6 +1868,7 @@ sub __searchResultsToHtml {
 	$text .= "<table class=\"info-table\">\r\n";
 	$text .= "<tr>\r\n";
 	$text .= "<th>Result</th>\r\n";
+	$text .= "<th>Translation</th>\r\n";
 	$text .= "<th>Verse</th>\r\n";
 	$text .= "<th>Text</th>\r\n";
 	$text .= "</tr>\r\n";
@@ -1743,6 +1888,7 @@ sub __searchResultsToHtml {
 
 		$text .= "<tr>\r\n";
 		$text .= sprintf("<td>%s</td>\r\n", $attributes->{title});
+		$text .= sprintf("<td>%s</td>\r\n", $attributes->{translation});
 		$text .= sprintf("<td>%s</td>\r\n", $linkToVerse);
 		$text .= sprintf("<td>%s</td>\r\n", $attributes->{text});
 		$text .= "</tr>\r\n";

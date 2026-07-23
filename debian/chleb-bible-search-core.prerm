@@ -39,7 +39,8 @@ rm -vf \
 	'/usr/bin/chleb-bible-search/session-dump'
 
 echo 'clearing bible translation cache'
-rm -f /var/cache/chleb-bible-search/*.bin
+find /var/cache/chleb-bible-search -mindepth 1 ! -type d -delete
+find /var/cache/chleb-bible-search -mindepth 1 -depth -type d -delete
 
 #DEBHELPER#
 

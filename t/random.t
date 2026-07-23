@@ -1,8 +1,3 @@
-## no critic (RegularExpressions::RequireExtendedFormatting)
-## no critic (Modules::RequireEndWithOne)
-## no critic (Modules::RequireFilenameMatchesPackage)
-## no critic (Modules::ProhibitMultiplePackages)
-## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -35,6 +30,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package RandomTests;
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -76,6 +76,24 @@ sub test {
 			text    => ignore(),
 		),
 	), 'verse inspection') or diag(explain($verse->toString()));
+
+	return EXIT_SUCCESS;
+}
+
+sub testMultipleTranslationsRetryUnavailableVerse {
+	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
+	plan tests => 2;
+
+	my $verses = $self->sut->random({ version => 2, translations => ['kjv', 'pickthall'] });
+	my %translations = map { $_->book->bible->translation() => 1 } @{ $verses };
+	my ($pickthallVerse) = grep {
+		$_->book->bible->translation() eq 'pickthall'
+	} @{ $verses };
+
+	is_deeply([ sort keys %translations ], [ 'kjv', 'pickthall' ], 'random returns both requested translations');
+	cmp_ok($pickthallVerse->ordinal, '<=', $self->sut->bibles('pickthall')->verseCount,
+		'random retries until the verse is available in every translation');
 
 	return EXIT_SUCCESS;
 }

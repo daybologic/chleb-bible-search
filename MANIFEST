@@ -42,7 +42,6 @@ bin/git/tools/mergebranch
 bin/git/tools/mergepreview
 bin/git/tools/newbranch
 bin/import/text-to-asv.sh
-bin/import/text-to-bin.pl
 bin/import/text-to-kjv.sh
 bin/maint/copyright-bump.sh
 bin/maint/git-install-local-hooks.sh

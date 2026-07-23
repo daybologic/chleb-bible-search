@@ -1,8 +1,3 @@
-## no critic (Modules::RequireEndWithOne)
-## no critic (Modules::RequireFilenameMatchesPackage)
-## no critic (Modules::ProhibitMultiplePackages)
-## no critic (Subroutines::ProtectPrivateSubs)
-## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -35,6 +30,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package ChlebGetBibleTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -97,7 +97,7 @@ sub testSuccess {
 		),
 	], 'correct bibles returned (polluted)');
 
-	@list = $self->sut->__getBible('all');
+	@list = $self->sut->__getBible({ translations => [ $self->coreTranslations() ] });
 	cmp_deeply(\@list, [
 		all(
 			isa('Chleb::Bible'),
@@ -107,7 +107,7 @@ sub testSuccess {
 			isa('Chleb::Bible'),
 			methods(translation => 'kjv'),
 		),
-	], 'all bibles returned');
+	], 'core bibles returned');
 
 	return EXIT_SUCCESS;
 }
@@ -130,6 +130,19 @@ sub testDefault {
 		isa('Chleb::Bible'),
 		methods(translation => 'kjv'),
 	), 'empty ARRAY: kjv');
+
+	return EXIT_SUCCESS;
+}
+
+sub testAllBiblesAreDiscoverable {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @bibles = $self->sut->__getBible('all');
+	my @actual = sort map { $_->translation() } @bibles;
+	my @expected = sort $self->sut->availableTranslations();
+
+	is_deeply(\@actual, \@expected, 'all returns every installed translation');
 
 	return EXIT_SUCCESS;
 }

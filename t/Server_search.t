@@ -1,9 +1,3 @@
-## no critic (RegularExpressions::ProhibitComplexRegexes)
-## no critic (RegularExpressions::RequireExtendedFormatting)
-## no critic (Modules::RequireEndWithOne)
-## no critic (Modules::RequireFilenameMatchesPackage)
-## no critic (Modules::ProhibitMultiplePackages)
-## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -36,6 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package SearchServerTests;
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 use strict;
 use warnings;
 use Carp qw(croak);
@@ -91,6 +91,7 @@ sub test {
 				text => 'And Jesus, walking by the sea of Galilee, saw two brethren, Simon called Peter, and Andrew his brother, casting a net into the sea: for they were fishers.',
 				tones => [],
 				title => "Result 1/153 from Chleb Bible Search 'peter'",
+				year => 1611,
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/4/18',
@@ -120,6 +121,7 @@ sub test {
 				text => 'Now the names of the twelve apostles are these; The first, Simon, who is called Peter, and Andrew his brother; James [the son] of Zebedee, and John his brother;',
 				tones => [],
 				title => 'Result 2/153 from Chleb Bible Search \'peter\'',
+				year => 1611,
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/10/2',
@@ -149,6 +151,7 @@ sub test {
 				text => 'And Peter answered him and said, Lord, if it be thou, bid me come unto thee on the water.',
 				tones => ['encouragement', 'trust'],
 				title => 'Result 3/153 from Chleb Bible Search \'peter\'',
+				year => 1611,
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/14/28',
@@ -178,6 +181,7 @@ sub test {
 				text => 'And he said, Come. And when Peter was come down out of the ship, he walked on the water, to go to Jesus.',
 				tones => ['encouragement', 'trust'],
 				title => 'Result 4/153 from Chleb Bible Search \'peter\'',
+				year => 1611,
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/14/29',
@@ -207,6 +211,7 @@ sub test {
 				text => 'Then answered Peter and said unto him, Declare unto us this parable.',
 				tones => [],
 				title => 'Result 5/153 from Chleb Bible Search \'peter\'',
+				year => 1611,
 				translation => 'kjv',
 			},
 			id => 'kjv/mat/15/15',
@@ -507,7 +512,7 @@ sub testInvalidPageValues {
 
 sub testHtmlPaginationPreservesQuery {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 7;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
 	my ($html) = $self->sut->__search({
@@ -521,6 +526,10 @@ sub testHtmlPaginationPreservesQuery {
 	});
 
 	like($html, qr{<nav class="pagination"}, 'HTML includes pagination nav');
+	like($html, qr{<th>Result</th>\s*<th>Translation</th>\s*<th>Verse</th>}s,
+		'HTML places the translation column between result and verse');
+	like($html, qr{<td>Result 6/153 from Chleb Bible Search 'peter'</td>\s*<td>kjv</td>}s,
+		'HTML renders the translation from the JSON result attributes');
 	like($html, qr{/1/search[?]term=peter&wholeword=1&limit=153&page=1&per_page=5&form=true">Previous</a>}, 'HTML previous link preserves query');
 	like($html, qr{/1/search[?]term=peter&wholeword=1&limit=153&page=3&per_page=5&form=true">Next</a>}, 'HTML next link preserves query');
 	like($html, qr{/1/search[?]term=peter&wholeword=1&limit=153&page=1&per_page=5&form=true">1</a>}, 'HTML page number preserves query');
@@ -549,6 +558,37 @@ sub testWholeWordPunctuation {
 	foreach my $result (@{ $json->{data} }) {
 		like($result->{attributes}->{text}, qr/\b$term\b/, sprintf("Result (%d/2) text contains the term '%s'", ++$counter, $term));
 	}
+
+	return EXIT_SUCCESS;
+}
+
+sub testSearchSelectedTranslation {
+	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
+	plan tests => 4;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__search({
+		accept => $mediaType,
+		limit => 2,
+		term => 'Allah',
+		translations => ['pickthall'],
+		wholeword => 'true',
+	});
+
+	ok(scalar(@{ $json->{data} }) > 0, 'selected translation returns search results');
+	is($json->{data}->[0]->{attributes}->{translation}, 'pickthall', 'result uses selected translation');
+	like($json->{links}->{self}, qr{translations=pickthall}, 'pagination links preserve selected translation');
+
+	my $bookJson = $self->sut->__search({
+		accept => $mediaType,
+		book => 'quran',
+		limit => 2,
+		term => 'Allah',
+		translations => ['pickthall'],
+		wholeword => 'true',
+	});
+	is($bookJson->{data}->[0]->{attributes}->{book}, 'quran', 'selected book filters search results');
 
 	return EXIT_SUCCESS;
 }

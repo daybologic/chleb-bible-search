@@ -1,7 +1,3 @@
-## no critic (Modules::RequireEndWithOne)
-## no critic (Modules::RequireFilenameMatchesPackage)
-## no critic (Modules::ProhibitMultiplePackages)
-## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -34,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Server_Dancer2_preferredTranslationsTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 use strict;
 use warnings;
 use Moose;
@@ -48,10 +48,12 @@ use Test::More 0.96;
 
 sub testCookiePreference {
 	my ($self) = @_;
-	plan tests => 8;
+	plan tests => 10;
 
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv'), [ 'asv' ], 'ASV cookie is used');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'kjv'), [ 'kjv' ], 'KJV cookie is used');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'pickthall'), [ 'pickthall' ], 'Pickthall cookie is used');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'pickthall', [ 'asv', 'kjv', 'pickthall' ]), [ 'pickthall' ], 'available translations are accepted as an array reference');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv,kjv'), [ 'asv', 'kjv' ], 'combined cookie is used');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv,kjv,asv'), [ 'asv', 'kjv' ], 'duplicate cookie values are ignored');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'all'), [ 'all' ], 'all cookie is used');

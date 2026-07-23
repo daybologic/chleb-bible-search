@@ -939,8 +939,9 @@ components:
               example: 1 minute and 30 seconds
     Translation:
       type: string
-      enum: ["all", "asv", "kjv"]
       default: "kjv"
+      description: Translation code, or the reserved value "all". Additional translation codes may be installed dynamically.
+      example: "kjv"
     Verse:
       type: object
       properties:
@@ -980,6 +981,10 @@ components:
                 example: encouragement
             translation:
               $ref: '#/components/schemas/Translation'
+            year:
+              type: integer
+              description: Publication year of the translation
+              example: 1611
     Stats:
       type: object
       properties:

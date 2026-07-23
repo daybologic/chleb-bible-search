@@ -16,7 +16,7 @@ has msec => (is => 'rw', isa => 'Int', default => 0);
 
 sub toString {
 	my ($self) = @_;
-	return sprintf('%s about %d bibles', $self->type, scalar(@{ $self->bibles }));
+	return sprintf('%s about %d translations', $self->type, scalar(@{ $self->bibles }));
 }
 
 sub __makeId {

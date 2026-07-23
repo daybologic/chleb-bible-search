@@ -28,21 +28,7 @@
 						</span>
 					</label>
 
-					<label class="translation-option">
-						<input type="checkbox" name="preferredTranslation" value="asv">
-						<span>
-							<strong>ASV</strong>
-							<small>American Standard Version</small>
-						</span>
-					</label>
-
-					<label class="translation-option">
-						<input type="checkbox" name="preferredTranslation" value="kjv">
-						<span>
-							<strong>KJV</strong>
-							<small>King James Version</small>
-						</span>
-					</label>
+					<div id="available-translations"></div>
 				</fieldset>
 
 				<div class="settings-actions">
@@ -61,8 +47,9 @@
 			'use strict';
 
 			var preferredTranslationCookieName = 'preferredTranslation';
-			var allowedTranslations = [ 'default', 'all', 'asv', 'kjv' ];
+			var allowedTranslations = [ 'default', 'all' ];
 			var form = document.getElementById('settings-form');
+			var availableTranslations = document.getElementById('available-translations');
 			var status = document.getElementById('settings-status');
 			var back = document.getElementById('settings-back');
 			var home = document.getElementById('settings-home');
@@ -107,6 +94,51 @@
 				return form.querySelectorAll('input[name="preferredTranslation"]');
 			}
 
+			function addTranslationOption(translation) {
+				var label = document.createElement('label');
+				label.className = 'translation-option';
+
+				var input = document.createElement('input');
+				input.type = 'checkbox';
+				input.name = 'preferredTranslation';
+				input.value = translation;
+
+				var span = document.createElement('span');
+				var name = document.createElement('strong');
+				name.textContent = translation.toUpperCase();
+				var description = document.createElement('small');
+				description.textContent = 'Available translation';
+
+				span.appendChild(name);
+				span.appendChild(description);
+				label.appendChild(input);
+				label.appendChild(span);
+				availableTranslations.appendChild(label);
+			}
+
+			function loadAvailableTranslations() {
+				fetch('/1/info', { headers: { Accept: 'application/vnd.api+json' } })
+					.then(function (response) {
+						if (!response.ok) {
+							throw new Error('Unable to load translation information');
+						}
+						return response.json();
+					})
+					.then(function (json) {
+						var translations = json.data[0].attributes.translations || [];
+						for (var i = 0; i < translations.length; i++) {
+							if (allowedTranslations.indexOf(translations[i]) === -1) {
+								allowedTranslations.push(translations[i]);
+								addTranslationOption(translations[i]);
+							}
+						}
+						selectPreference(readPreference());
+					})
+					.catch(function () {
+						selectPreference([ 'default' ]);
+					});
+			}
+
 			function selectPreference(values) {
 				var inputs = translationInputs();
 				for (var i = 0; i < inputs.length; i++) {
@@ -114,7 +146,8 @@
 				}
 			}
 
-			selectPreference(readPreference());
+			selectPreference([ 'default' ]);
+			loadAvailableTranslations();
 
 			form.addEventListener('change', function (event) {
 				if (event.target.name !== 'preferredTranslation' || !event.target.checked) {

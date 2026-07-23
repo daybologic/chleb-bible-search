@@ -1,10 +1,3 @@
-## no critic (RegularExpressions::ProhibitComplexRegexes)
-## no critic (RegularExpressions::RequireExtendedFormatting)
-## no critic (Modules::RequireEndWithOne)
-## no critic (Modules::RequireFilenameMatchesPackage)
-## no critic (Modules::ProhibitMultiplePackages)
-## no critic (Subroutines::ProtectPrivateSubs)
-## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -37,6 +30,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package LookupServerTests;
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -84,6 +84,7 @@ sub test_translation_all {
 						ordinal => 1,
 						text => 'Jehovah saith unto my Lord, Sit thou at my right hand, Until I make thine enemies thy footstool.',
 						tones => ['encouragement','trust'],
+						year => 1901,
 						translation => 'asv',
 					},
 					id => 'asv/psa/110/1',
@@ -120,6 +121,7 @@ sub test_translation_all {
 						ordinal => 1,
 						text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
 						tones => ['encouragement','trust'],
+						year => 1611,
 						translation => 'kjv',
 					},
 					id => 'kjv/psa/110/1',
@@ -213,6 +215,7 @@ sub test_translation_all {
 						ordinal => 1,
 						text => 'A Psalm of David. The LORD said unto my Lord, Sit thou at my right hand, until I make thine enemies thy footstool.',
 						tones => ['encouragement','trust'],
+						year => 1611,
 						translation => 'kjv',
 					},
 					id => 'kjv/psa/110/1',
@@ -299,17 +302,16 @@ sub test_translation_all {
 
 sub testWarmupPrimesSentimentCache {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 7;
 
 	my $dic = Chleb::DI::Container->instance();
 	my $previousLogger = $dic->logger;
 	my $logger = Chleb::DI::MockLogger->new();
 	$dic->logger($logger);
 
-	my ($bible) = $self->sut->__library->__getBible({ translations => [ 'kjv' ] });
-	$self->sut->__warmBackendCaches($bible);
+	$self->sut->__warmBackendCaches();
 
-	my $before = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+	my $before = scalar(keys(%{ $self->sut->__library->bibles('kjv')->__backend->__sentimentCache }));
 	my $bookInfoBefore = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountBefore = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
@@ -319,16 +321,19 @@ sub testWarmupPrimesSentimentCache {
 		chapter => 2,
 		verse => 1,
 	});
-	my $after = scalar(grep { /\QSELECT emotion, tones FROM sentiment\E/ } @{ $logger->__messages });
+	my $after = scalar(keys(%{ $self->sut->__library->bibles('kjv')->__backend->__sentimentCache }));
 	my $bookInfoAfter = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountAfter = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $translationWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation kjv in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
+	my $pickthallWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation pickthall in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 	my $allWarmupFinished = scalar(grep { /\QAll backend cache warmup finished in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 
+	ok($before > 0, 'warmup loads sentiment data');
 	is($after, $before, 'lookup does not reload sentiment after warmup');
 	is($bookInfoAfter, $bookInfoBefore, 'lookup does not reload book info after warmup');
 	is($verseCountAfter, $verseCountBefore, 'lookup does not reload verse counts after warmup');
 	ok($translationWarmupFinished > 0, 'warmup logs per-translation msec');
+	ok($pickthallWarmupFinished > 0, 'warmup discovers Pickthall');
 	ok($allWarmupFinished > 0, 'warmup logs overall msec');
 
 	$dic->logger($previousLogger);
@@ -379,11 +384,11 @@ sub testHtmlListsTranslationsSeparately {
 	shift(@cards);
 
 	is(scalar(@cards), 2, 'each translation has its own card');
-	is_deeply(\@translations, [ 'kjv', 'asv' ], 'each translation has its requested label order');
-	like($cards[0], qr{<div class="translation">kjv</div>}s, 'KJV label is in the first card');
+	is_deeply(\@translations, [ 'kjv (1611)', 'asv (1901)' ], 'each translation has its requested label order');
+	like($cards[0], qr{<div class="translation">kjv \(1611\)</div>}s, 'KJV label is in the first card');
 	like($cards[0], qr{<blockquote>\s*For many are called, but few \[are\] chosen\.\s*</blockquote>}s, 'KJV text is in the first card');
 	like($cards[0], qr{<span class="tag tag-color-\d+">neutral</span>\s*</blockquote>}s, 'KJV sentiments are in the first card');
-	like($cards[1], qr{<div class="translation">asv</div>}s, 'ASV label is in the second card');
+	like($cards[1], qr{<div class="translation">asv \(1901\)</div>}s, 'ASV label is in the second card');
 	like($cards[1], qr{<blockquote>\s*For many are called, but few chosen\.\s*</blockquote>}s, 'ASV text is in the second card');
 	like($cards[1], qr{<span class="tag tag-color-\d+">neutral</span> <span class="tag tag-color-\d+">instruction</span>}s, 'ASV sentiments are in the second card');
 
@@ -408,7 +413,82 @@ sub testHtmlPreservesReversedTranslationInput {
 	my $html = $self->sut->__verseToHtml(\@verse, \@json, 3);
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
-	is_deeply(\@translations, [ 'kjv', 'asv' ], 'HTML preserves reversed renderer input');
+	is_deeply(\@translations, [ 'kjv (1611)', 'asv (1901)' ], 'HTML preserves reversed renderer input');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlBookSelectorUsesCurrentTranslation {
+	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
+	plan tests => 9;
+
+	my ($verse) = $self->sut->__library->fetch('Quran', 1, 1, { translations => ['pickthall'] });
+	my $cache = { };
+	my $json = Chleb::Server::Moose::__verseToJsonApi($verse, { translations => ['pickthall'] }, $cache);
+	my $html = $self->sut->__verseToHtml($verse, [$json], 3);
+
+	like($html, qr{<select id="verse-nav-translation" name="translations"}, 'HTML includes translation selector');
+	like($html, qr{<option value="pickthall" selected>pickthall \(1930\)</option>},
+		'HTML displays the selected translation in lowercase with its year');
+	like($html, qr{<select id="verse-nav-book" name="book"[^>]*>.*?<option value="quran" selected>Quran \(114\)</option>}s,
+		'HTML selects books from the current translation');
+	like($html, qr{<h4 class="chapter-nav-title">Surahs</h4>.*?Surah 1}s,
+		'HTML labels Pickthall navigation as Surahs');
+	like($html, qr{<div class="translation">pickthall \(1930\)</div>}s,
+		'HTML displays Pickthall year in lowercase');
+	unlike($html, qr{<button>→</button>}, 'HTML does not include the old arrow button');
+	like($html, qr{<button type="submit">Select</button>}, 'HTML includes a manual selector submit button');
+	like($html, qr{book\.addEventListener\('change'.*?if \(!isKindleBrowser\).*?book\.form\.submit\(\);}s,
+		'HTML submits immediately when a book is selected');
+	like($html, qr{var isKindleBrowser = /Kindle\|Silk/i.*?translation\.addEventListener\('change'.*?if \(booksLoaded && !isKindleBrowser\) \{ submitFirstBook\(\); \}.*?if \(translationChangePending && !isKindleBrowser\) \{ submitFirstBook\(\); \}}s,
+		'HTML navigates to the first book when a translation is selected');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlUsesEachTranslationReference {
+	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
+	plan tests => 1;
+
+	my @verse = (
+		$self->sut->__library->fetch('Genesis', 1, 1, { translations => ['kjv'] }),
+		$self->sut->__library->fetch('Quran', 1, 1, { translations => ['pickthall'] }),
+	);
+	my $cache = { };
+	my @json = map {
+		Chleb::Server::Moose::__verseToJsonApi($_, { translations => ['all'] }, $cache)
+	} @verse;
+	push(@{ $json[0]->{data} }, $json[1]->{data}->[0]);
+
+	my $html = $self->sut->__verseToHtml(\@verse, \@json, 3);
+	my @references = $html =~ m{<h1>([^<]+)</h1>}g;
+
+	is_deeply(\@references, [ 'Gen 1:1', 'Quran 1:1' ], 'HTML uses each translation reference');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlLookupLinksPreserveTranslation {
+	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'Quran',
+		chapter => 1,
+		translations => ['pickthall'],
+	});
+
+	like($html, qr{<a href="/1/lookup/quran/1/7\?translations=pickthall">7 </a>},
+		'verse links preserve their JSON translation context');
+	like($html, qr{href="/1/lookup/quran/2\?translations=pickthall">next chapter</a>},
+		'headline navigation preserves the JSON translation context');
+	like($html, qr{href="/1/lookup/quran/1\?translations=pickthall">Surah 1</a>},
+		'chapter navigation preserves the JSON translation context');
 
 	return EXIT_SUCCESS;
 }

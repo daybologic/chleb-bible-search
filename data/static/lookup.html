@@ -1,0 +1,206 @@
+<!-- Chleb Template -->
+		<form class="search-form lookup-form" method="GET" action="/1/lookup">
+			<h2>Lookup</h2>
+
+			<div class="form-group">
+				<label for="lookup-translations">Translation</label>
+				<select id="lookup-translations" name="translations" required>
+					__LOOKUP_TRANSLATIONS__
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="lookup-book">Book</label>
+				<select id="lookup-book" name="book" required __LOOKUP_BOOK_DISABLED__>
+					__LOOKUP_BOOKS__
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="lookup-chapter">Chapter</label>
+				<select id="lookup-chapter" name="chapter" required __LOOKUP_CHAPTER_DISABLED__>
+					__LOOKUP_CHAPTERS__
+				</select>
+			</div>
+
+			<div class="form-group">
+				<label for="lookup-verse">Verse</label>
+				<select id="lookup-verse" name="verse" required __LOOKUP_VERSE_DISABLED__>
+					__LOOKUP_VERSES__
+				</select>
+			</div>
+
+			<input type="hidden" name="form" value="true">
+			<button type="submit" name="submit" value="lookup">Look up</button>
+			<button type="button" id="lookup-home">Home</button>
+		</form>
+
+		<script>
+			(function () {
+				'use strict';
+
+				var form = document.querySelector('.lookup-form');
+				var translation = document.getElementById('lookup-translations');
+				var book = document.getElementById('lookup-book');
+				var chapter = document.getElementById('lookup-chapter');
+				var verse = document.getElementById('lookup-verse');
+				var home = document.getElementById('lookup-home');
+				var params = new URLSearchParams(window.location.search);
+
+				function readCookie(name) {
+					var prefix = name + '=';
+					var cookies = document.cookie.split(';');
+					for (var i = 0; i < cookies.length; i++) {
+						var cookie = cookies[i].trim();
+						if (cookie.indexOf(prefix) === 0) {
+							return decodeURIComponent(cookie.substring(prefix.length));
+						}
+					}
+					return '';
+				}
+
+				function addOption(select, value, label) {
+					var option = document.createElement('option');
+					option.value = value;
+					option.textContent = label;
+					select.appendChild(option);
+				}
+
+				function clearSelect(select, label) {
+					select.innerHTML = '';
+					addOption(select, '', label);
+					select.disabled = true;
+				}
+
+				function populateBooks(metadata) {
+					clearSelect(book, 'Choose a book');
+					clearSelect(chapter, 'Choose a chapter');
+					clearSelect(verse, 'Choose a verse');
+					var selected = metadata[translation.value];
+					if (!selected) {
+						return;
+					}
+
+					for (var i = 0; i < selected.books.length; i++) {
+						addOption(book, selected.books[i].shortName, selected.books[i].name);
+					}
+					book.disabled = false;
+					var requestedBook = params.get('book');
+					if (requestedBook && selected.books.some(function (item) { return item.shortName === requestedBook; })) {
+						book.value = requestedBook;
+					}
+					populateChapters(metadata);
+				}
+
+				function populateChapters(metadata) {
+					clearSelect(chapter, 'Choose a chapter');
+					clearSelect(verse, 'Choose a verse');
+					var selected = metadata[translation.value];
+					if (!selected || !book.value) {
+						return;
+					}
+
+					var chapters = selected.chapters[book.value] || [];
+					for (var i = 0; i < chapters.length; i++) {
+						addOption(chapter, chapters[i].ordinal, String(chapters[i].ordinal));
+					}
+					chapter.disabled = false;
+					var requestedChapter = params.get('chapter');
+					if (requestedChapter && selected.chapters[book.value].some(function (item) { return String(item.ordinal) === requestedChapter; })) {
+						chapter.value = requestedChapter;
+					}
+					populateVerses(metadata);
+				}
+
+				function populateVerses(metadata) {
+					clearSelect(verse, 'Choose a verse');
+					var selected = metadata[translation.value];
+					if (!selected || !book.value || !chapter.value) {
+						return;
+					}
+
+					var chapters = selected.chapters[book.value] || [];
+					var selectedChapter = chapters.find(function (item) {
+						return String(item.ordinal) === chapter.value;
+					});
+					if (!selectedChapter) {
+						return;
+					}
+					for (var i = 1; i <= selectedChapter.verseCount; i++) {
+						addOption(verse, i, String(i));
+					}
+					verse.disabled = false;
+					var requestedVerse = params.get('verse');
+					if (requestedVerse && parseInt(requestedVerse, 10) <= selectedChapter.verseCount) {
+						verse.value = requestedVerse;
+					}
+				}
+
+				fetch('/1/info', { headers: { Accept: 'application/vnd.api+json' } })
+					.then(function (response) { return response.json(); })
+					.then(function (json) {
+						var metadata = {};
+						var included = json.included || [];
+						for (var optionIndex = translation.options.length - 1; optionIndex >= 1; optionIndex--) {
+							translation.removeChild(translation.options[optionIndex]);
+						}
+						included.forEach(function (item) {
+							if (item.type === 'bible') {
+								var attributes = item.attributes;
+								metadata[attributes.translation] = { books: [], chapters: {}, year: attributes.year };
+								for (var i = 0; i < attributes.book_names_short.length; i++) {
+									metadata[attributes.translation].books.push({
+										name: attributes.book_names_short_raw[i],
+										shortName: attributes.book_names_short[i]
+									});
+								}
+							}
+						});
+						included.forEach(function (item) {
+							if (item.type === 'chapter') {
+								var chapterAttributes = item.attributes;
+								if (metadata[chapterAttributes.translation]) {
+									if (!metadata[chapterAttributes.translation].chapters[chapterAttributes.book]) {
+										metadata[chapterAttributes.translation].chapters[chapterAttributes.book] = [];
+									}
+									metadata[chapterAttributes.translation].chapters[chapterAttributes.book].push({
+										ordinal: chapterAttributes.ordinal,
+										verseCount: chapterAttributes.verse_count
+									});
+								}
+							}
+						});
+
+						Object.keys(metadata).forEach(function (code) {
+							var label = code.toLowerCase();
+							if (metadata[code].year) {
+								label += ' (' + metadata[code].year + ')';
+							}
+							addOption(translation, code, label);
+						});
+						var requested = (params.get('translations') || readCookie('preferredTranslation')).split(',')[0];
+						if (metadata[requested]) {
+							translation.value = requested;
+						}
+						populateBooks(metadata);
+						translation.addEventListener('change', function () {
+							params.delete('book');
+							params.delete('chapter');
+							params.delete('verse');
+							populateBooks(metadata);
+						});
+						book.addEventListener('change', function () {
+							params.delete('chapter');
+							params.delete('verse');
+							populateChapters(metadata);
+						});
+						chapter.addEventListener('change', function () {
+							params.delete('verse');
+							populateVerses(metadata);
+						});
+					})
+					.catch(function () {});
+
+				home.addEventListener('click', function () { window.location.href = '/'; });
+			}());
+		</script>

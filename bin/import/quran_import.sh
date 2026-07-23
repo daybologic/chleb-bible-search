@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (2E0EOL),
 # All rights reserved.
@@ -30,10 +30,60 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-set -eu
+use strict;
+use warnings;
+use utf8;
+use open qw(:std :utf8);
 
-translation=asv
-name=$translation
+use English qw(-no_match_vars);
+use JSON::PP ();
+use IO::File ();
 
-bin/import/text-to-sqlite.pl -t $translation -n $name
-gzip -f "data/${translation}.sqlite"
+# Usage:
+#	./quran_json_to_chleb.pl quran_pickthall_json > quran_pickthall.chleb
+# Defaults to ./quran_pickthall_json if not supplied
+my $dir = $ARGV[0] // 'quran_pickthall_json';
+
+my $translation = 'pickthall';
+my $book        = 'Quran';
+
+my $json = JSON::PP->new->utf8->relaxed;
+
+for (my $surah = 1; $surah <= 114; $surah++) {
+	my $fn = "${dir}/chapter_${surah}.json";
+
+	my $fh = IO::File->new($fn, 'r');
+	die('Cannot open chapter JSON file for reading: ' . $fn . ': ' . $OS_ERROR . "\n")
+	    unless ($fh);
+
+	local $/ = undef;
+	my $raw = <$fh>;
+	$fh->close();
+
+	my $aRef = $json->decode($raw);
+	die("$fn: expected a JSON array\n") if (ref($aRef) ne 'ARRAY');
+
+	my $verseCount = scalar(@$aRef);
+	for (my $i = 0; $i < $verseCount; $i++) {
+		my $ayah = $i + 1;
+		my $verseText = $aRef->[$i];
+
+		# Validation
+		die("$fn: undefined text at ayah $ayah\n") unless (defined($verseText));
+		die("$fn: empty text at ayah $ayah\n") if ($verseText eq '');
+
+		# Normalization
+		$verseText =~ s/\r\n/\n/g;
+		$verseText =~ s/\r/\n/g;
+
+		# Strip control chars (except whitespace we normalize next)
+		$verseText =~ s/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]//g;
+
+		# Collapse whitespace
+		$verseText =~ s/\s+/ /g;
+		$verseText =~ s/^\s+//;
+		$verseText =~ s/\s+$//;
+
+		print(join(':', $translation, $book, $surah, $ayah) . '::' . $verseText . "\n");
+	}
+}

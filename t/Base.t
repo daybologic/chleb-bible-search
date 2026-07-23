@@ -1,10 +1,10 @@
+#!/usr/bin/perl
+package BaseTests;
 ## no critic (Modules::RequireEndWithOne)
 ## no critic (Modules::RequireFilenameMatchesPackage)
 ## no critic (Modules::ProhibitMultiplePackages)
 ## no critic (Subroutines::ProtectPrivateSubs)
 ## no critic (BuiltinFunctions::ProhibitUniversalIsa)
-#!/usr/bin/perl
-package BaseTests;
 use strict;
 use warnings;
 use lib 't/lib';

@@ -47,11 +47,12 @@ Readonly my $OT_COUNT => 39;
 Readonly my $DATA_DIR => 'data';
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 14;
+Readonly my $FILE_VERSION => 17;
 
 Readonly my %TRANSLATION_META => (
-	kjv => { year => 1611, language => 'en' },
-	asv => { year => 1901, language => 'en' },
+	kjv       => { year => 1611, language => 'en', properties => {} },
+	asv       => { year => 1901, language => 'en', properties => {} },
+	pickthall => { year => 1930, language => 'en', properties => { chapter_name => 'Surah', chapter_name_plural => 'Surahs' } },
 );
 
 Readonly my %BOOK_ORDINAL => (
@@ -121,6 +122,11 @@ Readonly my %BOOK_ORDINAL => (
 	'3John' => 64,
 	Jude  => 65,
 	Rev   => 66,
+	Quran => 1,
+);
+
+Readonly my %BOOK_TESTAMENT => (
+	Quran => 'O',
 );
 
 my %bookKeys = ( );
@@ -152,6 +158,16 @@ CREATE TABLE IF NOT EXISTS translation (
 	code CHAR(8) PRIMARY KEY,
 	year INTEGER NOT NULL,
 	language CHAR(2) NOT NULL
+)
+SQL
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS properties (
+	translation CHAR(8) NOT NULL,
+	name TEXT NOT NULL,
+	value TEXT NOT NULL,
+	PRIMARY KEY (translation, name),
+	FOREIGN KEY (translation) REFERENCES translation(code)
 )
 SQL
 
@@ -198,11 +214,11 @@ SQL
 
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS sentiment (
-	translation CHAR(8) NOT NULL,
-	ordinal INTEGER NOT NULL,
-	emotion TEXT NOT NULL,
-	tones TEXT NOT NULL,
-	PRIMARY KEY (translation, ordinal)
+	verse_id INTEGER NOT NULL,
+	sentiment TEXT NOT NULL,
+	kind TEXT NOT NULL CHECK (kind IN ('emotion', 'tone')),
+	PRIMARY KEY (verse_id, kind, sentiment),
+	FOREIGN KEY (verse_id) REFERENCES verse(id)
 )
 SQL
 
@@ -217,6 +233,7 @@ sub __createIndexes {
 	# these cover the remaining hot lookups.
 	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_verse_book ON verse(book_id, ordinal_relative_to_book)');
 	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_book_trans ON book(translation, ordinal)');
+	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_sentiment_kind_value ON sentiment(kind, sentiment)');
 
 	$fileHandle->commit();
 
@@ -290,26 +307,79 @@ SQL
 	return;
 }
 
-sub __writeSentiment {
-	my ($fileHandle, $translation) = @_;
+sub __writeProperties {
+	my ($fileHandle, $translations) = @_;
 
-	my $sentiment = getSentiment($translation);
 	my $sth = $fileHandle->prepare(<<'SQL');
-		INSERT INTO sentiment (translation, ordinal, emotion, tones)
-		VALUES(?, ?, ?, ?)
+		INSERT INTO properties (translation, name, value)
+		VALUES(?, ?, ?)
 SQL
 
-	my $ordinal = 0;
-	foreach my $entry (@{ $sentiment }) {
-		$ordinal++;
-		my $emotion = $entry->{emotion} // 'neutral';
-		my $tones = encode_json($entry->{tones} // [ ]);
-		$sth->execute($translation, $ordinal, $emotion, $tones);
+	foreach my $translation (@$translations) {
+		my $meta = $TRANSLATION_META{$translation}
+		    or die("No metadata (year/language) known for translation '$translation'");
+		foreach my $name (keys(%{ $meta->{properties} // {} })) {
+			$sth->execute($translation, $name, $meta->{properties}->{$name});
+		}
 	}
 
 	$fileHandle->commit();
 
 	return;
+}
+
+sub __writeSentiment {
+	my ($fileHandle, $translation) = @_;
+
+	my $sentiment = getSentiment($translation);
+	my $verseRows = $fileHandle->selectall_arrayref(<<'SQL', { Slice => {} }, $translation);
+		SELECT verse.id
+		  FROM verse
+		  JOIN book ON book.id = verse.book_id
+		  JOIN chapter ON chapter.id = verse.chapter_id
+		 WHERE book.translation = ?
+		 ORDER BY book.ordinal, chapter.ordinal, verse.ordinal_relative_to_chapter
+SQL
+	die("Sentiment data for $translation does not match the verse data\n")
+	    unless (scalar(@{ $sentiment }) == scalar(@{ $verseRows }));
+
+	my $sth = $fileHandle->prepare(<<'SQL');
+		INSERT INTO sentiment (verse_id, sentiment, kind)
+		VALUES(?, ?, ?)
+SQL
+
+	for (my $i = 0; $i < scalar(@{ $sentiment }); $i++) {
+		my $entry = $sentiment->[$i];
+		my $emotion = $entry->{emotion} // 'neutral';
+		$sth->execute($verseRows->[$i]->{id}, $emotion, 'emotion');
+		foreach my $tone (@{ $entry->{tones} // [ ] }) {
+			$sth->execute($verseRows->[$i]->{id}, $tone, 'tone');
+		}
+	}
+
+	$fileHandle->commit();
+
+	return;
+}
+
+=item C<__verseCountFromTranslation($translation)>
+
+Return the number of verse records in the translation's input file.
+
+=cut
+
+sub __verseCountFromTranslation {
+	my ($translation) = @_;
+
+	my $fileName = join('/', $DATA_DIR, __inputFromTranslation($translation));
+	my $fh = IO::File->new($fileName, 'r')
+	    or die(sprintf("Failed to open '%s' -- %s", $fileName, $ERRNO));
+
+	my $verseCount = 0;
+	$verseCount++ while (<$fh>);
+	$fh->close();
+
+	return $verseCount;
 }
 
 my %idCounters = ( );
@@ -378,12 +448,14 @@ sub main2 {
 	if ($translation eq 'core') {
 		my @translations = ('asv', 'kjv'); # TODO can we make this list dynamic somehow?  all might need to be an even bigger superset, or we might need to tag inputs from dirs
 		__writeTranslations($fileHandle, \@translations);
+		__writeProperties($fileHandle, \@translations);
 		foreach my $translation2 (@translations) {
 			__processVerses($fileHandle, $translation2);
 			__writeSentiment($fileHandle, $translation2);
 		}
 	} else {
 		__writeTranslations($fileHandle, [$translation]);
+		__writeProperties($fileHandle, [$translation]);
 		__processVerses($fileHandle, $translation);
 		__writeSentiment($fileHandle, $translation);
 	}
@@ -407,7 +479,7 @@ SQL
 	my $bookKey = join(':', $translation, $bookShortName);
 	unless ($bookKeys{$bookKey}) {
 		my $ordinal = $BOOK_ORDINAL{$bookShortName} or die("Missing ordinal for '$bookShortName'");
-		my $testament = $ordinal > $OT_COUNT ? 'N' : 'O';
+		my $testament = $BOOK_TESTAMENT{$bookShortName} // ($ordinal > $OT_COUNT ? 'N' : 'O');
 		my $id = __uuid('book');
 
 		my $chapterCount = 0; # populated after load by __populateCounts()
@@ -495,7 +567,9 @@ sub getSentiment {
 	}
 
 	my $data = decode_json($text);
-	die("Sentiment data for $translation is incomplete") unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == 31_102);
+	my $verseCount = __verseCountFromTranslation($translation);
+	die("Sentiment data for $translation is incomplete")
+	    unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == $verseCount);
 
 	return $data;
 }

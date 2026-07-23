@@ -1,9 +1,3 @@
-## no critic (RegularExpressions::ProhibitComplexRegexes)
-## no critic (RegularExpressions::RequireExtendedFormatting)
-## no critic (Modules::RequireEndWithOne)
-## no critic (Modules::RequireFilenameMatchesPackage)
-## no critic (Modules::ProhibitMultiplePackages)
-## no critic (Subroutines::ProtectPrivateSubs)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -36,8 +30,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package SearchResultsToHtmlServerTests;
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -69,6 +70,7 @@ sub setUp {
 sub testEmpty {
 	my ($self) = @_;
 	plan tests => 1;
+	local $SIG{__WARN__} = sub { croak(@_); };
 
 	$self->mock('Chleb::Server::Dancer2', 'fetchStaticPage');
 
@@ -83,7 +85,8 @@ sub testEmpty {
 
 sub testResultsTable {
 	my ($self) = @_;
-	plan tests => 7;
+	plan tests => 8;
+	local $SIG{__WARN__} = sub { croak(@_); };
 
 	my %json = (
 		data => [
@@ -94,6 +97,7 @@ sub testResultsTable {
 					ordinal => 1,
 					text => 'In the beginning God created the heaven and the earth.',
 					title => "Result 1/1 from Chleb Bible Search 'beginning'",
+					translation => 'kjv',
 				},
 			},
 		],
@@ -112,6 +116,7 @@ sub testResultsTable {
 	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, 'home link is present by default');
 	like($html, qr{<table class="info-table">}, 'search results use info table');
 	like($html, qr{<th>Result</th>}, 'result header is present');
+	like($html, qr{<td>kjv</td>}, 'translation is in a table cell');
 	like($html, qr{<th>Verse</th>}, 'verse header is present');
 	like($html, qr{<a href="/1/lookup/gen/1/1">Gen \[1:1\]</a>}, 'verse link is present');
 	like($html, qr{<td>In the beginning God created the heaven and the earth\.</td>}, 'verse text is in a table cell');

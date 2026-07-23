@@ -1,7 +1,3 @@
-## no critic (Modules::RequireEndWithOne)
-## no critic (Modules::RequireFilenameMatchesPackage)
-## no critic (Modules::ProhibitMultiplePackages)
-## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 #!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
@@ -34,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package InfoTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -63,24 +63,25 @@ sub setUp {
 
 sub test {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $info = $self->sut->info();
-	cmp_deeply($info, all(
+	my @coreTranslations = $self->coreTranslations();
+	my %coreTranslation = map { $_ => 1 } @coreTranslations;
+	my @coreBibles = grep { $coreTranslation{ $_->translation } } @{ $info->bibles() };
+	my $coreInfo = Chleb::Info->new({ bibles => \@coreBibles });
+	cmp_deeply($coreInfo, all(
 		isa('Chleb::Info'),
 		methods(
-			bibles => [
+			bibles => [ map {
 				all(
 					isa('Chleb::Bible'),
-					methods(translation => 'asv'),
-				),
-				all(
-					isa('Chleb::Bible'),
-					methods(translation => 'kjv'),
-				),
-			],
+					methods(translation => $_),
+				)
+			} @coreTranslations ],
 		),
 	), 'info inspection') or diag(explain($info->toString()));
+	is($coreInfo->toString(), sprintf('info about %d translations', scalar(@coreTranslations)), 'info description uses translation terminology');
 
 	return EXIT_SUCCESS;
 }

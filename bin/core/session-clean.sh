@@ -42,7 +42,7 @@ if [ -f "$CONFIG_DIR/main.yaml" ]; then
 		"$CONFIG_DIR/features.yaml" \
 		"$CONFIG_DIR/tokens.yaml")
 	__rootDir=$(echo $json | jq -r .session_tokens.backend_local.dir)
-	if [ "$__rootDir" != 'null' ]; then
+	if [ -n "$__rootDir" ] && [ "$__rootDir" != 'null' ]; then
 		rootDir=$__rootDir
 	fi
 fi

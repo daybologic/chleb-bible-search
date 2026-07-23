@@ -494,6 +494,40 @@ sub getSentimentByOrdinal {
 	return $self->__backend->getSentimentByOrdinal($ordinal);
 }
 
+=item C<getSentimentByVerseKey($key)>
+
+Return sentiment data for the canonical verse key.
+
+=cut
+
+sub getSentimentByVerseKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getSentimentByVerseKey($key);
+}
+
+=item C<getProperty($name)>
+
+Return a property for this translation from the SQLite source, or C<undef>
+when the property is not present.
+
+=cut
+
+sub getProperty {
+	my ($self, $name) = @_;
+	return $self->__backend->getProperty($name);
+}
+
+=item C<year()>
+
+Return the publication year for this translation from the SQLite source.
+
+=cut
+
+sub year {
+	my ($self) = @_;
+	return $self->__backend->year();
+}
+
 =item C<deferSharedCacheWrites($defer)>
 
 Control deferred writes to the shared backend cache while performing a grouped
