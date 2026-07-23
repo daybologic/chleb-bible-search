@@ -106,11 +106,7 @@ retain their existing first 12 characters.
 
 sub logValue {
 	my ($class, $value, $isJWT) = @_;
-
-	if ($isJWT) {
-		return substr(Digest::SHA::sha256_hex($value), 0, 12);
-	}
-
+	return substr(Digest::SHA::sha256_hex($value), 0, 12) if ($isJWT);
 	return substr($value, 0, 12);
 }
 
