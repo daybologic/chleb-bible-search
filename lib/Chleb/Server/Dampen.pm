@@ -36,6 +36,7 @@ use Moose;
 
 extends 'Chleb::Bible::Base';
 
+use Chleb::Token;
 use Chleb::Server::Dampen::Store::Memcached;
 use Chleb::Server::Dampen::Store::Memory;
 
@@ -128,10 +129,10 @@ sub dampen {
 	return 0;
 }
 
-=item C<dampenSession($tokenValue)>
+=item C<dampenSession($sessionToken)>
 
-Enforces a sliding window rate limit for authenticated clients.  C<$tokenValue> is
-the raw session token string.
+Enforces a sliding window rate limit for authenticated clients.  C<$sessionToken>
+is the L<Chleb::Token> being rate limited.
 
 The window size and maximum request count are read from the server configuration
 (C<rate_limit.session_window_seconds>, default 60; C<rate_limit.session_max_requests>,
@@ -142,7 +143,9 @@ Returns C<1> if the request should be denied, C<0> otherwise.
 =cut
 
 sub dampenSession {
-	my ($self, $tokenValue) = @_;
+	my ($self, $sessionToken) = @_;
+	my $tokenValue = $sessionToken->value;
+	my $isJWT = $sessionToken->source->isa('Chleb::Token::Repository::JWT');
 
 	my $windowSecs  = $self->dic->config->get('rate_limit', 'session_window_seconds', 60);
 	my $maxRequests = $self->dic->config->get('rate_limit', 'session_max_requests',   100);
@@ -151,7 +154,7 @@ sub dampenSession {
 	if ($self->__checkStore('dampenSession', $tokenValue, $currentTime, $windowSecs, $maxRequests)) {
 		$self->dic->logger->warn(sprintf(
 			'Session %s exceeded %d requests in %ds window, denying',
-			substr($tokenValue, 0, 8), $maxRequests, $windowSecs,
+			Chleb::Token->logValue($tokenValue, $isJWT), $maxRequests, $windowSecs,
 		));
 		return 1;
 	}
