@@ -99,6 +99,9 @@ Key files and directories:
   heading levels.
 - In Perl PoD, always follow `=cut` with two newline characters before the
   next code or POD element.
+- In Perl PoD, keep `=over` active through its `=item` entries.  Put a
+  section-level `=cut` only after `=back`; when moving entries, do not move
+  section delimiters as part of an individual item block.
 - When adding or extracting a named Perl subroutine, add or update its PoD
   `=item` documentation in the surrounding section.
 - Keep changes scoped to the library, server layer, config, or packaging area
