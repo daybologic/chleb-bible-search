@@ -161,6 +161,10 @@ has __sourceMetadata => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub
 
 =over
 
+=item C<BUILD>
+
+Build hook, called by Moose.  Should not be called directly.
+
 =cut
 
 sub BUILD {
@@ -180,6 +184,7 @@ used by warmup and search loops so they can add many entries in memory and then
 write C<shared.bin> once at the end.
 
 =cut
+
 sub deferSharedCacheWrites {
 	my ($self, $defer) = @_;
 	$self->__sharedCacheWriteDeferred($defer ? 1 : 0);
@@ -193,6 +198,7 @@ exclusive lock, merges this backend's current translation cache with the latest
 file contents, and replaces the file atomically.
 
 =cut
+
 sub flushSharedCache {
 	my ($self) = @_;
 	return 1 unless ($self->__sharedCacheDirty);
@@ -210,14 +216,12 @@ sub flushSharedCache {
 	return $ok;
 }
 
-
-# Invoked by Moose as the lazy builder for the __sharedCache attribute.
-
 =item C<getAvailableTranslations()>
 
 Return translation codes found in the available compressed SQLite source files.
 
 =cut
+
 sub getAvailableTranslations {
 	my ($self) = @_;
 
@@ -292,6 +296,7 @@ SQL
 		# back by getOrdinalByVerseKey().  It only feeds the book-relative map below.
 		$self->__verseKeyByBookCache->{join(':', $translation, $bookShortName, $bookOrdinal)} = join(':', $translation, $bookShortName, $chapterOrdinal, $verseOrdinal);
 	}
+
 	return $rows;
 }
 
@@ -336,6 +341,7 @@ SQL
 TODO
 
 =cut
+
 sub getChapterVerseDataByKey {
 	my ($self, $bookShortName, $chapterNumber) = @_;
 	my $cacheKey = join(':', $self->bible->translation, $bookShortName, $chapterNumber);
@@ -417,6 +423,7 @@ Return a translation property from the SQLite source, or C<undef> when the
 property is not present.
 
 =cut
+
 sub getProperty {
 	my ($self, $name) = @_;
 	my $translation = $self->bible->translation;
@@ -556,9 +563,6 @@ SQL
 	return $text;
 }
 
-		# NB: $bookOrdinal is the *within-book* ordinal; it must NOT be written to
-		# __verseKeyOrdinalCache, which holds the *global* absolute ordinal read
-		# back by getOrdinalByVerseKey().  It only feeds the book-relative map below.
 sub getVerseKeyByBookVerseKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $ordinal) = split(m{ : }x, $key, 3);
@@ -690,6 +694,7 @@ lazily re-opens its own handle.  The populated in-memory caches are left intact
 so forked workers inherit a warm cache via copy-on-write.
 
 =cut
+
 sub resetForkUnsafeHandles {
 	my ($self) = @_;
 
@@ -708,6 +713,7 @@ sub resetForkUnsafeHandles {
 Return the publication year for this translation from the SQLite source.
 
 =cut
+
 sub year {
 	my ($self) = @_;
 	my ($year) = $self->__selectrowArray(
@@ -719,8 +725,6 @@ sub year {
 }
 
 =back
-
-=cut
 
 =head1 PRIVATE METHODS
 
@@ -773,6 +777,7 @@ Return a new empty top-level shared-cache structure tagged with the current
 cache format and backend file version.
 
 =cut
+
 sub __emptySharedCache {
 	my ($self) = @_;
 	return {
@@ -909,6 +914,7 @@ This now delegates to the source-selection helper so startup can inspect all
 available SQLite bundles and choose the best match.
 
 =cut
+
 sub __makeCompressedPath {
 	my ($self) = @_;
 	return $self->__makeSourceCompressedPath();
@@ -956,9 +962,11 @@ Build the in-memory representation of C<shared.bin>.  The file is read under a
 shared lock and falls back to an empty cache structure if the file does not
 exist, cannot be read, or is stale for this code's cache format.
 
+This is invoked by Moose as the lazy builder for the C<__sharedCache> attribute.
+
 =cut
+
 sub __makeSharedCache { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
-	# Invoked by Moose as the lazy builder for the __sharedCache attribute.
 	my ($self) = @_;
 	return $self->__withSharedCacheLock(LOCK_SH, sub {
 		return $self->__readSharedCacheFile();
@@ -972,6 +980,7 @@ Return the path to the backend shared cache file in the selected cache
 directory.
 
 =cut
+
 sub __makeSharedCachePath { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	# Invoked by Moose as the lazy builder for the __sharedCachePath attribute.
 	my ($self) = @_;
@@ -986,6 +995,7 @@ multi-translation bundle such as C<core.sqlite.gz>, and finally the
 translation-specific filename as a fallback.
 
 =cut
+
 sub __makeSourceCompressedPath {
 	my ($self) = @_;
 	my @candidates = $self->__sourceCompressedPathsForTranslation($self->bible->translation);
@@ -1000,6 +1010,7 @@ hash read from disk.  Other translation entries already present in C<$cache> are
 preserved.
 
 =cut
+
 sub __mergeSharedCacheTranslation {
 	my ($self, $cache) = @_;
 	my $translation = $self->bible->translation;
@@ -1057,6 +1068,7 @@ Read and validate C<shared.bin>.  Corrupt, incompatible, or missing cache files
 are treated as empty caches so backend operation can continue.
 
 =cut
+
 sub __readSharedCacheFile {
 	my ($self) = @_;
 	my $path = $self->__sharedCachePath;
@@ -1088,6 +1100,7 @@ C<undef> if no entry exists.  C<$kind> groups related cache entries, while
 C<$key> is hashed before being used as the stored entry key.
 
 =cut
+
 sub __sharedCacheGet {
 	my ($self, $kind, $key) = @_;
 	my $entries = $self->__sharedCacheTranslation->{entries};
@@ -1104,6 +1117,7 @@ entry names short and avoids leaking raw lookup strings into the cache file's
 internal structure.
 
 =cut
+
 sub __sharedCacheKey {
 	my ($self, $key) = @_;
 	return sha1_hex($key // '');
@@ -1116,6 +1130,7 @@ flushes C<shared.bin> immediately; callers doing many writes can defer those
 flushes with L</deferSharedCacheWrites($defer)>.
 
 =cut
+
 sub __sharedCacheSet {
 	my ($self, $kind, $key, $value) = @_;
 	my $entries = $self->__sharedCacheTranslation->{entries};
@@ -1133,6 +1148,7 @@ Return the compressed source file metadata used to decide whether a
 translation's shared-cache entry is still valid.
 
 =cut
+
 sub __sharedCacheSourceMeta {
 	my ($self) = @_;
 	my @stat = stat($self->compressedPath);
@@ -1149,6 +1165,7 @@ translation entry is missing or stale relative to the compressed SQLite source,
 it is replaced with a fresh empty entry.
 
 =cut
+
 sub __sharedCacheTranslation {
 	my ($self) = @_;
 	my $translation = $self->bible->translation;
@@ -1174,6 +1191,7 @@ Return true when a translation entry has the expected structure and was built
 from the same compressed SQLite source file that this backend is using.
 
 =cut
+
 sub __sharedCacheTranslationIsFresh {
 	my ($self, $translationCache) = @_;
 	return 0 unless (ref($translationCache) eq 'HASH');
@@ -1195,6 +1213,7 @@ preference. Files containing only one translation are preferred over bundles
 that contain multiple translations.
 
 =cut
+
 sub __sourceCompressedPathsForTranslation {
 	my ($self) = @_;
 	my $translation = $self->bible->translation;
@@ -1221,6 +1240,7 @@ Return all compressed SQLite source files in a directory, sorted
 lexicographically.
 
 =cut
+
 sub __sourceFilesInPath {
 	my ($self, $path) = @_;
 	my @files = sort glob(join('/', $path, '*.sqlite.gz'));
@@ -1238,6 +1258,7 @@ Return true when C<$cache> is a top-level shared-cache hash for the current
 cache format and backend file version.
 
 =cut
+
 sub __validSharedCache {
 	my ($self, $cache) = @_;
 	return 0 unless (ref($cache) eq 'HASH');
@@ -1293,6 +1314,7 @@ C<flock()> mode.  Returns the callback result, or C<undef> if the lock file
 cannot be opened or locked.
 
 =cut
+
 sub __withSharedCacheLock {
 	my ($self, $mode, $callback) = @_;
 	my $lockPath = $self->__sharedCachePath . '.lock';
@@ -1317,6 +1339,7 @@ Write the supplied shared-cache hash to C<shared.bin> using a temporary file in
 the cache directory, flushing it, and atomically renaming it into place.
 
 =cut
+
 sub __writeSharedCacheFile {
 	my ($self, $cache) = @_;
 	my $path = $self->__sharedCachePath;
