@@ -235,6 +235,14 @@ sub getAvailableTranslations {
 	return @translations;
 }
 
+=item C<getBookInfoByShortName($shortNameRaw)>
+
+Return metadata for a book identified by its short name, or C<undef> when the
+book is not present.  The result includes its chapter count, long name,
+testament, and per-chapter verse counts.
+
+=cut
+
 sub getBookInfoByShortName {
 	my ($self, $shortNameRaw) = @_;
 	my $translation = $self->bible->translation;
@@ -262,6 +270,14 @@ SQL
 	$self->__sharedCacheSet('bookinfo', $cacheKey, $bookInfo);
 	return $bookInfo;
 }
+
+=item C<getBookVerseDataByKey($bookShortName)>
+
+Return all verse rows for a book as an ARRAY ref, including chapter-relative,
+book-relative, and text data.  Loading the rows also populates the related
+verse-text and book-relative key caches.
+
+=cut
 
 sub getBookVerseDataByKey {
 	my ($self, $bookShortName) = @_;
@@ -299,6 +315,13 @@ SQL
 
 	return $rows;
 }
+
+=item C<getBooks()>
+
+Return the books available for the current translation as an ARRAY ref of
+C<Chleb::Bible::Book> objects, loading and caching their metadata as needed.
+
+=cut
 
 sub getBooks { # returns ARRAY of Chleb::Bible::Book
 	my ($self) = @_;
@@ -376,6 +399,13 @@ SQL
 	return $rows;
 }
 
+=item C<getOrdinalByVerseKey($key)>
+
+Return the absolute ordinal for a verse key, or zero when the key cannot be
+resolved.  Results are populated into the local and shared ordinal caches.
+
+=cut
+
 sub getOrdinalByVerseKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $key, 4);
@@ -445,6 +475,13 @@ SQL
 	return $value;
 }
 
+=item C<getSentimentByOrdinal($ordinal)>
+
+Return sentiment data for the verse at an absolute ordinal.  When no verse or
+sentiment record is available, return the neutral sentiment structure.
+
+=cut
+
 sub getSentimentByOrdinal {
 	my ($self, $ordinal) = @_;
 
@@ -458,6 +495,13 @@ sub getSentimentByOrdinal {
 		tones   => [ ],
 	};
 }
+
+=item C<getSentimentByVerseKey($verseKey)>
+
+Return the emotion and tones associated with a verse key, using the local and
+shared sentiment caches before querying the SQLite source.
+
+=cut
 
 sub getSentimentByVerseKey {
 	my ($self, $verseKey) = @_;
@@ -519,11 +563,24 @@ SQL
 	return $sentiment;
 }
 
+=item C<getVerseCount()>
+
+Return the total number of verses in the current translation.
+
+=cut
+
 sub getVerseCount {
 	my ($self) = @_;
 	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');
 	return $count + 0;
 }
+
+=item C<getVerseDataByKey($key)>
+
+Return the text for a verse key, or C<undef> when the verse does not exist.
+Results are served from and populated into the local and shared text caches.
+
+=cut
 
 sub getVerseDataByKey {
 	my ($self, $key) = @_;
@@ -566,6 +623,13 @@ SQL
 	return $text;
 }
 
+=item C<getVerseKeyByBookVerseKey($key)>
+
+Convert a book-relative verse key to its full translation, book, chapter, and
+verse key, or return C<undef> when the ordinal cannot be resolved.
+
+=cut
+
 sub getVerseKeyByBookVerseKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $ordinal) = split(m{ : }x, $key, 3);
@@ -596,6 +660,13 @@ SQL
 	$self->__sharedCacheSet('bookversekey', $cacheKey, $verseKey);
 	return $verseKey;
 }
+
+=item C<getVerseKeyByOrdinal($ordinal)>
+
+Return the verse key for an absolute ordinal, supporting negative ordinals from
+the end of the translation, or C<undef> when the ordinal is out of range.
+
+=cut
 
 sub getVerseKeyByOrdinal {
 	my ($self, $ordinal) = @_;
@@ -735,6 +806,13 @@ sub year {
 
 =cut
 
+=item C<__bibleFileName(%flags)>
+
+Return the SQLite filename for the current translation, adding the compressed
+suffix when the C<compressed> flag is true.
+
+=cut
+
 sub __bibleFileName {
 	my ($self, %flags) = @_;
 	my $fileName = $self->bible->translation . '.sqlite';
@@ -742,10 +820,22 @@ sub __bibleFileName {
 	return $fileName;
 }
 
+=item C<__bookLongName($shortNameRaw)>
+
+Return the long name for a book short name, caching the lookup in the process.
+
+=cut
+
 sub __bookLongName {
 	my ($self, $shortNameRaw) = @_;
 	return $BOOK_NAMES{$shortNameRaw} //= ($BOOK_LONG_NAMES{$shortNameRaw} // $shortNameRaw);
 }
+
+=item C<__bookVerseCount($bookId)>
+
+Return and cache the number of verses belonging to a book ID.
+
+=cut
 
 sub __bookVerseCount {
 	my ($self, $bookId) = @_;
@@ -755,6 +845,12 @@ sub __bookVerseCount {
 	$self->__bookInfoCache->{"versecount:$bookId"} = $count;
 	return $count;
 }
+
+=item C<__bookVerseCounts($bookId)>
+
+Return a hash ref mapping each chapter ordinal to its verse count for a book.
+
+=cut
 
 sub __bookVerseCounts {
 	my ($self, $bookId) = @_;
@@ -789,6 +885,13 @@ sub __emptySharedCache {
 		translations => {},
 	};
 }
+
+=item C<__fsck()>
+
+Validate the backend file signature and version, logging failures and returning
+the corresponding process status code.
+
+=cut
 
 sub __fsck {
 	my ($self) = @_;
@@ -844,6 +947,13 @@ sub __inspectSourceFile {
 	};
 }
 
+=item C<__makeBooksFromRows($rows)>
+
+Convert cached book rows into an ARRAY ref of
+C<Chleb::Bible::Book> objects for the current Bible.
+
+=cut
+
 sub __makeBooksFromRows {
 	my ($self, $rows) = @_;
 	my @books = map {
@@ -861,6 +971,12 @@ sub __makeBooksFromRows {
 }
 
 	# In a source checkout, do not fall through to stale installed data just because generated SQLite is absent.
+=item C<__makeCacheDir()>
+
+Return the first available backend cache directory, or throw when none exists.
+
+=cut
+
 sub __makeCacheDir {
 	my ($self) = @_;
 
@@ -871,6 +987,13 @@ sub __makeCacheDir {
 
 	croak('No cache dir available');
 }
+
+=item C<__makeCachePath()>
+
+Return the decompressed SQLite cache path, refreshing it when the compressed
+source is newer or the cached schema data is invalid.
+
+=cut
 
 sub __makeCachePath {
 	my ($self) = @_;
@@ -923,6 +1046,12 @@ sub __makeCompressedPath {
 	return $self->__makeSourceCompressedPath();
 }
 
+=item C<__makeData()>
+
+Open and return the SQLite database handle for the current cache file.
+
+=cut
+
 sub __makeData {
 	my ($self) = @_;
 
@@ -940,6 +1069,13 @@ sub __makeData {
 
 	# Until we reach version 1.0.0 of the package (stable release), we only accept the exact correct version of the file!
 	# this gives us more flexibility to make changes.
+=item C<__makeDataDir()>
+
+Select the source data directory, preferring source-checkout data and then an
+installed data directory containing usable compressed SQLite files.
+
+=cut
+
 sub __makeDataDir {
 	my ($self) = @_;
 
@@ -1022,6 +1158,13 @@ sub __mergeSharedCacheTranslation {
 	return;
 }
 
+=item C<__prepareSelect($dbh, $sql, @bind)>
+
+Prepare and execute a parameterized SQL statement, tracing it before returning
+the resulting statement handle.
+
+=cut
+
 sub __prepareSelect {
 	my ($self, $dbh, $sql, @bind) = @_;
 	$self->__traceSelectQuery($sql, @bind);
@@ -1089,6 +1232,13 @@ sub __readSharedCacheFile {
 
 	return $self->__validSharedCache($cache) ? $cache : $self->__emptySharedCache();
 }
+
+=item C<__selectrowArray($dbh, $sql, @bind)>
+
+Execute a parameterized SQL query expected to return one row and return its
+values as an array.
+
+=cut
 
 sub __selectrowArray {
 	my ($self, $dbh, $sql, @bind) = @_;
@@ -1250,6 +1400,13 @@ sub __sourceFilesInPath {
 	return @files;
 }
 
+=item C<__traceSelectQuery($sql, @bind)>
+
+Trace a SQL query and its bind values when query tracing is enabled.  The
+default implementation is intentionally silent.
+
+=cut
+
 sub __traceSelectQuery {
 	my ($self, $sql, @bind) = @_;
 	return;
@@ -1271,12 +1428,25 @@ sub __validSharedCache {
 	return 1;
 }
 
+=item C<__validateSig()>
+
+Check that the SQLite master record has the expected backend file signature.
+
+=cut
+
 sub __validateSig {
 	my ($self) = @_;
 	my ($sig) = $self->__selectrowArray($self->data, 'SELECT sig FROM master LIMIT 1');
 	return EXIT_SUCCESS if (defined($sig) && $sig eq $FILE_SIG);
 	return EXIT_FAILURE;
 }
+
+=item C<__validateVersion()>
+
+Check that the SQLite master record has the exact backend file version expected
+by this code.
+
+=cut
 
 sub __validateVersion {
 	my ($self) = @_;
@@ -1293,6 +1463,13 @@ sub __validateVersion {
 
 	return EXIT_FAILURE;
 }
+
+=item C<__verseCount()>
+
+Return and cache the total verse count for the current translation, consulting
+the shared cache before querying SQLite.
+
+=cut
 
 sub __verseCount {
 	my ($self) = @_;
