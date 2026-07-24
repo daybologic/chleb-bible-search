@@ -115,7 +115,7 @@ sub testSessionWindowDenies {
 	}
 	is($self->sut->dampenSession($token), 1, 'request over limit is denied');
 	$self->sut->dic->logger->isLogged(
-		qr/Session @{[substr(sha256_hex($token->value), 0, 12)]} exceeded 100 requests in 60s window, denying/,
+		qr/Session @{[substr(sha256_hex($token->value), 0, $Chleb::Token::LENGTH_SHORT)]} exceeded 100 requests in 60s window, denying/,
 	);
 
 	return EXIT_SUCCESS;

@@ -106,9 +106,9 @@ sub testLogValue {
 	plan tests => 3;
 
 	my $jwt = 'eyJhbGciOiJIUzI1NiJ9.eyJpYXQiOjF9.signature';
-	is(Chleb::Token->logValue($jwt, 1), substr(sha256_hex($jwt), 0, 12), 'JWT log value is a truncated SHA-256 digest');
+	is(Chleb::Token->logValue($jwt, 1), substr(sha256_hex($jwt), 0, $Chleb::Token::LENGTH_SHORT), 'JWT log value is a truncated SHA-256 digest');
 	is(Chleb::Token->logValue('token-plain'), 'token-plain', 'non-JWT log value is unchanged');
-	is(Chleb::Token->logValue('one.two.three'), 'one.two.thre', 'non-JWT dotted value is unchanged');
+	is(Chleb::Token->logValue('one.two.three'), substr('one.two.three', 0, $Chleb::Token::LENGTH_SHORT), 'non-JWT dotted value is unchanged');
 
 	return EXIT_SUCCESS;
 }
