@@ -804,8 +804,6 @@ sub year {
 
 =over
 
-=cut
-
 =item C<__bibleFileName(%flags)>
 
 Return the SQLite filename for the current translation, adding the compressed
