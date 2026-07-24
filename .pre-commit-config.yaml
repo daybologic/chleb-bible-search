@@ -5,17 +5,20 @@ repos:
         name: Block line-number/markdown corruption in lib/
         entry: bin/git/hooks/run-trap-goose.sh
         language: system
-        pass_filenames: false
+        pass_filenames: true
+        files: ^lib/
       - id: text-final-newline
         name: text files end with newline
         entry: bin/git/hooks/run-text-final-newline.sh
         language: system
+        pass_filenames: true
         types: [text]
       - id: run-perlcritic
         name: perlcritic
         entry: bin/git/hooks/run-perlcritic.sh
         language: system
-        pass_filenames: false
+        pass_filenames: true
+        files: (?i)\.p[lm]$
       - id: run-perlc
         name: perl compile check
         entry: bin/git/hooks/run-perlc.sh
@@ -26,10 +29,11 @@ repos:
         name: PoD check
         entry: bin/git/hooks/run-podchecker.sh
         language: system
-        pass_filenames: false
+        pass_filenames: true
+        files: (?i)\.p[lm]$
       - id: openapi-check
         name: OpenAPI Check
         entry: bin/maint/swagger-check.sh
         language: system
-        pass_filenames: false
+        pass_filenames: true
         files: ^swagger\.yaml$
