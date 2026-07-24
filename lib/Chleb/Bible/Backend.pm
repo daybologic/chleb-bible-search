@@ -1151,7 +1151,6 @@ sub __makeBooksFromRows {
 	return \@books;
 }
 
-	# In a source checkout, do not fall through to stale installed data just because generated SQLite is absent.
 =item C<__makeCacheDir()>
 
 Return the first available backend cache directory, or throw when none exists.
@@ -1248,8 +1247,6 @@ sub __makeData {
 	);
 }
 
-	# Until we reach version 1.0.0 of the package (stable release), we only accept the exact correct version of the file!
-	# this gives us more flexibility to make changes.
 =item C<__makeDataDir()>
 
 Select the source data directory, preferring source-checkout data and then an
@@ -1299,10 +1296,11 @@ sub __makeSharedCache { ## no critic (Subroutines::ProhibitUnusedPrivateSubrouti
 Return the path to the backend shared cache file in the selected cache
 directory.
 
+Invoked by Moose as the lazy builder for the __sharedCachePath attribute.
+
 =cut
 
 sub __makeSharedCachePath { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
-	# Invoked by Moose as the lazy builder for the __sharedCachePath attribute.
 	my ($self) = @_;
 	return join('/', $self->cacheDir, $SHARED_CACHE_FILE);
 }
@@ -1631,10 +1629,10 @@ by this code.
 
 sub __validateVersion {
 	my ($self) = @_;
+
 	my ($version) = $self->__selectrowArray($self->data, 'SELECT version FROM master LIMIT 1');
-	# Until we reach version 1.0.0 of the package (stable release), we only accept the exact correct version of the file!
-	# this gives us more flexibility to make changes.
 	if (defined($version) && length($version) <= 5 && $version =~ m{ ^\d+$ }x) {
+		# We only accept the exact correct version of the file!
 		if ($version == $FILE_VERSION) {
 			return EXIT_SUCCESS;
 		} else {
