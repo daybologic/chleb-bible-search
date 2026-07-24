@@ -128,34 +128,219 @@ Readonly my %BOOK_LONG_NAMES => (
 	Rev => 'Revelation of John',
 );
 
+=head1 ATTRIBUTES
+
+=over
+
+=item C<bible>
+
+The required L<Chleb::Bible> object whose translation is served by this
+backend.
+
+=cut
+
 has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
-has compressedPath => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeCompressedPath);
+=item C<cacheDir>
 
-has data => (is => 'ro', isa => 'Object', lazy => 1, default => \&__makeData);
+The directory used for decompressed SQLite and shared-cache files.  It is
+selected lazily by L</__makeCacheDir()> and may be changed by callers.
 
-has cachePath => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeCachePath);
-
-has dataDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDataDir);
+=cut
 
 has cacheDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeCacheDir);
 
+=item C<cachePath>
+
+The writable decompressed SQLite cache path used by C<data>.  It is constructed
+lazily by L</__makeCachePath()> and may be changed by callers.
+
+=cut
+
+has cachePath => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeCachePath);
+
+=item C<compressedPath>
+
+The path to the compressed SQLite source for the current translation.  It is
+constructed lazily by L</__makeCompressedPath()>.
+
+=cut
+
+has compressedPath => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeCompressedPath);
+
+=item C<data>
+
+The lazily opened SQLite database handle for the backend cache, constructed by
+L</__makeData()>.
+
+=cut
+
+has data => (is => 'ro', isa => 'Object', lazy => 1, default => \&__makeData);
+
+=item C<dataDir>
+
+The directory containing compressed Bible SQLite sources.  It is selected
+lazily by L</__makeDataDir()> and may be changed by callers.
+
+=cut
+
+has dataDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDataDir);
+
+=back
+
+=cut
+
+=head1 PRIVATE ATTRIBUTES
+
+=over
+
+=item C<__bookInfoCache>
+
+Process-local cache for book objects and book verse-count values, initialized
+lazily to an empty hash ref.
+
+=cut
+
 has __bookInfoCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__bookInfoDataCache>
+
+Process-local cache for raw book metadata, initialized lazily to an empty hash
+ref.
+
+=cut
+
 has __bookInfoDataCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
-has __verseOrdinalCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
-has __verseKeyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
-has __verseKeyOrdinalCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
-has __verseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
-has __chapterVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__bookVerseTextCache>
+
+Process-local cache of book verse rows keyed by translation and book,
+initialized lazily to an empty hash ref.
+
+=cut
+
 has __bookVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
-has __verseKeyByBookCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
-has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__chapterVerseTextCache>
+
+Process-local cache of chapter verse rows keyed by translation, book, and
+chapter, initialized lazily to an empty hash ref.
+
+=cut
+
+has __chapterVerseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__propertyCache>
+
+Process-local cache of translation properties, initialized lazily to an empty
+hash ref.
+
+=cut
+
 has __propertyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__sentimentCache>
+
+Process-local cache of sentiment structures keyed by full verse key,
+initialized lazily to an empty hash ref.
+
+=cut
+
+has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__sharedCache>
+
+The process-local representation of the on-disk shared cache.  It is built
+lazily by the Moose builder L</__makeSharedCache()>.
+
+=cut
+
 has __sharedCache => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeSharedCache');
+
+=item C<__sharedCacheDirty>
+
+Boolean indicating that the in-memory shared cache contains changes which have
+not yet been flushed to disk.  It defaults to false.
+
+=cut
+
 has __sharedCacheDirty => (is => 'rw', isa => 'Bool', default => 0);
+
+=item C<__sharedCachePath>
+
+The path to the on-disk shared cache file.  It is built lazily by the Moose
+builder L</__makeSharedCachePath()>.
+
+=cut
+
 has __sharedCachePath => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeSharedCachePath');
+
+=item C<__sharedCacheWriteDeferred>
+
+Boolean controlling whether shared-cache writes are deferred.  It defaults to
+false and may be enabled while performing bulk cache population.
+
+=cut
+
 has __sharedCacheWriteDeferred => (is => 'rw', isa => 'Bool', default => 0);
+
+=item C<__sourceMetadata>
+
+Process-local cache of metadata inspected from compressed SQLite source files,
+initialized lazily to an empty hash ref.
+
+=cut
+
 has __sourceMetadata => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__verseKeyByBookCache>
+
+Process-local mapping from book-relative verse ordinals to full verse keys,
+initialized lazily to an empty hash ref.
+
+=cut
+
+has __verseKeyByBookCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__verseKeyCache>
+
+Process-local mapping from translation and absolute ordinal to full verse key,
+initialized lazily to an empty hash ref.
+
+=cut
+
+has __verseKeyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__verseKeyOrdinalCache>
+
+Process-local ordinal mappings used to resolve verse keys in both directions,
+initialized lazily to an empty hash ref.
+
+=cut
+
+has __verseKeyOrdinalCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__verseOrdinalCache>
+
+Process-local mapping from full verse keys to absolute verse ordinals,
+initialized lazily to an empty hash ref.
+
+=cut
+
+has __verseOrdinalCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__verseTextCache>
+
+Process-local cache of verse text keyed by full verse key, initialized lazily to
+an empty hash ref.
+
+=cut
+
+has __verseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=back
+
+=cut
 
 =head1 METHODS
 
