@@ -110,6 +110,8 @@ sub readFiles {
 
 =back
 
+=cut
+
 my $data = @ARGV ? readFiles() : readStdin();
 print encode_json $data;
 print "\n";
