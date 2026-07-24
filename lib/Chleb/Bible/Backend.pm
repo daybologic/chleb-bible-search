@@ -338,7 +338,10 @@ SQL
 
 =item C<getChapterVerseDataByKey($bookShortName, $chapterNumber)>
 
-TODO
+Return the verses for a chapter as an ARRAY ref of rows containing the
+verse-relative ordinal and text.  Results are served from, and populated into,
+the local and shared caches; loading a chapter also primes its absolute verse
+ordinal mappings.
 
 =cut
 
