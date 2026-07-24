@@ -721,11 +721,10 @@ Register random-verse and verse-of-the-day routes.
 
 # Invoked during module initialization to register Dancer routes.
 sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
-	get '/:version/random' => sub {
+	get '/2/random' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
 
-	my $version = int(getParam('version') || 1);
 	my $parental = Chleb::Utils::boolean('parental', getParam('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', getParam('redirect'), 0);
 
@@ -746,7 +745,7 @@ sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubr
 			accept => $accept,
 			translations => $translations,
 			testament => getParam('testament'),
-			version => $version,
+			version => 2,
 			parental => $parental,
  			redirect => $redirect,
 			form => 0,
@@ -759,52 +758,11 @@ sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubr
 	}
 
 	if (ref($result) ne 'HASH') {
-		$server->dic->logger->trace("${version}/random returned as HTML");
+		$server->dic->logger->trace('2/random returned as HTML');
 		send_as html => $result;
 	}
 
-	$server->dic->logger->trace("${version}/random returned as JSON");
-	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
-	return $result;
-};
-
-get '/1/votd' => sub {
-	$server->logRequest();
-	$server->handleSessionToken();
-
-	my $parental = Chleb::Utils::boolean('parental', getParam('parental'), 0);
-	my $redirect = Chleb::Utils::boolean('redirect', getParam('redirect'), 0);
-	my $when = getParam('when');
-	my $testament = getParam('testament');
-	my $dancerRequest = request();
-	my $accept;
-	my $queryParams = $dancerRequest->params('query');
-	my $translations = __preferredTranslations(
-		exists($queryParams->{translations}),
-		getParam('translations'),
-		getCookie('preferredTranslation'),
-		[ $server->__library->availableTranslations() ],
-	);
-
-	my $result;
-	my $evalOk4; $evalOk4 = eval {
-		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
-		$result = $server->__votd({
-			accept       => $accept,
-			parental    => $parental,
-			redirect    => $redirect,
-			translations => $translations,
-			when        => $when,
-			testament   => $testament,
-			form        => 0,
-		});
-		1;
-	} or $evalOk4 = 0;
-
-	if (my $exception = $EVAL_ERROR) {
-		handleException($exception);
-	}
-
+	$server->dic->logger->trace('2/random returned as JSON');
 	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
 	return $result;
 };
