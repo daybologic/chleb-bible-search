@@ -340,8 +340,6 @@ has __verseTextCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub
 
 =back
 
-=cut
-
 =head1 METHODS
 
 =over
