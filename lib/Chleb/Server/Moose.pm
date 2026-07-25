@@ -1511,6 +1511,40 @@ sub __verseNavigationQuery {
 	return '';
 }
 
+=item C<__votdNavigationLink($json, $type, $label)>
+
+Build an HTML link from a document-level VoTD link.  If the requested link
+does not exist, an empty string is returned.
+
+=cut
+
+sub __votdNavigationLink {
+	my ($json, $type, $label) = @_;
+
+	my $link = $json->{links}->{$type};
+	return '' unless ($link);
+
+	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
+}
+
+=item C<__votdNavigationLinks($json, $function)>
+
+Return an C<ARRAY> reference containing the yesterday and tomorrow HTML links
+only for VoTD rendering.
+
+=cut
+
+sub __votdNavigationLinks {
+	my ($json, $function) = @_;
+
+	return [ '', '' ] unless ($function == $FUNCTION_VOTD);
+
+	return [
+		__votdNavigationLink($json, 'yesterday', 'yesterday'),
+		__votdNavigationLink($json, 'tomorrow', 'tomorrow'),
+	];
+}
+
 =item C<__verseToHtml($verse, $json, $function)>
 
 Render a verse response as the HTML verse page, including translation cards and
@@ -1548,6 +1582,7 @@ sub __verseToHtml {
 	my $firstVerseObject = $verse;
 	$firstVerseObject = $firstVerseObject->[0] if (ref($firstVerseObject) eq 'ARRAY');
 	my $navigationQuery = __verseNavigationQuery($json->[0]);
+	my ($yesterdayLink, $tomorrowLink) = @{__votdNavigationLinks($json->[0], $function)};
 
 	my $prevBookLink = '';
 	if (my $prevBook = $firstVerseObject->book->getPrev()) {
@@ -1634,8 +1669,10 @@ sub __verseToHtml {
 		FIRST_VERSE_URL => __verseNavigationLink($json->[0], 'first', 'first verse'),
 		FIRST_CHAPTER_URL => sprintf($bookLinkFormat, 'first chapter'),
 		LAST_CHAPTER_URL => $lastChapterLink,
+		YESTERDAY_URL => $yesterdayLink,
 		PREV_VERSE_URL => __verseNavigationLink($json->[0], 'prev', 'prev verse'),
 		NEXT_VERSE_URL => __verseNavigationLink($json->[0], 'next', 'next verse'),
+		TOMORROW_URL => $tomorrowLink,
 		LAST_VERSE_URL => __verseNavigationLink($json->[0], 'last', 'last verse'),
 		RANDOM_URL => $random,
 		BOOKS => $self->__makeBooks($firstVerseObject->book),

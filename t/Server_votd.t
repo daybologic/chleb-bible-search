@@ -910,7 +910,7 @@ sub testV2_translations_all {
 
 sub testHtmlNavigationKeepsAllTranslations {
 	my ($self) = @_;
-	plan tests => 4;
+	plan tests => 6;
 
 	my $when = '2024-10-30T21:36:26+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
@@ -924,9 +924,31 @@ sub testHtmlNavigationKeepsAllTranslations {
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
 	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'HTML renders both selected translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?translations=asv,kjv&when=2024-10-29T00:00:00\+0000">yesterday</a>},
+		'VoTD HTML uses the yesterday document link');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?translations=asv,kjv&when=2024-10-31T00:00:00\+0000">tomorrow</a>},
+		'VoTD HTML uses the tomorrow document link');
 	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/7\?translations=asv,kjv">prev verse</a>}, 'previous verse keeps selected translations');
 	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/9\?translations=asv,kjv">next verse</a>}, 'next verse keeps selected translations');
 	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/8\?translations=asv,kjv">permalink</a>}, 'permalink keeps selected translations');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlNavigationDateLinksOnlyForVotd {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'psa',
+		chapter => 122,
+		verse => 8,
+	});
+
+	unlike($html, qr{>yesterday</a>}, 'lookup HTML omits the yesterday VoTD link');
+	unlike($html, qr{>tomorrow</a>}, 'lookup HTML omits the tomorrow VoTD link');
 
 	return EXIT_SUCCESS;
 }
