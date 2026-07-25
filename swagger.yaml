@@ -906,6 +906,14 @@ components:
           type: string
           description: URL for the current page of search results
           example: /1/search?term=peter&wholeword=1&limit=153&page=2&per_page=50
+        yesterday:
+          type: string
+          description: URL for the previous verse of the day
+          example: /2/votd?when=2024-08-22T00:00:00+0000
+        tomorrow:
+          type: string
+          description: URL for the following verse of the day
+          example: /2/votd?when=2024-08-24T00:00:00+0000
         prev:
           type: string
           description: URL for the previous page of search results, omitted on the first page

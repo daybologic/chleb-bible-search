@@ -166,6 +166,8 @@ sub test {
 		],
 		links => {
 			self => '/2/votd',
+			yesterday => '/2/votd?when=2024-08-22T00:00:00+0000',
+			tomorrow => '/2/votd?when=2024-08-24T00:00:00+0000',
 		},
 	}, "single verse JSON for $when") or diag(explain($json));
 
@@ -395,6 +397,8 @@ sub testV2 {
 		],
 		links => {
 			self => '/2/votd',
+			yesterday => '/2/votd?when=1971-04-27T00:00:00+0000',
+			tomorrow => '/2/votd?when=1971-04-29T00:00:00+0000',
 		},
 	}, "specific JSON verses inspection for $when") or diag(explain($json));
 
@@ -499,6 +503,8 @@ sub testV2_translations_asv_asv {
 		],
 		links => {
 			self => '/2/votd?translations=asv',
+			yesterday => '/2/votd?translations=asv&when=2024-10-29T00:00:00+0000',
+			tomorrow => '/2/votd?translations=asv&when=2024-10-31T00:00:00+0000',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
@@ -643,6 +649,8 @@ sub testV2_translations_kjv_asv {
 		],
 		links => {
 			self => '/2/votd?translations=asv,kjv',
+			yesterday => '/2/votd?translations=asv,kjv&when=2024-10-29T00:00:00+0000',
+			tomorrow => '/2/votd?translations=asv,kjv&when=2024-10-31T00:00:00+0000',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
@@ -892,6 +900,8 @@ sub testV2_translations_all {
 		],
 		links => {
 			self => '/2/votd?translations=asv,kjv',
+			yesterday => '/2/votd?translations=asv,kjv&when=2021-10-29T00:00:00+0000',
+			tomorrow => '/2/votd?translations=asv,kjv&when=2021-10-31T00:00:00+0000',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 

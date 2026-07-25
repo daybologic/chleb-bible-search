@@ -556,6 +556,42 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 =cut
 
+=item C<__votdDateLink($version, $params, $when)>
+
+Build a VoTD URL for a normalized date while preserving supported query
+parameters.
+
+=cut
+
+sub __votdDateLink {
+	my ($version, $params, $when) = @_;
+
+	my $queryParams = Chleb::Utils::queryParamsHelper($params);
+	$queryParams .= (length($queryParams) > 0 ? '&' : '?')
+	    . 'when=' . $when->strftime('%FT%T%z');
+
+	return '/' . join('/', $version, 'votd') . $queryParams;
+}
+
+=item C<__addVotdDateLinks($version, $params, $links)>
+
+Add document-level links for the preceding and following VoTD dates.
+
+=cut
+
+sub __addVotdDateLinks {
+	my ($self, $version, $params, $links) = @_;
+
+	my $when = $self->_resolveISO8601($params->{when})
+	    ->set_time_zone('UTC')
+	    ->truncate(to => 'day');
+
+	$links->{yesterday} = __votdDateLink($version, $params, $when->clone->subtract(days => 1));
+	$links->{tomorrow} = __votdDateLink($version, $params, $when->clone->add(days => 1));
+
+	return;
+}
+
 # Called by the Dancer2 routing layer.
 sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
@@ -593,6 +629,7 @@ sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		}
 
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
+		__addVotdDateLinks($self, $version, $params, $json[0]->{links});
 
 		if (__isJsonContentType($contentType)) {
 			if ($params->{form}) {
@@ -619,6 +656,7 @@ sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	my $json = __verseToJsonApi($verse, $params);
 	$json->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
+	__addVotdDateLinks($self, $version, $params, $json->{links});
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		return $self->__verseToHtml($verse, [$json], $FUNCTION_VOTD);
