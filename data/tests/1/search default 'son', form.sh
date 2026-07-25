@@ -31,7 +31,5 @@
 
 set -euo pipefail
 
-echo "❌ TODO what's wrong with this test... it executes 0 when I run it?  The framework says exit code 4"
-exit 0
-
-http --check-status GET chleb-api.example.org/1/search term==son form==true
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/search Accept:text/html term==son form==true)
+grep -q '<button type="button" id="search-home">Home</button>' <<< "$page"

@@ -29,9 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+set -uo pipefail
 
-echo "❌ we requested JSON and got HTML, but the 307 is correct"
-exit 0
-
-http --check-status GET chleb-api.example.org/1/random Accept:application/json redirect==true
+http --check-status GET chleb-api.example.org/2/random Accept:application/json redirect==true >/dev/null 2>&1
+[[ $? -eq 4 ]]
