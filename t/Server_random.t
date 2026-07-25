@@ -49,6 +49,7 @@ use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Dancer2;
 use Chleb::Server::Moose;
+use Test::Deep qw(all array_each cmp_deeply isa methods re ignore);
 use Test::More 0.96;
 
 sub setUp {
@@ -59,6 +60,320 @@ sub setUp {
 	}
 
 	$self->sut(Chleb::Server::Moose->new());
+
+	return EXIT_SUCCESS;
+}
+
+sub test_translation_kjv {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__random({ accept => $mediaType, version => 2 });
+	cmp_deeply($json, {
+		data => array_each(
+			{
+				attributes => {
+					book => ignore(),
+					chapter => re(qr/^\d{1,3}$/),
+					emotion => re(qr/^\w+$/),
+					ordinal => re(qr/^\d{1,3}$/),
+					text => ignore(),
+					tones => array_each(re(qr/^\w+$/)), # every element must be a single non-empty word
+					year => 1611,
+					translation => 'kjv',
+				},
+				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
+				type => 'verse',
+				links => {
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}$@),
+				},
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => ignore(),
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+		),
+		included => [
+			{
+				attributes => {
+					book => ignore(),
+					ordinal => re(qr/^\d{1,3}$/),
+					translation => 'kjv',
+					verse_count => re(qr/^\d{1,3}$/),
+				},
+				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
+				type => 'chapter',
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+					},
+				},
+			},
+			{
+				attributes => {
+					chapter_count => re(qr/^\d{1,3}$/),
+					long_name => ignore(),
+					ordinal => re(qr/^\d{1,2}$/),
+					sample_verse_text => ignore(),
+					sample_verse_chapter_ordinal => ignore(),
+					sample_verse_ordinal_in_chapter => ignore(),
+					short_name => re(qr/^\w+$/),
+					short_name_raw => re(qr/^\w+$/),
+					testament => re(qr/^\w{3}$/),
+					translation => 'kjv',
+					verse_count => re(qr/^\d{1,4}$/),
+				},
+				id => ignore(),
+				relationships => {},
+				type => 'book'
+			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
+			},
+		],
+		links => {
+			self => '/2/random',
+		},
+	}, "single random verse JSON") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub test_translation_asv {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'], version => 2 });
+	cmp_deeply($json, {
+		data => array_each(
+			{
+				attributes => {
+					book => ignore(),
+					chapter => re(qr/^\d{1,3}$/),
+					emotion => re(qr/^\w+$/),
+					ordinal => re(qr/^\d{1,3}$/),
+					text => ignore(),
+					tones => array_each(re(qr/^\w+$/)), # every element must be a single non-empty word
+					year => 1901,
+					translation => 'asv',
+				},
+				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
+				type => 'verse',
+				links => {
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=asv$@),
+				},
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => ignore(),
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+		),
+		included => [
+			{
+				attributes => {
+					book => ignore(),
+					ordinal => re(qr/^\d{1,3}$/),
+					translation => 'asv',
+					verse_count => re(qr/^\d{1,3}$/),
+				},
+				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
+				type => 'chapter',
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+					},
+				},
+			},
+			{
+				attributes => {
+					chapter_count => re(qr/^\d{1,3}$/),
+					long_name => ignore(),
+					ordinal => re(qr/^\d{1,2}$/),
+					sample_verse_text => ignore(),
+					sample_verse_chapter_ordinal => ignore(),
+					sample_verse_ordinal_in_chapter => ignore(),
+					short_name => re(qr/^\w+$/),
+					short_name_raw => re(qr/^\w+$/),
+					testament => re(qr/^\w{3}$/),
+					translation => 'asv',
+					verse_count => re(qr/^\d{1,4}$/),
+				},
+				id => ignore(),
+				relationships => {},
+				type => 'book'
+			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
+			},
+		],
+		links => {
+			self => '/2/random?translations=asv',
+		},
+	}, "single random verse JSON") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub test_translation_core {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
+	cmp_deeply($json, {
+		data => array_each(
+			{
+				attributes => {
+					book => ignore(),
+					chapter => re(qr/^\d{1,3}$/),
+					emotion => re(qr/^\w+$/),
+					ordinal => re(qr/^\d{1,3}$/),
+					text => ignore(),
+					tones => array_each(re(qr/^\w+$/)),
+					year => re(qr/^\d{4}$/),
+					translation => re(qr/^\w{3}$/),
+				},
+				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
+				type => 'verse',
+				links => {
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+				},
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+						links => {},
+					},
+					chapter => {
+						data => {
+							id => ignore(),
+							type => 'chapter',
+						},
+						links => {},
+					}
+				},
+			},
+		),
+		included => [
+			{
+				attributes => {
+					book => ignore(),
+					ordinal => re(qr/^\d{1,3}$/),
+					translation => re(qr/^(asv|kjv)$/),
+					verse_count => re(qr/^\d{1,3}$/),
+				},
+				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
+				type => 'chapter',
+				relationships => {
+					book => {
+						data => {
+							id => ignore(),
+							type => 'book',
+						},
+					},
+				},
+			},
+			{
+				attributes => {
+					chapter_count => re(qr/^\d{1,3}$/),
+					long_name => ignore(),
+					ordinal => re(qr/^\d{1,2}$/),
+					sample_verse_text => ignore(),
+					sample_verse_chapter_ordinal => ignore(),
+					sample_verse_ordinal_in_chapter => ignore(),
+					short_name => re(qr/^\w+$/),
+					short_name_raw => re(qr/^\w+$/),
+					testament => re(qr/^\w{3}$/),
+					translation => re(qr/^\w{3}$/),
+					verse_count => re(qr/^\d{1,4}$/),
+				},
+				id => ignore(),
+				relationships => {},
+				type => 'book'
+			},
+			{
+				attributes => {
+					msec => re(qr/^\d+$/),
+				},
+				id => ignore(), # uuid
+				type => 'stats',
+				links => {},
+			},
+		],
+		links => {
+			self => '/2/random?translations=asv,kjv',
+		},
+	}, "single random verse JSON") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub test_json_api_media_type {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['kjv'], version => 2 });
+
+	is(ref($json), 'HASH', 'random JSON:API media type returns JSON structure');
+	is($json->{data}->[0]->{type}, 'verse', 'random JSON:API media type returns verse data');
+	is($json->{links}->{self}, '/2/random?translations=kjv', 'random JSON:API media type keeps self link');
 
 	return EXIT_SUCCESS;
 }
