@@ -82,7 +82,7 @@ sub testDefaults {
 				changeset => $Chleb::Generated::Info::BUILD_CHANGESET,
 				perl_version => $Chleb::Generated::Info::BUILD_PERL_VERSION,
 				server_host => 'localhost',
-				version => '2.5.1',
+				version => '3.0.0',
 			},
 			id => ignore(),
 			type => 'version',
