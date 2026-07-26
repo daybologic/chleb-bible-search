@@ -5,6 +5,7 @@
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/release-common"
 require_repo
 require_clean_worktree
+command -v dch >/dev/null 2>&1 || die 'dch is required to prepare the release changelog'
 
 purpose=${1:-}
 if [[ -z "$purpose" ]]; then
@@ -24,16 +25,31 @@ latest=$(latest_release_branch)
 [[ -n "$latest" ]] || die 'no existing rel/X.Y branch was found'
 
 case "$purpose" in
-	major) target_branch="rel/$((major + 1)).0" ;;
-	minor) target_branch="rel/$major.$((minor + 1))" ;;
-	patch) target_branch="$latest" ;;
+	major)
+		target_branch="rel/$((major + 1)).0"
+		next_version="$((major + 1)).0.0"
+		;;
+	minor)
+		target_branch="rel/$major.$((minor + 1))"
+		next_version="$major.$((minor + 1)).0"
+		;;
+	patch)
+		target_branch="$latest"
+		next_version="$major.$minor.$((patch + 1))"
+		;;
 esac
+
+start_changelog() {
+	printf 'Preparing debian/changelog for version %s with dch...\n' "$next_version"
+	dch --newversion="$next_version" --distribution=stable --urgency=medium
+}
 
 if [[ "$purpose" == patch ]]; then
 	[[ "$target_branch" == "rel/$major.$minor" ]] || die "changelog version $current_version does not belong to $target_branch"
 	git show-ref --verify --quiet "refs/heads/$target_branch" || die "local branch '$target_branch' does not exist"
 	git switch "$target_branch"
 	git merge master --no-ff
+	start_changelog
 	printf 'Merged master into %s for patch release preparation.\n' "$target_branch"
 	exit 0
 fi
@@ -43,4 +59,5 @@ if git show-ref --verify --quiet "refs/heads/$target_branch"; then
 fi
 git switch master
 git switch --create "$target_branch"
+start_changelog
 printf 'Created release branch %s from master.\n' "$target_branch"
