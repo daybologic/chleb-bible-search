@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Shared helpers for the Chleb Bible Search release tools.
+
+set -euo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+repo_root=$(cd "$script_dir/../../.." && pwd)
+cd "$repo_root"
+
+die() {
+	printf 'ERROR: %s\n' "$*" >&2
+	exit 1
+}
+
+require_repo() {
+	git rev-parse --show-toplevel >/dev/null 2>&1 || die 'not inside a Git repository'
+}
+
+require_clean_worktree() {
+	if [[ -n $(git status --porcelain) ]]; then
+		die 'the worktree is not clean; commit or stash changes first'
+	fi
+}
+
+read_version() {
+	local changelog='debian/changelog'
+	[[ -r "$changelog" ]] || die "cannot read $changelog"
+
+	local version
+	version=$(awk 'NR == 1 { if (match($0, /\([^)]*\)/)) { value = substr($0, RSTART + 1, RLENGTH - 2); print value; exit } }' "$changelog")
+	[[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "invalid release version in $changelog: '$version'"
+	printf '%s\n' "$version"
+}
+
+latest_release_branch() {
+	git for-each-ref --format='%(refname:short)' refs/heads/rel refs/remotes \
+		| sed -nE 's#^(.*\/)?rel/([0-9]+)\.([0-9]+)$#rel/\2.\3#p' \
+		| sort -u -V | tail -n 1
+}
+
+version_branch() {
+	local version=$1
+	printf 'rel/%s\n' "${version%.*}"
+}
