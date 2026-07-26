@@ -247,12 +247,9 @@ sub __warmBackendVerse {
 
 	${ $args->{lastPercent} } = $progressPercent;
 	$self->dic->logger->trace(sprintf(
-		'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
+		'Backend cache warmup %d%% complete (translation %s)',
 		$progressPercent,
 		$bible->translation,
-		$book->shortNameRaw,
-		$chapterOrdinal,
-		$verseOrdinal,
 	));
 
 	return;

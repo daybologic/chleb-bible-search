@@ -302,7 +302,7 @@ sub test_translation_all {
 
 sub testWarmupPrimesSentimentCache {
 	my ($self) = @_;
-	plan tests => 7;
+	plan tests => 9;
 
 	my $dic = Chleb::DI::Container->instance();
 	my $previousLogger = $dic->logger;
@@ -325,16 +325,20 @@ sub testWarmupPrimesSentimentCache {
 	my $bookInfoAfter = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountAfter = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $translationWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation kjv in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
-	my $pickthallWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation pickthall in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
+	my $asvWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation asv in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 	my $allWarmupFinished = scalar(grep { /\QAll backend cache warmup finished in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
+	my $translationWarmupProgress = scalar(grep { /\QBackend cache warmup \E\d+\Q% complete (translation \E(?:kjv|asv)\Q)\E\z/ } @{ $logger->__messages });
+	my $verseWarmupProgress = scalar(grep { /\QBackend cache warmup \E\d+\Q% complete (translation \E(?:kjv|asv)\Q, book \E/ } @{ $logger->__messages });
 
 	ok($before > 0, 'warmup loads sentiment data');
 	is($after, $before, 'lookup does not reload sentiment after warmup');
 	is($bookInfoAfter, $bookInfoBefore, 'lookup does not reload book info after warmup');
 	is($verseCountAfter, $verseCountBefore, 'lookup does not reload verse counts after warmup');
 	ok($translationWarmupFinished > 0, 'warmup logs per-translation msec');
-	ok($pickthallWarmupFinished > 0, 'warmup discovers Pickthall');
+	ok($asvWarmupFinished > 0, 'warmup logs ASV');
 	ok($allWarmupFinished > 0, 'warmup logs overall msec');
+	ok($translationWarmupProgress > 0, 'warmup progress identifies the translation');
+	is($verseWarmupProgress, 0, 'warmup progress does not identify the verse');
 
 	$dic->logger($previousLogger);
 
