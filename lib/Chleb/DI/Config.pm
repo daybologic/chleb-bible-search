@@ -133,7 +133,7 @@ sub get {
 	if ($defaultUsed && !$self->__warnedDefaults->{join("\0", $section, $key)}) {
 		$level = 'warn';
 		$self->__warnedDefaults->{join("\0", $section, $key)} = 1;
-		$msg .= ' -- default used!  We recommend you set this value explicitly in your config!';
+		$msg .= ' -- default used because this value is not configured!  We recommend you set it explicitly in your config!';
 	}
 
 	$self->dic->logger->$level($msg);

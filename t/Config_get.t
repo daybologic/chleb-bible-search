@@ -67,6 +67,8 @@ simple_boolean:
   on_value: on
   true_value: true
   false_value: false
+warning_equal:
+  value: default
 Dancer2:
   public_dir: data/static/public
 session_tokens:
@@ -111,12 +113,14 @@ sub testGetSimpleBoolean {
 
 sub testDefaultWarningOnce {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 3;
 
 	$self->sut->get('warning_once', 'missing', 'default', 0);
 	$self->sut->get('warning_once', 'missing', 'default', 0);
 
 	is(scalar(keys(%{ $self->sut->__warnedDefaults })), 1, 'missing configuration warns only once per key');
+	is($self->sut->get('warning_equal', 'value', 'default', 0), 'default', 'explicit value equal to default is returned');
+	ok(!exists($self->sut->__warnedDefaults->{join("\0", 'warning_equal', 'value')}), 'explicit value equal to default does not warn');
 
 	return EXIT_SUCCESS;
 }
