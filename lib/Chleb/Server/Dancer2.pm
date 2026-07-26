@@ -602,9 +602,31 @@ sub handleException {
 	} else {
 		$str = $exception;
 	}
+	$str = q{} . $exception if (!defined($str) && defined($exception));
 
-	$server->dic->logger->error("Internal Server Error: $exception");
-	return send_error($exception, 500);
+	$server->dic->logger->error("Internal Server Error: $str");
+	return send_error($str, 500);
+}
+
+=head1 __validateLookupOrdinals($chapter, $verse)
+
+Reject malformed lookup path ordinals before they reach Moose constructors.
+
+=cut
+
+sub __validateLookupOrdinals {
+	my ($chapter, $verse) = @_;
+
+	foreach my $ordinal ([ 'chapter', $chapter ], [ 'verse', $verse ]) {
+		next unless (defined($ordinal->[1]));
+		next if ($ordinal->[1] =~ m{\A-?\d+\z}x);
+		croak(Chleb::Exception->raise(
+			HTTP_BAD_REQUEST,
+			sprintf("Invalid %s ordinal '%s'", $ordinal->[0], $ordinal->[1]),
+		));
+	}
+
+	return;
 }
 
 =head1 __isTemplateMarker($line)
@@ -941,6 +963,7 @@ get '/1/lookup/:book/:chapter' => sub {
 
 	my $result;
 	my $evalOk6; $evalOk6 = eval {
+		__validateLookupOrdinals($chapter);
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
 			accept       => $accept,
@@ -987,6 +1010,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 
 	my $result;
 	my $evalOk7; $evalOk7 = eval {
+		__validateLookupOrdinals($chapter, $verse);
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__lookup({
 			accept       => $accept,
