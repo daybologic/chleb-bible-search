@@ -32,6 +32,7 @@
 set -eu
 
 DEFAULT_NPROC=10
+DEFAULT_MAX_NPROC=30
 YAML_SCRIPT='/usr/share/chleb-bible-search/yaml2json.pl'
 CONFIG_DIR='/etc/chleb-bible-search'
 APP='/usr/share/chleb-bible-search/app.psgi'
@@ -54,6 +55,7 @@ if [ -e "$(pwd)/.git" ] && [ -f 'bin/core/app.psgi' ]; then
 fi
 
 nProc=$DEFAULT_NPROC
+maxChildren=$DEFAULT_MAX_NPROC
 if [ -f "$CONFIG_DIR/main.yaml" ]; then
 	json=$($YAML_SCRIPT \
 		"$CONFIG_DIR/main.yaml" \
@@ -63,6 +65,25 @@ if [ -f "$CONFIG_DIR/main.yaml" ]; then
 	__nProc=$(echo $json | jq -r .server.children)
 	if [ "$__nProc" != 'null' ]; then
 		nProc=$__nProc
+	fi
+	__maxChildren=$(echo $json | jq -r .server.max_children)
+	if [ "$__maxChildren" != 'null' ]; then
+		maxChildren=$__maxChildren
+	fi
+fi
+
+if [ "$nProc" = 'auto' ]; then
+	calculateChildren='/usr/share/chleb-bible-search/calculate-children.sh'
+	if [ ! -x "$calculateChildren" ]; then
+		calculateChildren=$(dirname "$0")/calculate-children.sh
+	fi
+	if [ ! -x "$calculateChildren" ]; then
+		echo 'ERROR: Cannot calculate automatic child count' >&2
+		exit 1
+	fi
+	nProc=$($calculateChildren)
+	if [ "$maxChildren" != 'null' ] && [ "$nProc" -gt "$maxChildren" ]; then
+		nProc=$maxChildren
 	fi
 fi
 
