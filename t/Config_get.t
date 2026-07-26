@@ -109,6 +109,18 @@ sub testGetSimpleBoolean {
 	return EXIT_SUCCESS;
 }
 
+sub testDefaultWarningOnce {
+	my ($self) = @_;
+	plan tests => 1;
+
+	$self->sut->get('warning_once', 'missing', 'default', 0);
+	$self->sut->get('warning_once', 'missing', 'default', 0);
+
+	is(scalar(keys(%{ $self->sut->__warnedDefaults })), 1, 'missing configuration warns only once per key');
+
+	return EXIT_SUCCESS;
+}
+
 sub testSubsectionHash {
 	my ($self) = @_;
 	plan tests => 2;

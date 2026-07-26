@@ -64,6 +64,7 @@ Readonly my @SPLIT_CONFIG_FILE_NAMES => qw(
 );
 
 has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
+has __warnedDefaults => (is => 'ro', isa => 'HashRef[Bool]', lazy => 1, default => sub { {} });
 
 =head1 ATTRIBUTES
 
@@ -129,8 +130,9 @@ sub get {
 	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $valuePrintable, $defaultPrintable);
 
 	my $level = 'trace';
-	if ($defaultUsed) {
+	if ($defaultUsed && !$self->__warnedDefaults->{join("\0", $section, $key)}) {
 		$level = 'warn';
+		$self->__warnedDefaults->{join("\0", $section, $key)} = 1;
 		$msg .= ' -- default used!  We recommend you set this value explicitly in your config!';
 	}
 
