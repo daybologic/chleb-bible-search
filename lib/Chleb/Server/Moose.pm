@@ -247,12 +247,9 @@ sub __warmBackendVerse {
 
 	${ $args->{lastPercent} } = $progressPercent;
 	$self->dic->logger->trace(sprintf(
-		'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
+		'Backend cache warmup %d%% complete (translation %s)',
 		$progressPercent,
 		$bible->translation,
-		$book->shortNameRaw,
-		$chapterOrdinal,
-		$verseOrdinal,
 	));
 
 	return;
@@ -2216,7 +2213,7 @@ sub __removeUptime {
 	return;
 }
 
-has __warnedSessionToken => (is => 'rw', isa => 'Bool', default => 0);
+has __loggedUsingSessionToken => (is => 'rw', isa => 'Bool', default => 0);
 
 =over
 
@@ -2252,12 +2249,13 @@ sub handleSessionToken {
 	my ($self) = @_;
 
 	my $supportSessions = $self->dic->config->get('features', 'sessions', 'false', 1);
-	return unless ($supportSessions);
 
-	unless ($self->__warnedSessionToken) {
-		$self->dic->logger->warn('Using experimental session cookie support, alpha quality, there are known bugs and limitations');
-		$self->__warnedSessionToken(1);
+	unless ($self->__loggedUsingSessionToken) {
+		$self->dic->logger->debug('session cookie support ' . ($supportSessions ? 'on' : 'off'));
+		$self->__loggedUsingSessionToken(1);
 	}
+
+	return unless ($supportSessions);
 
 	my $request = Chleb::Server::Dancer2::getRequest();
 	my $ipAddress = $request->address() // '';
