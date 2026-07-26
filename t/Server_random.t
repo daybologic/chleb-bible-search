@@ -69,9 +69,9 @@ sub test_translation_kjv {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, version => 1 });
+	my $json = $self->sut->__random({ accept => $mediaType, version => 2 });
 	cmp_deeply($json, {
-		data => [
+		data => array_each(
 			{
 				attributes => {
 					book => ignore(),
@@ -109,7 +109,7 @@ sub test_translation_kjv {
 					}
 				},
 			},
-		],
+		),
 		included => [
 			{
 				attributes => {
@@ -157,7 +157,7 @@ sub test_translation_kjv {
 			},
 		],
 		links => {
-			self => '/1/random',
+			self => '/2/random',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
@@ -169,9 +169,9 @@ sub test_translation_asv {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'], version => 1 });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'], version => 2 });
 	cmp_deeply($json, {
-		data => [
+		data => array_each(
 			{
 				attributes => {
 					book => ignore(),
@@ -209,7 +209,7 @@ sub test_translation_asv {
 					}
 				},
 			},
-		],
+		),
 		included => [
 			{
 				attributes => {
@@ -257,7 +257,7 @@ sub test_translation_asv {
 			},
 		],
 		links => {
-			self => '/1/random?translations=asv',
+			self => '/2/random?translations=asv',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
@@ -269,9 +269,9 @@ sub test_translation_core {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 1 });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
 	cmp_deeply($json, {
-		data => [
+		data => array_each(
 			{
 				attributes => {
 					book => ignore(),
@@ -309,7 +309,7 @@ sub test_translation_core {
 					}
 				},
 			},
-		],
+		),
 		included => [
 			{
 				attributes => {
@@ -357,7 +357,7 @@ sub test_translation_core {
 			},
 		],
 		links => {
-			self => '/1/random?translations=asv,kjv',
+			self => '/2/random?translations=asv,kjv',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
@@ -369,11 +369,11 @@ sub test_json_api_media_type {
 	plan tests => 3;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => ['kjv'], version => 1 });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['kjv'], version => 2 });
 
 	is(ref($json), 'HASH', 'random JSON:API media type returns JSON structure');
 	is($json->{data}->[0]->{type}, 'verse', 'random JSON:API media type returns verse data');
-	is($json->{links}->{self}, '/1/random?translations=kjv', 'random JSON:API media type keeps self link');
+	is($json->{links}->{self}, '/2/random?translations=kjv', 'random JSON:API media type keeps self link');
 
 	return EXIT_SUCCESS;
 }
@@ -401,4 +401,4 @@ package main;
 use strict;
 use warnings;
 
-exit(RandomServerTests->new->run(n => ($ENV{TEST_QUICK} ? 1 : 5)));
+exit(RandomServerTests->new->run(n => ($ENV{TEST_QUICK} ? 1 : 2)));

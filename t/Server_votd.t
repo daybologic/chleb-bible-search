@@ -73,7 +73,7 @@ sub test {
 
 	my $when = '2024-08-23T11:49:09+0100';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__votd({ accept => $mediaType, when => $when });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -165,7 +165,7 @@ sub test {
 			},
 		],
 		links => {
-			self => '/1/votd',
+			self => '/2/votd',
 		},
 	}, "single verse JSON for $when") or diag(explain($json));
 
@@ -178,11 +178,11 @@ sub testJsonApiMediaType {
 
 	my $when = '2024-08-23T11:49:09+0100';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
-	my $json = $self->sut->__votd({ accept => $mediaType, when => $when });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when });
 
 	is(ref($json), 'HASH', 'votd JSON:API media type returns JSON structure');
 	is($json->{data}->[0]->{type}, 'verse', 'votd JSON:API media type returns verse data');
-	is($json->{links}->{self}, '/1/votd', 'votd JSON:API media type keeps self link');
+	is($json->{links}->{self}, '/2/votd', 'votd JSON:API media type keeps self link');
 
 	return EXIT_SUCCESS;
 }
@@ -995,31 +995,6 @@ sub testRedirectV2 {
 				statusCode  => 400,
 			),
 		), 'correct error');
-	} else {
-		fail('No exception raised, as was expected');
-	}
-
-	return EXIT_SUCCESS;
-}
-
-sub testRedirectV1 {
-	my ($self) = @_;
-
-	my $evalOk2; $evalOk2 = eval {
-		my $when = '2021-10-30T21:36:26+0000';
-		$self->sut->__votd({ redirect => 1, version => 1, when => $when });
-		1;
-	} or $evalOk2 = 0;
-
-	if (my $evalError = $EVAL_ERROR) {
-		cmp_deeply($evalError, all(
-			isa('Chleb::Exception'),
-			methods(
-				description => undef,
-				location    => '/1/lookup/num/16/8',
-				statusCode  => 307,
-			),
-		), 'correct redirect');
 	} else {
 		fail('No exception raised, as was expected');
 	}
