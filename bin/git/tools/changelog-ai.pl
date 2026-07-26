@@ -11,6 +11,7 @@ use HTTP::Tiny;
 use IPC::Open3 qw(open3);
 use JSON::PP qw(decode_json encode_json);
 use Symbol qw(gensym);
+use Text::Wrap ();
 
 my ($previous_version, $current_version) = @ARGV;
 die("Usage: $0 previous-version current-version\n")
@@ -142,13 +143,14 @@ sub edit_notes {
 sub normalize_notes {
 	my ($raw_notes) = @_;
 	my @lines;
+	local $Text::Wrap::columns = 80;
 	for my $line (split(m{\R}x, $raw_notes // '')) {
 		$line =~ s{\A\s+}{}x;
 		$line =~ s{\s+\z}{}x;
 		next if length($line) == 0 || $line =~ m{\A \#}x;
 		$line =~ s{\A (?: [-*+] \s+ | \x{2022} \s+ )}{}x;
 		$line =~ s{\A \d+ [.)] \s+}{}x;
-		push(@lines, "  * $line") if length($line) > 0;
+		push(@lines, Text::Wrap::wrap('  * ', '    ', $line)) if length($line) > 0;
 	}
 	return join("\n", @lines);
 }

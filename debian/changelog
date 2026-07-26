@@ -1,24 +1,47 @@
 chleb-bible-search (3.0.0) stable; urgency=medium
 
-  * ⚙️ Split runtime config into multiple YAML files (main, tokens, contact, features) and add recursive merge support for loading split configs
-  * 🔧 Debian package now clears and preserves cache on install/remove and updates tokens.yaml for generated JWT secrets
-  * ✨ Add Pickthall translation support including separate package, Pickthall SQLite import, sentiment data, and translation-specific display and metadata
-  * 🔍 Support searching and displaying multiple translations: translation selectors, labels with publication years, dependent lookup form, and translation-specific verse references
-  * 🧭 Preserve and show translation context and selection in random verses, VOTD, and search results; ensure requested translation order is preserved and deterministic
-  * 🗂️ Prefer source-built generated data over installed data to avoid stale SQLite fallbacks when running from source
-  * 💾 Restore shared backend cache for Bible data (memcached) except sentiment to speed warm restarts; keep sentiment in per-process cache
-  * 🧪 Build generated data before dev server startup and for targeted tests; update test fixtures and make unit tests executable
+  * ⚙️ Split runtime config into multiple YAML files (main, tokens,
+    contact, features) and add recursive merge support for loading split
+    configs
+  * 🔧 Debian package now clears and preserves cache on install/remove and
+    updates tokens.yaml for generated JWT secrets
+  * ✨ Add Pickthall translation support including separate package,
+    Pickthall SQLite import, sentiment data, and translation-specific display
+    and metadata
+  * 🔍 Support searching and displaying multiple translations: translation
+    selectors, labels with publication years, dependent lookup form, and
+    translation-specific verse references
+  * 🧭 Preserve and show translation context and selection in random verses,
+    VOTD, and search results; ensure requested translation order is preserved
+    and deterministic
+  * 🗂️ Prefer source-built generated data over installed data to avoid stale
+    SQLite fallbacks when running from source
+  * 💾 Restore shared backend cache for Bible data (memcached) except
+    sentiment to speed warm restarts; keep sentiment in per-process cache
+  * 🧪 Build generated data before dev server startup and for targeted tests;
+    update test fixtures and make unit tests executable
   * 🧹 Remove obsolete /1 v1 API verse routes where v2 exists
-  * 🧭 Add VoTD (Verse of the Day) date navigation and grouping links and restore related HTML tests
-  * 🔐 Hash JWT identifiers in logs, use shared short token length, and improve session/token dampening handling
-  * ♻️ Preserve default session cleanup directory and keep SQLite temp files out of /tmp
-  * 🧾 Major POD and documentation cleanup: reorganize Backend POD, fix podchecker errors, document backend methods and helpers, and enforce POD boundaries
-  * 🧰 Add merge-and-release tooling and automation (bumpversion, rcbranch, changelog AI helper, release scripts)
-  * 🧩 Reintroduce support for split config path as a directory and fail fast on file-path misconfiguration; update yaml2json and related tools
-  * 🛠️ Numerous Perl::Critic and code-quality fixes: reduce complexity, enforce final newlines, check eval returns, and other cleanups
-  * 🔁 Persist expanded navigation state and clear cache on Debian reinstall/removal
-  * 🧪 Improve tests: share sentiment cache with Storable backend, normalize sentiment storage by verse identity, and bulk-warm sentiment caches
-  * 📦 Remove obsolete binary Bible importer and related spurious files; add many generated/static data files (Pickthall text and emotion JSON)
+  * 🧭 Add VoTD (Verse of the Day) date navigation and grouping links and
+    restore related HTML tests
+  * 🔐 Hash JWT identifiers in logs, use shared short token length, and
+    improve session/token dampening handling
+  * ♻️ Preserve default session cleanup directory and keep SQLite temp files
+    out of /tmp
+  * 🧾 Major POD and documentation cleanup: reorganize Backend POD, fix
+    podchecker errors, document backend methods and helpers, and enforce POD
+    boundaries
+  * 🧰 Add merge-and-release tooling and automation (bumpversion, rcbranch,
+    changelog AI helper, release scripts)
+  * 🧩 Reintroduce support for split config path as a directory and fail fast
+    on file-path misconfiguration; update yaml2json and related tools
+  * 🛠️ Numerous Perl::Critic and code-quality fixes: reduce complexity,
+    enforce final newlines, check eval returns, and other cleanups
+  * 🔁 Persist expanded navigation state and clear cache on Debian
+    reinstall/removal
+  * 🧪 Improve tests: share sentiment cache with Storable backend, normalize
+    sentiment storage by verse identity, and bulk-warm sentiment caches
+  * 📦 Remove obsolete binary Bible importer and related spurious files; add
+    many generated/static data files (Pickthall text and emotion JSON)
 
  -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 26 Jul 2026 14:28:39 +0100
 
