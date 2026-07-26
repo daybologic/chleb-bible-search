@@ -63,6 +63,7 @@ sub setUp {
 	$self->{__original_cwd} = getcwd();
 
 	my $root = tempdir(CLEANUP => 1);
+	$self->{root} = $root;
 	mkdir($root . '/data') or croak("mkdir $root/data failed: $!");
 	mkdir($root . '/cache') or croak("mkdir $root/cache failed: $!");
 	$self->__makeSourceFile($root . '/data', 'core.sqlite.gz', ['asv', 'kjv']);
@@ -83,6 +84,7 @@ sub tearDown {
 
 	chdir($self->{__original_cwd}) if (defined($self->{__original_cwd}));
 	$self->{__original_cwd} = undef;
+	$self->{root} = undef;
 
 	return $self->SUPER::tearDown();
 }
@@ -102,6 +104,24 @@ sub testFallbackToCoreWhenNoSingleFile {
 	my $sut = Chleb::Bible->new({ translation => 'asv' })->__backend;
 	is($sut->__makeSourceCompressedPath(), $sut->dataDir . '/core.sqlite.gz',
 		'falls back to the multi-translation core file');
+
+	return EXIT_SUCCESS;
+}
+
+sub testSourceInspectionDoesNotUseSystemTempDirectory {
+	my ($self) = @_;
+	plan tests => 1;
+
+	local $ENV{TMPDIR} = $self->{root} . '/not-a-directory';
+	unlink($self->{root} . '/cache/kjv.sqlite') if (-f $self->{root} . '/cache/kjv.sqlite');
+	my $backend = Chleb::Bible::Backend->new({
+		bible    => Chleb::Bible->new({ translation => 'kjv' }),
+		dataDir  => $self->{root} . '/data',
+		cacheDir => $self->{root} . '/cache',
+	});
+
+	is($backend->__makeSourceCompressedPath(), $self->{root} . '/data/kjv.sqlite.gz',
+		'source inspection uses the backend cache for temporary SQLite data');
 
 	return EXIT_SUCCESS;
 }
