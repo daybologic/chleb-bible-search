@@ -41,15 +41,35 @@ esac
 
 start_changelog() {
 	local notes_file
-	local notes
+	local note
+	local line
+	local first_note=1
 	printf 'Preparing debian/changelog for version %s with dch...\n' "$next_version"
 	notes_file=$(bin/git/tools/changelog-ai.pl "$current_version" "$next_version")
-	notes=$(<"$notes_file")
-	if ! dch --newversion="$next_version" --distribution=stable --urgency=medium "$notes"; then
-		rm -f "$notes_file"
-		return 1
-	fi
+	append_note() {
+		[[ -n "$note" ]] || return 0
+		if (( first_note )); then
+			dch --newversion="$next_version" --distribution=stable --urgency=medium "$note"
+			first_note=0
+		else
+			dch --append "$note"
+		fi
+		note=''
+	}
+	while IFS= read -r line; do
+		[[ -n "$line" ]] || continue
+		if [[ "$line" == '  * '* ]]; then
+			append_note
+			note=${line#'  * '}
+		elif [[ "$line" == '    '* && -n "$note" ]]; then
+			note+=$'\n'"${line#'    '}"
+		else
+			die "malformed release note line: $line"
+		fi
+	done < "$notes_file"
+	append_note
 	rm -f "$notes_file"
+	(( first_note == 0 )) || die 'no release notes were supplied'
 }
 
 if [[ "$purpose" == patch ]]; then
