@@ -40,8 +40,16 @@ case "$purpose" in
 esac
 
 start_changelog() {
+	local notes_file
+	local notes
 	printf 'Preparing debian/changelog for version %s with dch...\n' "$next_version"
-	dch --newversion="$next_version" --distribution=stable --urgency=medium
+	notes_file=$(bin/git/tools/changelog-ai.pl "$current_version" "$next_version")
+	notes=$(<"$notes_file")
+	if ! dch --newversion="$next_version" --distribution=stable --urgency=medium "$notes"; then
+		rm -f "$notes_file"
+		return 1
+	fi
+	rm -f "$notes_file"
 }
 
 if [[ "$purpose" == patch ]]; then

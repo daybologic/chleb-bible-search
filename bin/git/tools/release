@@ -33,5 +33,10 @@ if git show-ref --tags --verify --quiet "refs/tags/$tag"; then
 	die "tag '$tag' already exists"
 fi
 
-git tag --annotate "$tag" --message "🔖 release $version"
+tag_message=$(awk '
+	NR == 1 { print; next }
+	/^ -- / { exit }
+	{ print }
+' debian/changelog)
+printf '%s\n' "$tag_message" | git tag --annotate "$tag" --file=-
 printf 'Created tag %s.\n' "$tag"
