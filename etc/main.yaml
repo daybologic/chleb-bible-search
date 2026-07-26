@@ -30,8 +30,7 @@
 
 server:
   uptime_file: cache/startup.txt
-  children: 'auto'
-  max_children: 30
+#  children: 30
 votd_exclude:
   terms:
     - fornication
