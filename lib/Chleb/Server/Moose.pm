@@ -2338,15 +2338,15 @@ sub handleSessionToken {
 	}
 
 	if ($sessionToken->ipAddress ne $ipAddress) {
-		$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',
-		    $sessionToken->toString(), $sessionToken->ipAddress, $ipAddress));
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed IP address from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->ipAddress, $ipAddress));
 
 		$sessionToken->ipAddress($ipAddress);
 	}
 
 	if (__userAgentChanged($sessionToken->userAgent, $userAgent)) {
-		$self->dic->logger->info(sprintf('%s the client changed user agent from %s to %s',
-		    $sessionToken->toString(), $sessionToken->userAgent, $userAgent));
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed user agent from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->userAgent, $userAgent));
 
 		$sessionToken->userAgent($userAgent);
 	}
