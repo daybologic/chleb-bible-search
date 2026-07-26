@@ -43,6 +43,6 @@ $title =~ s{>}{&gt;}gx;
 $title =~ s{"}{&quot;}gx;
 $title =~ s{'}{&#39;}gx;
 $md =~ s{([A-Z]+)\.md}{lc($1) . '.html'}gex;
-print qq{<!DOCTYPE html>\n<html lang="en">\n<head>\n\t<meta charset="UTF-8">\n\t<title>$title</title>\n\t<link rel="icon" href="/images/favicon.png" type="image/png">\n\t<link href="/style.css" rel="stylesheet" type="text/css">\n</head>\n<body>\n};
+print qq{<!DOCTYPE html>\n<html lang="en">\n<head>\n\t<meta charset="UTF-8">\n\t<title>$title</title>\n\t<link rel="icon" href="/images/favicon.png" type="image/png">\n\t<link href="/style.css" rel="stylesheet" type="text/css">\n</head>\n<body>\n\t<nav aria-label="Primary"><a href="/">Home</a></nav>\n};
 print markdown($md);
 print qq{</body>\n</html>\n};
