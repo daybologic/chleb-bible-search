@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Chleb Bible Search
+# Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL).
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/release-common"
+require_repo
+require_clean_worktree
+
+purpose=${1:-}
+if [[ -z "$purpose" ]]; then
+	printf '%s\n' 'What is the purpose of this release?' '  1) major' '  2) minor' '  3) patch'
+	read -r -p 'Release type (major/minor/patch, empty to abort): ' purpose
+fi
+case "$purpose" in
+	1|major) purpose=major ;;
+	2|minor) purpose=minor ;;
+	3|patch) purpose=patch ;;
+	*) die "unsupported release type '$purpose'" ;;
+esac
+
+current_version=$(read_version)
+IFS=. read -r major minor patch <<< "$current_version"
+latest=$(latest_release_branch)
+[[ -n "$latest" ]] || die 'no existing rel/X.Y branch was found'
+
+case "$purpose" in
+	major) target_branch="rel/$((major + 1)).0" ;;
+	minor) target_branch="rel/$major.$((minor + 1))" ;;
+	patch) target_branch="$latest" ;;
+esac
+
+if [[ "$purpose" == patch ]]; then
+	[[ "$target_branch" == "rel/$major.$minor" ]] || die "changelog version $current_version does not belong to $target_branch"
+	git show-ref --verify --quiet "refs/heads/$target_branch" || die "local branch '$target_branch' does not exist"
+	git switch "$target_branch"
+	git merge master --no-ff
+	printf 'Merged master into %s for patch release preparation.\n' "$target_branch"
+	exit 0
+fi
+
+if git show-ref --verify --quiet "refs/heads/$target_branch"; then
+	die "local branch '$target_branch' already exists"
+fi
+git switch master
+git switch --create "$target_branch"
+printf 'Created release branch %s from master.\n' "$target_branch"
