@@ -11,6 +11,9 @@ expected_branch=$(version_branch "$version")
 current_branch=$(git branch --show-current)
 [[ "$current_branch" == "$expected_branch" ]] || die "release $version must be made from $expected_branch, currently on '$current_branch'"
 
+printf 'Generating build metadata with ./Makefile.PL...\n'
+./Makefile.PL
+
 test_file='t/version.t'
 [[ -f "$test_file" ]] || test_file='t/Server_version.t'
 [[ -f "$test_file" ]] || die 'cannot find t/version.t or t/Server_version.t'
@@ -22,10 +25,6 @@ command -v make >/dev/null 2>&1 || die 'make is required'
 command -v sbuild >/dev/null 2>&1 || die 'sbuild is required to build the Debian package'
 
 printf 'Building Debian package with sbuild via make deb...\n'
-if [[ ! -f Makefile ]]; then
-	printf 'Generating Makefile with ./Makefile.PL...\n'
-	./Makefile.PL
-fi
 make deb
 
 tag="v$version"
