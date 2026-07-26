@@ -1100,7 +1100,11 @@ the best available source file without relying on filenames alone.
 
 sub __inspectSourceFile {
 	my ($self, $sourceFile) = @_;
-	my ($tempHandle, $tempPath) = tempfile(SUFFIX => '.sqlite', UNLINK => 1);
+	my ($tempHandle, $tempPath) = tempfile(
+		DIR    => $self->__makeTempDir(),
+		SUFFIX => '.sqlite',
+		UNLINK => 1,
+	);
 	close($tempHandle);
 	gunzip $sourceFile => $tempPath
 	   or die("gunzip \"" . $sourceFile . "\" failed: $GunzipError\n");
@@ -1168,6 +1172,26 @@ sub __makeCacheDir {
 	croak('No cache dir available');
 }
 
+=item C<__makeTempDir()>
+
+Return a writable directory for temporary SQLite work.  Prefer the selected
+backend cache directory and use C</var/tmp> when that directory is not
+writable.  Large compressed Bible databases must not be expanded in the
+usually much smaller system temporary filesystem.
+
+=cut
+
+sub __makeTempDir {
+	my ($self) = @_;
+
+	Readonly my @PATHS => ($self->cacheDir, '/var/tmp');
+	foreach my $path (@PATHS) {
+		return $path if (-d $path && -w $path);
+	}
+
+	croak('No writable temporary directory available');
+}
+
 =item C<__makeCachePath()>
 
 Return the decompressed SQLite cache path, refreshing it when the compressed
@@ -1206,8 +1230,21 @@ sub __makeCachePath {
 	}
 
 	if ($needsRefresh) {
-		gunzip $self->compressedPath => $path
-		   or die("gunzip \"" . $self->compressedPath . "\" failed: $GunzipError\n");
+		my ($tempHandle, $tempPath) = tempfile(
+			DIR    => $self->cacheDir,
+			SUFFIX => '.sqlite',
+			UNLINK => 0,
+		);
+		close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
+		if (!gunzip($self->compressedPath => $tempPath)) {
+			unlink($tempPath);
+			die("gunzip \"" . $self->compressedPath . "\" failed: $GunzipError\n");
+		}
+		rename($tempPath, $path) or do {
+			my $renameError = $ERRNO;
+			unlink($tempPath);
+			croak("rename($tempPath -> $path) failed: $renameError");
+		};
 	}
 
 	return $path;
