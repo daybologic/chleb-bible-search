@@ -75,6 +75,27 @@ sub testExplicitPreference {
 	return EXIT_SUCCESS;
 }
 
+sub testLookupBookFallback {
+	my ($self) = @_;
+	my $library = Chleb->new();
+	plan skip_all => 'Pickthall test data is not installed'
+		unless (scalar(grep { $_ eq 'pickthall' } $library->availableTranslations()) > 0);
+	plan tests => 2;
+
+	is_deeply(
+		Chleb::Server::Dancer2::__lookupTranslationsForBook(['pickthall'], 'eph', $library),
+		[],
+		'preferred translation falls back when it does not contain the requested book',
+	);
+	is_deeply(
+		Chleb::Server::Dancer2::__lookupTranslationsForBook(['pickthall'], 'quran', $library),
+		['pickthall'],
+		'preferred translation remains selected when it contains the requested book',
+	);
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;

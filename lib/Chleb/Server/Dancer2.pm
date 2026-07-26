@@ -163,6 +163,57 @@ sub __preferredTranslations {
 	return \@supportedTranslations;
 }
 
+=head1 __lookupTranslationsForBook($translations, $book, $library)
+
+Return the preferred translations when they contain C<$book>.  A preferred
+translation is a display preference, so an incompatible preference falls
+back to normal lookup translation selection.  Explicit C<translations>
+parameters are handled by the caller and are not passed through this helper.
+
+=cut
+
+sub __lookupTranslationsForBook {
+	my ($translations, $book, $library) = @_;
+
+	return $translations if (!defined($book) || length($book) == 0 || scalar(@$translations) == 0);
+
+	my @bibles = $library->getBibles({ translations => $translations });
+	my $requestedBook = lc($book);
+	foreach my $bible (@bibles) {
+		foreach my $bookObject (@{ $bible->books }) {
+			return $translations if (
+				lc($bookObject->shortName) eq $requestedBook
+				|| lc($bookObject->shortNameRaw) eq $requestedBook
+				|| lc($bookObject->longName) eq $requestedBook
+			);
+		}
+	}
+
+	return [];
+}
+
+=head1 __lookupTranslations($params)
+
+Resolve lookup translations from the request and preferred translation, then
+fall back when a cookie-selected translation does not contain the requested
+book.  Explicit request parameters always remain authoritative.
+
+=cut
+
+sub __lookupTranslations {
+	my ($params) = @_;
+
+	my $translations = __preferredTranslations(
+		$params->{paramPresent},
+		$params->{paramValue},
+		$params->{preferredTranslation},
+		$params->{availableTranslations},
+	);
+
+	return $translations if ($params->{paramPresent});
+	return __lookupTranslationsForBook($translations, $params->{book}, $params->{library});
+}
+
 =head1 __htmlEscape($value)
 
 Escape a value before inserting it into an HTML document.
@@ -834,12 +885,14 @@ sub __registerLookupRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	my $verse = getParam('verse');
 	my $form = Chleb::Utils::boolean('form', getParam('form'), 0);
 	my $queryParams = request()->params('query');
-	my $translations = __preferredTranslations(
-		exists($queryParams->{translations}),
-		getParam('translations'),
-		getCookie('preferredTranslation'),
-		[ $server->__library->availableTranslations() ],
-	);
+	my $translations = __lookupTranslations({
+		availableTranslations => [ $server->__library->availableTranslations() ],
+		book                 => $book,
+		library              => $server->__library,
+		paramPresent         => exists($queryParams->{translations}),
+		paramValue           => getParam('translations'),
+		preferredTranslation => getCookie('preferredTranslation'),
+	});
 	my $navigation = Chleb::Utils::boolean('navigation', getParam('navigation'), 0);
 	if ($navigation) {
 		redirect __lookupNavigationUrl($translations, $book), 307;
@@ -877,12 +930,14 @@ get '/1/lookup/:book/:chapter' => sub {
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
-	my $translations = __preferredTranslations(
-		exists($queryParams->{translations}),
-		getParam('translations'),
-		getCookie('preferredTranslation'),
-		[ $server->__library->availableTranslations() ],
-	);
+	my $translations = __lookupTranslations({
+		availableTranslations => [ $server->__library->availableTranslations() ],
+		book                 => $book,
+		library              => $server->__library,
+		paramPresent         => exists($queryParams->{translations}),
+		paramValue           => getParam('translations'),
+		preferredTranslation => getCookie('preferredTranslation'),
+	});
 
 	my $result;
 	my $evalOk6; $evalOk6 = eval {
@@ -921,12 +976,14 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $dancerRequest = request();
 	my $accept;
 	my $queryParams = $dancerRequest->params('query');
-	my $translations = __preferredTranslations(
-		exists($queryParams->{translations}),
-		getParam('translations'),
-		getCookie('preferredTranslation'),
-		[ $server->__library->availableTranslations() ],
-	);
+	my $translations = __lookupTranslations({
+		availableTranslations => [ $server->__library->availableTranslations() ],
+		book                 => $book,
+		library              => $server->__library,
+		paramPresent         => exists($queryParams->{translations}),
+		paramValue           => getParam('translations'),
+		preferredTranslation => getCookie('preferredTranslation'),
+	});
 
 	my $result;
 	my $evalOk7; $evalOk7 = eval {
