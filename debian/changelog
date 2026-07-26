@@ -12,7 +12,7 @@ chleb-bible-search (3.0.0) stable; urgency=medium
     selectors, labels with publication years, dependent lookup form, and
     translation-specific verse references
   * 🧭 Preserve and show translation context and selection in random verses,
-    VOTD, and search results; ensure requested translation order is preserved
+    VoTD, and search results; ensure requested translation order is preserved
     and deterministic
   * 🗂️ Prefer source-built generated data over installed data to avoid stale
     SQLite fallbacks when running from source
@@ -20,10 +20,10 @@ chleb-bible-search (3.0.0) stable; urgency=medium
     sentiment to speed warm restarts; keep sentiment in per-process cache
   * 🧪 Build generated data before dev server startup and for targeted tests;
     update test fixtures and make unit tests executable
-  * 🧹 Remove obsolete /1 v1 API verse routes where v2 exists
+  * 💥 Remove obsolete /1 v1 API verse routes where v2 exists
   * 🧭 Add VoTD (Verse of the Day) date navigation and grouping links and
     restore related HTML tests
-  * 🔐 Hash JWT identifiers in logs, use shared short token length, and
+  * 🔒️ Hash JWT identifiers in logs, use shared short token length, and
     improve session/token dampening handling
   * ♻️ Preserve default session cleanup directory and keep SQLite temp files
     out of /tmp
@@ -40,7 +40,7 @@ chleb-bible-search (3.0.0) stable; urgency=medium
     reinstall/removal
   * 🧪 Improve tests: share sentiment cache with Storable backend, normalize
     sentiment storage by verse identity, and bulk-warm sentiment caches
-  * 📦 Remove obsolete binary Bible importer and related spurious files; add
+  * 🔥 Remove obsolete binary Bible importer and related spurious files; add
     many generated/static data files (Pickthall text and emotion JSON)
 
  -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 26 Jul 2026 14:28:39 +0100
