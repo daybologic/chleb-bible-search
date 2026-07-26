@@ -33,7 +33,16 @@ use strict;
 use warnings;
 use Text::Markdown 'markdown';
 
-local $/; # slurp mode
+local $/ = undef; # slurp mode
 my $md = <>;
-$md =~ s/([A-Z]+)\.md/lc($1).'.html'/ge;
+my ($title) = $md =~ m{\A\#\s+(.+?)\s*$}mx;
+$title //= 'Chleb Bible Search';
+$title =~ s{&}{&amp;}gx;
+$title =~ s{<}{&lt;}gx;
+$title =~ s{>}{&gt;}gx;
+$title =~ s{"}{&quot;}gx;
+$title =~ s{'}{&#39;}gx;
+$md =~ s{([A-Z]+)\.md}{lc($1) . '.html'}gex;
+print qq{<!DOCTYPE html>\n<html lang="en">\n<head>\n\t<meta charset="UTF-8">\n\t<title>$title</title>\n\t<link rel="icon" href="/images/favicon.png" type="image/png">\n\t<link href="/style.css" rel="stylesheet" type="text/css">\n</head>\n<body>\n};
 print markdown($md);
+print qq{</body>\n</html>\n};
