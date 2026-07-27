@@ -2256,7 +2256,7 @@ not persisted, such as a JWT, rather than an observed change.
 sub __userAgentChanged {
 	my ($previous, $current) = @_;
 
-	return length($previous) > 0 && $previous ne $current;
+	return (length($previous) > 0 && $previous ne $current);
 }
 
 sub handleSessionToken {
