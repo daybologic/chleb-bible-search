@@ -178,6 +178,7 @@ data/static/public/settings.html
 data/static/public/style.css
 data/static/public/terms.html
 data/static/search.html
+data/static/votd.html
 data/static/verse.html
 'data/tests/1/a HTML.sh'
 'data/tests/1/a JSON.sh'

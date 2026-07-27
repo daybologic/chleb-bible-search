@@ -640,7 +640,7 @@ sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		}
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return $self->__verseToHtml($verse, \@json, $FUNCTION_VOTD);
+			return $self->__votdToHtml($verse, \@json, $params);
 		} else {
 			croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
 		}
@@ -656,7 +656,7 @@ sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	__addVotdDateLinks($self, $version, $params, $json->{links});
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return $self->__verseToHtml($verse, [$json], $FUNCTION_VOTD);
+		return $self->__votdToHtml($verse, [$json], $params);
 	}
 
 	if (__isJsonContentType($contentType)) {
@@ -1542,6 +1542,52 @@ sub __votdNavigationLinks {
 	];
 }
 
+=item C<__votdFormToHtml($verse, $json, $params)>
+
+Render a VoTD result inside the date-picker page.  The result uses the shared
+translation cards without lookup links, while its preceding and following day
+controls preserve form mode.
+
+=cut
+
+sub __votdFormToHtml {
+	my ($self, $verse, $json, $params) = @_;
+
+	my $when = $self->_resolveISO8601($params->{when})
+	    ->set_time_zone('UTC')
+	    ->truncate(to => 'day');
+	my $date = $when->strftime('%F');
+	my $pageTitle = "Chleb Bible Search - Verse of The Day - $date";
+	my $verseHtmlData = __verseHtmlData($verse, $json, { linkVerses => 0 });
+	my $cards = __verseHtmlCards($verseHtmlData, $pageTitle);
+	my ($yesterdayLink, $tomorrowLink) = @{__votdNavigationLinks($json->[0], $FUNCTION_VOTD)};
+
+	my $output = Chleb::Server::Dancer2::fetchStaticPage('generic_head', { TITLE => $pageTitle });
+	$output .= Chleb::Server::Dancer2::fetchStaticPage('votd', {
+		VOTD_CARDS => $cards,
+		VOTD_DATE => $date,
+		VOTD_TOMORROW => $tomorrowLink,
+		VOTD_WHEN => $when->strftime('%FT%T%z'),
+		VOTD_YESTERDAY => $yesterdayLink,
+	});
+	$output .= Chleb::Server::Dancer2::fetchStaticPage('generic_tail');
+
+	return $output;
+}
+
+=item C<__votdToHtml($verse, $json, $params)>
+
+Select the standalone or form-page VoTD HTML renderer.
+
+=cut
+
+sub __votdToHtml {
+	my ($self, $verse, $json, $params) = @_;
+
+	return $self->__votdFormToHtml($verse, $json, $params) if ($params->{form});
+	return $self->__verseToHtml($verse, $json, $FUNCTION_VOTD);
+}
+
 =item C<__verseToHtml($verse, $json, $function)>
 
 Render a verse response as the HTML verse page, including translation cards and
@@ -1685,15 +1731,18 @@ sub __verseToHtml {
 	});
 }
 
-=item C<__verseHtmlData($verse, $json)>
+=item C<__verseHtmlData($verse, $json, [$options])>
 
 Collect the verse reference and translation sections used by the HTML renderer.
 The order in which translations first appear is retained for card rendering.
+Set C<linkVerses> false in C<$options> to render continuation verse numbers
+without lookup links.
 
 =cut
 
 sub __verseHtmlData {
-	my ($verse, $json) = @_;
+	my ($verse, $json, $options) = @_;
+	$options ||= { };
 
 	my $includedCount = scalar(@{ $json->[0]->{included} });
 	my %rawBookNameMap = ( );
@@ -1742,8 +1791,10 @@ sub __verseHtmlData {
 			$section->{html} .= "\r\n";
 			$section->{html} .= '<sup class="versenum">';
 			my $verseLink = $json->[0]->{data}->[$verseIndex]->{links}->{self};
-			$section->{html} .= sprintf('<a href="%s">', $verseLink);
-			$section->{html} .= "${verseOrdinal} </a></sup>";
+			$section->{html} .= sprintf('<a href="%s">', $verseLink) if (!exists($options->{linkVerses}) || $options->{linkVerses});
+			$section->{html} .= "${verseOrdinal} ";
+			$section->{html} .= '</a>' if (!exists($options->{linkVerses}) || $options->{linkVerses});
+			$section->{html} .= '</sup>';
 		}
 
 		$section->{html} .= $attributes->{text};

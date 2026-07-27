@@ -935,6 +935,60 @@ sub testHtmlNavigationKeepsAllTranslations {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlFormKeepsResultOnDatePickerPage {
+	my ($self) = @_;
+	plan tests => 14;
+
+	my $when = '2024-10-30T00:00:00+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		form => 1,
+		version => 2,
+		when => $when,
+		translations => ['asv', 'kjv'],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	like($html, qr{<title>Chleb Bible Search - Verse of The Day - 2024-10-30</title>}, 'form HTML has a dated title');
+	like($html, qr{<form class="search-form votd-form" method="GET" action="/2/votd">}, 'form submits to the v2 VoTD endpoint');
+	like($html, qr{<input type="date" id="votd-date" name="date" value="2024-10-30" required>}, 'form selects the requested date');
+	like($html, qr{<input type="hidden" id="votd-when" name="when" value="2024-10-30T00:00:00\+0000" disabled>},
+		'form carries the endpoint timestamp');
+	like($html, qr{when\.value = date\.value \+ 'T00:00:00\+0000';}, 'form submits the date as an endpoint timestamp');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?[^"]*form=1[^"]*when=2024-10-29T00:00:00\+0000">yesterday</a>},
+		'yesterday remains on the form page');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?[^"]*form=1[^"]*when=2024-10-31T00:00:00\+0000">tomorrow</a>},
+		'tomorrow remains on the form page');
+	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'form page renders the result cards');
+	unlike($html, qr{href="/1/lookup/}, 'form result does not link through to lookup');
+	like($html, qr{<button type="button" id="votd-home">Home</button>}, 'form has a Home button');
+	is(Chleb::Server::Dancer2::__votdFormWhen('2026-07-28'), '2026-07-28T00:00:00+0000',
+		'date picker value converts to the endpoint timestamp');
+	like($html, qr{<div class="wrapper votd-results">\s+<div class="card">}s, 'result is displayed as a card on the same page');
+
+	my @continuedVerses = (
+		$self->sut->__library->fetch('Genesis', 1, 1, { translations => ['kjv'] }),
+		$self->sut->__library->fetch('Genesis', 1, 2, { translations => ['kjv'] }),
+	);
+	my @continuedJson = map {
+		Chleb::Server::Moose::__verseToJsonApi($_, { translations => ['kjv'] })
+	} @continuedVerses;
+	push(@{ $continuedJson[0]->{data} }, $continuedJson[1]->{data}->[0]);
+	$continuedJson[0]->{links}->{yesterday} = '/2/votd?form=1&when=2024-10-29T00:00:00+0000';
+	$continuedJson[0]->{links}->{tomorrow} = '/2/votd?form=1&when=2024-10-31T00:00:00+0000';
+	my $continuedHtml = $self->sut->__votdFormToHtml(
+		\@continuedVerses,
+		[$continuedJson[0]],
+		{ form => 1, when => $when },
+	);
+
+	like($continuedHtml, qr{<sup class="versenum">2 </sup>}, 'continuation verse number remains visible');
+	unlike($continuedHtml, qr{href="/1/lookup/}, 'continuation verse number does not link through to lookup');
+
+	return EXIT_SUCCESS;
+}
+
 sub testHtmlNavigationDateLinksOnlyForVotd {
 	my ($self) = @_;
 	plan tests => 2;

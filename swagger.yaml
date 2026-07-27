@@ -220,6 +220,21 @@ paths:
           required: false
           description: Date in ISO-8601, for viewing previous verses of the day
         - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+            example: 2026-07-28
+          required: false
+          description: Date-picker fallback used by form mode; converted to midnight UTC when when is absent
+        - in: query
+          name: form
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: In text/html mode, display the date picker and VoTD result cards on the same page
+        - in: query
           name: parental
           schema:
             type: boolean

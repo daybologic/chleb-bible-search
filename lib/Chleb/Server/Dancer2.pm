@@ -416,6 +416,22 @@ sub __lookupNavigationUrl {
 	return "/1/lookup/${selectedBook}/1${translationQuery}";
 }
 
+=head1 __votdFormWhen($date)
+
+Convert a date-picker value to the UTC timestamp accepted by the VoTD
+endpoint.
+
+=cut
+
+sub __votdFormWhen {
+	my ($date) = @_;
+
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "Invalid VoTD date '$date'"))
+		if (!defined($date) || $date !~ m{\A\d{4}-\d{2}-\d{2}\z}x);
+
+	return "${date}T00:00:00+0000";
+}
+
 =head1 __preferredWholeword($paramPresent, $paramValue, $wholeword)
 
 Resolves the whole-word search preference.
@@ -774,6 +790,8 @@ get '/2/votd' => sub {
 	my $parental = Chleb::Utils::boolean('parental', getParam('parental'), 0);
 	my $redirect = Chleb::Utils::boolean('redirect', getParam('redirect'), 0);
 	my $when = getParam('when');
+	my $date = getParam('date');
+	my $form = Chleb::Utils::boolean('form', getParam('form'), 0);
 	my $testament = getParam('testament');
 	my $dancerRequest = request();
 	my $accept;
@@ -787,6 +805,7 @@ get '/2/votd' => sub {
 
 	my $result;
 	my $evalOk5; $evalOk5 = eval {
+		$when = __votdFormWhen($date) if (defined($date) && !defined($when));
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 		$result = $server->__votd({
 			accept       => $accept,
@@ -796,7 +815,7 @@ get '/2/votd' => sub {
 			translations => $translations,
 			redirect     => $redirect,
 			testament    => $testament,
-			form         => 0,
+			form         => $form,
 		});
 		1;
 	} or $evalOk5 = 0;
