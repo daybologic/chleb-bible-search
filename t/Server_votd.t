@@ -961,7 +961,7 @@ sub testHtmlFormKeepsResultOnDatePickerPage {
 	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?[^"]*form=1[^"]*when=2024-10-31T00:00:00\+0000">tomorrow</a>},
 		'tomorrow remains on the form page');
 	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'form page renders the result cards');
-	unlike($html, qr{href="/1/lookup/}, 'form result does not link through to lookup');
+	unlike($html, qr{href="/1/lookup/}, 'single-verse form result does not wrap its card in a lookup link');
 	like($html, qr{<button type="button" id="votd-home">Home</button>}, 'form has a Home button');
 	is(Chleb::Server::Dancer2::__votdFormWhen('2026-07-28'), '2026-07-28T00:00:00+0000',
 		'date picker value converts to the endpoint timestamp');
@@ -983,8 +983,12 @@ sub testHtmlFormKeepsResultOnDatePickerPage {
 		{ form => 1, when => $when },
 	);
 
-	like($continuedHtml, qr{<sup class="versenum">2 </sup>}, 'continuation verse number remains visible');
-	unlike($continuedHtml, qr{href="/1/lookup/}, 'continuation verse number does not link through to lookup');
+	like(
+		$continuedHtml,
+		qr{<sup class="versenum"><a href="/1/lookup/gen/1/2\?translations=kjv">2 </a></sup>},
+		'continuation verse number links through to lookup',
+	);
+	unlike($continuedHtml, qr{<a href="/1/lookup/gen/1/1}, 'card itself does not link through to lookup');
 
 	return EXIT_SUCCESS;
 }

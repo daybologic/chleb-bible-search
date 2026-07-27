@@ -1545,8 +1545,8 @@ sub __votdNavigationLinks {
 =item C<__votdFormToHtml($verse, $json, $params)>
 
 Render a VoTD result inside the date-picker page.  The result uses the shared
-translation cards without lookup links, while its preceding and following day
-controls preserve form mode.
+translation cards, with continuation verse numbers linking to lookup, while
+its preceding and following day controls preserve form mode.
 
 =cut
 
@@ -1558,7 +1558,7 @@ sub __votdFormToHtml {
 	    ->truncate(to => 'day');
 	my $date = $when->strftime('%F');
 	my $pageTitle = "Chleb Bible Search - Verse of The Day - $date";
-	my $verseHtmlData = __verseHtmlData($verse, $json, { linkVerses => 0 });
+	my $verseHtmlData = __verseHtmlData($verse, $json);
 	my $cards = __verseHtmlCards($verseHtmlData, $pageTitle);
 	my ($yesterdayLink, $tomorrowLink) = @{__votdNavigationLinks($json->[0], $FUNCTION_VOTD)};
 

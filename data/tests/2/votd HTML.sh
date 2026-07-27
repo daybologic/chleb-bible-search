@@ -56,4 +56,3 @@ grep -q '<input type="date" id="votd-date" name="date" value="2026-07-28" requir
 grep -q '<div class="wrapper votd-results">' <<< "$formPage"
 grep -q '>yesterday</a>' <<< "$formPage"
 grep -q '>tomorrow</a>' <<< "$formPage"
-! grep -q 'href="/1/lookup/' <<< "$formPage"
