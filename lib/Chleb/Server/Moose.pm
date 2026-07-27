@@ -2245,6 +2245,20 @@ sub logRequest {
 	return;
 }
 
+=head1 __userAgentChanged($previous, $current)
+
+Return true when a previously recorded user agent differs from the current
+one.  An empty previous value represents a token whose user-agent metadata was
+not persisted, such as a JWT, rather than an observed change.
+
+=cut
+
+sub __userAgentChanged {
+	my ($previous, $current) = @_;
+
+	return (length($previous) > 0 && $previous ne $current);
+}
+
 sub handleSessionToken {
 	my ($self) = @_;
 
@@ -2324,15 +2338,15 @@ sub handleSessionToken {
 	}
 
 	if ($sessionToken->ipAddress ne $ipAddress) {
-		$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',
-		    $sessionToken->toString(), $sessionToken->ipAddress, $ipAddress));
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed IP address from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->ipAddress, $ipAddress));
 
 		$sessionToken->ipAddress($ipAddress);
 	}
 
-	if ($sessionToken->userAgent ne $userAgent) {
-		$self->dic->logger->info(sprintf('%s the client changed user agent from %s to %s',
-		    $sessionToken->toString(), $sessionToken->userAgent, $userAgent));
+	if (__userAgentChanged($sessionToken->userAgent, $userAgent)) {
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed user agent from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->userAgent, $userAgent));
 
 		$sessionToken->userAgent($userAgent);
 	}
