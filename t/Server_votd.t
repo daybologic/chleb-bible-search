@@ -937,7 +937,7 @@ sub testHtmlNavigationKeepsAllTranslations {
 
 sub testHtmlFormKeepsResultOnDatePickerPage {
 	my ($self) = @_;
-	plan tests => 14;
+	plan tests => 17;
 
 	my $when = '2024-10-30T00:00:00+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
@@ -961,7 +961,10 @@ sub testHtmlFormKeepsResultOnDatePickerPage {
 	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?[^"]*form=1[^"]*when=2024-10-31T00:00:00\+0000">tomorrow</a>},
 		'tomorrow remains on the form page');
 	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'form page renders the result cards');
-	unlike($html, qr{href="/1/lookup/}, 'single-verse form result does not wrap its card in a lookup link');
+	like($html, qr{<a href="/1/lookup/psa/1\?translations=asv">Psa</a>}, 'VoTD card book links to its first chapter');
+	like($html, qr{<a href="/1/lookup/psa/122\?translations=asv">122</a>}, 'VoTD card chapter links to its chapter');
+	like($html, qr{<a href="/1/lookup/psa/122/8\?translations=asv">8</a>}, 'VoTD card verse links to its verse');
+	unlike($html, qr{<a href="/1/lookup/[^"]+">\s*<div class="card">}, 'form does not wrap its card in a lookup link');
 	like($html, qr{<button type="button" id="votd-home">Home</button>}, 'form has a Home button');
 	is(Chleb::Server::Dancer2::__votdFormWhen('2026-07-28'), '2026-07-28T00:00:00+0000',
 		'date picker value converts to the endpoint timestamp');
@@ -988,7 +991,11 @@ sub testHtmlFormKeepsResultOnDatePickerPage {
 		qr{<sup class="versenum"><a href="/1/lookup/gen/1/2\?translations=kjv">2 </a></sup>},
 		'continuation verse number links through to lookup',
 	);
-	unlike($continuedHtml, qr{<a href="/1/lookup/gen/1/1}, 'card itself does not link through to lookup');
+	unlike(
+		$continuedHtml,
+		qr{<a href="/1/lookup/gen/1/1[^"]*">In the beginning},
+		'card verse text does not link through to lookup',
+	);
 
 	return EXIT_SUCCESS;
 }

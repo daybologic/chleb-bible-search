@@ -1775,9 +1775,13 @@ sub __verseHtmlData {
 		if (!exists($translationSections{$translation})) {
 			push(@translationOrder, $translation);
 			$translationSections{$translation} = {
+				book => lc($bookName),
+				book_name_raw => $bookNameRaw,
+				chapter => $chapter,
 				emotion => $attributes->{emotion},
 				html => '',
 				last_continues => 0,
+				ordinal => $verseOrdinal,
 				reference => sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal),
 				tones => [],
 				year => $thisVerse->book->bible->year(),
@@ -1826,6 +1830,14 @@ sub __verseHtmlCards {
 		my $section = $data->{translationSections}->{$translation};
 		my $translationLabel = lc($translation);
 		$translationLabel .= sprintf(' (%d)', $section->{year}) if (defined($section->{year}));
+		my $lookupBase = sprintf('/1/lookup/%s', $section->{book});
+		my $translationQuery = sprintf('?translations=%s', lc($translation));
+		my $referenceHtml = sprintf(
+			'<a href="%s/1%s">%s</a> <a href="%s/%d%s">%d</a>:<a href="%s/%d/%d%s">%d</a>',
+			$lookupBase, $translationQuery, $section->{book_name_raw},
+			$lookupBase, $section->{chapter}, $translationQuery, $section->{chapter},
+			$lookupBase, $section->{chapter}, $section->{ordinal}, $translationQuery, $section->{ordinal},
+		);
 		my $sentiments = '';
 		my %toneSeen;
 
@@ -1839,7 +1851,7 @@ sub __verseHtmlCards {
 		$output .= "\t\t\t\t\t\t<div class=\"card\">\n";
 		$output .= "\t\t\t\t\t\t\t<div class=\"subtitle\">$pageTitle</div>\n";
 		$output .= "\n";
-		$output .= "\t\t\t\t\t\t\t<h1>$section->{reference}</h1>\n";
+		$output .= "\t\t\t\t\t\t\t<h1>$referenceHtml</h1>\n";
 		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translationLabel</div>\n";
 		$output .= "\n";
 		$output .= "\t\t\t\t\t\t\t<div>\n";
