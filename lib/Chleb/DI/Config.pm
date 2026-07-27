@@ -132,7 +132,7 @@ sub get {
 	my $level = 'trace';
 	if ($defaultUsed && !$self->__warnedDefaults->{join("\0", $section, $key)}) {
 		$level = 'warn';
-		$self->__warnedDefaults->{join("\0", $section, $key)} = 1;
+		$self->__warnedDefaults->{join("\0", $section, $key)}++;
 		$msg .= ' -- default used because this value is not configured!  We recommend you set it explicitly in your config!';
 	}
 
