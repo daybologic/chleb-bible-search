@@ -72,6 +72,8 @@ warning_equal:
 Dancer2:
   public_dir: data/static/public
 session_tokens:
+  backend_jwt:
+    secret: unit-test-secret
   backend_redis:
     db: 5
     host: redis-82.example.net
@@ -161,6 +163,21 @@ sub testSubsectionHash_default {
 		host => 'redis-82.example.net',
 		nonExist => $default,
 	}, 'key not set - returning default within subsection') or diag(explain($subsection));
+
+	return EXIT_SUCCESS;
+}
+
+sub testSubsectionSecretRedacted {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $subsection = $self->sut->get('session_tokens', 'backend_jwt', { secret => undef });
+	is($subsection->{secret}, 'unit-test-secret', 'secret is returned to the caller');
+
+	$self->sut->dic->logger->isNotLogged(qr{ \Qunit-test-secret\E }x);
+	$self->sut->dic->logger->isLogged(
+		qr{ secret: [ ] '\Q***\E' [ ] \(from [ ] real [ ] config\) }x,
+	);
 
 	return EXIT_SUCCESS;
 }
