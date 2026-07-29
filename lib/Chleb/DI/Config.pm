@@ -50,7 +50,6 @@ C<tokens.yaml> are merged over it when present.
 =cut
 
 use Chleb::Utils;
-use Data::Dumper;
 use English qw(-no_match_vars);
 use IO::File;
 use Readonly;
@@ -125,8 +124,12 @@ sub get {
 		isBoolean    => $isBoolean,
 		pDefaultUsed => \$defaultUsed,
 	});
-	my $valuePrintable = (defined($value) && ref($value)) ? (Dumper $value) : $value;
-	my $defaultPrintable = (defined($default) && ref($default)) ? (Dumper $default) : $default;
+	my $valuePrintable = Chleb::Utils::redactConfigValue($key, $value);
+	$valuePrintable = Chleb::Utils::redactingDumper($valuePrintable)
+	    if (defined($valuePrintable) && ref($valuePrintable));
+	my $defaultPrintable = Chleb::Utils::redactConfigValue($key, $default);
+	$defaultPrintable = Chleb::Utils::redactingDumper($defaultPrintable)
+	    if (defined($defaultPrintable) && ref($defaultPrintable));
 	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $valuePrintable, $defaultPrintable);
 
 	my $level = 'trace';
@@ -195,18 +198,20 @@ sub __get {
 			foreach my $k (keys(%allKeys)) {
 				my $v;
 				if (exists($self->__data->{$section}->{$key}->{$k})) {
-					$self->dic->logger->trace(Dumper $self->__data);
+					$self->dic->logger->trace(Chleb::Utils::redactingDumper($self->__data));
 					$v = $self->__data->{$section}->{$key}->{$k};
-					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from real config)");
+					my $printableValue = Chleb::Utils::redactConfigValue($k, $v);
+					$self->dic->logger->trace("$section -> $key -> $k: '$printableValue' (from real config)");
 				} else {
 					$v = $default->{$k};
-					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from default)");
+					my $printableValue = Chleb::Utils::redactConfigValue($k, $v);
+					$self->dic->logger->trace("$section -> $key -> $k: '$printableValue' (from default)");
 				}
 
 				$ephemeralSection{$k} = $v;
 			}
 
-			$self->dic->logger->trace('Ephemeral section content: ' . Dumper \%ephemeralSection);
+			$self->dic->logger->trace('Ephemeral section content: ' . Chleb::Utils::redactingDumper(\%ephemeralSection));
 			return \%ephemeralSection;
 		}
 
