@@ -1560,7 +1560,7 @@ sub __votdFormToHtml {
 	my $pageTitle = "Chleb Bible Search - Verse of The Day - $date";
 	my $verseHtmlData = __verseHtmlData($verse, $json);
 	my $cards = __verseHtmlCards($verseHtmlData, $pageTitle);
-	my ($yesterdayLink, $tomorrowLink) = @{__votdNavigationLinks($json->[0], $FUNCTION_VOTD)};
+	my ($yesterdayLink, $tomorrowLink) = @{ __votdNavigationLinks($json->[0], $FUNCTION_VOTD) };
 
 	my $output = Chleb::Server::Dancer2::fetchStaticPage('generic_head', { TITLE => $pageTitle });
 	$output .= Chleb::Server::Dancer2::fetchStaticPage('votd', {
