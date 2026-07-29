@@ -1,0 +1,44 @@
+<!-- Chleb Template -->
+		<form class="search-form votd-form" method="GET" action="/2/votd">
+			<h2>Verse of the Day</h2>
+
+			<div class="form-group">
+				<label for="votd-date">Date</label>
+				<input type="date" id="votd-date" name="date" value="__VOTD_DATE__" required>
+				<input type="hidden" id="votd-when" name="when" value="__VOTD_WHEN__" disabled>
+			</div>
+
+			<input type="hidden" name="form" value="true">
+			<button type="submit">Show verse</button>
+			<button type="button" id="votd-home">Home</button>
+		</form>
+
+		<nav class="votd-date-navigation" aria-label="Verse of the Day dates">
+			__VOTD_YESTERDAY__
+			__VOTD_TOMORROW__
+		</nav>
+
+		<div class="wrapper votd-results">
+			__VOTD_CARDS__
+		</div>
+
+		<script>
+			(function () {
+				'use strict';
+
+				var form = document.querySelector('.votd-form');
+				var date = document.getElementById('votd-date');
+				var when = document.getElementById('votd-when');
+				var home = document.getElementById('votd-home');
+
+				form.addEventListener('submit', function () {
+					when.value = date.value + 'T00:00:00+0000';
+					when.disabled = false;
+					date.removeAttribute('name');
+				});
+
+				home.addEventListener('click', function () {
+					window.location.href = '/';
+				});
+			}());
+		</script>

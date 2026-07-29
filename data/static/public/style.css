@@ -385,6 +385,7 @@ label {
 	font-weight: bold;
 }
 
+input[type="date"],
 input[type="text"],
 select {
 	box-sizing: border-box;
@@ -396,6 +397,30 @@ select {
 	background-color: #fff;
 	color: #000;
 	font-size: 1em;
+}
+
+.votd-date-navigation {
+	display: flex;
+	justify-content: center;
+	gap: 0.75rem;
+	margin: 1.5rem auto 0;
+}
+
+.votd-date-navigation a {
+	display: inline-block;
+	padding: 0.7em 1.5em;
+	border-radius: 8px;
+	background: #333;
+	color: #fff;
+	text-decoration: none;
+}
+
+.votd-date-navigation a:hover {
+	background: #555;
+}
+
+.votd-results {
+	margin: 0 auto;
 }
 
 button {

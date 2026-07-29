@@ -372,7 +372,7 @@ sub test_not_found {
 
 sub testHtmlListsTranslationsSeparately {
 	my ($self) = @_;
-	plan tests => 8;
+	plan tests => 11;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
 	my $html = $self->sut->__lookup({
@@ -390,6 +390,9 @@ sub testHtmlListsTranslationsSeparately {
 	is(scalar(@cards), 2, 'each translation has its own card');
 	is_deeply(\@translations, [ 'kjv (1611)', 'asv (1901)' ], 'each translation has its requested label order');
 	like($cards[0], qr{<div class="translation">kjv \(1611\)</div>}s, 'KJV label is in the first card');
+	like($cards[0], qr{<a href="/1/lookup/mat/1\?translations=kjv">Mat</a>}, 'book name links to its first chapter');
+	like($cards[0], qr{<a href="/1/lookup/mat/22\?translations=kjv">22</a>}, 'chapter number links to its chapter');
+	like($cards[0], qr{<a href="/1/lookup/mat/22/14\?translations=kjv">14</a>}, 'verse number links to its verse');
 	like($cards[0], qr{<blockquote>\s*For many are called, but few \[are\] chosen\.\s*</blockquote>}s, 'KJV text is in the first card');
 	like($cards[0], qr{<span class="tag tag-color-\d+">neutral</span>\s*</blockquote>}s, 'KJV sentiments are in the first card');
 	like($cards[1], qr{<div class="translation">asv \(1901\)</div>}s, 'ASV label is in the second card');
@@ -454,7 +457,7 @@ sub testHtmlBookSelectorUsesCurrentTranslation {
 sub testHtmlUsesEachTranslationReference {
 	my ($self) = @_;
 	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
-	plan tests => 1;
+	plan tests => 2;
 
 	my @verse = (
 		$self->sut->__library->fetch('Genesis', 1, 1, { translations => ['kjv'] }),
@@ -467,9 +470,18 @@ sub testHtmlUsesEachTranslationReference {
 	push(@{ $json[0]->{data} }, $json[1]->{data}->[0]);
 
 	my $html = $self->sut->__verseToHtml(\@verse, \@json, 3);
-	my @references = $html =~ m{<h1>([^<]+)</h1>}g;
+	my @references = $html =~ m{<h1>(.*?)</h1>}g;
 
-	is_deeply(\@references, [ 'Gen 1:1', 'Quran 1:1' ], 'HTML uses each translation reference');
+	like(
+		$references[0],
+		qr{<a href="/1/lookup/gen/1\?translations=kjv">Gen</a>},
+		'HTML uses the first translation reference',
+	);
+	like(
+		$references[1],
+		qr{<a href="/1/lookup/quran/1\?translations=pickthall">Quran</a>},
+		'HTML uses the second translation reference',
+	);
 
 	return EXIT_SUCCESS;
 }
