@@ -31,15 +31,16 @@
 
 use strict;
 use warnings;
+use Carp qw(croak);
 use English qw(-no_match_vars);
 use JSON::PP qw(decode_json);
 
 my $infile = shift @ARGV // 'EntireBible-DR.json';
 
-open my $fh, '<:raw', $infile or die "open($infile): $OS_ERROR";
-local $INPUT_RECORD_SEPARATOR;
+open(my $fh, '<:raw', $infile) or croak("open($infile): $OS_ERROR");
+local $INPUT_RECORD_SEPARATOR = undef;
 my $data = decode_json(<$fh>);
-close $fh or die "close($infile): $OS_ERROR";
+close($fh) or croak("close($infile): $OS_ERROR");
 
 my @expected = (
 	'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',

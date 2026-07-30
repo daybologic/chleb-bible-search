@@ -31,15 +31,16 @@
 
 use strict;
 use warnings;
+use Carp qw(croak);
 use English qw(-no_match_vars);
 use JSON::PP qw(decode_json);
 
 my $infile = shift @ARGV // 'EntireBible-DR.json';
 
-open my $fh, '<:raw', $infile or die "open($infile): $OS_ERROR";
-local $INPUT_RECORD_SEPARATOR;
+open(my $fh, '<:raw', $infile) or croak("open($infile): $OS_ERROR");
+local $INPUT_RECORD_SEPARATOR = undef;
 my $json_text = <$fh>;
-close $fh or die "close($infile): $OS_ERROR";
+close($fh) or croak("close($infile): $OS_ERROR");
 
 my $data = decode_json($json_text);
 
@@ -180,7 +181,7 @@ if (!exists $data->{'Apocalypse'} && exists $data->{'Revelation'}) {
 BOOK:
 for my $book (@book_order) {
 	next BOOK if !exists $data->{$book}; # skip if absent
-	my $book_abbr = $abbr{$book} // die "No abbreviation mapping for book: $book";
+	my $book_abbr = $abbr{$book} // croak("No abbreviation mapping for book: $book");
 
 	my $chapters = $data->{$book};
 	for my $ch (sort { $a <=> $b } keys %{$chapters}) {
@@ -189,7 +190,7 @@ for my $book (@book_order) {
 			my $text = $verses->{$vs};
 
 			# Clean up: ensure it's a single line (just in case)
-			$text =~ s/\R/ /g;
+			$text =~ s{ \R }{ }gx;
 
 			print "dr:${book_abbr}:${ch}:${vs}::${text}\n";
 		}
