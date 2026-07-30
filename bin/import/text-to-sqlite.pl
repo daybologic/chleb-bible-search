@@ -34,6 +34,7 @@ package main;
 use strict;
 use warnings;
 
+use Carp qw(croak);
 use DBI;
 use English qw(-no_match_vars);
 use IO::File;
@@ -320,7 +321,7 @@ SQL
 
 	foreach my $translation (@$translations) {
 		my $meta = $TRANSLATION_META{$translation}
-		    or die("No metadata (year/language) known for translation '$translation'");
+		    or croak("No metadata (year/language) known for translation '$translation'");
 		$sth->execute($translation, $meta->{year}, $meta->{language});
 	}
 
@@ -339,7 +340,7 @@ SQL
 
 	foreach my $translation (@$translations) {
 		my $meta = $TRANSLATION_META{$translation}
-		    or die("No metadata (year/language) known for translation '$translation'");
+		    or croak("No metadata (year/language) known for translation '$translation'");
 		foreach my $name (keys(%{ $meta->{properties} // {} })) {
 			$sth->execute($translation, $name, $meta->{properties}->{$name});
 		}
@@ -362,7 +363,7 @@ sub __writeSentiment {
 		 WHERE book.translation = ?
 		 ORDER BY book.ordinal, chapter.ordinal, verse.ordinal_relative_to_chapter
 SQL
-	die("Sentiment data for $translation does not match the verse data\n")
+	croak("Sentiment data for $translation does not match the verse data\n")
 	    unless (scalar(@{ $sentiment }) == scalar(@{ $verseRows }));
 
 	my $sth = $fileHandle->prepare(<<'SQL');
@@ -395,7 +396,7 @@ sub __verseCountFromTranslation {
 
 	my $fileName = join('/', $DATA_DIR, __inputFromTranslation($translation));
 	my $fh = IO::File->new($fileName, 'r')
-	    or die(sprintf("Failed to open '%s' -- %s", $fileName, $ERRNO));
+	    or croak(sprintf("Failed to open '%s' -- %s", $fileName, $ERRNO));
 
 	my $verseCount = 0;
 	$verseCount++ while (<$fh>);
@@ -502,7 +503,7 @@ SQL
 	unless ($bookKeys{$bookKey}) {
 		my $ordinal = ($TRANSLATION_BOOK_ORDINAL{$translation} // {})->{$bookShortName}
 		    // $BOOK_ORDINAL{$bookShortName}
-		    // die("Missing ordinal for '$bookShortName' in translation '$translation'");
+		    // croak("Missing ordinal for '$bookShortName' in translation '$translation'");
 		my $otCount = $TRANSLATION_OT_COUNT{$translation} // $OT_COUNT;
 		my $testament = $BOOK_TESTAMENT{$bookShortName} // ($ordinal > $otCount ? 'N' : 'O');
 		my $id = __uuid('book');
@@ -538,7 +539,9 @@ SQL
 }
 
 sub __writeVerse {
-	my ($fileHandle, $translation, $bookShortName, $chapterOrdinal, $verseNumber, $verseKey, $verseText) = @_;
+	my ($fileHandle, $args) = @_;
+	my ($translation, $bookShortName, $chapterOrdinal, $verseNumber, $verseText) =
+	    @{$args}{qw(translation bookShortName chapterOrdinal verseNumber verseText)};
 
 my $sthVerse = $fileHandle->prepare(<<'SQL');
 	INSERT INTO verse (id, book_id, chapter_id, ordinal_relative_to_book, ordinal_relative_to_chapter, text)
@@ -565,15 +568,21 @@ sub __processVerses {
 
 	if (my $fh = IO::File->new(join('/', $DATA_DIR, __inputFromTranslation($translation)), 'r')) {
 		while (my $line = <$fh>) {
-			my @verseData = split(m/::/, $line, 2);
+			my @verseData = split(m{ :: }x, $line, 2);
 			my ($verseKey, $verseText) = @verseData;
-			my ($translation, $bookShortName, $chapterOrdinal, $verseNumber)
-			    = split(m/:/, $verseKey, 4);
+			my ($lineTranslation, $bookShortName, $chapterOrdinal, $verseNumber)
+			    = split(m{ : }x, $verseKey, 4);
 			chomp($verseText);
 
-			__writeBook($fileHandle, $translation, $bookShortName);
-			__writeChapter($fileHandle, $translation, $bookShortName, $chapterOrdinal);
-			__writeVerse($fileHandle, $translation, $bookShortName, $chapterOrdinal, $verseNumber, $verseKey, $verseText);
+			__writeBook($fileHandle, $lineTranslation, $bookShortName);
+			__writeChapter($fileHandle, $lineTranslation, $bookShortName, $chapterOrdinal);
+			__writeVerse($fileHandle, {
+				translation    => $lineTranslation,
+				bookShortName  => $bookShortName,
+				chapterOrdinal => $chapterOrdinal,
+				verseNumber    => $verseNumber,
+				verseText      => $verseText,
+			});
 		}
 	}
 
@@ -587,15 +596,15 @@ sub getSentiment {
 
 	my $text;
 	if (my $fh = IO::File->new(join('/', $DATA_DIR, __emotionFromTranslation($translation)), 'r')) {
-		$text = do { local $/; <$fh> };
-		$fh = undef;
+		$text = do { local $INPUT_RECORD_SEPARATOR = undef; <$fh> };
+		$fh->close() or croak("Cannot close sentiment data for $translation: $ERRNO");
 	}
 
 	my $verseCount = __verseCountFromTranslation($translation);
 	return [ map { {} } (1 .. $verseCount) ] unless (defined($text));
 
 	my $data = decode_json($text);
-	die("Sentiment data for $translation is incomplete")
+	croak("Sentiment data for $translation is incomplete")
 	    unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == $verseCount);
 
 	return $data;
