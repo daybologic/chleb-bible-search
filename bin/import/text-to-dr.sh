@@ -32,5 +32,8 @@
 
 set -eu
 
-bin/import/text-to-bin.pl dr
-gzip -f data/dr.bin
+translation=dr
+name=$translation
+
+bin/import/text-to-sqlite.pl -t "$translation" -n "$name"
+gzip -f "data/${name}.sqlite"

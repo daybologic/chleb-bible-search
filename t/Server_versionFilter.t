@@ -30,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package ServerVersionFilterTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -54,7 +58,7 @@ sub setUp {
 		return EXIT_FAILURE;
 	}
 
-	$self->sut(\&Chleb::Server::Moose::__versionFilter);
+	$self->sut(\&Chleb::Server::Moose::__versionFilter); ## no critic (Variables::ProtectPrivateVars)
 
 	return EXIT_SUCCESS;
 }
@@ -82,9 +86,10 @@ sub testTrap {
 sub __checkTrap {
 	my ($self, $version) = @_;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->($version, 2, 5);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		my $description = "endpoint version must be between 2 and 5, you said ${version}";

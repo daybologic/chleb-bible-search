@@ -30,18 +30,34 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-all: kjv.bin.gz asv.bin.gz dr.bin.gz
+all: \
+	asv.sqlite.gz \
+	core.sqlite.gz \
+	dr.sqlite.gz \
+	kjv.sqlite.gz
 
-kjv.bin.gz: static/kjv.txt
-	cd ../ && ./bin/import/text-to-kjv.sh
+ifneq ($(wildcard static/pickthall.txt),)
+all: pickthall.sqlite.gz
+endif
 
-asv.bin.gz: static/asv.txt
+asv.sqlite.gz: static/asv.txt ../bin/import/text-to-asv.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-asv.sh
 
-dr.bin.gz: static/dr.txt
+core.sqlite.gz: static/kjv.txt ../bin/import/text-to-core.sh ../bin/import/text-to-sqlite.pl
+	cd ../ && ./bin/import/text-to-core.sh
+
+dr.sqlite.gz: static/dr.txt ../bin/import/text-to-dr.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-dr.sh
 
+kjv.sqlite.gz: static/kjv.txt ../bin/import/text-to-kjv.sh ../bin/import/text-to-sqlite.pl
+	cd ../ && ./bin/import/text-to-kjv.sh
+
+ifneq ($(wildcard static/pickthall.txt),)
+pickthall.sqlite.gz: static/pickthall.txt ../bin/import/text-to-pickthall.sh ../bin/import/text-to-sqlite.pl
+	cd ../ && ./bin/import/text-to-pickthall.sh
+endif
+
 clean:
-	rm -vf kjv.bin.gz kjv.bin asv.bin.gz asv.bin dr.bin.gz dr.bin
+	rm -vf *.bin *.bin.gz *.sqlite *.sqlite.gz
 
 .PHONY: clean all

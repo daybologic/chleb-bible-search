@@ -31,6 +31,31 @@
 
 set -e
 
+reverse=0
+
+usage() {
+	echo "Usage: $0 [-r]" >&2
+}
+
+while getopts 'r' opt; do
+	case "$opt" in
+	r)
+		reverse=1
+		;;
+	*)
+		usage
+		exit 2
+		;;
+	esac
+done
+
+shift $((OPTIND - 1))
+
+if [ "$#" -ne 0 ]; then
+	usage
+	exit 2
+fi
+
 if [ -z "$CHLEB_SCHEME" ]; then
 	CHLEB_SCHEME=https
 fi
@@ -43,19 +68,78 @@ if [ -z "$CHLEB_PORT" ]; then
 	CHLEB_PORT=443
 fi
 
+# Start at full speed by default.  If the server returns HTTP 429, the script
+# backs off and retries the same verse.  Successful requests cut that delay
+# down again so the demo keeps probing the live rate limit.
+if [ -z "$CHLEB_REQUEST_DELAY" ]; then
+	CHLEB_REQUEST_DELAY=0
+fi
+
+if [ -z "$CHLEB_BACKOFF_STEP" ]; then
+	CHLEB_BACKOFF_STEP=0.1
+fi
+
+if [ -z "$CHLEB_RECOVERY_FACTOR" ]; then
+	CHLEB_RECOVERY_FACTOR=0.5
+fi
+
 set -u
 
-p="/1/lookup/gen/1/1"
+if [ "$reverse" -eq 1 ]; then
+	p="/1/lookup/rev/22/21"
+	linkName=prev
+else
+	p="/1/lookup/gen/1/1"
+	linkName=next
+fi
+
 scheme=$CHLEB_SCHEME
 host=$CHLEB_HOSTNAME
 port=$CHLEB_PORT
+requestDelay=$CHLEB_REQUEST_DELAY
+backoffStep=$CHLEB_BACKOFF_STEP
+recoveryFactor=$CHLEB_RECOVERY_FACTOR
 base="${scheme}://${host}:${port}"
+cookieJar=$(mktemp)
+responseHeaders=$(mktemp)
+responseBody=$(mktemp)
 
-while [ ! -z "$p" ]; do
-	json=$(curl --header 'Accept: application/json' -s "${base}${p}");
-	p=$(echo "$json" | jq -r .links.next);
+cleanup() {
+	rm -f "$cookieJar" "$responseHeaders" "$responseBody"
+}
+
+trap cleanup EXIT HUP INT TERM
+
+# Start at full speed.  Back off on HTTP 429, and speed up again after each
+# successful request so the client continues to push the available limit.
+while [ -n "$p" ] && [ "$p" != "null" ]; do
+	statusCode=$(curl --cookie "$cookieJar" --cookie-jar "$cookieJar" --dump-header "$responseHeaders" --header 'Accept: application/json' -s --output "$responseBody" --write-out '%{http_code}' "${base}${p}");
+	if [ "$statusCode" = "429" ]; then
+		cat "$responseBody" >&2
+		echo >&2
+		retryAfter=$(awk 'tolower($1) == "retry-after:" { value = $2; gsub(/\r/, "", value) } END { print value }' "$responseHeaders")
+		if [ -n "$retryAfter" ]; then
+			requestDelay=$retryAfter
+		else
+			requestDelay=$(awk -v delay="$requestDelay" -v step="$backoffStep" 'BEGIN { printf("%.3f", delay + step) }')
+		fi
+		echo "Rate limited; retrying in ${requestDelay}s" >&2
+		sleep "$requestDelay"
+		continue
+	fi
+	if [ "$statusCode" -lt 200 ] || [ "$statusCode" -ge 300 ]; then
+		echo "Unexpected HTTP status: $statusCode" >&2
+		cat "$responseBody" >&2
+		exit 1
+	fi
+	json=$(cat "$responseBody")
+	p=$(echo "$json" | jq -r ".links.${linkName}");
 	text=$(echo "$json" | jq -r .data[0].attributes.text);
 	echo "$text"
+	requestDelay=$(awk -v delay="$requestDelay" -v factor="$recoveryFactor" 'BEGIN { delay *= factor; if (delay < 0.001) delay = 0; printf("%.3f", delay) }')
+	if [ -n "$p" ] && [ "$p" != "null" ] && awk -v delay="$requestDelay" 'BEGIN { exit !(delay > 0) }'; then
+		sleep "$requestDelay"
+	fi
 done
 
 exit 0

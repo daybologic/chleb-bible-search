@@ -1,8 +1,10 @@
 ^\.git/
+^\.venv-openai/
 ^MYMETA\.
 ^blib/
 \.bak$
 ^data/sessions/
+^data/*.bin.gz
 ^externals/
 ^log/.*\.log$
 ^cache/.*\.bin$

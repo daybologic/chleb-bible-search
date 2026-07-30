@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Chleb Bible Search
+# Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#     * Redistributions of source code must retain the above copyright notice,
+#       this list of conditions and the following disclaimer.
+#
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#
+#     * Neither the name of the Daybo Logic nor the names of its contributors
+#       may be used to endorse or promote products derived from this software
+#       without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+set -euo pipefail
+
+cookieResult=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/search \
+	Accept:application/json \
+	Cookie:wholeword=true \
+	term==fire)
+
+jq -e '.links.self == "/1/search?term=fire&wholeword=1&limit=50&page=1&per_page=50"' \
+	<<< "$cookieResult" >/dev/null
+
+explicitResult=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/search \
+	Accept:application/json \
+	Cookie:wholeword=true \
+	term==fire \
+	wholeword==false)
+
+jq -e '.links.self == "/1/search?term=fire&wholeword=0&limit=50&page=1&per_page=50"' \
+	<<< "$explicitResult" >/dev/null
+
+searchPage=$(http --check-status --body --pretty=none GET \
+	chleb-api.example.org/1/search \
+	Accept:text/html)
+
+grep -q 'name="wholeword" value="true"' <<< "$searchPage"
+grep -q "var wholewordCookieName = 'wholeword';" <<< "$searchPage"
+grep -q "writeCookie(wholewordCookieName, wholeword.checked ? 'true' : 'false');" <<< "$searchPage"
+
+exit 0

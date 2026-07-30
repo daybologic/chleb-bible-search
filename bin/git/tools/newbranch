@@ -36,7 +36,7 @@ set -u
 # Ignominious exit if we're not the Git repo
 git -C . rev-parse 2>/dev/null
 
-branchTypes=(bugfix docs feature hotfix maint platform private refactor tests rel)
+branchTypes=(bugfix docs feature hotfix maint platform private refactor tests rel ui)
 
 function listBranchTypes() {
 	i=1
@@ -138,7 +138,7 @@ case "$branchType" in
 	rel)
 		>&2 echo "ERROR: this is the wrong tool for performing releases, we don't presently have a release tool but this will appear very soon"
 		;;
-	docs|feature|bugfix|hotfix|maint|private|refactor|tests)   # multiple matches
+	docs|feature|bugfix|hotfix|maint|private|refactor|tests|ui)   # multiple matches
 		askDescription
 		;;
 	*)

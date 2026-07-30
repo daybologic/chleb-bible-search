@@ -30,6 +30,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package ExceptionTests;
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use Moose;
@@ -50,7 +55,7 @@ use Test::More 0.96;
 
 sub testRaiseBaseException {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $description = $self->uniqueStr();
 	$self->sut(Chleb::Exception->raise(HTTP_UNAVAILABLE_FOR_LEGAL_REASONS, $description));
@@ -63,6 +68,42 @@ sub testRaiseBaseException {
 			statusCode  => 451,
 		),
 	), 'exception object fields correct');
+
+	cmp_deeply($self->sut->toJsonApiErrorDocument(), {
+		errors => [
+			{
+				detail => $description,
+				status => '451',
+				title  => 'Unavailable For Legal Reasons',
+			},
+		],
+	}, 'JSON:API error document');
+
+	return EXIT_SUCCESS;
+}
+
+sub testRaiseBaseExceptionWithRetryAfter {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $description = $self->uniqueStr();
+	$self->sut(Chleb::Exception->raise(
+		HTTP_TOO_MANY_REQUESTS,
+		$description,
+		{ retryAfterSeconds => 60 },
+	));
+
+	is($self->sut->retryAfterSeconds, 60, 'retry-after seconds available for HTTP header');
+
+	cmp_deeply($self->sut->toJsonApiErrorDocument(), {
+		errors => [
+			{
+				detail => $description,
+				status => '429',
+				title  => 'Too Many Requests',
+			},
+		],
+	}, 'JSON:API error document does not duplicate retry-after value');
 
 	return EXIT_SUCCESS;
 }

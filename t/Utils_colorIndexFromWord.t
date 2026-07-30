@@ -30,6 +30,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package UtilsColorIndexFromWordTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
 use strict;
 use warnings;
 use Moose;

@@ -1,32 +1,77 @@
 <!-- Chleb Template -->
 
 <nav class="verse-nav">
-	<div class="verse-nav-row verse-nav-row-top">
-
-		<div class="verse-nav-group verse-nav-prev">
-			__PREV_BOOK_URL__
-			__FIRST_CHAPTER_URL__
-			__PREV_CHAPTER_URL__
-			__FIRST_VERSE_URL__
-			__PREV_VERSE_URL__
-		</div>
-
-		<div class="verse-nav-group verse-nav-center">
-			__BOOKS__
+	<div class="verse-nav-primary">
+		<div class="verse-nav-group verse-nav-core">
 			__HOME_URL__
-			__BOOK_URL__
+			__BOOKS__
 			__CHAPTER_URL__
 			__RANDOM_URL__
 			__PERMALINK_URL__
+			__SETTINGS_URL__
 		</div>
 
-		<div class="verse-nav-group verse-nav-next">
+		<div class="verse-nav-group verse-nav-verse">
+			__YESTERDAY_URL__
+			__TOMORROW_URL__
+			__PREV_VERSE_URL__
 			__NEXT_VERSE_URL__
-			__LAST_VERSE_URL__
+		</div>
+	</div>
+
+	<details class="verse-nav-more">
+		<summary>More navigation</summary>
+
+		<div class="verse-nav-group verse-nav-secondary">
+			__BOOK_URL__
+			__PREV_BOOK_URL__
+			__NEXT_BOOK_URL__
+			__FIRST_CHAPTER_URL__
+			__PREV_CHAPTER_URL__
 			__NEXT_CHAPTER_URL__
 			__LAST_CHAPTER_URL__
-			__NEXT_BOOK_URL__
+			__FIRST_VERSE_URL__
+			__LAST_VERSE_URL__
 		</div>
+	</details>
 
-	</div>
+	<script>
+		(function () {
+			'use strict';
+
+			var moreNavigationCookieName = 'moreNavigation';
+			var moreNavigation = document.querySelector('.verse-nav-more');
+			var summary = moreNavigation.querySelector('summary');
+
+			function readCookie(name) {
+				var prefix = name + '=';
+				var cookies = document.cookie.split(';');
+
+				for (var i = 0; i < cookies.length; i++) {
+					var cookie = cookies[i].trim();
+					if (cookie.indexOf(prefix) === 0) {
+						return decodeURIComponent(cookie.substring(prefix.length));
+					}
+				}
+
+				return '';
+			}
+
+			function writeCookie(name, value) {
+				document.cookie = name + '=' + encodeURIComponent(value)
+					+ '; Max-Age=31536000; Path=/; SameSite=Lax';
+			}
+
+			function updateSummary() {
+				summary.textContent = moreNavigation.open ? 'Less navigation' : 'More navigation';
+			}
+
+			moreNavigation.open = readCookie(moreNavigationCookieName) === 'true';
+			updateSummary();
+			moreNavigation.addEventListener('toggle', function () {
+				writeCookie(moreNavigationCookieName, moreNavigation.open ? 'true' : 'false');
+				updateSummary();
+			});
+		}());
+	</script>
 </nav>

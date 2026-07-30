@@ -30,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package ChlebGetTranslationTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 use strict;
 use warnings;
 use Moose;

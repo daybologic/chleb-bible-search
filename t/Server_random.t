@@ -30,6 +30,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package RandomServerTests;
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -42,6 +47,7 @@ extends 'Test::Module::Runnable::Local';
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
+use Chleb::Server::Dancer2;
 use Chleb::Server::Moose;
 use Test::Deep qw(all array_each cmp_deeply isa methods re ignore);
 use Test::More 0.96;
@@ -63,9 +69,9 @@ sub test_translation_kjv {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, version => 1 });
+	my $json = $self->sut->__random({ accept => $mediaType, version => 2 });
 	cmp_deeply($json, {
-		data => [
+		data => array_each(
 			{
 				attributes => {
 					book => ignore(),
@@ -74,6 +80,7 @@ sub test_translation_kjv {
 					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
 					tones => array_each(re(qr/^\w+$/)), # every element must be a single non-empty word
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
@@ -102,7 +109,7 @@ sub test_translation_kjv {
 					}
 				},
 			},
-		],
+		),
 		included => [
 			{
 				attributes => {
@@ -150,7 +157,7 @@ sub test_translation_kjv {
 			},
 		],
 		links => {
-			self => '/1/random',
+			self => '/2/random',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
@@ -162,9 +169,9 @@ sub test_translation_asv {
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'], version => 1 });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['asv'], version => 2 });
 	cmp_deeply($json, {
-		data => [
+		data => array_each(
 			{
 				attributes => {
 					book => ignore(),
@@ -173,6 +180,7 @@ sub test_translation_asv {
 					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
 					tones => array_each(re(qr/^\w+$/)), # every element must be a single non-empty word
+					year => 1901,
 					translation => 'asv',
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
@@ -201,7 +209,7 @@ sub test_translation_asv {
 					}
 				},
 			},
-		],
+		),
 		included => [
 			{
 				attributes => {
@@ -249,21 +257,21 @@ sub test_translation_asv {
 			},
 		],
 		links => {
-			self => '/1/random?translations=asv',
+			self => '/2/random?translations=asv',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
 	return EXIT_SUCCESS;
 }
 
-sub test_translation_all {
+sub test_translation_core {
 	my ($self) = @_;
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => ['all'], version => 1 });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
 	cmp_deeply($json, {
-		data => [
+		data => array_each(
 			{
 				attributes => {
 					book => ignore(),
@@ -272,16 +280,17 @@ sub test_translation_all {
 					ordinal => re(qr/^\d{1,3}$/),
 					text => ignore(),
 					tones => array_each(re(qr/^\w+$/)),
+					year => re(qr/^\d{4}$/),
 					translation => re(qr/^\w{3}$/),
 				},
 				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
-					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=\w{3}$@),
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
 				},
 				relationships => {
 					book => {
@@ -300,7 +309,7 @@ sub test_translation_all {
 					}
 				},
 			},
-		],
+		),
 		included => [
 			{
 				attributes => {
@@ -348,9 +357,40 @@ sub test_translation_all {
 			},
 		],
 		links => {
-			self => '/1/random?translations=all',
+			self => '/2/random?translations=asv,kjv',
 		},
 	}, "single random verse JSON") or diag(explain($json));
+
+	return EXIT_SUCCESS;
+}
+
+sub test_json_api_media_type {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
+	my $json = $self->sut->__random({ accept => $mediaType, translations => ['kjv'], version => 2 });
+
+	is(ref($json), 'HASH', 'random JSON:API media type returns JSON structure');
+	is($json->{data}->[0]->{type}, 'verse', 'random JSON:API media type returns verse data');
+	is($json->{links}->{self}, '/2/random?translations=kjv', 'random JSON:API media type keeps self link');
+
+	return EXIT_SUCCESS;
+}
+
+sub test_html_translation_order {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'random HTML sorts translations lexically');
+
+	$html = $self->sut->__random({ accept => $mediaType, translations => ['kjv', 'asv'], version => 2 });
+	@translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+	is_deeply(\@translations, [ 'kjv (1611)', 'asv (1901)' ], 'random HTML preserves explicit translation order');
 
 	return EXIT_SUCCESS;
 }
@@ -361,4 +401,4 @@ package main;
 use strict;
 use warnings;
 
-exit(RandomServerTests->new->run());
+exit(RandomServerTests->new->run(n => ($ENV{TEST_QUICK} ? 1 : 2)));

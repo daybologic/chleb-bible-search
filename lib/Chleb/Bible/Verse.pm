@@ -43,8 +43,6 @@ has emotion => (is => 'ro', isa => 'Str', required => 1, lazy => 1, default => \
 
 has ordinal => (is => 'ro', isa => 'Int', required => 1);
 
-has ordinalAbsolute => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeOrdinalAbsolute);
-
 has text => (is => 'ro', isa => 'Str', required => 1);
 
 has tones => (is => 'ro', isa => 'ArrayRef[Str]', required => 1, lazy => 1, default => \&__makeTones);
@@ -91,7 +89,7 @@ sub getPrev {
 		return $self->chapter->getVerseByOrdinal($self->ordinal - 1, { nonFatal => 1 });
 	}
 
-	return undef;
+	return;
 }
 
 sub equals {
@@ -122,7 +120,7 @@ sub TO_JSON {
 
 sub getPath {
 	my ($self) = @_;
-	my @id = split(m@/@, $self->id);
+	my @id = split(m@/@x, $self->id);
 	shift(@id);
 	return join('/', @id);
 }
@@ -162,12 +160,7 @@ sub __makeTones {
 
 sub __makeSentiment {
 	my ($self) = @_;
-	return $self->book->bible->__backend->getSentimentByOrdinal($self->ordinalAbsolute);
-}
-
-sub __makeOrdinalAbsolute {
-	my ($self) = @_;
-	return $self->book->bible->__backend->getOrdinalByVerseKey($self->key);
+	return $self->book->bible->getSentimentByVerseKey($self->key);
 }
 
 sub __makeKey {

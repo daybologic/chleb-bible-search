@@ -36,12 +36,26 @@
 # turn on errors and unbound variable trap
 set -eu
 
-if [ -d .git ]; then
-	for hook in bin/git/hooks/*; do
-		cp -v "$hook" .git/hooks/
+if [ -d '.git' ]; then
+	if [ ! -d '.git/hooks/' ]; then
+		>&2 echo 'ERROR: Directory .git/hooks/ does not exist'
+		exit 1
+	fi
+
+	pre-commit install --install-hooks
+	for hook in bin/git/hooks/post-*; do
+		hookTarget=$(basename $hook)
+		hookTarget=".git/hooks/$hookTarget"
+		if ! cmp -s "$hook" "$hookTarget"; then
+			cp -v "$hook" "$hookTarget"
+		fi
+
+		if [ ! -x "$hookTarget" ]; then
+			chmod +x "$hookTarget"
+		fi
 	done
 else
-	echo "WARN: .git not found" >&2
+	>&2 echo "WARN: .git not found" >&2
 fi
 
 exit 0

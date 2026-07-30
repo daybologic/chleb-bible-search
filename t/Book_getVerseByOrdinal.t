@@ -30,6 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Book_getVerseByOrdinalTests;
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -192,6 +198,33 @@ sub testOutOfBounds {
 	$book = $bible[0]->getBookByShortName('Gen');
 	$msg = 'Verse 1534 not found in Gen';
 	throws_ok { $book->getVerseByOrdinal(1534) } qr/^$msg /, $msg;
+
+	return EXIT_SUCCESS;
+}
+
+sub testBookOrdinalCacheIsolation {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my @bible = $self->sut->__getBible();
+	my $gen = $bible[0]->getBookByShortName('Gen');
+	$gen->getVerseByOrdinal(1);
+
+	my $book = $bible[0]->getBookByShortName('2Ki');
+	my $verse = $book->getVerseByOrdinal(1);
+	cmp_deeply($verse, all(
+		isa('Chleb::Bible::Verse'),
+		methods(
+			book => methods(
+				shortNameRaw => '2Ki',
+			),
+			chapter => methods(
+				ordinal => 1,
+			),
+			ordinal => 1,
+		),
+	), 'book-relative verse ordinal cache stays book-specific') or diag(explain($verse->toString()));
+	is($verse->chapter->book->shortNameRaw, '2Ki', 'chapter belongs to the requested book');
 
 	return EXIT_SUCCESS;
 }

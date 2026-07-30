@@ -38,17 +38,18 @@ packages:
   - libdatetime-format-strptime-perl
   - libdatetime-perl
   - libdevel-cover-perl
+  - libdbd-sqlite3-perl
   - libdbd-mysql-perl
   - libdbi-perl
   - libdigest-crc-perl
   - libfile-nfslock-perl
   - libjson-maybexs-perl
   - libjson-perl
+  - liblog-dispatch-filerotate-perl
   - liblog-log4perl-perl
   - libmoose-perl
   - libmoosex-singleton-perl
   - libreadonly-perl
-  - libredis-perl
   - libtest-deep-perl
   - libtest-exception-perl
   - libtest-mockmodule-perl
@@ -61,6 +62,7 @@ packages:
   - libwww-perl
   - libyaml-libyaml-perl
   - perl
+  - pre-commit
 
 sources:
   - https://git.sr.ht/~m6kvm/chleb-bible-search

@@ -1,0 +1,203 @@
+<!-- Chleb Template -->
+	<main class="settings-page">
+		<section class="settings-card" aria-labelledby="settings-title">
+			<div class="settings-heading">
+				<p class="subtitle">Chleb Bible Search</p>
+				<h1 id="settings-title">Settings</h1>
+				<p>Choose how Bible passages should be displayed.</p>
+			</div>
+
+			<form id="settings-form">
+				<fieldset class="translation-options">
+					<legend>Preferred translation</legend>
+					<p class="settings-help">This preference is saved in your browser.</p>
+
+					<label class="translation-option">
+						<input type="checkbox" name="preferredTranslation" value="default">
+						<span>
+							<strong>Default</strong>
+							<small>Use the service's default translation.</small>
+						</span>
+					</label>
+
+					<label class="translation-option">
+						<input type="checkbox" name="preferredTranslation" value="all">
+						<span>
+							<strong>All</strong>
+							<small>Show every available translation.</small>
+						</span>
+					</label>
+
+					<div id="available-translations"></div>
+				</fieldset>
+
+				<div class="settings-actions">
+					<button type="submit">Save settings</button>
+					<button type="button" id="settings-back">Back</button>
+					<button type="button" id="settings-home">Home</button>
+				</div>
+
+				<p id="settings-status" class="settings-status" role="status" aria-live="polite"></p>
+			</form>
+		</section>
+	</main>
+
+	<script>
+		(function () {
+			'use strict';
+
+			var preferredTranslationCookieName = 'preferredTranslation';
+			var allowedTranslations = [ 'default', 'all' ];
+			var form = document.getElementById('settings-form');
+			var availableTranslations = document.getElementById('available-translations');
+			var status = document.getElementById('settings-status');
+			var back = document.getElementById('settings-back');
+			var home = document.getElementById('settings-home');
+
+			function readCookie(name) {
+				var prefix = name + '=';
+				var cookies = document.cookie.split(';');
+
+				for (var i = 0; i < cookies.length; i++) {
+					var cookie = cookies[i].trim();
+					if (cookie.indexOf(prefix) === 0) {
+						return decodeURIComponent(cookie.substring(prefix.length));
+					}
+				}
+
+				return '';
+			}
+
+			function writeCookie(name, value) {
+				document.cookie = name + '=' + encodeURIComponent(value)
+					+ '; Max-Age=31536000; Path=/; SameSite=Lax';
+			}
+
+			function readPreference() {
+				var value = readCookie(preferredTranslationCookieName);
+				var values = value.split(',').filter(function (translation) {
+					return allowedTranslations.indexOf(translation) !== -1;
+				});
+
+				if (values.indexOf('default') !== -1 || values.length === 0) {
+					return [ 'default' ];
+				}
+
+				if (values.indexOf('all') !== -1) {
+					return [ 'all' ];
+				}
+
+				return values;
+			}
+
+			function translationInputs() {
+				return form.querySelectorAll('input[name="preferredTranslation"]');
+			}
+
+			function addTranslationOption(translation) {
+				var label = document.createElement('label');
+				label.className = 'translation-option';
+
+				var input = document.createElement('input');
+				input.type = 'checkbox';
+				input.name = 'preferredTranslation';
+				input.value = translation;
+
+				var span = document.createElement('span');
+				var name = document.createElement('strong');
+				name.textContent = translation.toUpperCase();
+				var description = document.createElement('small');
+				description.textContent = 'Available translation';
+
+				span.appendChild(name);
+				span.appendChild(description);
+				label.appendChild(input);
+				label.appendChild(span);
+				availableTranslations.appendChild(label);
+			}
+
+			function loadAvailableTranslations() {
+				fetch('/1/info', { headers: { Accept: 'application/vnd.api+json' } })
+					.then(function (response) {
+						if (!response.ok) {
+							throw new Error('Unable to load translation information');
+						}
+						return response.json();
+					})
+					.then(function (json) {
+						var translations = json.data[0].attributes.translations || [];
+						for (var i = 0; i < translations.length; i++) {
+							if (allowedTranslations.indexOf(translations[i]) === -1) {
+								allowedTranslations.push(translations[i]);
+								addTranslationOption(translations[i]);
+							}
+						}
+						selectPreference(readPreference());
+					})
+					.catch(function () {
+						selectPreference([ 'default' ]);
+					});
+			}
+
+			function selectPreference(values) {
+				var inputs = translationInputs();
+				for (var i = 0; i < inputs.length; i++) {
+					inputs[i].checked = values.indexOf(inputs[i].value) !== -1;
+				}
+			}
+
+			selectPreference([ 'default' ]);
+			loadAvailableTranslations();
+
+			form.addEventListener('change', function (event) {
+				if (event.target.name !== 'preferredTranslation' || !event.target.checked) {
+					return;
+				}
+
+				var inputs = translationInputs();
+				for (var i = 0; i < inputs.length; i++) {
+					if (
+						(event.target.value === 'default' || event.target.value === 'all')
+						&& inputs[i] !== event.target
+					) {
+						inputs[i].checked = false;
+					} else if (
+						(event.target.value !== 'default' && event.target.value !== 'all')
+						&& (inputs[i].value === 'default' || inputs[i].value === 'all')
+					) {
+						inputs[i].checked = false;
+					}
+				}
+			});
+
+			form.addEventListener('submit', function (event) {
+				event.preventDefault();
+
+				var selected = form.querySelectorAll('input[name="preferredTranslation"]:checked');
+				var values = [];
+				for (var i = 0; i < selected.length; i++) {
+					values.push(selected[i].value);
+				}
+
+				if (values.length === 0) {
+					values = [ 'default' ];
+					selectPreference(values);
+				}
+
+				writeCookie(preferredTranslationCookieName, values.join(','));
+				status.textContent = 'Settings saved.';
+			});
+
+			back.addEventListener('click', function () {
+				if (window.history.length > 1) {
+					window.history.back();
+				} else {
+					window.location.href = '/';
+				}
+			});
+
+			home.addEventListener('click', function () {
+				window.location.href = '/';
+			});
+		}());
+	</script>

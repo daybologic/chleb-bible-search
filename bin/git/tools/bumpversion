@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Chleb Bible Search
+# Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL).
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/release-common"
+require_repo
+
+new_version=$(read_version)
+old_version=${1:-}
+
+if [[ -z "$old_version" ]]; then
+	old_version=$(awk '$1 == "version:" { print $2; exit }' swagger.yaml | tr -d "\"'")
+fi
+
+[[ "$old_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "could not determine the previous release version"
+
+if [[ "$old_version" == "$new_version" ]]; then
+	printf 'Version references already use %s.\n' "$new_version"
+else
+	printf 'Updating version references from %s to %s.\n' "$old_version" "$new_version"
+fi
+
+# This is intentionally filename-driven: Perl script version declarations, if
+# any are introduced under lib, are included without having to edit this tool.
+while IFS= read -r file; do
+	[[ -n "$file" ]] || continue
+	if awk '/\$VERSION[[:space:]]*=/ { found = 1 } END { exit(found ? 0 : 1) }' "$file"; then
+		NEW_VERSION="$new_version" perl -0pi -e 's/(\$VERSION\s*=\s*["'"'"'])[0-9]+\.[0-9]+\.[0-9]+(["'"'"'])/$1$ENV{NEW_VERSION}$2/g' "$file"
+	fi
+done < <(find lib -name '*.pl' -type f -print)
+
+replace_in_file() {
+	local file=$1
+	[[ -f "$file" ]] || die "required version file is missing: $file"
+	OLD_VERSION="$old_version" NEW_VERSION="$new_version" perl -0pi -e 's/\Q$ENV{OLD_VERSION}\E/$ENV{NEW_VERSION}/g' "$file"
+}
+
+NEW_VERSION="$new_version" perl -0pi -e 's{^(\s*version:\s*)[0-9]+\.[0-9]+\.[0-9]+\s*$}{$1$ENV{NEW_VERSION}}m' swagger.yaml
+replace_in_file README.md
+
+# This repository's version regression test contains the release literal too.
+if [[ -f t/version.t ]]; then
+	test_file=t/version.t
+elif [[ -f t/Server_version.t ]]; then
+	test_file=t/Server_version.t
+else
+	die 'cannot find t/version.t or t/Server_version.t'
+fi
+NEW_VERSION="$new_version" perl -0pi -e 's{(version\s*=>\s*["'"'"'])[0-9]+\.[0-9]+\.[0-9]+(["'"'"'])}{$1$ENV{NEW_VERSION}$2}g; s{(<td>)[0-9]+\.[0-9]+\.[0-9]+(</td>)}{$1$ENV{NEW_VERSION}$2}g' "$test_file"
+
+printf 'Updated release references to %s.\n' "$new_version"
+git diff --stat -- README.md swagger.yaml t/version.t t/Server_version.t lib

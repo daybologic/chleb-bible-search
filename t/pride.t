@@ -30,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package PrideTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -94,7 +98,7 @@ sub testPride_allTranslations {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ 'all' ] });
+	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ $self->coreTranslations() ] });
 	cmp_deeply(\@verse, [
 		all(
 			isa('Chleb::Bible::Verse'),
@@ -147,15 +151,16 @@ sub testBadBook {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->fetch('Mormon', 16, 18);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
 			isa('Chleb::Exception'),
 			methods(
-				description => "Long book name 'Mormon' is not a book in the bible, did you mean Amos?",
+				description => "Book 'Mormon' was not found in any requested translation",
 				location    => undef,
 				statusCode  => 404,
 			),
@@ -171,9 +176,10 @@ sub testBadChapter {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$self->sut->fetch('Prov', 36, 1);
-	};
+		1;
+	} or $evalOk2 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
@@ -195,9 +201,10 @@ sub testBadVerse {
 	my ($self) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$self->sut->fetch('Luke', 24, 54);
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(

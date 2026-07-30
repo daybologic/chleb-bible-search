@@ -1,5 +1,6 @@
 package Chleb::Token::Repository::Redis;
 use Moose;
+use Carp qw(croak);
 
 extends 'Chleb::Token::Repository::Base';
 
@@ -30,8 +31,17 @@ use Data::Dumper;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 use Readonly;
-use Redis;
 use Scalar::Util qw(looks_like_number);
+
+our $REDIS_CLASS;
+BEGIN {
+	if (eval { require Redis::Fast; 1 }) {
+		$REDIS_CLASS = 'Redis::Fast';
+	} elsif (eval { require Redis; 1 }) {
+		$REDIS_CLASS = 'Redis';
+	}
+	# else undef: neither is installed; error deferred to __makeDo
+}
 
 =head1 CONSTANTS
 
@@ -77,7 +87,7 @@ The builder for this is L</__makeDo()>.
 
 =cut
 
-has do => (isa => 'Redis', is => 'rw', lazy => 1, init_arg => undef, default => \&__makeDo);
+has do => (isa => 'Object', is => 'rw', lazy => 1, init_arg => undef, default => \&__makeDo);
 
 =back
 
@@ -130,9 +140,10 @@ sub load {
 	$self->_valueValidate($value);
 
 	my $data = [ ];
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$data = $self->do->hmget($value, @{ Chleb::Token::TO_JSON() });
-	};
+		1;
+	} or $evalOk1 = 0;
 	my $evalError = $EVAL_ERROR;
 
 	my @fieldNames = @{ Chleb::Token::TO_JSON() };
@@ -148,13 +159,13 @@ sub load {
 
 	if ($evalError) {
 		$self->dic->logger->error($evalError);
-		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "error getting session '$value' token via " . __PACKAGE__);
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "error getting session '$value' token via " . __PACKAGE__));
 	} elsif (!$data) {
-		return undef; # not found
+		return; # not found
 	}
 
 	my $token;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$token = Chleb::Token->new({
 			dic       => $self->dic,
 			_repo     => $self->repo,
@@ -168,16 +179,17 @@ sub load {
 			now       => $data->{created},
 			userAgent => $data->{userAgent},
 		});
-	};
+		1;
+	} or $evalOk2 = 0;
 
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->error($evalError);
-		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data'); # This should not happen!
+	if (my $tokenEvalError = $EVAL_ERROR) {
+		$self->dic->logger->error($tokenEvalError);
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Token cannot be rebuilt using stored data')); # This should not happen!
 	} elsif ($token->major != $Chleb::Token::DATA_VERSION_MAJOR) {
 		$self->dic->logger->error(sprintf('Version mismatch in %s, (store %d, expect %d), stale data?', $token->toString(), $token->major, $Chleb::Token::DATA_VERSION_MAJOR));
-		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Sorry, the token went stale because of a version mismatch, remove your sessionToken cookie and you'll get a new one");
+		croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, "Sorry, the token went stale because of a version mismatch, remove your sessionToken cookie and you'll get a new one"));
 	} elsif ($token->expired) {
-		die Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__);
+		croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'sessionToken expired via ' . __PACKAGE__));
 	}
 
 	return $token;
@@ -193,13 +205,14 @@ and if it is new, we will set the expiry time to ensure it is automagically evic
 sub save {
 	my ($self, $token) = @_;
 
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$self->do->hmset($token->value, %{ $token->TO_JSON() }); # TODO: Don't send undirty keys, for a speed improvement
 		$self->do->expireat($token->value, $token->expires) if ($token->isNew);
-	};
+		1;
+	} or $evalOk3 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
-		die Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token');
+		croak(Chleb::Exception->raise(HTTP_INSUFFICIENT_STORAGE, 'Cannot save session token'));
 	}
 
 	$token->dirty(0);
@@ -224,12 +237,13 @@ sub __buildRedis {
 	my ($self, $server) = @_;
 
 	my $redis;
-	eval {
-		$redis = Redis->new(server => $server);
-	};
+	my $evalOk4; $evalOk4 = eval {
+		$redis = $REDIS_CLASS->new(server => $server);
+		1;
+	} or $evalOk4 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
-		die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "Failed to connect to $server: $evalError");
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "Failed to connect to $server: $evalError"));
 	}
 
 	return $redis;
@@ -247,18 +261,23 @@ sub __makeDo {
 
 	my $config = $self->dic->config->get('session_tokens', 'backend_redis', { host => $REDIS_HOST, db => $REDIS_DB });
 	my $uri = $config->{host};
-	if ($uri !~ m/:/) {
+	if ($uri !~ m{ : }x) {
 		$uri = "${uri}:${REDIS_PORT}";
 	}
 
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR,
+	    'Redis backend is unavailable: neither Redis nor Redis::Fast is installed'))
+	    unless ($REDIS_CLASS);
+
+	$self->dic->logger->debug("Redis backend using $REDIS_CLASS");
 	my $redis = $self->__buildRedis($uri);
 
 	my $db = $config->{db};
 	if (defined($db)) {
-		if ($db =~ m/^\d+$/) {
+		if ($db =~ m{ ^\d+$ }x) {
 			$redis->select($db);
 		} else {
-			die Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "db must be numerical, positive integer: '$db'");
+			croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "db must be numerical, positive integer: '$db'"));
 		}
 	}
 

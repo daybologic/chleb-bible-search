@@ -69,8 +69,6 @@ unknown, which should not be possible.
 
 Readonly our $ANY => 'any';
 
-=back
-
 =item C<$OLD>
 
 The Old Testament.
@@ -78,8 +76,6 @@ The Old Testament.
 =cut
 
 Readonly our $OLD => 'old';
-
-=back
 
 =item C<$NEW>
 

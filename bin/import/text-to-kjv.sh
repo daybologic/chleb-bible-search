@@ -32,5 +32,8 @@
 
 set -eu
 
-bin/import/text-to-bin.pl kjv
-gzip -f data/kjv.bin
+translation=kjv
+name=$translation
+
+bin/import/text-to-sqlite.pl -t $translation -n $name
+gzip -f "data/${translation}.sqlite"

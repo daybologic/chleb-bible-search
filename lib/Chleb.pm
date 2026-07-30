@@ -42,7 +42,6 @@ use Data::Dumper;
 use Digest::CRC qw(crc32);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
-use List::Util qw(shuffle);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
@@ -54,14 +53,19 @@ use Chleb::Bible::Search::Query;
 use Chleb::Bible::Verse;
 use Chleb::DI::Container;
 use Chleb::Utils;
+use Carp qw(croak);
 
 Readonly my $TRANSLATION_DEFAULT => 'kjv';
 
 has __bibles => (is => 'ro', isa => 'HashRef[Str]', lazy => 1, default => \&__makeBibles); # use 'bibles' to access
+has __availableTranslations => (is => 'ro', isa => 'ArrayRef[Str]', lazy => 1, default => \&__makeAvailableTranslations);
 
+# The release version is generated during the build.
+## no critic (ValuesAndExpressions::ProhibitComplexVersion)
 BEGIN {
 	our $VERSION = $Chleb::Generated::Info::VERSION;
 }
+## use critic
 
 sub BUILD {
 	my ($self) = @_;
@@ -82,7 +86,7 @@ sub newSearchQuery {
 	}
 
 	my %params = @args;
-	__fixTranslationsParam(\%params);
+	$self->__fixTranslationsParam(\%params);
 
 	$params{text} = __ensureSecureString($params{text});
 
@@ -93,13 +97,19 @@ sub newSearchQuery {
 sub fetch {
 	my ($self, $book, $chapterOrdinal, $verseOrdinal, $args) = @_;
 	my $startTiming = Time::HiRes::time();
-	__fixTranslationsParam($args);
+	$self->__fixTranslationsParam($args);
 
 	my (@bible) = $self->__getBible($args);
 
 	my @verse;
 	for (my $bibleI = 0; $bibleI < scalar(@bible); $bibleI++) {
-		if (my $resolvedBook = $bible[$bibleI]->resolveBook($book)) {
+		my $resolvedBook;
+		my $resolvedOk = eval {
+			$resolvedBook = $bible[$bibleI]->resolveBook($book);
+			1;
+		};
+		next unless ($resolvedOk && $resolvedBook);
+		if ($resolvedBook) {
 			my $chapter = $resolvedBook->getChapterByOrdinal($chapterOrdinal);
 			if ($verseOrdinal) { # want a specific verse?
 				push(@verse, $chapter->getVerseByOrdinal($verseOrdinal));
@@ -108,6 +118,9 @@ sub fetch {
 			}
 		}
 	}
+
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, "Book '$book' was not found in any requested translation"))
+	    if (scalar(@verse) == 0);
 
 	my $endTiming = Time::HiRes::time();
 	my $msec = int(1000 * ($endTiming - $startTiming));
@@ -139,12 +152,23 @@ sub info {
 	return $info;
 }
 
+=head1 availableTranslations()
+
+Return the translation codes discovered from the available SQLite source data.
+
+=cut
+
+sub availableTranslations {
+	my ($self) = @_;
+	return @{ $self->__availableTranslations };
+}
+
 sub random {
 	my ($self, $args) = @_;
 
 	my $startTiming = Time::HiRes::time();
 
-	__fixTranslationsParam($args);
+	$self->__fixTranslationsParam($args);
 	my ($version, $parental, $testament) = @{$args}{qw(version parental testament)};
 
 	$testament = Chleb::Utils::parseIntoType(
@@ -156,9 +180,8 @@ sub random {
 	$self->dic->logger->trace('Looking for testament: ' . $testament->toString());
 
 	my (@bible) = $self->__getBible($args);
-	@bible = shuffle(@bible);
 
-	my ($verse, $verseOrdinal);
+	my ($verse, $verseOrdinal, @verses);
 	my $seed = rand($PID + $bible[0]->verseCount);
 	for (my $offset = 0; $offset > -1; $offset++) {
 		$seed = crc32($seed + $offset);
@@ -167,6 +190,18 @@ sub random {
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
+		my $verseAvailable = 1;
+		@verses = ($verse);
+		for (my $candidateI = 1; $candidateI < scalar(@bible); $candidateI++) {
+			my $candidateBible = $bible[$candidateI];
+			my $candidateVerse = $self->__getRelatedRandomVerse($candidateBible, $verse, $verseOrdinal, $args);
+			unless ($candidateVerse) {
+				$verseAvailable = 0;
+				last;
+			}
+			push(@verses, $candidateVerse);
+		}
+		next unless ($verseAvailable);
 
 		next unless ($self->__isTestamentMatch($verse, $testament));
 
@@ -179,28 +214,28 @@ sub random {
 	my $msecAll = 0;
 	# handle ARRAY verses where more than one compound Verse may be returned
 	if ($version && looks_like_number($version) && $version == 2) {
-		$verse = [ $verse ]; # make it an ARRAY
+		my @expandedVerses;
 		for (my $bibleTranslationOrdinal = 0; $bibleTranslationOrdinal < scalar(@bible); $bibleTranslationOrdinal++) {
-			if ($bibleTranslationOrdinal > 0) {
-				push(@$verse, $bible[$bibleTranslationOrdinal]->getVerseByOrdinal($verseOrdinal, $args));
-			}
-
+			my $translationVerse = $verses[$bibleTranslationOrdinal];
+			push(@expandedVerses, $translationVerse);
 			my $endTiming = Time::HiRes::time();
 			my $msec = int(1000 * ($endTiming - $startTiming));
-			$verse->[0]->msec($msec);
+			$translationVerse->msec($msec);
 			$msecAll += $msec;
 
-			while ($verse->[-1]->continues) {
-				push(@$verse, $verse->[-1]->getNext());
+			while ($translationVerse->continues) {
+				$translationVerse = $translationVerse->getNext();
+				push(@expandedVerses, $translationVerse);
 				$endTiming = Time::HiRes::time();
 				$msec = int(1000 * ($endTiming - $startTiming));
-				$verse->[-1]->msec($msec);
+				$translationVerse->msec($msec);
 				$msecAll += $msec;
 				$startTiming = Time::HiRes::time();
 			}
 
 			$startTiming = Time::HiRes::time();
 		}
+		$verse = \@expandedVerses;
 	} else {
 		my $endTiming = Time::HiRes::time();
 		$msecAll = int(1000 * ($endTiming - $startTiming));
@@ -222,7 +257,7 @@ sub votd {
 
 	my $startTiming = Time::HiRes::time();
 
-	__fixTranslationsParam($args);
+	$self->__fixTranslationsParam($args);
 	my ($when, $version, $parental, $testament) = @{$args}{qw(when version parental testament)};
 
 	$testament = Chleb::Utils::parseIntoType(
@@ -237,7 +272,7 @@ sub votd {
 	$when = $self->_resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
-	my ($verse, $verseOrdinal);
+	my ($verse, $verseOrdinal, @verses);
 	for (my $offset = 0; $offset > -1; $offset++) {
 		my $seed = crc32($when->epoch + $offset);
 		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
@@ -246,16 +281,30 @@ sub votd {
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
 		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
 		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
-
 		next unless ($self->__isTestamentMatch($verse, $testament));
 
-		last if (!$parental || !$verse->parental);
-		$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
-	}
+		if ($parental && $verse->parental) {
+			$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
+			next;
+		}
 
-	while ($verse->previous && $verse->previous->continues) {
-		# look upwards until we are not on a continuation, to give increased context
-		$verse = $verse->previous;
+		while ($verse->previous && $verse->previous->continues) {
+			# look upwards until we are not on a continuation, to give increased context
+			$verse = $verse->previous;
+		}
+
+		my $verseAvailable = 1;
+		@verses = ($verse);
+		for (my $candidateI = 1; $candidateI < scalar(@bible); $candidateI++) {
+			my $candidateBible = $bible[$candidateI];
+			my $candidateVerse = $self->__getRelatedRandomVerse($candidateBible, $verse, $verseOrdinal, $args);
+			unless ($candidateVerse) {
+				$verseAvailable = 0;
+				last;
+			}
+			push(@verses, $candidateVerse);
+		}
+		last if ($verseAvailable);
 	}
 
 	$self->dic->logger->debug($verse->toString());
@@ -263,28 +312,28 @@ sub votd {
 	my $msecAll = 0;
 	# handle ARRAY verses where more than one compound Verse may be returned
 	if ($version && looks_like_number($version) && $version == 2) {
-		$verse = [ $verse ]; # make it an ARRAY
+		my @expandedVerses;
 		for (my $bibleTranslationOrdinal = 0; $bibleTranslationOrdinal < scalar(@bible); $bibleTranslationOrdinal++) {
-			if ($bibleTranslationOrdinal > 0) {
-				push(@$verse, $bible[$bibleTranslationOrdinal]->getVerseByOrdinal($verseOrdinal, $args));
-			}
-
+			my $translationVerse = $verses[$bibleTranslationOrdinal];
+			push(@expandedVerses, $translationVerse);
 			my $endTiming = Time::HiRes::time();
 			my $msec = int(1000 * ($endTiming - $startTiming));
-			$verse->[0]->msec($msec);
+			$translationVerse->msec($msec);
 			$msecAll += $msec;
 
-			while ($verse->[-1]->continues) {
-				push(@$verse, $verse->[-1]->getNext());
+			while ($translationVerse->continues) {
+				$translationVerse = $translationVerse->getNext();
+				push(@expandedVerses, $translationVerse);
 				$endTiming = Time::HiRes::time();
 				$msec = int(1000 * ($endTiming - $startTiming));
-				$verse->[-1]->msec($msec);
+				$translationVerse->msec($msec);
 				$msecAll += $msec;
 				$startTiming = Time::HiRes::time() unless (defined($startTiming));
 			}
 
 			$startTiming = Time::HiRes::time() unless (defined($startTiming));
 		}
+		$verse = \@expandedVerses;
 	} else {
 		my $endTiming = Time::HiRes::time();
 		$msecAll = int(1000 * ($endTiming - $startTiming));
@@ -307,19 +356,30 @@ sub bibles {
 	return $self->__bibles->{$translation};
 }
 
+sub getBibles {
+	my ($self, $args) = @_;
+	return $self->__getBible($args);
+}
+
+=head1 PRIVATE METHODS
+
+=over
+
+=cut
+
 sub __getBible {
 	my ($self, $args) = @_;
 
 	my @bible = ( );
-	my %real = map { $_ => 1 } __allTranslationsList();
+	my %real = map { $_ => 1 } $self->__allTranslationsList();
 	my @translations = __getTranslation($args);
 
 	if (scalar(@translations) == 0) {
-		@translations = __allTranslationsList();
+		@translations = $self->__allTranslationsList();
 	} else {
 		foreach my $translation (@translations) {
 			next if ($translation ne 'all');
-			@translations = __allTranslationsList();
+			@translations = $self->__allTranslationsList();
 			last;
 		}
 	}
@@ -329,7 +389,7 @@ sub __getBible {
 		push(@bible, $self->bibles($translation));
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_FOUND, 'No recognized bible translations')
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, 'No recognized bible translations'))
 	    if (scalar(@bible) == 0);
 
 	return @bible;
@@ -366,11 +426,11 @@ sub __makeBibles {
 }
 
 sub __fixTranslationsParam {
-	my ($args) = @_;
+	my ($self, $args) = @_;
 
 	if (my $translation = $args->{translation}) { # legacy
 		if ($translation eq 'all') {
-			die ("Cannot use all in 'translation', switch code to 'translations'");
+		croak("Cannot use all in 'translation', switch code to 'translations'");
 		}
 		$args->{translations} = [ $translation ]; # convert to new style
 	}
@@ -378,13 +438,15 @@ sub __fixTranslationsParam {
 	if (my $translations = $args->{translations}) { # new style
 		TRANSLATION: foreach my $translation (@{ $args->{translations} }) {
 			if ($translation eq 'all') {
-				$translations = [ __allTranslationsList() ];
+				$args->{__translationsAll} = 1;
+				$translations = [ $self->__allTranslationsList() ];
 				last TRANSLATION;
 			}
 		}
-		my %uniqueTranslations = map { $_ => 1 } @$translations;
-		$translations = [ sort(keys(%uniqueTranslations)) ]; # ensure order is predictable
-		$args->{translations} = $translations; # update after unique/sort
+		my %seenTranslation;
+		my @uniqueTranslations = grep { !$seenTranslation{$_}++ } @$translations;
+		$translations = \@uniqueTranslations; # remove duplicates while preserving order
+		$args->{translations} = $translations;
 		$args->{translation} = $translations->[0]; # populate legacy
 	}
 
@@ -392,8 +454,36 @@ sub __fixTranslationsParam {
 }
 
 sub __allTranslationsList {
-	# TODO: Can we make this dynamic?  If we can, we can drop in custom translations dynamically
-	return ('asv', 'kjv'. 'dr');
+	my ($self) = @_;
+	return @{ $self->__availableTranslations };
+}
+
+sub __makeAvailableTranslations {
+	my ($self) = @_;
+	my $bible = $self->bibles($TRANSLATION_DEFAULT);
+	return [ $bible->__backend->getAvailableTranslations() ];
+}
+
+=item C<__getRelatedRandomVerse($bible, $anchorVerse, $verseOrdinal, $args)>
+
+Return the corresponding random verse from another translation.  Translations
+which contain the anchor book use its chapter and verse reference; translations
+with a different canon fall back to their own verse ordinal.
+
+=cut
+
+sub __getRelatedRandomVerse {
+	my ($self, $bible, $anchorVerse, $verseOrdinal, $args) = @_;
+
+	my $book = $bible->getBookByShortName($anchorVerse->book->shortName, { nonFatal => 1 });
+	if ($book) {
+		my $chapter = $book->getChapterByOrdinal($anchorVerse->chapter->ordinal, { nonFatal => 1 });
+		return if (!$chapter);
+		return $chapter->getVerseByOrdinal($anchorVerse->ordinal, { nonFatal => 1 });
+	}
+
+	return if ($bible->verseCount < $verseOrdinal);
+	return $bible->getVerseByOrdinal($verseOrdinal, $args);
 }
 
 sub __isTestamentMatch {
@@ -421,6 +511,10 @@ sub __ensureSecureString {
 
 	return $input;
 }
+
+=back
+
+=cut
 
 __PACKAGE__->meta->make_immutable;
 

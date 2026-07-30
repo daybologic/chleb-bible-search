@@ -56,12 +56,26 @@ sub invoke {
 	}
 }
 
+sub can_write_hooks_dir {
+	my $testPath = '.git/hooks/.codex-write-test';
+	return 0 unless (-d '.git/hooks');
+
+	my $fh;
+	if (!open($fh, '>', $testPath)) {
+		return 0;
+	}
+
+	close($fh);
+	unlink($testPath);
+	return 1;
+}
+
 invoke('bin/maint/pkg-info.sh'); # needs to run really early doors
 invoke('bin/maint/synology.sh');
-invoke('bin/maint/git-install-local-hooks.sh');
+invoke('bin/maint/git-install-local-hooks.sh') if (can_write_hooks_dir());
 invoke('bin/maint/make-legal-notices.sh');
 
-my @exeFiles = glob q('data/*.bin.gz');
+my @exeFiles = ( );
 push @exeFiles, glob q('bin/core/*.psgi');
 push @exeFiles, glob q('bin/core/*.sh');
 push @exeFiles, glob q('bin/core/*.pl');
@@ -74,10 +88,10 @@ WriteMakefile(
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
 	EXE_FILES    => \@exeFiles,
 
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
 	PREREQ_PM => {
+		'Cache::Memcached' => 0,
+		'DBI'              => 0,
+		'DBD::SQLite'      => 0,
 		'Moose'            => 0,
 		'Test::MockModule' => 0,
 		'Test::More'       => 0,
@@ -88,7 +102,6 @@ WriteMakefile(
 		'Moose'           => 0,
 		'Test::More'      => 0,
 		'Readonly'        => 0,
-		'Redis'           => 0,
 		'Test::Deep'      => 0,
 		'Test::Exception' => 0,
 	},
@@ -110,11 +123,18 @@ http-test :: pure_all
 clean :: 
 	rm -rf cover_db
 	rm -f cache/*.bin
+	rm -f cache/*.sqlite cache/*.sqlite-journal cache/*.sqlite-wal cache/*.sqlite-shm
 	cd data/ && make clean
 	cd info/ && make clean
 
+# Build the generated Bible data before normal build and test targets.
+all :: data
+
+data ::
+	cd data && $(MAKE)
+
 # Extend test target
-test :: http-test
+test :: data http-test
 
     ~;
 }

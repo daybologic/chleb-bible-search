@@ -35,4 +35,5 @@ use Text::Markdown 'markdown';
 
 local $/; # slurp mode
 my $md = <>;
+$md =~ s/([A-Z]+)\.md/lc($1).'.html'/ge;
 print markdown($md);
