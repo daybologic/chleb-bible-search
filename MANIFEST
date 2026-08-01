@@ -227,6 +227,7 @@ data/static/public/images/locked.webp
 data/static/public/images/loop-detected.webp
 data/static/public/images/method-not-allowed.webp
 data/static/public/images/misdirected-request.webp
+data/static/public/images/network-authentication-required.webp
 data/static/public/images/not-acceptable.webp
 data/static/public/images/not-implemented.webp
 data/static/public/images/not-found.webp
