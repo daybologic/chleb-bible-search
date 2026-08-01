@@ -166,6 +166,7 @@ data/static/twitter.html
 data/static/generic_head.html
 data/static/generic_tail.html
 data/static/index.html
+data/static/internal_server_error.html
 data/static/kjv.cvs
 data/static/kjv.txt
 data/static/mailing_list_votd.html
@@ -173,6 +174,7 @@ data/static/no_results.html
 data/static/not_found.html
 data/static/public/images/bible.png
 data/static/public/images/favicon.png
+data/static/public/images/internal-server-error.webp
 data/static/public/images/not-found.webp
 data/static/public/privacy.html
 data/static/public/robots.txt

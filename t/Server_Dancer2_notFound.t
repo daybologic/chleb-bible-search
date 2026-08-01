@@ -82,6 +82,27 @@ sub testJsonNotFoundPage {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlInternalServerErrorPage {
+	my ($self) = @_;
+	plan tests => 6;
+
+	my $htmlAccept = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = Chleb::Server::Dancer2::__internalServerErrorHtml($htmlAccept);
+	my $title = '<title>Chleb Bible Search: Internal server error</title>';
+	ok(index($html, $title) >= 0, 'page has an internal-server-error title');
+	like($html, qr{ <h1>Internal[ ]server[ ]error</h1> }x, 'page has an internal-server-error heading');
+	like($html, qr{ <img[ ]src="/images/internal-server-error\.webp" }x,
+		'page displays the internal-server-error illustration');
+	like($html, qr{ width="273"[ ]height="214" }x, 'page displays the illustration at a compact size');
+	like($html, qr{ <a[ ]href="/">Return[ ]to[ ]Chleb[ ]Bible[ ]Search</a> }x, 'page links home');
+
+	my $jsonAccept = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	is(Chleb::Server::Dancer2::__internalServerErrorHtml($jsonAccept), undef,
+		'JSON keeps the existing internal-server-error response');
+
+	return EXIT_SUCCESS;
+}
+
 sub testMalformedLookupOrdinalIsNotFound {
 	my ($self) = @_;
 	plan tests => 4;
@@ -131,6 +152,33 @@ sub testRoutePreservesJson {
 		is($response->code(), 404, 'unknown JSON route returns 404');
 		like($response->header('Content-Type'), qr{ \Aapplication/json }x, 'unknown JSON route retains JSON content type');
 		like($response->decoded_content(), qr{ "status":404 }x, 'unknown JSON route retains JSON body');
+	});
+
+	return EXIT_SUCCESS;
+}
+
+sub testDeliberateInternalServerErrorRoute {
+	my ($self) = @_;
+	plan tests => 8;
+
+	my $app = Chleb::Server::Dancer2->to_app();
+	test_psgi($app, sub {
+		my ($callback) = @_;
+
+		my $html = $callback->(GET('/1/test/http/500', Accept => 'text/html'));
+		is($html->code(), 500, 'dummy HTML endpoint returns 500');
+		like($html->header('Content-Type'), qr{ \Atext/html }x, 'dummy HTML endpoint returns HTML');
+		like($html->decoded_content(), qr{ <h1>Internal[ ]server[ ]error</h1> }x,
+			'dummy HTML endpoint returns the internal-server-error page');
+		unlike($html->decoded_content(), qr{ Deliberate[ ]500[ ]for[ ]testing }x,
+			'dummy HTML endpoint does not expose exception details');
+		like($html->decoded_content(), qr{ <a[ ]href="/"> }x, 'dummy HTML endpoint links home');
+
+		my $json = $callback->(GET('/1/test/http/500', Accept => 'application/json'));
+		is($json->code(), 500, 'dummy JSON endpoint returns 500');
+		like($json->header('Content-Type'), qr{ \Aapplication/json }x, 'dummy JSON endpoint returns JSON');
+		like($json->decoded_content(), qr{ Deliberate[ ]500[ ]for[ ]testing }x,
+			'dummy JSON endpoint explains the deliberate failure');
 	});
 
 	return EXIT_SUCCESS;

@@ -40,6 +40,32 @@ servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
 paths:
+  /1/test/http/500:
+    get:
+      summary: Generate an Internal Server Error
+      operationId: getTestHttp500
+      description: Deliberately raise an exception to test HTTP 500 handling, content negotiation, and monitoring
+      security: [] # No security
+      responses:
+        '500':
+          description: Deliberate Internal Server Error
+          content:
+            text/html:
+              schema:
+                type: string
+                example: '<!DOCTYPE html><html lang="en"><head><title>Chleb Bible Search: Internal server error</title></head></html>'
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 500
+                  message:
+                    type: string
+                  exception:
+                    type: string
+                    example: Deliberate 500 for testing
   /1/info:
     get:
       summary: Get global facts

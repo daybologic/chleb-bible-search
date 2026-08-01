@@ -682,6 +682,53 @@ sub __notFoundHtml {
 	return $html;
 }
 
+=head1 __internalServerErrorHtml($accept)
+
+Returns a generic HTML page when a request that failed with HTTP 500
+negotiates C<text/html>.  JSON requests return C<undef> so Dancer2 retains its
+existing serialized error response.
+
+=cut
+
+sub __internalServerErrorHtml {
+	my ($accept) = @_;
+	my $contentType = Chleb::Server::MediaType::acceptToContentType(
+		$accept,
+		$Chleb::Server::MediaType::CONTENT_TYPE_JSON_API,
+	);
+	return unless ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
+
+	my $html = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Internal server error" });
+	$html .= fetchStaticPage('internal_server_error');
+	$html .= fetchStaticPage('generic_tail');
+	return $html;
+}
+
+=head1 __registerErrorHooks()
+
+Replace Dancer2's serialized HTTP 500 response with the HTML error page only
+when the request negotiates C<text/html>.
+
+=cut
+
+sub __registerErrorHooks {
+	hook after_error => sub {
+		my ($response) = @_;
+		return unless ($response->status == HTTP_INTERNAL_SERVER_ERROR);
+
+		my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
+		if (my $html = __internalServerErrorHtml($accept)) {
+			# The error response has already inherited the app's JSON serializer.
+			# Remove it before replacing the finalized body with HTML.
+			delete($response->{serializer});
+			$response->is_encoded(0);
+			$response->content_type($Chleb::Server::MediaType::CONTENT_TYPE_HTML);
+			$response->content($html);
+		}
+	};
+	return;
+}
+
 sub __registerNotFoundRoute {
 	any qr{ .* }x => sub {
 		my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
@@ -1182,6 +1229,10 @@ Register ping, version, uptime, and Bible information routes.
 
 # Invoked during module initialization to register Dancer routes.
 sub __registerStatusRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/1/test/http/500' => sub {
+		croak('Deliberate 500 for testing');
+	};
+
 	get '/1/ping' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
@@ -1335,6 +1386,7 @@ __registerLookupRoutes();
 __registerSearchRoutes();
 __registerStatusRoutes();
 __registerNotFoundRoute();
+__registerErrorHooks();
 
 sub run {
 	my ($self) = @_;
