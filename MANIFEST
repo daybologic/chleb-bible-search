@@ -212,6 +212,7 @@ data/static/public/images/bible.png
 data/static/public/images/favicon.png
 data/static/public/images/internal-server-error.webp
 data/static/public/images/not-found.webp
+data/static/public/images/unauthorized.webp
 data/static/public/privacy.html
 data/static/public/robots.txt
 data/static/public/settings.html
