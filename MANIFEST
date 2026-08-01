@@ -210,6 +210,7 @@ data/static/no_results.html
 data/static/not_found.html
 data/static/public/images/bible.png
 data/static/public/images/favicon.png
+data/static/public/images/forbidden.webp
 data/static/public/images/internal-server-error.webp
 data/static/public/images/not-found.webp
 data/static/public/images/unauthorized.webp
