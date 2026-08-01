@@ -232,6 +232,7 @@ data/static/public/images/proxy-authentication-required.webp
 data/static/public/images/range-not-satisfiable.webp
 data/static/public/images/request-timeout.webp
 data/static/public/images/service-unavailable.webp
+data/static/public/images/too-early.webp
 data/static/public/images/too-many-requests.webp
 data/static/public/images/unauthorized.webp
 data/static/public/images/unavailable-for-legal-reasons.webp
