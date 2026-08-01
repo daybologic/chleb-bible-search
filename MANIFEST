@@ -224,6 +224,7 @@ data/static/public/images/insufficient-storage.webp
 data/static/public/images/internal-server-error.webp
 data/static/public/images/length-required.webp
 data/static/public/images/locked.webp
+data/static/public/images/loop-detected.webp
 data/static/public/images/method-not-allowed.webp
 data/static/public/images/misdirected-request.webp
 data/static/public/images/not-acceptable.webp
