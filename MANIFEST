@@ -217,6 +217,7 @@ data/static/public/images/expectation-failed.webp
 data/static/public/images/failed-dependency.webp
 data/static/public/images/favicon.png
 data/static/public/images/forbidden.webp
+data/static/public/images/gateway-timeout.webp
 data/static/public/images/gone.webp
 data/static/public/images/internal-server-error.webp
 data/static/public/images/length-required.webp
