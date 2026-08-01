@@ -238,6 +238,7 @@ data/static/public/images/unauthorized.webp
 data/static/public/images/unavailable-for-legal-reasons.webp
 data/static/public/images/unprocessable-content.webp
 data/static/public/images/unsupported-media-type.webp
+data/static/public/images/upgrade-required.webp
 data/static/public/images/uri-too-long.webp
 data/static/public/privacy.html
 data/static/public/robots.txt
