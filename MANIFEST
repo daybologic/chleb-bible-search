@@ -215,6 +215,7 @@ data/static/public/images/conflict.webp
 data/static/public/images/favicon.png
 data/static/public/images/forbidden.webp
 data/static/public/images/internal-server-error.webp
+data/static/public/images/not-implemented.webp
 data/static/public/images/not-found.webp
 data/static/public/images/service-unavailable.webp
 data/static/public/images/too-many-requests.webp
