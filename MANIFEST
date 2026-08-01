@@ -212,6 +212,7 @@ data/tests/1/a.sh
 'data/tests/1/search preferred wholeword JSON.sh'
 'data/tests/1/session JWT round-trip.sh'
 'data/tests/1/settings HTML.sh'
+'data/tests/1/test HTTP 404 HTML.sh'
 data/tests/1/template.sh
 'data/tests/1/uptime default.sh'
 'data/tests/1/uptime HTML.sh'

@@ -40,6 +40,30 @@ servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
 paths:
+  /1/test/http/404:
+    get:
+      summary: Generate a Not Found response
+      operationId: getTestHttp404
+      description: Deliberately request an unregistered route to test HTTP 404 handling, content negotiation, and monitoring
+      security: [] # No security
+      responses:
+        '404':
+          description: Deliberate Not Found response
+          content:
+            text/html:
+              schema:
+                type: string
+                example: '<!DOCTYPE html><html lang="en"><head><title>Chleb Bible Search: Page not found</title></head></html>'
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    example: 404
+                  message:
+                    type: string
+                    example: Page not found
   /1/test/http/500:
     get:
       summary: Generate an Internal Server Error

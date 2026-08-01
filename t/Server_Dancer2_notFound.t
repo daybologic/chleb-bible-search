@@ -128,7 +128,7 @@ sub testRouteNegotiatesHtml {
 	my $app = Chleb::Server::Dancer2->to_app();
 	test_psgi($app, sub {
 		my ($callback) = @_;
-		my $response = $callback->(GET('/definitely-not-a-route', Accept => 'text/html'));
+		my $response = $callback->(GET('/1/test/http/404', Accept => 'text/html'));
 
 		is($response->code(), 404, 'unknown route returns 404');
 		like($response->header('Content-Type'), qr{ \Atext/html }x, 'unknown route returns HTML content type');
@@ -147,7 +147,7 @@ sub testRoutePreservesJson {
 	my $app = Chleb::Server::Dancer2->to_app();
 	test_psgi($app, sub {
 		my ($callback) = @_;
-		my $response = $callback->(GET('/definitely-not-a-route', Accept => 'application/json'));
+		my $response = $callback->(GET('/1/test/http/404', Accept => 'application/json'));
 
 		is($response->code(), 404, 'unknown JSON route returns 404');
 		like($response->header('Content-Type'), qr{ \Aapplication/json }x, 'unknown JSON route retains JSON content type');
