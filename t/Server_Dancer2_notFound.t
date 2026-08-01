@@ -52,7 +52,7 @@ use Test::More 0.96;
 
 sub testHtmlNotFoundPage {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 7;
 
 	my $accept = Chleb::Server::MediaType->parseAcceptHeader('text/html');
 	my $html = Chleb::Server::Dancer2::__notFoundHtml(
@@ -62,6 +62,8 @@ sub testHtmlNotFoundPage {
 
 	like($html, qr{ <title>Chleb[ ]Bible[ ]Search:[ ]Page[ ]not[ ]found</title> }x, 'page has a not-found title');
 	like($html, qr{ <h1>Page[ ]not[ ]found</h1> }x, 'page has a not-found heading');
+	like($html, qr{ <img[ ]src="/images/not-found\.webp" }x, 'page displays the not-found illustration');
+	like($html, qr{ width="273"[ ]height="214" }x, 'page displays the illustration at a compact size');
 	like($html, qr{ did[ ]you[ ]mean[ ]amos,[ ]hag,[ ]quran\?[ ]&lt;here&gt; }x,
 		'page displays the escaped reason and suggestions');
 	unlike($html, qr{ <here> }x, 'page does not insert reason markup');
