@@ -221,6 +221,7 @@ data/static/public/images/not-acceptable.webp
 data/static/public/images/not-implemented.webp
 data/static/public/images/not-found.webp
 data/static/public/images/payment-required.webp
+data/static/public/images/proxy-authentication-required.webp
 data/static/public/images/request-timeout.webp
 data/static/public/images/service-unavailable.webp
 data/static/public/images/too-many-requests.webp
