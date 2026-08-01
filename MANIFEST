@@ -216,6 +216,7 @@ data/static/public/images/favicon.png
 data/static/public/images/forbidden.webp
 data/static/public/images/gone.webp
 data/static/public/images/internal-server-error.webp
+data/static/public/images/length-required.webp
 data/static/public/images/method-not-allowed.webp
 data/static/public/images/not-acceptable.webp
 data/static/public/images/not-implemented.webp
