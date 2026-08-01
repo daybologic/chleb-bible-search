@@ -102,10 +102,11 @@ sub fetch {
 	my (@bible) = $self->__getBible($args);
 
 	my @verse;
+	my @suggestions;
 	for (my $bibleI = 0; $bibleI < scalar(@bible); $bibleI++) {
 		my $resolvedBook;
 		my $resolvedOk = eval {
-			$resolvedBook = $bible[$bibleI]->resolveBook($book);
+			$resolvedBook = $bible[$bibleI]->resolveBook($book, { suggestions => \@suggestions });
 			1;
 		};
 		next unless ($resolvedOk && $resolvedBook);
@@ -119,8 +120,13 @@ sub fetch {
 		}
 	}
 
-	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, "Book '$book' was not found in any requested translation"))
-	    if (scalar(@verse) == 0);
+	if (scalar(@verse) == 0) {
+		my %seen;
+		@suggestions = sort(grep { !$seen{$_}++ } @suggestions);
+		my $description = "Book '$book' was not found in any requested translation";
+		$description .= ', did you mean ' . join(', ', @suggestions) . '?' if (scalar(@suggestions) > 0);
+		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $description));
+	}
 
 	my $endTiming = Time::HiRes::time();
 	my $msec = int(1000 * ($endTiming - $startTiming));

@@ -558,8 +558,17 @@ sub handleException {
 				content_type $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API;
 				response_header 'Retry-After' => $exception->retryAfterSeconds;
 				return halt($exception->toJsonApiErrorDocument());
+			} elsif ($exception->statusCode == HTTP_NOT_FOUND) {
+				my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
+				if (my $html = __notFoundHtml($accept, $exception->description)) {
+					status HTTP_NOT_FOUND;
+					content_type $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+					return send_as html => $html;
+				}
+
+				return send_error($exception->description, $exception->statusCode);
 			} else {
-				send_error($exception->description, $exception->statusCode);
+				return send_error($exception->description, $exception->statusCode);
 			}
 		} elsif ($exception->can('toString')) {
 			$str = $exception->toString();
@@ -570,6 +579,27 @@ sub handleException {
 
 	$server->dic->logger->error("Internal Server Error: $exception");
 	return send_error($exception, 500);
+}
+
+=head1 __validateLookupOrdinals($chapter, $verse)
+
+Reject malformed lookup path ordinals before they reach numeric Bible APIs.
+
+=cut
+
+sub __validateLookupOrdinals {
+	my ($chapter, $verse) = @_;
+
+	foreach my $ordinal ([ 'chapter', $chapter ], [ 'verse', $verse ]) {
+		next unless (defined($ordinal->[1]));
+		next if ($ordinal->[1] =~ m{\A-?\d+\z}x);
+		croak(Chleb::Exception->raise(
+			HTTP_NOT_FOUND,
+			sprintf("Invalid %s ordinal '%s'", $ordinal->[0], $ordinal->[1]),
+		));
+	}
+
+	return;
 }
 
 =head1 __isTemplateMarker($line)
@@ -626,6 +656,44 @@ sub fetchStaticPage {
 sub serveStaticPage {
 	my ($name, $templateParams) = @_;
 	send_as html => fetchStaticPage($name, $templateParams);
+	return;
+}
+
+=head1 __notFoundHtml($accept, $reason)
+
+Returns a placeholder HTML page when the request negotiates C<text/html>.
+For JSON requests, returns C<undef> so Dancer2 can retain its existing JSON
+404 response.  C<$reason> is escaped before being inserted into the page.
+
+=cut
+
+sub __notFoundHtml {
+	my ($accept, $reason) = @_;
+	my $contentType = Chleb::Server::MediaType::acceptToContentType(
+		$accept,
+		$Chleb::Server::MediaType::CONTENT_TYPE_JSON_API,
+	);
+	return unless ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
+
+	$reason //= 'The page you requested could not be found.';
+	my $html = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Page not found" });
+	$html .= fetchStaticPage('not_found', { NOT_FOUND_REASON => __htmlEscape($reason) });
+	$html .= fetchStaticPage('generic_tail');
+	return $html;
+}
+
+sub __registerNotFoundRoute {
+	any qr{ .* }x => sub {
+		my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
+		if (my $html = __notFoundHtml($accept)) {
+			status HTTP_NOT_FOUND;
+			content_type $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+			send_as html => $html;
+			return;
+		}
+
+		send_error('Page not found', HTTP_NOT_FOUND);
+	};
 	return;
 }
 
@@ -906,6 +974,7 @@ get '/1/lookup/:book/:chapter' => sub {
 	my $result;
 	my $evalOk6; $evalOk6 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+		__validateLookupOrdinals($chapter);
 		$result = $server->__lookup({
 			accept       => $accept,
 			book         => $book,
@@ -950,6 +1019,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $result;
 	my $evalOk7; $evalOk7 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+		__validateLookupOrdinals($chapter, $verse);
 		$result = $server->__lookup({
 			accept       => $accept,
 			book         => $book,
@@ -1264,6 +1334,7 @@ __registerVerseRoutes();
 __registerLookupRoutes();
 __registerSearchRoutes();
 __registerStatusRoutes();
+__registerNotFoundRoute();
 
 sub run {
 	my ($self) = @_;

@@ -170,6 +170,7 @@ data/static/kjv.cvs
 data/static/kjv.txt
 data/static/mailing_list_votd.html
 data/static/no_results.html
+data/static/not_found.html
 data/static/public/images/bible.png
 data/static/public/images/favicon.png
 data/static/public/privacy.html

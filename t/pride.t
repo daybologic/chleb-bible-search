@@ -149,7 +149,7 @@ sub testPride_allTranslations {
 
 sub testBadBook {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 3;
 
 	my $evalOk1; $evalOk1 = eval {
 		$self->sut->fetch('Mormon', 16, 18);
@@ -160,11 +160,14 @@ sub testBadBook {
 		cmp_deeply($evalError, all(
 			isa('Chleb::Exception'),
 			methods(
-				description => "Book 'Mormon' was not found in any requested translation",
 				location    => undef,
 				statusCode  => 404,
 			),
 		), 'correctly not found');
+		my $reason = "Book 'Mormon' was not found in any requested translation,";
+		is(index($evalError->description, $reason), 0, 'not-found description retains its reason');
+		like($evalError->description, qr{ did[ ]you[ ]mean[ ].+\?\z }x,
+			'not-found description retains book suggestions');
 	} else {
 		fail('No exception raised, as was expected');
 	}
