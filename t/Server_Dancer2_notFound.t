@@ -87,7 +87,7 @@ sub testHtmlInternalServerErrorPage {
 	plan tests => 6;
 
 	my $htmlAccept = Chleb::Server::MediaType->parseAcceptHeader('text/html');
-	my $html = Chleb::Server::Dancer2::__internalServerErrorHtml($htmlAccept);
+	my $html = Chleb::Server::Dancer2::httpErrorHtml($htmlAccept, 500);
 	my $title = '<title>Chleb Bible Search: Internal server error</title>';
 	ok(index($html, $title) >= 0, 'page has an internal-server-error title');
 	like($html, qr{ <h1>Internal[ ]server[ ]error</h1> }x, 'page has an internal-server-error heading');
@@ -97,7 +97,7 @@ sub testHtmlInternalServerErrorPage {
 	like($html, qr{ <a[ ]href="/">Return[ ]to[ ]Chleb[ ]Bible[ ]Search</a> }x, 'page links home');
 
 	my $jsonAccept = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	is(Chleb::Server::Dancer2::__internalServerErrorHtml($jsonAccept), undef,
+	is(Chleb::Server::Dancer2::httpErrorHtml($jsonAccept, 500), undef,
 		'JSON keeps the existing internal-server-error response');
 
 	return EXIT_SUCCESS;
@@ -179,6 +179,82 @@ sub testDeliberateInternalServerErrorRoute {
 		like($json->header('Content-Type'), qr{ \Aapplication/json }x, 'dummy JSON endpoint returns JSON');
 		like($json->decoded_content(), qr{ Deliberate[ ]500[ ]for[ ]testing }x,
 			'dummy JSON endpoint explains the deliberate failure');
+	});
+
+	return EXIT_SUCCESS;
+}
+
+sub testAllRegisteredHttpErrorPages {
+	my ($self) = @_;
+	my @codes = (
+		400 .. 417,
+		421 .. 426,
+		428, 429, 431, 451,
+		500 .. 508,
+		511,
+	);
+	plan tests => 1 + (scalar(@codes) * 3);
+
+	is_deeply([ Chleb::Server::Dancer2::httpErrorCodes() ], \@codes,
+		'error registry contains every registered non-obsolete HTTP error status');
+	my $htmlAccept = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $jsonAccept = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	foreach my $code (@codes) {
+		my $html = Chleb::Server::Dancer2::httpErrorHtml($htmlAccept, $code);
+		like($html, qr{ <main> }x, "$code has an HTML template");
+		like($html, qr{ <a[ ]href="/">Return[ ]to[ ]Chleb[ ]Bible[ ]Search</a> }x,
+			"$code template links home");
+		is(Chleb::Server::Dancer2::httpErrorHtml($jsonAccept, $code), undef,
+			"$code leaves JSON responses unchanged");
+	}
+
+	return EXIT_SUCCESS;
+}
+
+sub testAllDeliberateHttpErrorRoutes {
+	my ($self) = @_;
+	my @codes = Chleb::Server::Dancer2::httpErrorCodes();
+	plan tests => scalar(@codes) * 4;
+
+	my $app = Chleb::Server::Dancer2->to_app();
+	test_psgi($app, sub {
+		my ($callback) = @_;
+		foreach my $code (@codes) {
+			my $html = $callback->(GET("/1/test/http/$code", Accept => 'text/html'));
+			is($html->code(), $code, "$code HTML endpoint returns its status");
+			like($html->header('Content-Type'), qr{ \Atext/html }x, "$code HTML endpoint returns HTML");
+
+			my $json = $callback->(GET("/1/test/http/$code", Accept => 'application/json'));
+			is($json->code(), $code, "$code JSON endpoint returns its status");
+			like($json->header('Content-Type'), qr{ \Aapplication/json }x, "$code JSON endpoint returns JSON");
+		}
+	});
+
+	return EXIT_SUCCESS;
+}
+
+sub testDeliberateHttpErrorHeaders {
+	my ($self) = @_;
+	my %expected = (
+		401 => [ 'WWW-Authenticate'   => 'Test realm="Chleb"' ],
+		405 => [ 'Allow'              => 'GET' ],
+		407 => [ 'Proxy-Authenticate' => 'Test realm="Chleb"' ],
+		416 => [ 'Content-Range'      => 'bytes */0' ],
+		426 => [ 'Upgrade'            => 'HTTP/1.1' ],
+		429 => [ 'Retry-After'        => '60' ],
+		451 => [ 'Link'               => '<https://example.invalid/legal>; rel="blocked-by"' ],
+		503 => [ 'Retry-After'        => '60' ],
+	);
+	plan tests => scalar(keys(%expected));
+
+	my $app = Chleb::Server::Dancer2->to_app();
+	test_psgi($app, sub {
+		my ($callback) = @_;
+		foreach my $code (sort({ $a <=> $b } keys(%expected))) {
+			my $response = $callback->(GET("/1/test/http/$code", Accept => 'text/html'));
+			my ($name, $value) = @{ $expected{$code} };
+			is($response->header($name), $value, "$code returns $name");
+		}
 	});
 
 	return EXIT_SUCCESS;

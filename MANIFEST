@@ -165,6 +165,42 @@ data/static/facebook.html
 data/static/twitter.html
 data/static/generic_head.html
 data/static/generic_tail.html
+data/static/http/400.html
+data/static/http/401.html
+data/static/http/402.html
+data/static/http/403.html
+data/static/http/405.html
+data/static/http/406.html
+data/static/http/407.html
+data/static/http/408.html
+data/static/http/409.html
+data/static/http/410.html
+data/static/http/411.html
+data/static/http/412.html
+data/static/http/413.html
+data/static/http/414.html
+data/static/http/415.html
+data/static/http/416.html
+data/static/http/417.html
+data/static/http/421.html
+data/static/http/422.html
+data/static/http/423.html
+data/static/http/424.html
+data/static/http/425.html
+data/static/http/426.html
+data/static/http/428.html
+data/static/http/429.html
+data/static/http/431.html
+data/static/http/451.html
+data/static/http/501.html
+data/static/http/502.html
+data/static/http/503.html
+data/static/http/504.html
+data/static/http/505.html
+data/static/http/506.html
+data/static/http/507.html
+data/static/http/508.html
+data/static/http/511.html
 data/static/index.html
 data/static/internal_server_error.html
 data/static/kjv.cvs
@@ -213,6 +249,8 @@ data/tests/1/a.sh
 'data/tests/1/session JWT round-trip.sh'
 'data/tests/1/settings HTML.sh'
 'data/tests/1/test HTTP 404 HTML.sh'
+'data/tests/1/test HTTP errors HTML.sh'
+'data/tests/1/test HTTP errors JSON.sh'
 data/tests/1/template.sh
 'data/tests/1/uptime default.sh'
 'data/tests/1/uptime HTML.sh'
