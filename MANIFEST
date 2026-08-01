@@ -231,6 +231,7 @@ data/static/public/images/precondition-failed.webp
 data/static/public/images/precondition-required.webp
 data/static/public/images/proxy-authentication-required.webp
 data/static/public/images/range-not-satisfiable.webp
+data/static/public/images/request-header-fields-too-large.webp
 data/static/public/images/request-timeout.webp
 data/static/public/images/service-unavailable.webp
 data/static/public/images/too-early.webp
