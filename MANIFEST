@@ -221,6 +221,7 @@ data/static/public/images/service-unavailable.webp
 data/static/public/images/too-many-requests.webp
 data/static/public/images/unauthorized.webp
 data/static/public/images/unavailable-for-legal-reasons.webp
+data/static/public/images/unprocessable-content.webp
 data/static/public/privacy.html
 data/static/public/robots.txt
 data/static/public/settings.html
