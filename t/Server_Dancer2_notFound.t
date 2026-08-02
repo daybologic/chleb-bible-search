@@ -195,7 +195,7 @@ sub testAllRegisteredHttpErrorPages {
 	);
 	plan tests => 1 + (scalar(@codes) * 3);
 
-	is_deeply([ Chleb::Server::Dancer2::httpErrorCodes() ], \@codes,
+	is_deeply(Chleb::Server::Dancer2::httpErrorCodes(), \@codes,
 		'error registry contains every registered non-obsolete HTTP error status');
 	my $htmlAccept = Chleb::Server::MediaType->parseAcceptHeader('text/html');
 	my $jsonAccept = Chleb::Server::MediaType->parseAcceptHeader('application/json');
@@ -213,7 +213,7 @@ sub testAllRegisteredHttpErrorPages {
 
 sub testAllDeliberateHttpErrorRoutes {
 	my ($self) = @_;
-	my @codes = Chleb::Server::Dancer2::httpErrorCodes();
+	my @codes = @{ Chleb::Server::Dancer2::httpErrorCodes() };
 	plan tests => scalar(@codes) * 4;
 
 	my $app = Chleb::Server::Dancer2->to_app();

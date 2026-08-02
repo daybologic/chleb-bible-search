@@ -711,14 +711,15 @@ sub serveStaticPage {
 
 =head1 httpErrorCodes()
 
-Returns every registered, non-obsolete HTTP client-error and server-error
-status supported by the error-page and test-endpoint registry.
+Returns an array reference containing every registered, non-obsolete HTTP
+client-error and server-error status supported by the error-page and
+test-endpoint registry.
 
 =cut
 
 sub httpErrorCodes {
 	my @codes = sort({ $a <=> $b } keys(%HTTP_ERROR));
-	return @codes;
+	return \@codes;
 }
 
 =head1 httpErrorHtml($accept, $statusCode, [$reason])
