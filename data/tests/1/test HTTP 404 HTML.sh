@@ -39,7 +39,7 @@ if [ "$httpResult" -eq 4 ] \
 	&& [[ "$statusCode" == "404" ]] \
 	&& grep -qi '^Content-Type: text/html' <<< "$response" \
 	&& grep -q '<h1>Page not found</h1>' <<< "$response" \
-	&& grep -q 'src="/images/not-found.webp"' <<< "$response"; then
+	&& grep -q 'src="/images/404_not_found.webp"' <<< "$response"; then
 	exit 0
 fi
 
