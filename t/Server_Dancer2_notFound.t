@@ -62,7 +62,7 @@ sub testHtmlNotFoundPage {
 
 	like($html, qr{ <title>Chleb[ ]Bible[ ]Search:[ ]Page[ ]not[ ]found</title> }x, 'page has a not-found title');
 	like($html, qr{ <h1>Page[ ]not[ ]found</h1> }x, 'page has a not-found heading');
-	like($html, qr{ <img[ ]src="/images/not-found\.webp" }x, 'page displays the not-found illustration');
+	like($html, qr{ <img[ ]src="/images/404_not_found\.webp" }x, 'page displays the not-found illustration');
 	like($html, qr{ width="273"[ ]height="214" }x, 'page displays the illustration at a compact size');
 	like($html, qr{ did[ ]you[ ]mean[ ]amos,[ ]hag,[ ]quran\?[ ]&lt;here&gt; }x,
 		'page displays the escaped reason and suggestions');
@@ -91,7 +91,7 @@ sub testHtmlInternalServerErrorPage {
 	my $title = '<title>Chleb Bible Search: Internal server error</title>';
 	ok(index($html, $title) >= 0, 'page has an internal-server-error title');
 	like($html, qr{ <h1>Internal[ ]server[ ]error</h1> }x, 'page has an internal-server-error heading');
-	like($html, qr{ <img[ ]src="/images/internal-server-error\.webp" }x,
+	like($html, qr{ <img[ ]src="/images/500_internal_server_error\.webp" }x,
 		'page displays the internal-server-error illustration');
 	like($html, qr{ width="273"[ ]height="214" }x, 'page displays the illustration at a compact size');
 	like($html, qr{ <a[ ]href="/">Return[ ]to[ ]Chleb[ ]Bible[ ]Search</a> }x, 'page links home');
