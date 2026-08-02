@@ -814,6 +814,14 @@ sub __testHttpErrorHeaders {
 	return;
 }
 
+=head1 __registerNotFoundRoute()
+
+Register the fallback route that returns the HTML not-found page when the
+request negotiates C<text/html>, while preserving Dancer2's JSON error response
+for other requests.
+
+=cut
+
 sub __registerNotFoundRoute {
 	any qr{ .* }x => sub {
 		my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
