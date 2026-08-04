@@ -174,7 +174,9 @@ If the C<Verse> cannot be found, a fatal error is thrown.
 sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
-	$ordinal = $self->verseCount if ($ordinal == -1);
+	if ($ordinal < 0) {
+		$ordinal = $self->verseCount + $ordinal + 1;
+	}
 
 	my $bookVerseKey = join(':', $self->bible->translation, $self->shortNameRaw, $ordinal);
 	if (my $verseKey = $self->bible->getVerseKeyByBookVerseKey($bookVerseKey)) {

@@ -42,6 +42,7 @@ use Data::Dumper;
 use Digest::CRC qw(crc32);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
+use List::Util qw(max);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
@@ -279,8 +280,10 @@ sub votd {
 		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
 		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
-		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
-		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
+		my $maxVerseCount = max(map { $_->verseCount } @bible);
+		my $signedOrdinal = ($seed % (2 * $maxVerseCount)) - $maxVerseCount;
+		$verse = $bible[0]->getVerseByOrdinal($signedOrdinal, $args);
+		$verseOrdinal = $signedOrdinal;
 		next unless ($self->__isTestamentMatch($verse, $testament));
 
 		if ($parental && $verse->parental) {

@@ -55,7 +55,9 @@ sub BUILD {
 sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
-	$ordinal = $self->verseCount if ($ordinal == -1);
+	if ($ordinal < 0) {
+		$ordinal = $self->verseCount + $ordinal + 1;
+	}
 
 	my $verseKey = join(':', $self->bible->translation, $self->book->shortNameRaw, $self->ordinal, $ordinal);
 	if (my $text = $self->bible->getVerseDataByKey($verseKey)) {
