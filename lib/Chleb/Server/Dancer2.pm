@@ -62,6 +62,47 @@ use Sys::Hostname;
 
 Readonly my $PROJECT => 'Chleb Bible Search';
 
+Readonly my %HTTP_ERROR => (
+	400 => [ 'Bad Request', 'The request could not be understood or processed.', 'http/400_bad_request' ],
+	401 => [ 'Unauthorized', 'Valid authentication credentials are required.', 'http/401_unauthorized' ],
+	402 => [ 'Payment Required', 'Payment is required to access this resource.', 'http/402_payment_required' ],
+	403 => [ 'Forbidden', 'You do not have permission to access this resource.', 'http/403_forbidden' ],
+	404 => [ 'Page not found', 'The page you requested could not be found.', 'http/404_not_found' ],
+	405 => [ 'Method Not Allowed', 'The request method is not supported for this resource.', 'http/405_method_not_allowed' ],
+	406 => [ 'Not Acceptable', 'The requested response format is not available.', 'http/406_not_acceptable' ],
+	407 => [ 'Proxy Authentication Required', 'The intermediary requires authentication.', 'http/407_proxy_authentication_required' ],
+	408 => [ 'Request Timeout', 'The request took too long to complete.', 'http/408_request_timeout' ],
+	409 => [ 'Conflict', 'The request conflicts with the current resource state.', 'http/409_conflict' ],
+	410 => [ 'Gone', 'The requested resource is no longer available.', 'http/410_gone' ],
+	411 => [ 'Length Required', 'The request must include a valid Content-Length header.', 'http/411_length_required' ],
+	412 => [ 'Precondition Failed', 'A condition supplied with the request was not met.', 'http/412_precondition_failed' ],
+	413 => [ 'Content Too Large', 'The request content is larger than the server will accept.', 'http/413_content_too_large' ],
+	414 => [ 'URI Too Long', 'The request URI is longer than the server will accept.', 'http/414_uri_too_long' ],
+	415 => [ 'Unsupported Media Type', 'The request content format is not supported.', 'http/415_unsupported_media_type' ],
+	416 => [ 'Range Not Satisfiable', 'The requested range cannot be supplied.', 'http/416_range_not_satisfiable' ],
+	417 => [ 'Expectation Failed', 'The server could not meet the request expectations.', 'http/417_expectation_failed' ],
+	421 => [ 'Misdirected Request', 'This server cannot provide a response for the requested origin.', 'http/421_misdirected_request' ],
+	422 => [ 'Unprocessable Content', 'The request was understood but its content could not be processed.', 'http/422_unprocessable_content' ],
+	423 => [ 'Locked', 'The requested resource is locked.', 'http/423_locked' ],
+	424 => [ 'Failed Dependency', 'The request failed because a related action failed.', 'http/424_failed_dependency' ],
+	425 => [ 'Too Early', 'The server is unwilling to risk processing this request yet.', 'http/425_too_early' ],
+	426 => [ 'Upgrade Required', 'A different protocol must be used to complete the request.', 'http/426_upgrade_required' ],
+	428 => [ 'Precondition Required', 'The request must be conditional.', 'http/428_precondition_required' ],
+	429 => [ 'Too Many Requests', 'Too many requests have been received. Please try again later.', 'http/429_too_many_requests' ],
+	431 => [ 'Request Header Fields Too Large', 'The request headers are too large.', 'http/431_request_header_fields_too_large' ],
+	451 => [ 'Unavailable For Legal Reasons', 'This resource is unavailable for legal reasons.', 'http/451_unavailable_for_legal_reasons' ],
+	500 => [ 'Internal server error', 'Something went wrong while processing your request.', 'http/500_internal_server_error' ],
+	501 => [ 'Not Implemented', 'The server does not support the requested functionality.', 'http/501_not_implemented' ],
+	502 => [ 'Bad Gateway', 'An upstream service returned an invalid response.', 'http/502_bad_gateway' ],
+	503 => [ 'Service Unavailable', 'The service is temporarily unavailable. Please try again later.', 'http/503_service_unavailable' ],
+	504 => [ 'Gateway Timeout', 'An upstream service did not respond in time.', 'http/504_gateway_timeout' ],
+	505 => [ 'HTTP Version Not Supported', 'The requested HTTP version is not supported.', 'http/505_http_version_not_supported' ],
+	506 => [ 'Variant Also Negotiates', 'The requested resource has a negotiation configuration error.', 'http/506_variant_also_negotiates' ],
+	507 => [ 'Insufficient Storage', 'The server does not have enough storage to complete the request.', 'http/507_insufficient_storage' ],
+	508 => [ 'Loop Detected', 'The server detected a loop while processing the request.', 'http/508_loop_detected' ],
+	511 => [ 'Network Authentication Required', 'Network authentication is required before continuing.', 'http/511_network_authentication_required' ],
+);
+
 my $server;
 
 set serializer => 'JSON'; # or any other serializer
@@ -555,11 +596,29 @@ sub handleException {
 				return redirect $exception->location, $exception->statusCode;
 			} elsif (defined($exception->retryAfterSeconds)) {
 				status $exception->statusCode;
-				content_type $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API;
 				response_header 'Retry-After' => $exception->retryAfterSeconds;
+				my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
+				if (my $html = httpErrorHtml($accept, $exception->statusCode, $exception->description)) {
+					content_type $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+					return send_as html => $html;
+				}
+
+				content_type $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API;
 				return halt($exception->toJsonApiErrorDocument());
+			} elsif (exists($HTTP_ERROR{$exception->statusCode})) {
+				my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
+				my $reason = $exception->statusCode < HTTP_INTERNAL_SERVER_ERROR
+				    ? $exception->description
+				    : undef;
+				if (my $html = httpErrorHtml($accept, $exception->statusCode, $reason)) {
+					status $exception->statusCode;
+					content_type $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+					return send_as html => $html;
+				}
+
+				return send_error($exception->description, $exception->statusCode);
 			} else {
-				send_error($exception->description, $exception->statusCode);
+				return send_error($exception->description, $exception->statusCode);
 			}
 		} elsif ($exception->can('toString')) {
 			$str = $exception->toString();
@@ -570,6 +629,27 @@ sub handleException {
 
 	$server->dic->logger->error("Internal Server Error: $exception");
 	return send_error($exception, 500);
+}
+
+=head1 __validateLookupOrdinals($chapter, $verse)
+
+Reject malformed lookup path ordinals before they reach numeric Bible APIs.
+
+=cut
+
+sub __validateLookupOrdinals {
+	my ($chapter, $verse) = @_;
+
+	foreach my $ordinal ([ 'chapter', $chapter ], [ 'verse', $verse ]) {
+		next unless (defined($ordinal->[1]));
+		next if ($ordinal->[1] =~ m{\A-?\d+\z}x);
+		croak(Chleb::Exception->raise(
+			HTTP_NOT_FOUND,
+			sprintf("Invalid %s ordinal '%s'", $ordinal->[0], $ordinal->[1]),
+		));
+	}
+
+	return;
 }
 
 =head1 __isTemplateMarker($line)
@@ -626,6 +706,134 @@ sub fetchStaticPage {
 sub serveStaticPage {
 	my ($name, $templateParams) = @_;
 	send_as html => fetchStaticPage($name, $templateParams);
+	return;
+}
+
+=head1 httpErrorCodes()
+
+Returns an array reference containing every registered, non-obsolete HTTP
+client-error and server-error status supported by the error-page and
+test-endpoint registry.
+
+=cut
+
+sub httpErrorCodes {
+	my @codes = sort({ $a <=> $b } keys(%HTTP_ERROR));
+	return \@codes;
+}
+
+=head1 httpErrorHtml($accept, $statusCode, [$reason])
+
+Render the registered error template for C<$statusCode> when the request
+negotiates C<text/html>.  The safely escaped C<$reason> overrides the generic
+registered explanation when supplied.  Non-HTML requests return C<undef>.
+
+=cut
+
+sub httpErrorHtml {
+	my ($accept, $statusCode, $reason) = @_;
+	return unless (exists($HTTP_ERROR{$statusCode}));
+
+	my $contentType = Chleb::Server::MediaType::acceptToContentType(
+		$accept,
+		$Chleb::Server::MediaType::CONTENT_TYPE_JSON_API,
+	);
+	return unless ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
+
+	my ($title, $defaultReason, $template) = @{ $HTTP_ERROR{$statusCode} };
+	$reason //= $defaultReason;
+	my $html = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: $title" });
+	$html .= fetchStaticPage($template, { ERROR_REASON => __htmlEscape($reason) });
+	$html .= fetchStaticPage('generic_tail');
+	return $html;
+}
+
+=head1 __notFoundHtml($accept, $reason)
+
+Returns a placeholder HTML page when the request negotiates C<text/html>.
+For JSON requests, returns C<undef> so Dancer2 can retain its existing JSON
+404 response.  C<$reason> is escaped before being inserted into the page.
+
+=cut
+
+sub __notFoundHtml {
+	my ($accept, $reason) = @_;
+	return httpErrorHtml($accept, HTTP_NOT_FOUND, $reason);
+}
+
+=head1 __registerErrorHooks()
+
+Replace Dancer2's serialized registered error responses with their HTML pages
+only when the request negotiates C<text/html>.
+
+=cut
+
+sub __registerErrorHooks {
+	hook after_error => sub {
+		my ($response) = @_;
+		return unless (exists($HTTP_ERROR{$response->status}));
+		__testHttpErrorHeaders($response->status, $response);
+
+		my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
+		if (my $html = httpErrorHtml($accept, $response->status)) {
+			# The error response has already inherited the app's JSON serializer.
+			# Remove it before replacing the finalized body with HTML.
+			delete($response->{serializer});
+			$response->is_encoded(0);
+			$response->content_type($Chleb::Server::MediaType::CONTENT_TYPE_HTML);
+			$response->content($html);
+		}
+	};
+	return;
+}
+
+=head1 __testHttpErrorHeaders($statusCode, $response)
+
+Set protocol headers required or useful for deliberate error responses whose
+semantics are not fully represented by the status and response body alone.
+C<$response> is the finalized Dancer2 error response.
+
+=cut
+
+sub __testHttpErrorHeaders {
+	my ($statusCode, $response) = @_;
+	my %headers = (
+		401 => [ 'WWW-Authenticate'   => 'Test realm="Chleb"' ],
+		405 => [ 'Allow'              => 'GET' ],
+		407 => [ 'Proxy-Authenticate' => 'Test realm="Chleb"' ],
+		416 => [ 'Content-Range'      => 'bytes */0' ],
+		426 => [ 'Upgrade'            => 'HTTP/1.1' ],
+		429 => [ 'Retry-After'        => '60' ],
+		451 => [ 'Link'               => '<https://example.invalid/legal>; rel="blocked-by"' ],
+		503 => [ 'Retry-After'        => '60' ],
+	);
+
+	if (my $header = $headers{$statusCode}) {
+		$response->header($header->[0] => $header->[1]);
+	}
+	return;
+}
+
+=head1 __registerNotFoundRoute()
+
+Register the fallback route that returns the HTML not-found page when the
+request negotiates C<text/html>, while preserving Dancer2's JSON error response
+for other requests.
+
+=cut
+
+sub __registerNotFoundRoute {
+	any qr{ .* }x => sub {
+		my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
+		if (my $html = __notFoundHtml($accept)) {
+			status HTTP_NOT_FOUND;
+			content_type $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+			send_as html => $html;
+			return;
+		}
+
+		send_error('Page not found', HTTP_NOT_FOUND);
+	};
 	return;
 }
 
@@ -906,6 +1114,7 @@ get '/1/lookup/:book/:chapter' => sub {
 	my $result;
 	my $evalOk6; $evalOk6 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+		__validateLookupOrdinals($chapter);
 		$result = $server->__lookup({
 			accept       => $accept,
 			book         => $book,
@@ -950,6 +1159,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $result;
 	my $evalOk7; $evalOk7 = eval {
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+		__validateLookupOrdinals($chapter, $verse);
 		$result = $server->__lookup({
 			accept       => $accept,
 			book         => $book,
@@ -1104,6 +1314,23 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	return;
 }
 
+=item C<__testHttpError($statusCode)>
+
+Return the deliberate registered HTTP error requested by the test endpoint.
+
+=cut
+
+sub __testHttpError {
+	my ($statusCode) = @_;
+	if ($statusCode !~ m{\A[0-9]{3}\z}x || !exists($HTTP_ERROR{$statusCode})) {
+		return send_error("HTTP error status '$statusCode' is not registered for testing", HTTP_BAD_REQUEST);
+	}
+
+	$statusCode = int($statusCode);
+	croak('Deliberate 500 for testing') if ($statusCode == HTTP_INTERNAL_SERVER_ERROR);
+	return send_error("Deliberate $statusCode for testing", $statusCode);
+}
+
 =item C<__registerStatusRoutes()>
 
 Register ping, version, uptime, and Bible information routes.
@@ -1112,6 +1339,10 @@ Register ping, version, uptime, and Bible information routes.
 
 # Invoked during module initialization to register Dancer routes.
 sub __registerStatusRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/1/test/http/:statusCode' => sub {
+		return __testHttpError(param('statusCode') // '');
+	};
+
 	get '/1/ping' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
@@ -1264,6 +1495,8 @@ __registerVerseRoutes();
 __registerLookupRoutes();
 __registerSearchRoutes();
 __registerStatusRoutes();
+__registerNotFoundRoute();
+__registerErrorHooks();
 
 sub run {
 	my ($self) = @_;

@@ -20,7 +20,7 @@
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS BE
 # LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 # CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 # SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -31,7 +31,7 @@
 
 set -uo pipefail
 
-response=$(http --print=hb --pretty=none --check-status GET chleb-api.example.org/1/lookup/wibble/1/1 Accept:text/html 2>/dev/null)
+response=$(http --print=hb --pretty=none --check-status GET chleb-api.example.org/1/test/http/404 Accept:text/html 2>/dev/null)
 httpResult=$?
 statusCode=$(head -n 1 <<< "$response" | awk '{print $2}')
 
@@ -39,7 +39,7 @@ if [ "$httpResult" -eq 4 ] \
 	&& [[ "$statusCode" == "404" ]] \
 	&& grep -qi '^Content-Type: text/html' <<< "$response" \
 	&& grep -q '<h1>Page not found</h1>' <<< "$response" \
-	&& grep -q 'did you mean' <<< "$response"; then
+	&& grep -q 'src="/images/404_not_found.webp"' <<< "$response"; then
 	exit 0
 fi
 
