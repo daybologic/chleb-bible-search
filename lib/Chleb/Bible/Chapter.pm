@@ -60,10 +60,11 @@ sub getVerseByOrdinal {
 	my $verseKey = join(':', $self->bible->translation, $self->book->shortNameRaw, $self->ordinal, $ordinal);
 	if (my $text = $self->bible->getVerseDataByKey($verseKey)) {
 		return Chleb::Bible::Verse->new({
-			book    => $self->book,
-			chapter => $self,
-			ordinal => $ordinal,
-			text    => $text,
+			book           => $self->book,
+			chapter        => $self,
+			ordinal        => $ordinal,
+			text           => $text,
+			__queryContext => $args || {},
 		});
 	}
 
@@ -72,14 +73,15 @@ sub getVerseByOrdinal {
 }
 
 sub getVerses {
-	my ($self) = @_;
+	my ($self, $args) = @_;
 	my $verses = $self->bible->getChapterVerseDataByKey($self->book->shortNameRaw, $self->ordinal);
 	return [ map {
 		Chleb::Bible::Verse->new({
-			book    => $self->book,
-			chapter => $self,
-			ordinal => $_->{verse_ordinal} + 0,
-			text    => $_->{text},
+			book           => $self->book,
+			chapter        => $self,
+			ordinal        => $_->{verse_ordinal} + 0,
+			text           => $_->{text},
+			__queryContext => $args || {},
 		});
 	} @{ $verses // [ ] } ];
 }

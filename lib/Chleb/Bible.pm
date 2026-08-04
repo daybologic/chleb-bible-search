@@ -287,10 +287,11 @@ sub getVerseByOrdinal {
 				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
 
 				return Chleb::Bible::Verse->new({
-					book    => $book,
-					chapter => $chapter,
-					ordinal => $verseNumber,
-					text    => $text,
+					book           => $book,
+					chapter        => $chapter,
+					ordinal        => $verseNumber,
+					text           => $text,
+					__queryContext => $args || {},
 				});
 			}
 		} else {
