@@ -103,7 +103,7 @@ sub testHtml {
 	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, '__version HTML has home link');
 	like($html, qr{<table class="info-table">}, '__version HTML has info table');
 	like($html, qr{<th>Version</th>}, '__version HTML has version header');
-	like($html, qr{<td>3\.0\.0</td>}, '__version HTML has version value');
+	like($html, qr{<td>3\.0\.1</td>}, '__version HTML has version value');
 	like($html, qr{<th>Git changeset</th>}, '__version HTML has changeset header');
 	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_CHANGESET\E</td>}, '__version HTML has changeset value');
 	like($html, qr{<th>Build time</th>}, '__version HTML has build time header');
