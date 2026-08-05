@@ -149,11 +149,14 @@ sub __checkTraversalWork {
 
 	my $previousVerse;
 	my $actualBibleVerseCount = 0;
+	$bible[0]->deferSharedCacheWrites(1);
 	do {
 		$actualBibleVerseCount++;
 		$previousVerse = $verse;
 		$verse = $verse->getNext();
 	} while ($verse);
+	$bible[0]->deferSharedCacheWrites(0);
+	$bible[0]->flushSharedCache();
 
 	$verse = $previousVerse;
 	cmp_deeply($verse, all(
@@ -195,11 +198,14 @@ sub __testTraversalReverseWork {
 
 	my $previousVerse;
 	my $actualBibleVerseCount = 0;
+	$bible[0]->deferSharedCacheWrites(1);
 	do {
 		$actualBibleVerseCount++;
 		$previousVerse = $verse;
 		$verse = $verse->getPrev();
 	} while ($verse);
+	$bible[0]->deferSharedCacheWrites(0);
+	$bible[0]->flushSharedCache();
 
 	$verse = $previousVerse;
 	cmp_deeply($verse, all(
