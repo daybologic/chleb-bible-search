@@ -59,6 +59,8 @@ has parental => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeParenta
 
 has key => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeKey);
 
+has __queryContext => (is => 'ro', isa => 'HashRef', required => 0, default => sub { {} });
+
 has previous => (is => 'ro', isa => 'Maybe[Chleb::Bible::Verse]', lazy => 1, init_arg => undef, builder => 'getPrev');
 
 has __sentiment => (is => 'ro', isa => 'HashRef', lazy => 1, init_arg => undef, default => \&__makeSentiment);
@@ -80,13 +82,14 @@ sub getNext {
 
 sub getPrev {
 	my ($self) = @_;
+	my $args = { %{$self->__queryContext || {}}, nonFatal => 1 };
 
 	if ($self->ordinal == 1) {
 		if (my $chapter = $self->chapter->getPrev()) {
-			return $chapter->getVerseByOrdinal(-1);
+			return $chapter->getVerseByOrdinal(-1, $args);
 		}
 	} else {
-		return $self->chapter->getVerseByOrdinal($self->ordinal - 1, { nonFatal => 1 });
+		return $self->chapter->getVerseByOrdinal($self->ordinal - 1, $args);
 	}
 
 	return;
