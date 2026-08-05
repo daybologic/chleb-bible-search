@@ -42,7 +42,6 @@ use Data::Dumper;
 use Digest::CRC qw(crc32);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
-use List::Util qw(max);
 use Readonly;
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes ();
@@ -273,41 +272,38 @@ sub votd {
 	$when = $self->_resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
-	my ($verse, $verseOrdinal, @verses);
+	my ($verse, @verses);
+	OFFSET:
 	for (my $offset = 0; $offset > -1; $offset++) {
 		my $seed = crc32($when->epoch + $offset);
 		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
 		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
-		my $maxVerseCount = max(map { $_->verseCount } @bible);
-		my $signedOrdinal = ($seed % (2 * $maxVerseCount)) - $maxVerseCount;
-		$verse = $bible[0]->getVerseByOrdinal($signedOrdinal, $args);
-		$verseOrdinal = $signedOrdinal;
-		next unless ($self->__isTestamentMatch($verse, $testament));
+		my @candidateVerses;
+		foreach my $candidateBible (@bible) {
+			my $verseCount = $candidateBible->verseCount;
+			my $signedOrdinal = ($seed % (2 * $verseCount)) - $verseCount;
+			$signedOrdinal = -$verseCount if ($signedOrdinal == 0);
 
-		if ($parental && $verse->parental) {
-			$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
-			next;
-		}
+			my $candidateVerse = $candidateBible->getVerseByOrdinal($signedOrdinal, $args);
+			next OFFSET unless ($self->__isTestamentMatch($candidateVerse, $testament));
 
-		while ($verse->previous && $verse->previous->continues) {
-			# look upwards until we are not on a continuation, to give increased context
-			$verse = $verse->previous;
-		}
-
-		my $verseAvailable = 1;
-		@verses = ($verse);
-		for (my $candidateI = 1; $candidateI < scalar(@bible); $candidateI++) {
-			my $candidateBible = $bible[$candidateI];
-			my $candidateVerse = $self->__getRelatedRandomVerse($candidateBible, $verse, $verseOrdinal, $args);
-			unless ($candidateVerse) {
-				$verseAvailable = 0;
-				last;
+			if ($parental && $candidateVerse->parental) {
+				$self->dic->logger->debug('Skipping ' . $candidateVerse->toString() . ' because of parental mode');
+				next OFFSET;
 			}
-			push(@verses, $candidateVerse);
+
+			while ($candidateVerse->previous && $candidateVerse->previous->continues) {
+				# look upwards until we are not on a continuation, to give increased context
+				$candidateVerse = $candidateVerse->previous;
+			}
+
+			push(@candidateVerses, $candidateVerse);
 		}
-		last if ($verseAvailable);
+
+		@verses = @candidateVerses;
+		$verse = $verses[0];
+		last;
 	}
 
 	$self->dic->logger->debug($verse->toString());
