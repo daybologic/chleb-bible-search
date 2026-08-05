@@ -53,7 +53,7 @@ The latest release is version 3.0.1, which is available for download at the foll
 
 The latest release is available as a Debian package from the following locations:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/tag/v3.0.1)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/v3.0.1)
   * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v3.0.1)
 
 The service core is architecture-dependent.  We currently publish Debian packages for
