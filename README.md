@@ -53,19 +53,27 @@ The latest release is version 3.0.1, which is available for download at the foll
 
 The latest release is available as a Debian package from the following locations:
 
-  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/download/v3.0.1/chleb-bible-search_3.0.1_all.deb)
+  * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/tag/v3.0.1)
   * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v3.0.1)
+
+The service core is architecture-dependent.  We currently publish Debian packages for
+`amd64` and `arm64`; the meta-package and dictionary packages are architecture-independent
+and therefore retain the `_all.deb` suffix.  Users may also build the core package for
+other [architectures supported by Debian](https://www.debian.org/ports/) where the required
+dependencies are available.
 
 ## Self-hosted installation
 
 You are welcome to use our hosted version of the service, at [chleb-api.daybologic.co.uk](https://chleb-api.daybologic.co.uk/).
 This is the easiest way to fire up and get searching the bible via your application or website.  However, if you want to install
-the service on your own equipment.  Please install the deb file, where possible, an then run:
+the service on your own equipment.  Download the packages matching your system architecture,
+then run:
 
-```
+```bash
+architecture=$(dpkg --print-architecture)
 sudo dpkg -i \
-	chleb-bible-search_3.0.1_all.deb
-	chleb-bible-search-core_3.0.1_all.deb
+	chleb-bible-search_3.0.1_all.deb \
+	"chleb-bible-search-core_3.0.1_${architecture}.deb" \
 	chleb-bible-search-dict_3.0.1_all.deb
 
 sudo apt -yf install
