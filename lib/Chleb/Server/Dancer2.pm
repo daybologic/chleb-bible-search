@@ -704,27 +704,6 @@ sub __validateLookupOrdinals {
 	return;
 }
 
-=head1 __validateLookupOrdinals($chapter, $verse)
-
-Reject malformed lookup path ordinals before they reach numeric Bible APIs.
-
-=cut
-
-sub __validateLookupOrdinals {
-	my ($chapter, $verse) = @_;
-
-	foreach my $ordinal ([ 'chapter', $chapter ], [ 'verse', $verse ]) {
-		next unless (defined($ordinal->[1]));
-		next if ($ordinal->[1] =~ m{\A-?\d+\z}x);
-		croak(Chleb::Exception->raise(
-			HTTP_NOT_FOUND,
-			sprintf("Invalid %s ordinal '%s'", $ordinal->[0], $ordinal->[1]),
-		));
-	}
-
-	return;
-}
-
 =head1 __isTemplateMarker($line)
 
 Return true when a source line is the case-insensitive Chleb template marker.
@@ -1192,7 +1171,6 @@ get '/1/lookup/:book/:chapter' => sub {
 	my $evalOk6; $evalOk6 = eval {
 		__validateLookupOrdinals($chapter);
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
-		__validateLookupOrdinals($chapter);
 		$result = $server->__lookup({
 			accept       => $accept,
 			book         => $book,
@@ -1240,7 +1218,6 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	my $evalOk7; $evalOk7 = eval {
 		__validateLookupOrdinals($chapter, $verse);
 		$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
-		__validateLookupOrdinals($chapter, $verse);
 		$result = $server->__lookup({
 			accept       => $accept,
 			book         => $book,

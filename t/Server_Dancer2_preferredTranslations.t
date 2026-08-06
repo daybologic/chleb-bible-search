@@ -44,6 +44,7 @@ extends 'Test::Module::Runnable';
 
 use English qw(-no_match_vars);
 use Chleb::Server::Dancer2;
+use HTTP::Status qw(HTTP_BAD_REQUEST);
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
 
@@ -99,15 +100,21 @@ sub testLookupBookFallback {
 
 sub testLookupOrdinalValidation {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 4;
 
-	my $error;
-	eval {
-		Chleb::Server::Dancer2::__validateLookupOrdinals('6&translations=all');
-		1;
-	} or $error = $EVAL_ERROR;
+	foreach my $ordinals (
+		[ '6&translations=all' ],
+		[ 6, '7&translations=all' ],
+	) {
+		my $error;
+		eval {
+			Chleb::Server::Dancer2::__validateLookupOrdinals(@$ordinals);
+			1;
+		} or $error = $EVAL_ERROR;
 
-	isa_ok($error, 'Chleb::Exception', 'malformed lookup ordinal returns a Chleb exception');
+		isa_ok($error, 'Chleb::Exception', 'malformed lookup ordinal returns a Chleb exception');
+		is($error->statusCode, HTTP_BAD_REQUEST, 'malformed lookup ordinal returns HTTP 400 Bad Request');
+	}
 
 	return EXIT_SUCCESS;
 }
