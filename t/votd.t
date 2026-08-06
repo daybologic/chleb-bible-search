@@ -165,6 +165,45 @@ sub testV2TranslationIndependentDailyVerse {
 	return EXIT_SUCCESS;
 }
 
+sub testV2BibleTranslationsShareDailyReference {
+	my ($self) = @_;
+	plan skip_all => 'ASV, KJV and Pickthall test data are not installed'
+	    unless ($self->hasTranslation('asv') && $self->hasTranslation('kjv')
+	        && $self->hasTranslation('pickthall'));
+	plan tests => 5;
+
+	my $when = '2026-08-06T12:00:00+0100';
+	my @cases = (
+		[ [ 'asv' ], [ 'asv:2 Samuel 3:19' ] ],
+		[ [ 'kjv' ], [ 'kjv:2 Samuel 3:19' ] ],
+		[ [ 'asv', 'kjv' ], [ 'asv:2 Samuel 3:19', 'kjv:2 Samuel 3:19' ] ],
+		[ [ 'kjv', 'asv' ], [ 'kjv:2 Samuel 3:19', 'asv:2 Samuel 3:19' ] ],
+		[ [ 'all' ], [ 'asv:2 Samuel 3:19', 'kjv:2 Samuel 3:19', 'pickthall:Quran 53:36' ] ],
+	);
+
+	foreach my $case (@cases) {
+		my ($translations, $expected) = @$case;
+		my $verses = $self->sut->votd({
+			version      => 2,
+			when         => $when,
+			parental     => 0,
+			translations => $translations,
+		});
+		my %seenTranslation;
+		my @references = map {
+			join(':', $_->book->bible->translation, sprintf('%s %d:%d',
+				$_->book->longName, $_->chapter->ordinal, $_->ordinal));
+		} grep {
+			!$seenTranslation{$_->book->bible->translation}++;
+		} @$verses;
+
+		is_deeply(\@references, $expected,
+			'Bible VoTD references share the canonical reference and preserve request order');
+	}
+
+	return EXIT_SUCCESS;
+}
+
 sub testParentalTerm {
 	my ($self) = @_;
 	plan tests => 2;

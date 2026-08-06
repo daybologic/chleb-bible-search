@@ -55,6 +55,7 @@ Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
 Readonly my $SHARED_CACHE_FORMAT_VERSION => 1;
+Readonly my $VERSE_ORDINAL_CACHE_VERSION => 2;
 
 Readonly my $OT_COUNT => 39;
 
@@ -863,7 +864,8 @@ sub getVerseKeyByOrdinal {
 		$self->__verseKeyCache->{$cacheKey} = $mapped;
 		return $mapped;
 	}
-	if (my $cached = $self->__sharedCacheGet('versekey', $cacheKey)) {
+	my $sharedCacheKey = join(':', $VERSE_ORDINAL_CACHE_VERSION, $cacheKey);
+	if (my $cached = $self->__sharedCacheGet('versekey', $sharedCacheKey)) {
 		$self->__verseKeyCache->{$cacheKey} = $cached;
 		return $cached;
 	}
@@ -891,7 +893,7 @@ SQL
 	my ($mappedTranslation, $mappedBookShortName, $mappedChapterNumber, $mappedVerseNumber) = split(m{ : }x, $key, 4);
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{__ordinalToKey}->{$ordinal} = $key;
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{$mappedBookShortName}->{$mappedChapterNumber}->{$mappedVerseNumber} = $ordinal;
-	$self->__sharedCacheSet('versekey', $cacheKey, $key);
+	$self->__sharedCacheSet('versekey', $sharedCacheKey, $key);
 	return $key;
 }
 
