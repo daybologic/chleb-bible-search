@@ -4,6 +4,7 @@
 
 use strict;
 use warnings;
+use open ':std', ':encoding(UTF-8)';
 
 use Carp qw(croak);
 use File::Temp qw(tempfile);
