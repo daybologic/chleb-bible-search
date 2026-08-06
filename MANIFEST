@@ -165,11 +165,87 @@ data/static/facebook.html
 data/static/twitter.html
 data/static/generic_head.html
 data/static/generic_tail.html
+data/static/http/400_bad_request.html
+data/static/http/401_unauthorized.html
+data/static/http/402_payment_required.html
+data/static/http/403_forbidden.html
+data/static/http/404_not_found.html
+data/static/http/405_method_not_allowed.html
+data/static/http/406_not_acceptable.html
+data/static/http/407_proxy_authentication_required.html
+data/static/http/408_request_timeout.html
+data/static/http/409_conflict.html
+data/static/http/410_gone.html
+data/static/http/411_length_required.html
+data/static/http/412_precondition_failed.html
+data/static/http/413_content_too_large.html
+data/static/http/414_uri_too_long.html
+data/static/http/415_unsupported_media_type.html
+data/static/http/416_range_not_satisfiable.html
+data/static/http/417_expectation_failed.html
+data/static/http/421_misdirected_request.html
+data/static/http/422_unprocessable_content.html
+data/static/http/423_locked.html
+data/static/http/424_failed_dependency.html
+data/static/http/425_too_early.html
+data/static/http/426_upgrade_required.html
+data/static/http/428_precondition_required.html
+data/static/http/429_too_many_requests.html
+data/static/http/431_request_header_fields_too_large.html
+data/static/http/451_unavailable_for_legal_reasons.html
+data/static/http/500_internal_server_error.html
+data/static/http/501_not_implemented.html
+data/static/http/502_bad_gateway.html
+data/static/http/503_service_unavailable.html
+data/static/http/504_gateway_timeout.html
+data/static/http/505_http_version_not_supported.html
+data/static/http/506_variant_also_negotiates.html
+data/static/http/507_insufficient_storage.html
+data/static/http/508_loop_detected.html
+data/static/http/511_network_authentication_required.html
 data/static/index.html
 data/static/kjv.cvs
 data/static/kjv.txt
 data/static/mailing_list_votd.html
 data/static/no_results.html
+data/static/public/images/400_bad_request.webp
+data/static/public/images/401_unauthorized.webp
+data/static/public/images/402_payment_required.webp
+data/static/public/images/403_forbidden.webp
+data/static/public/images/404_not_found.webp
+data/static/public/images/405_method_not_allowed.webp
+data/static/public/images/406_not_acceptable.webp
+data/static/public/images/407_proxy_authentication_required.webp
+data/static/public/images/408_request_timeout.webp
+data/static/public/images/409_conflict.webp
+data/static/public/images/410_gone.webp
+data/static/public/images/411_length_required.webp
+data/static/public/images/412_precondition_failed.webp
+data/static/public/images/413_content_too_large.webp
+data/static/public/images/414_uri_too_long.webp
+data/static/public/images/415_unsupported_media_type.webp
+data/static/public/images/416_range_not_satisfiable.webp
+data/static/public/images/417_expectation_failed.webp
+data/static/public/images/421_misdirected_request.webp
+data/static/public/images/422_unprocessable_content.webp
+data/static/public/images/423_locked.webp
+data/static/public/images/424_failed_dependency.webp
+data/static/public/images/425_too_early.webp
+data/static/public/images/426_upgrade_required.webp
+data/static/public/images/428_precondition_required.webp
+data/static/public/images/429_too_many_requests.webp
+data/static/public/images/431_request_header_fields_too_large.webp
+data/static/public/images/451_unavailable_for_legal_reasons.webp
+data/static/public/images/500_internal_server_error.webp
+data/static/public/images/501_not_implemented.webp
+data/static/public/images/502_bad_gateway.webp
+data/static/public/images/503_service_unavailable.webp
+data/static/public/images/504_gateway_timeout.webp
+data/static/public/images/505_http_version_not_supported.webp
+data/static/public/images/506_variant_also_negotiates.webp
+data/static/public/images/507_insufficient_storage.webp
+data/static/public/images/508_loop_detected.webp
+data/static/public/images/511_network_authentication_required.webp
 data/static/public/images/bible.png
 data/static/public/images/favicon.png
 data/static/public/privacy.html
@@ -178,6 +254,7 @@ data/static/public/settings.html
 data/static/public/style.css
 data/static/public/terms.html
 data/static/search.html
+data/static/votd.html
 data/static/verse.html
 'data/tests/1/a HTML.sh'
 'data/tests/1/a JSON.sh'
@@ -207,6 +284,9 @@ data/tests/1/a.sh
 'data/tests/1/search preferred wholeword JSON.sh'
 'data/tests/1/session JWT round-trip.sh'
 'data/tests/1/settings HTML.sh'
+'data/tests/1/test HTTP 404 HTML.sh'
+'data/tests/1/test HTTP errors HTML.sh'
+'data/tests/1/test HTTP errors JSON.sh'
 data/tests/1/template.sh
 'data/tests/1/uptime default.sh'
 'data/tests/1/uptime HTML.sh'
@@ -384,6 +464,7 @@ t/Utils_limitText.t
 t/Utils_OSError_Mapper.t
 t/Utils_parseIntoType.t
 t/Utils_queryParamsHelper.t
+t/Utils_redactConfigValue.t
 t/Utils_removeArrayEmptyItems.t
 t/Utils_SecureString.t
 t/verse.t

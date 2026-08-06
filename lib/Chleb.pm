@@ -102,10 +102,11 @@ sub fetch {
 	my (@bible) = $self->__getBible($args);
 
 	my @verse;
+	my @suggestions;
 	for (my $bibleI = 0; $bibleI < scalar(@bible); $bibleI++) {
 		my $resolvedBook;
 		my $resolvedOk = eval {
-			$resolvedBook = $bible[$bibleI]->resolveBook($book);
+			$resolvedBook = $bible[$bibleI]->resolveBook($book, { suggestions => \@suggestions });
 			1;
 		};
 		next unless ($resolvedOk && $resolvedBook);
@@ -119,8 +120,13 @@ sub fetch {
 		}
 	}
 
-	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, "Book '$book' was not found in any requested translation"))
-	    if (scalar(@verse) == 0);
+	if (scalar(@verse) == 0) {
+		my %seen;
+		@suggestions = sort(grep { !$seen{$_}++ } @suggestions);
+		my $description = "Book '$book' was not found in any requested translation";
+		$description .= ', did you mean ' . join(', ', @suggestions) . '?' if (scalar(@suggestions) > 0);
+		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $description));
+	}
 
 	my $endTiming = Time::HiRes::time();
 	my $msec = int(1000 * ($endTiming - $startTiming));
@@ -272,39 +278,38 @@ sub votd {
 	$when = $self->_resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
-	my ($verse, $verseOrdinal, @verses);
+	my ($verse, @verses);
+	OFFSET:
 	for (my $offset = 0; $offset > -1; $offset++) {
 		my $seed = crc32($when->epoch + $offset);
 		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
 		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
-		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
-		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
-		next unless ($self->__isTestamentMatch($verse, $testament));
+		my @candidateVerses;
+		foreach my $candidateBible (@bible) {
+			my $verseCount = $candidateBible->verseCount;
+			my $signedOrdinal = ($seed % (2 * $verseCount)) - $verseCount;
+			$signedOrdinal = -$verseCount if ($signedOrdinal == 0);
 
-		if ($parental && $verse->parental) {
-			$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
-			next;
-		}
+			my $candidateVerse = $candidateBible->getVerseByOrdinal($signedOrdinal, $args);
+			next OFFSET unless ($self->__isTestamentMatch($candidateVerse, $testament));
 
-		while ($verse->previous && $verse->previous->continues) {
-			# look upwards until we are not on a continuation, to give increased context
-			$verse = $verse->previous;
-		}
-
-		my $verseAvailable = 1;
-		@verses = ($verse);
-		for (my $candidateI = 1; $candidateI < scalar(@bible); $candidateI++) {
-			my $candidateBible = $bible[$candidateI];
-			my $candidateVerse = $self->__getRelatedRandomVerse($candidateBible, $verse, $verseOrdinal, $args);
-			unless ($candidateVerse) {
-				$verseAvailable = 0;
-				last;
+			if ($parental && $candidateVerse->parental) {
+				$self->dic->logger->debug('Skipping ' . $candidateVerse->toString() . ' because of parental mode');
+				next OFFSET;
 			}
-			push(@verses, $candidateVerse);
+
+			while ($candidateVerse->previous && $candidateVerse->previous->continues) {
+				# look upwards until we are not on a continuation, to give increased context
+				$candidateVerse = $candidateVerse->previous;
+			}
+
+			push(@candidateVerses, $candidateVerse);
 		}
-		last if ($verseAvailable);
+
+		@verses = @candidateVerses;
+		$verse = $verses[0];
+		last;
 	}
 
 	$self->dic->logger->debug($verse->toString());

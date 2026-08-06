@@ -7,7 +7,19 @@ require_repo
 require_clean_worktree
 command -v dch >/dev/null 2>&1 || die 'dch is required to prepare the release changelog'
 
-purpose=${1:-}
+purpose=''
+merge_master=1
+for arg in "$@"; do
+	case "$arg" in
+		--no-merge) merge_master=0 ;;
+		major|minor|patch|1|2|3)
+			[[ -z "$purpose" ]] || die 'release type was specified more than once'
+			purpose=$arg
+			;;
+		*) die "unsupported argument '$arg'" ;;
+	esac
+done
+
 if [[ -z "$purpose" ]]; then
 	printf '%s\n' 'What is the purpose of this release?' '  1) major' '  2) minor' '  3) patch'
 	read -r -p 'Release type (major/minor/patch, empty to abort): ' purpose
@@ -18,6 +30,7 @@ case "$purpose" in
 	3|patch) purpose=patch ;;
 	*) die "unsupported release type '$purpose'" ;;
 esac
+[[ "$merge_master" == 1 || "$purpose" == patch ]] || die '--no-merge is supported only for patch releases'
 
 current_version=$(read_version)
 IFS=. read -r major minor patch <<< "$current_version"
@@ -41,7 +54,7 @@ esac
 
 start_changelog() {
 	local notes_file
-	local note
+	local note=''
 	local line
 	local first_note=1
 	printf 'Preparing debian/changelog for version %s with dch...\n' "$next_version"
@@ -75,10 +88,19 @@ start_changelog() {
 if [[ "$purpose" == patch ]]; then
 	[[ "$target_branch" == "rel/$major.$minor" ]] || die "changelog version $current_version does not belong to $target_branch"
 	git show-ref --verify --quiet "refs/heads/$target_branch" || die "local branch '$target_branch' does not exist"
-	git switch "$target_branch"
-	git merge master --no-ff
+	if (( merge_master )); then
+		git switch "$target_branch"
+		git merge master --no-ff
+	else
+		current_branch=$(git branch --show-current)
+		[[ "$current_branch" == "$target_branch" ]] || die "--no-merge requires the current branch to be '$target_branch'"
+	fi
 	start_changelog
-	printf 'Merged master into %s for patch release preparation.\n' "$target_branch"
+	if (( merge_master )); then
+		printf 'Merged master into %s for patch release preparation.\n' "$target_branch"
+	else
+		printf 'Prepared patch release on %s without merging master.\n' "$target_branch"
+	fi
 	exit 0
 fi
 

@@ -42,6 +42,7 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
+use English qw(-no_match_vars);
 use Chleb::Server::Dancer2;
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
@@ -71,6 +72,42 @@ sub testExplicitPreference {
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(1, 'kjv', 'asv'), [ 'kjv' ], 'explicit translation overrides cookie');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(1, 'asv,kjv', 'kjv'), [ 'asv', 'kjv' ], 'explicit translation list is preserved');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(1, '', 'asv'), [], 'explicit empty translation suppresses cookie');
+
+	return EXIT_SUCCESS;
+}
+
+sub testLookupBookFallback {
+	my ($self) = @_;
+	my $library = Chleb->new();
+	plan skip_all => 'Pickthall test data is not installed'
+		unless (scalar(grep { $_ eq 'pickthall' } $library->availableTranslations()) > 0);
+	plan tests => 2;
+
+	is_deeply(
+		Chleb::Server::Dancer2::__lookupTranslationsForBook(['pickthall'], 'eph', $library),
+		[],
+		'preferred translation falls back when it does not contain the requested book',
+	);
+	is_deeply(
+		Chleb::Server::Dancer2::__lookupTranslationsForBook(['pickthall'], 'quran', $library),
+		['pickthall'],
+		'preferred translation remains selected when it contains the requested book',
+	);
+
+	return EXIT_SUCCESS;
+}
+
+sub testLookupOrdinalValidation {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $error;
+	eval {
+		Chleb::Server::Dancer2::__validateLookupOrdinals('6&translations=all');
+		1;
+	} or $error = $EVAL_ERROR;
+
+	isa_ok($error, 'Chleb::Exception', 'malformed lookup ordinal returns a Chleb exception');
 
 	return EXIT_SUCCESS;
 }

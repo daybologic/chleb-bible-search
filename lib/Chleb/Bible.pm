@@ -182,6 +182,8 @@ sub getBookByShortName {
 
 	my $errorMsg = "Short book name '$shortName' is not a book in the bible, did you mean "
 	    . $closestBook->shortName . '?';
+	push(@{ $args->{suggestions} }, $closestBook->shortName)
+	    if (ref($args->{suggestions}) eq 'ARRAY');
 
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
@@ -192,18 +194,35 @@ sub getBookByShortName {
 	return;
 }
 
-=item C<findBookByShortName($shortName)>
+=item C<findBookByShortName($shortName, [$args])>
 
 Return a L<Chleb::Bible::Book> object from L</books> given its C<$shortName>, or
 C<undef> if the book does not exist.  An unsuccessful lookup is not logged.
 
+An optional C<suggestions> array reference in C<$args> collects the closest
+short book name from a failed lookup.
+
 =cut
 
 sub findBookByShortName {
-	my ($self, $shortName) = @_;
+	my ($self, $shortName, $args) = @_;
+	$args //= { };
 
 	foreach my $book (@{ $self->books }) {
 		return $book if ($book->equals($shortName));
+	}
+
+	if (ref($args->{suggestions}) eq 'ARRAY') {
+		my $closestBook;
+		my $lowestDistance = $Chleb::Constants::UINT_MAX;
+		foreach my $book (shuffle(@{ $self->books })) {
+			my $distance = distance($book->shortName, $shortName);
+			if ($distance < $lowestDistance) {
+				$lowestDistance = $distance;
+				$closestBook = $book;
+			}
+		}
+		push(@{ $args->{suggestions} }, $closestBook->shortName);
 	}
 
 	return;
@@ -305,10 +324,11 @@ sub getVerseByOrdinal {
 				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
 
 				return Chleb::Bible::Verse->new({
-					book    => $book,
-					chapter => $chapter,
-					ordinal => $verseNumber,
-					text    => $text,
+					book           => $book,
+					chapter        => $chapter,
+					ordinal        => $verseNumber,
+					text           => $text,
+					__queryContext => $args || {},
 				});
 			}
 		} else {
@@ -341,7 +361,7 @@ sub newSearchQuery {
 	return $self->_library->newSearchQuery(%params);
 }
 
-=item C<resolveBook($book)>
+=item C<resolveBook($book, [$args])>
 
 Resolve and return a L<Chleb::Bible::Book> object given any of the following C<$book> contents:
 
@@ -367,16 +387,22 @@ A long book name, for example C<1 Kings> or C<Genesis>.
 
 A fatal error is thrown if the Book cannot be found.
 
+An optional C<suggestions> array reference in C<$args> collects suggested short
+book names from a failed short-name lookup.
+
 =cut
 
 sub resolveBook {
-	my ($self, $book) = @_;
+	my ($self, $book, $args) = @_;
+	$args //= { };
 
 	unless (blessed($book)) {
 		if (looks_like_number($book)) {
 			$book = $self->getBookByOrdinal($book);
 		} else {
-			if (my $shortBook = $self->findBookByShortName($book)) {
+			if (my $shortBook = $self->findBookByShortName($book, {
+				suggestions => $args->{suggestions},
+			})) {
 				return $shortBook;
 			} else {
 				$book = $self->getBookByLongName($book);
@@ -389,7 +415,7 @@ sub resolveBook {
 
 =item C<fetch($book, $chapterOrdinal, $verseOrdinal)>
 
-Fetch a L<Chleb::Bible::Verse>, given C<book>, which may be in any format accepted by L</resolveBook($book)>,
+Fetch a L<Chleb::Bible::Verse>, given C<book>, which may be in any format accepted by L</resolveBook($book, [$args])>,
 and a numeric C<$chapterOrdinal> and a numeric C<$verseOrdinal>.  If this does not exist, a fatal error will
 be thrown.
 

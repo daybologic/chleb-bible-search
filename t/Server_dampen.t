@@ -48,6 +48,7 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Dampen;
+use Chleb::Server::Moose;
 use Chleb::Token;
 use Chleb::Token::Repository;
 use Digest::SHA qw(sha256_hex);
@@ -179,6 +180,16 @@ sub testChurnExpiry {
 	}
 	$self->sut->dic->time->sleep(301);
 	is($self->sut->dampenChurn($ip, 'token-fresh'), 0, 'expired churn entries are pruned and request is allowed');
+
+	return EXIT_SUCCESS;
+}
+
+sub testUserAgentChangeIgnoresMissingPreviousValue {
+	plan tests => 3;
+
+	ok(!Chleb::Server::Moose::__userAgentChanged('', 'Mozilla/5.0'), 'missing previous user agent is not a change');
+	ok(!Chleb::Server::Moose::__userAgentChanged('Mozilla/5.0', 'Mozilla/5.0'), 'same user agent is not a change');
+	ok(Chleb::Server::Moose::__userAgentChanged('Mozilla/5.0', 'Safari/605.1.15'), 'different recorded user agent is a change');
 
 	return EXIT_SUCCESS;
 }

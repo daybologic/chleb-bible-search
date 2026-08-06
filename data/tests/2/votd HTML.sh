@@ -49,3 +49,10 @@ mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "
 orderedPage=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html translations==kjv,asv)
 mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "$orderedPage" | sed -E 's#.*>([^<]+)</div>#\1#')
 [[ "${translations[*]}" == 'kjv (1611) asv (1901)' ]]
+
+formPage=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd \
+	Accept:text/html form==true when=='2026-07-28T00:00:00+0000')
+grep -q '<input type="date" id="votd-date" name="date" value="2026-07-28" required>' <<< "$formPage"
+grep -q '<div class="wrapper votd-results">' <<< "$formPage"
+grep -q '>yesterday</a>' <<< "$formPage"
+grep -q '>tomorrow</a>' <<< "$formPage"
