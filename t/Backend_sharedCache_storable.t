@@ -184,6 +184,19 @@ sub testCorruptSharedCacheIsIgnored {
 	return EXIT_SUCCESS;
 }
 
+sub testLegacyVerseOrdinalCacheIsIgnored {
+	my ($self) = @_;
+	plan tests => 2;
+
+	ok($self->sut->__sharedCacheSet('versekey', 'kjv:1', 'kjv:Gen:1:99'),
+		'legacy unversioned ordinal mapping is stored');
+	my $secondBackend = $self->__makeBackend('kjv');
+	is($secondBackend->getVerseKeyByOrdinal(1), 'kjv:Gen:1:1',
+		'ordinal lookup ignores a legacy unversioned shared-cache mapping');
+
+	return EXIT_SUCCESS;
+}
+
 sub __makeBackend {
 	my ($self, $translation) = @_;
 	return Chleb::Bible::Backend->new({
