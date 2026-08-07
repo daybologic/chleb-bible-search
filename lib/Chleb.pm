@@ -531,7 +531,7 @@ with a different canon fall back to their own verse ordinal.
 sub __getRelatedRandomVerse {
 	my ($self, $bible, $anchorVerse, $verseOrdinal, $args) = @_;
 
-	my $book = $bible->getBookByShortName($anchorVerse->book->shortName, { nonFatal => 1 });
+	my $book = $bible->findBookByShortName($anchorVerse->book->shortName);
 	if ($book) {
 		my $chapter = $book->getChapterByOrdinal($anchorVerse->chapter->ordinal, { nonFatal => 1 });
 		return if (!$chapter);

@@ -46,6 +46,7 @@ use Chleb::Server::Dancer2;
 use Chleb::Server::MediaType;
 use English qw(-no_match_vars);
 use HTTP::Request::Common qw(GET);
+use HTTP::Status qw(HTTP_BAD_REQUEST);
 use Plack::Test;
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
@@ -103,7 +104,7 @@ sub testHtmlInternalServerErrorPage {
 	return EXIT_SUCCESS;
 }
 
-sub testMalformedLookupOrdinalIsNotFound {
+sub testMalformedLookupOrdinalIsBadRequest {
 	my ($self) = @_;
 	plan tests => 4;
 
@@ -115,7 +116,7 @@ sub testMalformedLookupOrdinalIsNotFound {
 		my $exception = $EVAL_ERROR;
 
 		isa_ok($exception, 'Chleb::Exception', "malformed $ordinals->[2] raises a Chleb exception");
-		is($exception->statusCode(), 404, "malformed $ordinals->[2] is not found");
+		is($exception->statusCode(), HTTP_BAD_REQUEST, "malformed $ordinals->[2] is a bad request");
 	}
 
 	return EXIT_SUCCESS;
