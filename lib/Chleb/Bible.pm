@@ -165,6 +165,10 @@ in the key C<nonFatal> within the B<optional> C<$args> C<HASH>.
 sub getBookByShortName {
 	my ($self, $shortName, $args) = @_;
 
+	if (my $book = $self->findBookByShortName($shortName)) {
+		return $book;
+	}
+
 	my $closestBook;
 	my $lowestDistance = $Chleb::Constants::UINT_MAX; # an impossibly high number, all mismatches will be lower
 	my @books = shuffle(@{ $self->books }); # be fair; don't bias against books near the end of the bible
@@ -174,9 +178,6 @@ sub getBookByShortName {
 			$lowestDistance = $distance;
 			$closestBook = $book;
 		}
-
-		next unless ($book->equals($shortName));
-		return $book;
 	}
 
 	my $errorMsg = "Short book name '$shortName' is not a book in the bible, did you mean "
@@ -188,6 +189,40 @@ sub getBookByShortName {
 		$self->dic->logger->warn($errorMsg);
 	} else {
 		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg));
+	}
+
+	return;
+}
+
+=item C<findBookByShortName($shortName, [$args])>
+
+Return a L<Chleb::Bible::Book> object from L</books> given its C<$shortName>, or
+C<undef> if the book does not exist.  An unsuccessful lookup is not logged.
+
+An optional C<suggestions> array reference in C<$args> collects the closest
+short book name from a failed lookup.
+
+=cut
+
+sub findBookByShortName {
+	my ($self, $shortName, $args) = @_;
+	$args //= { };
+
+	foreach my $book (@{ $self->books }) {
+		return $book if ($book->equals($shortName));
+	}
+
+	if (ref($args->{suggestions}) eq 'ARRAY') {
+		my $closestBook;
+		my $lowestDistance = $Chleb::Constants::UINT_MAX;
+		foreach my $book (shuffle(@{ $self->books })) {
+			my $distance = distance($book->shortName, $shortName);
+			if ($distance < $lowestDistance) {
+				$lowestDistance = $distance;
+				$closestBook = $book;
+			}
+		}
+		push(@{ $args->{suggestions} }, $closestBook->shortName);
 	}
 
 	return;
@@ -365,8 +400,7 @@ sub resolveBook {
 		if (looks_like_number($book)) {
 			$book = $self->getBookByOrdinal($book);
 		} else {
-			if (my $shortBook = $self->getBookByShortName($book, {
-				nonFatal    => 1,
+			if (my $shortBook = $self->findBookByShortName($book, {
 				suggestions => $args->{suggestions},
 			})) {
 				return $shortBook;
