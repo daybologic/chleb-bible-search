@@ -250,10 +250,8 @@ sub search {
 		# Boundary: start/end OR a char that is NOT [\w'-]
 		$rx[0] = qr/(?<![\w'-])$phrase(?![\w'-])/ix;
 	} else {
-		# Extract words including internal apostrophes/hyphens
-		my @words = ($qtext =~ /[\w]+(?:['-][\w]+)*/gx);
-
-		@rx = map { qr/\Q$_\E/ix } @words;
+		my $wordGroups = $query->expandedWords();
+		@rx = map { __wordGroupRegex($_) } @$wordGroups;
 	}
 
 	CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
@@ -292,6 +290,19 @@ sub search {
 	}
 
 	return \@verses;
+}
+
+=item C<__wordGroupRegex($words)>
+
+Build a case-insensitive regular expression matching one word or any of its
+translation-specific thesaurus alternatives.
+
+=cut
+
+sub __wordGroupRegex {
+	my ($words) = @_;
+	my $pattern = join('|', map { quotemeta($_) } @$words);
+	return qr/(?:$pattern)/ix;
 }
 
 =item C<randomVerse()>

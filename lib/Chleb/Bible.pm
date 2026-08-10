@@ -561,6 +561,17 @@ sub getProperty {
 	return $self->__backend->getProperty($name);
 }
 
+=item C<getThesaurusTerms($word)>
+
+Return translation-specific thesaurus alternatives for C<$word>.
+
+=cut
+
+sub getThesaurusTerms {
+	my ($self, $word) = @_;
+	return $self->__backend->getThesaurusTerms($word);
+}
+
 =item C<year()>
 
 Return the publication year for this translation from the SQLite source.

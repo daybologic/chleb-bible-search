@@ -46,6 +46,9 @@ bin/git/tools/rcbranch
 bin/git/tools/release
 bin/git/tools/release-common
 bin/git/tools/changelog-ai.pl
+bin/import/thesaurus-ai.pl
+bin/import/thesaurus-ai-status.sh
+bin/import/thesaurus-ai-merge.pl
 bin/import/text-to-asv.sh
 bin/import/text-to-kjv.sh
 bin/maint/copyright-bump.sh
