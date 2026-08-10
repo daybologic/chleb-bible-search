@@ -282,6 +282,7 @@ data/tests/1/a.sh
 'data/tests/1/search HTML (no criteria).sh'
 'data/tests/1/search JSON \'fire\', form.sh'
 'data/tests/1/search JSON \'fire\'.sh'
+'data/tests/1/search JSON thesaurus \'dripping\'.sh'
 'data/tests/1/search JSON (no criteria).sh'
 'data/tests/1/search previous limit JSON.sh'
 'data/tests/1/search preferred wholeword JSON.sh'
