@@ -52,12 +52,19 @@ is_deeply(
 	[ 'dripping' ],
 	'backend reads normalized thesaurus relations',
 );
+is_deeply(
+	$backend->getThesaurusTerms('DRIPPING'),
+	[ 'dropping' ],
+	'backend reads thesaurus relations in reverse for search',
+);
 
 {
 	no warnings 'redefine'; ## no critic (TestingAndDebugging::ProhibitNoWarnings)
 	local *Chleb::Bible::getThesaurusTerms = sub {
 		my ($self, $word) = @_;
-		return lc($word) eq 'dropping' ? [ 'dripping' ] : [];
+		return [ 'dripping' ] if lc($word) eq 'dropping';
+		return [ 'dropping' ] if lc($word) eq 'dripping';
+		return [];
 	};
 
 is_deeply(
@@ -71,6 +78,7 @@ ok(
 		scalar(grep { $_->text =~ /dropping|dripping/ix } @{ $results->verses }),
 		'expanded search returns verses matching the related term',
 	);
+
 }
 
 done_testing();

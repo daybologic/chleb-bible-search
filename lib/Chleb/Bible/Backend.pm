@@ -693,13 +693,16 @@ sub getThesaurusTerms {
 		if (exists($self->__thesaurusCache->{$word}));
 	return $self->__thesaurusCache->{$word} = [] unless $self->__thesaurusAvailable;
 
-	my $sth = $self->__prepareSelect($self->data, <<'SQL', $word);
-		SELECT related.word
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $word, $word, $word);
+		SELECT CASE
+				 WHEN source.word = ? THEN related.word
+				 ELSE source.word
+			   END AS term
 		  FROM thesaurus_relation AS relation
 		  JOIN thesaurus_word AS source ON source.id = relation.source_word_id
 		  JOIN thesaurus_word AS related ON related.id = relation.related_word_id
-		 WHERE source.word = ?
-		 ORDER BY related.word
+		 WHERE source.word = ? OR related.word = ?
+		 ORDER BY term
 SQL
 	my @terms;
 	while (my ($term) = $sth->fetchrow_array()) {
