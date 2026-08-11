@@ -89,6 +89,23 @@ Readonly our $BOOLEAN_FLAG_EMPTY_IS_FALSE => 1 << 0;
 
 =over
 
+=item C<htmlEscape($value)>
+
+Escape a value for safe insertion into an HTML document.
+
+=cut
+
+sub htmlEscape {
+	my ($value) = @_;
+	$value = '' unless (defined($value));
+	$value =~ s{&}{&amp;}gx;
+	$value =~ s{<}{&lt;}gx;
+	$value =~ s{>}{&gt;}gx;
+	$value =~ s{"}{&quot;}gx;
+	$value =~ s{'}{&#39;}gx;
+	return $value;
+}
+
 =item C<forceArray($param)>
 
 Given any user input C<$param>, force the content to become an C<ARRAY> ref.
