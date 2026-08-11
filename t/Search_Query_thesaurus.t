@@ -115,8 +115,8 @@ sub __mockGetThesaurusTerms {
 	my ($self) = @_;
 	$self->mock('Chleb::Bible', 'getThesaurusTerms', sub {
 		my (undef, $word) = @_;
-		return [ 'dripping' ] if lc($word) eq 'dropping';
-		return [ 'dropping' ] if lc($word) eq 'dripping';
+		return [ 'dripping' ] if (lc($word) eq 'dropping');
+		return [ 'dropping' ] if (lc($word) eq 'dripping');
 		return [];
 	});
 
