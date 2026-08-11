@@ -1111,7 +1111,7 @@ are not presented as likely corrections.
 
 sub __searchSuggestions {
 	my ($term, $queries) = @_;
-	my @requestedWords = ($term =~ /[\p{L}\p{N}]+(?:['-][\p{L}\p{N}]+)*/gux);
+	my @requestedWords = @{ Chleb::Utils::extractWords($term) };
 	my %requested = map { lc($_) => 1 } @requestedWords;
 	my %distances;
 	for my $query (@{ $queries }) {

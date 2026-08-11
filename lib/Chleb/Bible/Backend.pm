@@ -50,6 +50,7 @@ use Storable qw(nstore_fd retrieve);
 use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
+use Chleb::Utils;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
@@ -1392,7 +1393,7 @@ sub __makeBibleWords { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutin
 		  FROM verse
 SQL
 	while (my ($text) = $sth->fetchrow_array()) {
-		for my $word ($text =~ /[\p{L}\p{N}]+(?:['-][\p{L}\p{N}]+)*/gux) {
+		for my $word (@{ Chleb::Utils::extractWords($text) }) {
 			$words{lc($word)} = 1;
 		}
 	}
