@@ -93,11 +93,12 @@ sub testSuggestions {
 	my %json = (
 		data => [ ],
 		suggestions => [ 'dropping', 'dropped' ],
+		links => { self => '/1/search?term=droppng&wholeword=1&per_page=5' },
 	);
 	Chleb::Server::Moose::__searchResultsToHtml(\%json);
 
 	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'fetchStaticPage');
-	cmp_deeply($mockCalls->[-1], ['no_results', { NO_RESULTS_MESSAGE => 'Did you mean: dropping, dropped' }], 'suggestions become a comma-separated no-results message') or diag(explain($mockCalls));
+	cmp_deeply($mockCalls->[-1], ['no_results', { NO_RESULTS_MESSAGE => 'Did you mean: <a href="/1/search?term=dropping&amp;wholeword=1&amp;per_page=5">dropping</a>, <a href="/1/search?term=dropped&amp;wholeword=1&amp;per_page=5">dropped</a>' }], 'suggestions become links preserving search criteria') or diag(explain($mockCalls));
 
 	my %unsafeJson = (data => [ ], suggestions => [ '<script>' ]);
 	$self->mock('Chleb::Server::Dancer2', 'fetchStaticPage');

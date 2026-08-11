@@ -2026,7 +2026,8 @@ sub __searchResultsToHtml {
 	if (0 == scalar(@{ $json->{data} })) { # no results?
 		my $message = 'Sorry, no results match your query';
 		if (ref($json->{suggestions}) eq 'ARRAY' && scalar(@{ $json->{suggestions} }) > 0) {
-			my @suggestions = map { Chleb::Utils::htmlEscape($_) } @{ $json->{suggestions} };
+			my $selfLink = $json->{links}->{self} // '/1/search';
+			my @suggestions = map { __searchSuggestionLink($_, $selfLink) } @{ $json->{suggestions} };
 			$message = 'Did you mean: ' . join(', ', @suggestions);
 		}
 		return Chleb::Server::Dancer2::fetchStaticPage('no_results', {
@@ -2081,6 +2082,24 @@ sub __searchResultsToHtml {
 	$text .= __searchPaginationToHtml($json);
 
 	return $text;
+}
+
+=item C<__searchSuggestionLink($suggestion, $selfLink)>
+
+Build an HTML link for a suggestion while preserving the existing search URL
+parameters and replacing only its C<term> value.
+
+=cut
+
+sub __searchSuggestionLink {
+	my ($suggestion, $selfLink) = @_;
+	my $href = $selfLink;
+	$href =~ s{([?&]term=)[^&]*}{$1 . uri_escape($suggestion)}ex;
+	return sprintf(
+		'<a href="%s">%s</a>',
+		Chleb::Utils::htmlEscape($href),
+		Chleb::Utils::htmlEscape($suggestion),
+	);
 }
 
 =item C<__searchPaginationToHtml($json)>
