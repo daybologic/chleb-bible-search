@@ -488,6 +488,32 @@ sub testEmptyResults {
 	return EXIT_SUCCESS;
 }
 
+sub testSearchSuggestions {
+	my ($self) = @_;
+	plan tests => 5;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__search({
+		accept => $mediaType,
+		term => 'droppng',
+		wholeword => 'true',
+	});
+
+	is(scalar(@{ $json->{data} }), 0, 'misspelled search has no results');
+	ok(exists($json->{suggestions}), 'empty JSON search includes suggestions');
+	ok(scalar(@{ $json->{suggestions} }) <= 5, 'suggestions are capped at five entries');
+	ok((grep { $_ eq 'dropping' } @{ $json->{suggestions} }), 'suggestions include the nearest Bible word');
+
+	my $results = $self->sut->__search({
+		accept => $mediaType,
+		term => 'peter',
+		wholeword => 'true',
+	});
+	ok(!exists($results->{suggestions}), 'non-empty JSON search has no suggestions property');
+
+	return EXIT_SUCCESS;
+}
+
 sub testInvalidPageValues {
 	my ($self) = @_;
 	plan tests => 3;

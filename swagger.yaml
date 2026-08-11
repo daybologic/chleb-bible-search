@@ -282,6 +282,15 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Verse'
+                  suggestions:
+                    type: array
+                    maxItems: 5
+                    items:
+                      type: string
+                    description: >-
+                      Up to five Bible words with the smallest Levenshtein
+                      distance from the requested term. This property is
+                      present only for JSON searches that return no results.
                   included:
                     type: array
                     items:

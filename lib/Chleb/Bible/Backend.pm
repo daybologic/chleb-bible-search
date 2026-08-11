@@ -249,6 +249,14 @@ word, initialized lazily to an empty hash ref.
 
 has __thesaurusCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 
+=item C<__bibleWordsCache>
+
+Process-local cache of the normalized words present in the current translation.
+
+=cut
+
+has __bibleWordsCache => (is => 'ro', isa => 'ArrayRef', lazy => 1, builder => '__makeBibleWords');
+
 =item C<__thesaurusAvailable>
 
 Boolean indicating whether the current SQLite source contains the thesaurus
@@ -710,6 +718,17 @@ SQL
 	}
 	$self->__thesaurusCache->{$word} = \@terms;
 	return \@terms;
+}
+
+=item C<getBibleWords()>
+
+Return the normalized distinct words present in the current translation.
+
+=cut
+
+sub getBibleWords {
+	my ($self) = @_;
+	return $self->__bibleWordsCache;
 }
 
 =item C<getSentimentByOrdinal($ordinal)>
@@ -1357,6 +1376,27 @@ sub __makeThesaurusAvailable { ## no critic (Subroutines::ProhibitUnusedPrivateS
 		)
 SQL
 	return $available ? 1 : 0;
+}
+
+=item C<__makeBibleWords()>
+
+Load and normalize the distinct words present in the current translation.
+
+=cut
+
+sub __makeBibleWords { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my %words;
+	my $sth = $self->__prepareSelect($self->data, <<'SQL');
+		SELECT text
+		  FROM verse
+SQL
+	while (my ($text) = $sth->fetchrow_array()) {
+		for my $word ($text =~ /[\p{L}\p{N}]+(?:['-][\p{L}\p{N}]+)*/gux) {
+			$words{lc($word)} = 1;
+		}
+	}
+	return [sort keys(%words)];
 }
 
 =item C<__makeDataDir()>
