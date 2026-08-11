@@ -85,13 +85,7 @@ sub testQueryExpansion {
 	plan tests => 1;
 	my $bible = $self->{bible};
 
-	no warnings 'redefine'; ## no critic (TestingAndDebugging::ProhibitNoWarnings)
-	local *Chleb::Bible::getThesaurusTerms = sub {
-		my ($object, $word) = @_;
-		return [ 'dripping' ] if lc($word) eq 'dropping';
-		return [ 'dropping' ] if lc($word) eq 'dripping';
-		return [];
-	};
+	$self->__mockGetThesaurusTerms();
 
 	is_deeply($bible->newSearchQuery('dropping')->expandedWords(), [ [ 'dropping', 'dripping' ] ], 'query expansion includes the translation-specific thesaurus term');
 
@@ -103,18 +97,30 @@ sub testExpandedSearch {
 	plan tests => 1;
 	my $bible = $self->{bible};
 
-	no warnings 'redefine'; ## no critic (TestingAndDebugging::ProhibitNoWarnings)
-	local *Chleb::Bible::getThesaurusTerms = sub {
-		my ($object, $word) = @_;
-		return [ 'dripping' ] if lc($word) eq 'dropping';
-		return [ 'dropping' ] if lc($word) eq 'dripping';
-		return [];
-	};
+	$self->__mockGetThesaurusTerms();
 
 	my $results = $bible->newSearchQuery('dropping')->run();
 	ok(scalar(grep { $_->text =~ /dropping|dripping/ix } @{ $results->verses }), 'expanded search returns verses matching the related term');
 
 	return EXIT_SUCCESS;
+}
+
+=item C<__mockGetThesaurusTerms()>
+
+Configure the mock thesaurus relation used by query expansion tests.
+
+=cut
+
+sub __mockGetThesaurusTerms {
+	my ($self) = @_;
+	$self->mock('Chleb::Bible', 'getThesaurusTerms', sub {
+		my (undef, $word) = @_;
+		return [ 'dripping' ] if lc($word) eq 'dropping';
+		return [ 'dropping' ] if lc($word) eq 'dripping';
+		return [];
+	});
+
+	return;
 }
 
 __PACKAGE__->meta->make_immutable;
