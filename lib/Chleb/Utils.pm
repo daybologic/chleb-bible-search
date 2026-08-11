@@ -89,6 +89,44 @@ Readonly our $BOOLEAN_FLAG_EMPTY_IS_FALSE => 1 << 0;
 
 =over
 
+=item C<htmlEscape($value)>
+
+Escape a value for safe insertion into an HTML document.
+
+=cut
+
+sub htmlEscape {
+	my ($value) = @_;
+	$value = '' unless (defined($value));
+	$value =~ s{&}{&amp;}gx;
+	$value =~ s{<}{&lt;}gx;
+	$value =~ s{>}{&gt;}gx;
+	$value =~ s{"}{&quot;}gx;
+	$value =~ s{'}{&#39;}gx;
+	return $value;
+}
+
+=item C<extractWords($text)>
+
+Return an array reference containing words extracted from C<$text>. Letters and
+numbers form each word; apostrophes and hyphens may join additional letters or
+numbers to it.
+
+=cut
+
+sub extractWords {
+	my ($text) = @_;
+	return [] if (!defined($text) || length($text) == 0);
+	my @words = ($text =~ /
+        [\p{L}\p{N}]+       # one or more letters or numbers
+        (?:
+            ['-]                # optionally continue after an apostrophe or hyphen
+            [\p{L}\p{N}]+       # with one or more letters or numbers
+        )*
+        /gux);
+	return \@words;
+}
+
 =item C<forceArray($param)>
 
 Given any user input C<$param>, force the content to become an C<ARRAY> ref.

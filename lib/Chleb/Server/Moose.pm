@@ -66,6 +66,7 @@ use Log::Log4perl::MDC;
 use List::Util qw(shuffle);
 use Readonly;
 use Sys::Hostname;
+use Text::LevenshteinXS qw(distance);
 use Time::Duration;
 use Time::HiRes ();
 use URI::Escape;
@@ -74,6 +75,8 @@ use UUID::Tiny ':std';
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 Readonly our $SEARCH_RESULTS_MAX_PAGE_SIZE => 2_000;
+Readonly my $SEARCH_SUGGESTIONS_MAX => 5;
+Readonly my $SEARCH_SUGGESTION_MAX_DISTANCE => 3;
 
 Readonly my $FUNCTION_RANDOM => 1;
 Readonly my $FUNCTION_VOTD => 2;
@@ -1076,6 +1079,9 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	foreach my $name (keys(%$paginationLinks)) {
 		$hash{links}->{$name} = $paginationLinks->{$name};
 	}
+	if ($totalCount == 0) {
+		$hash{suggestions} = __searchSuggestions($query->text, \@queries);
+	}
 
 	if (__isJsonContentType($contentType)) {
 		if ($search->{form}) {
@@ -1092,6 +1098,41 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	}
 
 	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
+}
+
+=item C<__searchSuggestions($term, $queries)>
+
+Return up to five nearby Bible words for a search that produced no results.
+Candidates are ranked by their smallest Levenshtein distance from any word in
+the requested term and are limited to a small distance so that unrelated words
+are not presented as likely corrections.
+
+=cut
+
+sub __searchSuggestions {
+	my ($term, $queries) = @_;
+	my @requestedWords = @{ Chleb::Utils::extractWords($term) };
+	my %requested = map { lc($_) => 1 } @requestedWords;
+	my %distances;
+	for my $query (@{ $queries }) {
+		for my $candidate (@{ $query->bible->getBibleWords() }) {
+			next if ($requested{$candidate});
+			my $lowestDistance;
+			for my $word (keys(%requested)) {
+				my $candidateDistance = distance($word, $candidate);
+				$lowestDistance = $candidateDistance
+					if (!defined($lowestDistance) || $candidateDistance < $lowestDistance);
+			}
+			next if (!defined($lowestDistance) || $lowestDistance > $SEARCH_SUGGESTION_MAX_DISTANCE);
+			$distances{$candidate} = $lowestDistance
+				if (!exists($distances{$candidate}) || $lowestDistance < $distances{$candidate});
+		}
+	}
+	my @suggestions = sort {
+		$distances{$a} <=> $distances{$b} || $a cmp $b
+	} keys(%distances);
+	splice(@suggestions, $SEARCH_SUGGESTIONS_MAX);
+	return \@suggestions;
 }
 
 =item C<__searchLimit($limit)>
@@ -1983,7 +2024,15 @@ sub __searchResultsToHtml {
 	$options ||= {};
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
-		return Chleb::Server::Dancer2::fetchStaticPage('no_results');
+		my $message = 'Sorry, no results match your query';
+		if (ref($json->{suggestions}) eq 'ARRAY' && scalar(@{ $json->{suggestions} }) > 0) {
+			my $selfLink = $json->{links}->{self} // '/1/search';
+			my @suggestions = map { __searchSuggestionLink($_, $selfLink) } @{ $json->{suggestions} };
+			$message = 'Did you mean: ' . join(', ', @suggestions);
+		}
+		return Chleb::Server::Dancer2::fetchStaticPage('no_results', {
+			NO_RESULTS_MESSAGE => $message,
+		});
 	}
 
 	my $includedCount = scalar(@{ $json->{included} });
@@ -2033,6 +2082,24 @@ sub __searchResultsToHtml {
 	$text .= __searchPaginationToHtml($json);
 
 	return $text;
+}
+
+=item C<__searchSuggestionLink($suggestion, $selfLink)>
+
+Build an HTML link for a suggestion while preserving the existing search URL
+parameters and replacing only its C<term> value.
+
+=cut
+
+sub __searchSuggestionLink {
+	my ($suggestion, $selfLink) = @_;
+	my $href = $selfLink;
+	$href =~ s{([?&]term=)[^&]*}{$1 . uri_escape($suggestion)}ex;
+	return sprintf(
+		'<a href="%s">%s</a>',
+		Chleb::Utils::htmlEscape($href),
+		Chleb::Utils::htmlEscape($suggestion),
+	);
 }
 
 =item C<__searchPaginationToHtml($json)>

@@ -50,6 +50,7 @@ use Storable qw(nstore_fd retrieve);
 use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
+use Chleb::Utils;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
@@ -248,6 +249,14 @@ word, initialized lazily to an empty hash ref.
 =cut
 
 has __thesaurusCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__bibleWordsCache>
+
+Process-local cache of the normalized words present in the current translation.
+
+=cut
+
+has __bibleWordsCache => (is => 'ro', isa => 'ArrayRef', lazy => 1, builder => '__makeBibleWords');
 
 =item C<__thesaurusAvailable>
 
@@ -710,6 +719,17 @@ SQL
 	}
 	$self->__thesaurusCache->{$word} = \@terms;
 	return \@terms;
+}
+
+=item C<getBibleWords()>
+
+Return the normalized distinct words present in the current translation.
+
+=cut
+
+sub getBibleWords {
+	my ($self) = @_;
+	return $self->__bibleWordsCache;
 }
 
 =item C<getSentimentByOrdinal($ordinal)>
@@ -1357,6 +1377,27 @@ sub __makeThesaurusAvailable { ## no critic (Subroutines::ProhibitUnusedPrivateS
 		)
 SQL
 	return $available ? 1 : 0;
+}
+
+=item C<__makeBibleWords()>
+
+Load and normalize the distinct words present in the current translation.
+
+=cut
+
+sub __makeBibleWords { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my %words;
+	my $sth = $self->__prepareSelect($self->data, <<'SQL');
+		SELECT text
+		  FROM verse
+SQL
+	while (my ($text) = $sth->fetchrow_array()) {
+		for my $word (@{ Chleb::Utils::extractWords($text) }) {
+			$words{lc($word)} = 1;
+		}
+	}
+	return [sort keys(%words)];
 }
 
 =item C<__makeDataDir()>

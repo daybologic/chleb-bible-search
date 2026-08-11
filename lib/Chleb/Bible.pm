@@ -572,6 +572,17 @@ sub getThesaurusTerms {
 	return $self->__backend->getThesaurusTerms($word);
 }
 
+=item C<getBibleWords()>
+
+Return the normalized distinct words present in this translation.
+
+=cut
+
+sub getBibleWords {
+	my ($self) = @_;
+	return $self->__backend->getBibleWords();
+}
+
 =item C<year()>
 
 Return the publication year for this translation from the SQLite source.
