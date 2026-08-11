@@ -78,7 +78,32 @@ sub testEmpty {
 	Chleb::Server::Moose::__searchResultsToHtml(\%json);
 
 	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'fetchStaticPage');
-	cmp_deeply($mockCalls, [['no_results']], "calls to fetchStaticPage for 'no_results'") or diag(explain($mockCalls));
+	cmp_deeply($mockCalls->[-1], ['no_results', { NO_RESULTS_MESSAGE => 'Sorry, no results match your query' }], "calls to fetchStaticPage for 'no_results'") or diag(explain($mockCalls));
+
+	return EXIT_SUCCESS;
+}
+
+sub testSuggestions {
+	my ($self) = @_;
+	plan tests => 2;
+	local $SIG{__WARN__} = sub { croak(@_); };
+
+	$self->mock('Chleb::Server::Dancer2', 'fetchStaticPage');
+
+	my %json = (
+		data => [ ],
+		suggestions => [ 'dropping', 'dropped' ],
+	);
+	Chleb::Server::Moose::__searchResultsToHtml(\%json);
+
+	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'fetchStaticPage');
+	cmp_deeply($mockCalls->[-1], ['no_results', { NO_RESULTS_MESSAGE => 'Did you mean: dropping, dropped' }], 'suggestions become a comma-separated no-results message') or diag(explain($mockCalls));
+
+	my %unsafeJson = (data => [ ], suggestions => [ '<script>' ]);
+	$self->mock('Chleb::Server::Dancer2', 'fetchStaticPage');
+	Chleb::Server::Moose::__searchResultsToHtml(\%unsafeJson);
+	$mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'fetchStaticPage');
+	like($mockCalls->[-1]->[1]->{NO_RESULTS_MESSAGE}, qr{&lt;script&gt;}, 'suggestions are HTML escaped');
 
 	return EXIT_SUCCESS;
 }

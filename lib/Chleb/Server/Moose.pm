@@ -1079,7 +1079,7 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	foreach my $name (keys(%$paginationLinks)) {
 		$hash{links}->{$name} = $paginationLinks->{$name};
 	}
-	if (__isJsonContentType($contentType) && $totalCount == 0) {
+	if ($totalCount == 0) {
 		$hash{suggestions} = __searchSuggestions($query->text, \@queries);
 	}
 
@@ -2024,7 +2024,14 @@ sub __searchResultsToHtml {
 	$options ||= {};
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
-		return Chleb::Server::Dancer2::fetchStaticPage('no_results');
+		my $message = 'Sorry, no results match your query';
+		if (ref($json->{suggestions}) eq 'ARRAY' && scalar(@{ $json->{suggestions} }) > 0) {
+			my @suggestions = map { __searchSuggestionHtmlEscape($_) } @{ $json->{suggestions} };
+			$message = 'Did you mean: ' . join(', ', @suggestions);
+		}
+		return Chleb::Server::Dancer2::fetchStaticPage('no_results', {
+			NO_RESULTS_MESSAGE => $message,
+		});
 	}
 
 	my $includedCount = scalar(@{ $json->{included} });
@@ -2074,6 +2081,23 @@ sub __searchResultsToHtml {
 	$text .= __searchPaginationToHtml($json);
 
 	return $text;
+}
+
+=item C<__searchSuggestionHtmlEscape($value)>
+
+Escape one search suggestion before inserting it into an HTML response.
+
+=cut
+
+sub __searchSuggestionHtmlEscape {
+	my ($value) = @_;
+	$value = '' unless (defined($value));
+	$value =~ s{&}{&amp;}gx;
+	$value =~ s{<}{&lt;}gx;
+	$value =~ s{>}{&gt;}gx;
+	$value =~ s{"}{&quot;}gx;
+	$value =~ s{'}{&#39;}gx;
+	return $value;
 }
 
 =item C<__searchPaginationToHtml($json)>
