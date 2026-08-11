@@ -387,7 +387,11 @@ paths:
     get:
       summary: Bible search
       operationId: search
-      description: Search for criteria in the whole bible
+      description: >-
+        Search for criteria in the whole bible. Ordinary searches may also
+        match translation-specific thesaurus terms, so equivalent wording
+        used by a selected translation can be found. Set `wholeword` to true
+        to require an exact whole-word match without thesaurus expansion.
       parameters:
         - in: query
           name: form
@@ -400,7 +404,11 @@ paths:
           schema:
             type: string
           required: false
-          description: Critereon for search, not required if you want the form mode, which is only valid in text/html mode
+          description: >-
+            Criterion for search, not required if you want the form mode, which
+            is only valid in text/html mode. Ordinary searches may include
+            related thesaurus terms; use `wholeword` for an exact whole-word
+            search.
         - in: query
           name: limit
           schema:
@@ -432,7 +440,7 @@ paths:
             type: boolean
             default: false
           required: false
-          description: Require whitespace or end of verse after the requested term
+          description: Require an exact whole-word match, with whitespace or end of verse after the requested term; disables thesaurus expansion
         - in: query
           name: translations
           schema:

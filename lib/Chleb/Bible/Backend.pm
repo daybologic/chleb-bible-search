@@ -240,6 +240,24 @@ hash ref.
 
 has __propertyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 
+=item C<__thesaurusCache>
+
+Process-local cache of translation-specific thesaurus terms keyed by source
+word, initialized lazily to an empty hash ref.
+
+=cut
+
+has __thesaurusCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__thesaurusAvailable>
+
+Boolean indicating whether the current SQLite source contains the thesaurus
+tables, initialized lazily from the database schema.
+
+=cut
+
+has __thesaurusAvailable => (is => 'ro', isa => 'Bool', lazy => 1, builder => '__makeThesaurusAvailable');
+
 =item C<__sentimentCache>
 
 Process-local cache of sentiment structures keyed by full verse key,
@@ -657,6 +675,41 @@ SQL
 	$self->__propertyCache->{$translation}->{$name} = $value;
 
 	return $value;
+}
+
+=item C<getThesaurusTerms($word)>
+
+Return the normalized related words for C<$word> in the current translation.
+An empty array reference is returned when no thesaurus table or source word is
+available.
+
+=cut
+
+sub getThesaurusTerms {
+	my ($self, $word) = @_;
+	$word = lc($word // '');
+	return [] if length($word) == 0;
+	return $self->__thesaurusCache->{$word}
+		if (exists($self->__thesaurusCache->{$word}));
+	return $self->__thesaurusCache->{$word} = [] unless $self->__thesaurusAvailable;
+
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $word, $word, $word);
+		SELECT CASE
+				 WHEN source.word = ? THEN related.word
+				 ELSE source.word
+			   END AS term
+		  FROM thesaurus_relation AS relation
+		  JOIN thesaurus_word AS source ON source.id = relation.source_word_id
+		  JOIN thesaurus_word AS related ON related.id = relation.related_word_id
+		 WHERE source.word = ? OR related.word = ?
+		 ORDER BY term
+SQL
+	my @terms;
+	while (my ($term) = $sth->fetchrow_array()) {
+		push(@terms, $term);
+	}
+	$self->__thesaurusCache->{$word} = \@terms;
+	return \@terms;
 }
 
 =item C<getSentimentByOrdinal($ordinal)>
@@ -1284,6 +1337,26 @@ sub __makeData {
 			sqlite_unicode => 1,
 		}
 	);
+}
+
+=item C<__makeThesaurusAvailable()>
+
+Inspect the SQLite schema once and report whether the thesaurus relation table
+is available for the current translation.
+
+=cut
+
+sub __makeThesaurusAvailable { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my ($available) = $self->data->selectrow_array(<<'SQL');
+		SELECT EXISTS(
+			SELECT 1
+			  FROM sqlite_master
+			 WHERE type = 'table'
+			   AND name = 'thesaurus_relation'
+		)
+SQL
+	return $available ? 1 : 0;
 }
 
 =item C<__makeDataDir()>

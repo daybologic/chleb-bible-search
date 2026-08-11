@@ -46,6 +46,9 @@ bin/git/tools/rcbranch
 bin/git/tools/release
 bin/git/tools/release-common
 bin/git/tools/changelog-ai.pl
+bin/import/thesaurus-ai.pl
+bin/import/thesaurus-ai-status.sh
+bin/import/thesaurus-ai-merge.pl
 bin/import/text-to-asv.sh
 bin/import/text-to-kjv.sh
 bin/maint/copyright-bump.sh
@@ -279,6 +282,7 @@ data/tests/1/a.sh
 'data/tests/1/search HTML (no criteria).sh'
 'data/tests/1/search JSON \'fire\', form.sh'
 'data/tests/1/search JSON \'fire\'.sh'
+'data/tests/1/search JSON thesaurus \'dripping\'.sh'
 'data/tests/1/search JSON (no criteria).sh'
 'data/tests/1/search previous limit JSON.sh'
 'data/tests/1/search preferred wholeword JSON.sh'
