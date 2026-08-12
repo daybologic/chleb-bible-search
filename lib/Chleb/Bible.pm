@@ -45,6 +45,7 @@ Object representing one translation of The Holy Bible
 
 extends 'Chleb::Bible::Base';
 
+use Carp qw(croak);
 use Digest::CRC qw(crc32);
 use HTTP::Status qw(:constants);
 use List::Util qw(shuffle);
@@ -164,6 +165,10 @@ in the key C<nonFatal> within the B<optional> C<$args> C<HASH>.
 sub getBookByShortName {
 	my ($self, $shortName, $args) = @_;
 
+	if (my $book = $self->findBookByShortName($shortName)) {
+		return $book;
+	}
+
 	my $closestBook;
 	my $lowestDistance = $Chleb::Constants::UINT_MAX; # an impossibly high number, all mismatches will be lower
 	my @books = shuffle(@{ $self->books }); # be fair; don't bias against books near the end of the bible
@@ -173,18 +178,51 @@ sub getBookByShortName {
 			$lowestDistance = $distance;
 			$closestBook = $book;
 		}
-
-		next unless ($book->equals($shortName));
-		return $book;
 	}
 
 	my $errorMsg = "Short book name '$shortName' is not a book in the bible, did you mean "
 	    . $closestBook->shortName . '?';
+	push(@{ $args->{suggestions} }, $closestBook->shortName)
+	    if (ref($args->{suggestions}) eq 'ARRAY');
 
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
-		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
+		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg));
+	}
+
+	return;
+}
+
+=item C<findBookByShortName($shortName, [$args])>
+
+Return a L<Chleb::Bible::Book> object from L</books> given its C<$shortName>, or
+C<undef> if the book does not exist.  An unsuccessful lookup is not logged.
+
+An optional C<suggestions> array reference in C<$args> collects the closest
+short book name from a failed lookup.
+
+=cut
+
+sub findBookByShortName {
+	my ($self, $shortName, $args) = @_;
+	$args //= { };
+
+	foreach my $book (@{ $self->books }) {
+		return $book if ($book->equals($shortName));
+	}
+
+	if (ref($args->{suggestions}) eq 'ARRAY') {
+		my $closestBook;
+		my $lowestDistance = $Chleb::Constants::UINT_MAX;
+		foreach my $book (shuffle(@{ $self->books })) {
+			my $distance = distance($book->shortName, $shortName);
+			if ($distance < $lowestDistance) {
+				$lowestDistance = $distance;
+				$closestBook = $book;
+			}
+		}
+		push(@{ $args->{suggestions} }, $closestBook->shortName);
 	}
 
 	return;
@@ -223,7 +261,7 @@ sub getBookByLongName {
 	if ($args->{nonFatal}) {
 		$self->dic->logger->warn($errorMsg);
 	} else {
-		die Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg);
+		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $errorMsg));
 	}
 
 	return;
@@ -253,8 +291,8 @@ sub getBookByOrdinal {
 		if ($args->{nonFatal}) {
 			return;
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Book ordinal %d out of range, there are %d books in the bible',
-			    $ordinal, $self->bookCount));
+			croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Book ordinal %d out of range, there are %d books in the bible',
+			    $ordinal, $self->bookCount)));
 		}
 	}
 
@@ -280,24 +318,25 @@ sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
 	if (my $verseKey = $self->__backend->getVerseKeyByOrdinal($ordinal)) {
-		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m/:/, $verseKey, 4);
+		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $verseKey, 4);
 		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
 			if (my $book = $self->getBookByShortName($bookShortName, $args)) {
 				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
 
 				return Chleb::Bible::Verse->new({
-					book    => $book,
-					chapter => $chapter,
-					ordinal => $verseNumber,
-					text    => $text,
+					book           => $book,
+					chapter        => $chapter,
+					ordinal        => $verseNumber,
+					text           => $text,
+					__queryContext => $args || {},
 				});
 			}
 		} else {
-			die "I don't think you can reach this";
+		croak("I don't think you can reach this");
 		}
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf("Verse %d not found in '%s'", $ordinal, $self->translation));
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf("Verse %d not found in '%s'", $ordinal, $self->translation)));
 }
 
 =item C<$newSearchQuery(@args)>
@@ -322,7 +361,7 @@ sub newSearchQuery {
 	return $self->_library->newSearchQuery(%params);
 }
 
-=item C<resolveBook($book)>
+=item C<resolveBook($book, [$args])>
 
 Resolve and return a L<Chleb::Bible::Book> object given any of the following C<$book> contents:
 
@@ -348,16 +387,22 @@ A long book name, for example C<1 Kings> or C<Genesis>.
 
 A fatal error is thrown if the Book cannot be found.
 
+An optional C<suggestions> array reference in C<$args> collects suggested short
+book names from a failed short-name lookup.
+
 =cut
 
 sub resolveBook {
-	my ($self, $book) = @_;
+	my ($self, $book, $args) = @_;
+	$args //= { };
 
 	unless (blessed($book)) {
 		if (looks_like_number($book)) {
 			$book = $self->getBookByOrdinal($book);
 		} else {
-			if (my $shortBook = $self->getBookByShortName($book, { nonFatal => 1 })) {
+			if (my $shortBook = $self->findBookByShortName($book, {
+				suggestions => $args->{suggestions},
+			})) {
 				return $shortBook;
 			} else {
 				$book = $self->getBookByLongName($book);
@@ -370,7 +415,7 @@ sub resolveBook {
 
 =item C<fetch($book, $chapterOrdinal, $verseOrdinal)>
 
-Fetch a L<Chleb::Bible::Verse>, given C<book>, which may be in any format accepted by L</resolveBook($book)>,
+Fetch a L<Chleb::Bible::Verse>, given C<book>, which may be in any format accepted by L</resolveBook($book, [$args])>,
 and a numeric C<$chapterOrdinal> and a numeric C<$verseOrdinal>.  If this does not exist, a fatal error will
 be thrown.
 
@@ -425,6 +470,151 @@ sub TO_JSON {
 		translation          => $self->translation,
 		verse_count          => $self->verseCount+0,
 	};
+}
+
+=item C<getVerseDataByKey($key)>
+
+Return verse text for a canonical verse key.
+
+=cut
+
+sub getVerseDataByKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getVerseDataByKey($key);
+}
+
+=item C<getVerseKeyByBookVerseKey($key)>
+
+Return a canonical verse key for a book-relative verse key.
+
+=cut
+
+sub getVerseKeyByBookVerseKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getVerseKeyByBookVerseKey($key);
+}
+
+=item C<getChapterVerseDataByKey($bookShortName, $chapterOrdinal)>
+
+Return the verse data for a chapter.
+
+=cut
+
+sub getChapterVerseDataByKey {
+	my ($self, $bookShortName, $chapterOrdinal) = @_;
+	return $self->__backend->getChapterVerseDataByKey($bookShortName, $chapterOrdinal);
+}
+
+=item C<getBookInfoByShortName($bookShortName)>
+
+Return metadata for a book identified by its short name.
+
+=cut
+
+sub getBookInfoByShortName {
+	my ($self, $bookShortName) = @_;
+	return $self->__backend->getBookInfoByShortName($bookShortName);
+}
+
+=item C<getOrdinalByVerseKey($key)>
+
+Return the absolute ordinal for a canonical verse key.
+
+=cut
+
+sub getOrdinalByVerseKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getOrdinalByVerseKey($key);
+}
+
+=item C<getSentimentByOrdinal($ordinal)>
+
+Return sentiment data for an absolute verse ordinal.
+
+=cut
+
+sub getSentimentByOrdinal {
+	my ($self, $ordinal) = @_;
+	return $self->__backend->getSentimentByOrdinal($ordinal);
+}
+
+=item C<getSentimentByVerseKey($key)>
+
+Return sentiment data for the canonical verse key.
+
+=cut
+
+sub getSentimentByVerseKey {
+	my ($self, $key) = @_;
+	return $self->__backend->getSentimentByVerseKey($key);
+}
+
+=item C<getProperty($name)>
+
+Return a property for this translation from the SQLite source, or C<undef>
+when the property is not present.
+
+=cut
+
+sub getProperty {
+	my ($self, $name) = @_;
+	return $self->__backend->getProperty($name);
+}
+
+=item C<getThesaurusTerms($word)>
+
+Return translation-specific thesaurus alternatives for C<$word>.
+
+=cut
+
+sub getThesaurusTerms {
+	my ($self, $word) = @_;
+	return $self->__backend->getThesaurusTerms($word);
+}
+
+=item C<getBibleWords()>
+
+Return the normalized distinct words present in this translation.
+
+=cut
+
+sub getBibleWords {
+	my ($self) = @_;
+	return $self->__backend->getBibleWords();
+}
+
+=item C<year()>
+
+Return the publication year for this translation from the SQLite source.
+
+=cut
+
+sub year {
+	my ($self) = @_;
+	return $self->__backend->year();
+}
+
+=item C<deferSharedCacheWrites($defer)>
+
+Control deferred writes to the shared backend cache while performing a grouped
+operation such as a search.
+
+=cut
+
+sub deferSharedCacheWrites {
+	my ($self, $defer) = @_;
+	return $self->__backend->deferSharedCacheWrites($defer);
+}
+
+=item C<flushSharedCache()>
+
+Flush pending writes to the shared backend cache.
+
+=cut
+
+sub flushSharedCache {
+	my ($self) = @_;
+	return $self->__backend->flushSharedCache();
 }
 
 =back

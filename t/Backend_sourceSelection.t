@@ -30,8 +30,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package BackendSourceSelectionTests;
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -57,11 +63,12 @@ sub setUp {
 	$self->{__original_cwd} = getcwd();
 
 	my $root = tempdir(CLEANUP => 1);
-	mkdir($root . '/data') or die("mkdir $root/data failed: $!");
-	mkdir($root . '/cache') or die("mkdir $root/cache failed: $!");
+	$self->{root} = $root;
+	mkdir($root . '/data') or croak("mkdir $root/data failed: $!");
+	mkdir($root . '/cache') or croak("mkdir $root/cache failed: $!");
 	$self->__makeSourceFile($root . '/data', 'core.sqlite.gz', ['asv', 'kjv']);
 	$self->__makeSourceFile($root . '/data', 'kjv.sqlite.gz', ['kjv']);
-	chdir($root) or die("chdir $root failed: $!");
+	chdir($root) or croak("chdir $root failed: $!");
 
 	$self->sut(Chleb::Bible::Backend->new({
 		bible    => Chleb::Bible->new({ translation => 'kjv' }),
@@ -77,6 +84,7 @@ sub tearDown {
 
 	chdir($self->{__original_cwd}) if (defined($self->{__original_cwd}));
 	$self->{__original_cwd} = undef;
+	$self->{root} = undef;
 
 	return $self->SUPER::tearDown();
 }
@@ -100,14 +108,32 @@ sub testFallbackToCoreWhenNoSingleFile {
 	return EXIT_SUCCESS;
 }
 
+sub testSourceInspectionDoesNotUseSystemTempDirectory {
+	my ($self) = @_;
+	plan tests => 1;
+
+	local $ENV{TMPDIR} = $self->{root} . '/not-a-directory';
+	unlink($self->{root} . '/cache/kjv.sqlite') if (-f $self->{root} . '/cache/kjv.sqlite');
+	my $backend = Chleb::Bible::Backend->new({
+		bible    => Chleb::Bible->new({ translation => 'kjv' }),
+		dataDir  => $self->{root} . '/data',
+		cacheDir => $self->{root} . '/cache',
+	});
+
+	is($backend->__makeSourceCompressedPath(), $self->{root} . '/data/kjv.sqlite.gz',
+		'source inspection uses the backend cache for temporary SQLite data');
+
+	return EXIT_SUCCESS;
+}
+
 sub testLocalDataDirWinsWithoutGeneratedSqlite {
 	my ($self) = @_;
 
 	my $root = tempdir(CLEANUP => 1);
-	mkdir($root . '/data') or die("mkdir $root/data failed: $!");
-	mkdir($root . '/data/static') or die("mkdir $root/data/static failed: $!");
+	mkdir($root . '/data') or croak("mkdir $root/data failed: $!");
+	mkdir($root . '/data/static') or croak("mkdir $root/data/static failed: $!");
 
-	chdir($root) or die("chdir $root failed: $!");
+	chdir($root) or croak("chdir $root failed: $!");
 	my $backend = bless({}, 'Chleb::Bible::Backend');
 	is($backend->__makeDataDir(), 'data', 'source checkout data dir wins even before generated SQLite exists');
 
@@ -125,15 +151,16 @@ sub __makeSourceFile {
 		AutoCommit => 1,
 	});
 	$dbh->do('CREATE TABLE master (sig CHAR(36) NOT NULL, version INTEGER NOT NULL, built_time TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)');
-	$dbh->do(q{INSERT INTO master (sig, version) VALUES ('178d4220-2531-11f1-8c59-ab2e7e0be878', 14)});
+	$dbh->do(q{INSERT INTO master (sig, version) VALUES ('178d4220-2531-11f1-8c59-ab2e7e0be878', 17)});
 	$dbh->do('CREATE TABLE translation (code TEXT NOT NULL)');
+	$dbh->do('CREATE TABLE properties (translation TEXT NOT NULL, name TEXT NOT NULL, value TEXT NOT NULL)');
 	foreach my $translation (@{ $translations }) {
 		$dbh->do('INSERT INTO translation (code) VALUES (?)', undef, $translation);
 	}
 	$dbh->disconnect();
 
-	gzip($sqlitePath => $dir . '/' . $fileName) or die("gzip failed: $GzipError");
-	unlink($sqlitePath) or die("unlink $sqlitePath failed: $!");
+	gzip($sqlitePath => $dir . '/' . $fileName) or croak("gzip failed: $GzipError");
+	unlink($sqlitePath) or croak("unlink $sqlitePath failed: $!");
 
 	return;
 }

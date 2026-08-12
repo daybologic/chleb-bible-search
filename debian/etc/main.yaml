@@ -29,7 +29,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 server:
-  children: 30
+  children: 'auto'
+  max_children: 30
   uptime_file: /var/run/chleb-bible-search/startup.txt
 votd_exclude:
   terms:

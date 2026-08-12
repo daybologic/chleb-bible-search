@@ -1,6 +1,7 @@
 package Chleb::Utils;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -15,6 +16,7 @@ Functions for miscellaneous internal purposes
 use Chleb::Utils::BooleanParserSystemException;
 use Chleb::Utils::BooleanParserUserException;
 use Chleb::Utils::TypeParserException;
+use Data::Dumper;
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 use Readonly;
@@ -48,6 +50,14 @@ The maximum length of a string returned by L</limitText($text)>.
 
 Readonly my $MAX_TEXT_LENGTH => 120;
 
+=item C<$REDACT_CONFIG_KEY_PATTERN>
+
+Pattern matching configuration keys whose values must not be exposed.
+
+=cut
+
+Readonly my $REDACT_CONFIG_KEY_PATTERN => qr{ secret }ix;
+
 =back
 
 =head1 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.
@@ -79,6 +89,44 @@ Readonly our $BOOLEAN_FLAG_EMPTY_IS_FALSE => 1 << 0;
 
 =over
 
+=item C<htmlEscape($value)>
+
+Escape a value for safe insertion into an HTML document.
+
+=cut
+
+sub htmlEscape {
+	my ($value) = @_;
+	$value = '' unless (defined($value));
+	$value =~ s{&}{&amp;}gx;
+	$value =~ s{<}{&lt;}gx;
+	$value =~ s{>}{&gt;}gx;
+	$value =~ s{"}{&quot;}gx;
+	$value =~ s{'}{&#39;}gx;
+	return $value;
+}
+
+=item C<extractWords($text)>
+
+Return an array reference containing words extracted from C<$text>. Letters and
+numbers form each word; apostrophes and hyphens may join additional letters or
+numbers to it.
+
+=cut
+
+sub extractWords {
+	my ($text) = @_;
+	return [] if (!defined($text) || length($text) == 0);
+	my @words = ($text =~ /
+        [\p{L}\p{N}]+       # one or more letters or numbers
+        (?:
+            ['-]                # optionally continue after an apostrophe or hyphen
+            [\p{L}\p{N}]+       # with one or more letters or numbers
+        )*
+        /gux);
+	return \@words;
+}
+
 =item C<forceArray($param)>
 
 Given any user input C<$param>, force the content to become an C<ARRAY> ref.
@@ -109,9 +157,9 @@ sub forceArray {
 
 	my $noObjects = sub {
 		my ($item) = @_;
-		die('no blessed object support') if (blessed($item));
-		die('no CODE support') if (ref($item) eq 'CODE');
-		die('no HASH support') if (ref($item) eq 'HASH');
+		croak('no blessed object support') if (blessed($item));
+		croak('no CODE support') if (ref($item) eq 'CODE');
+		croak('no HASH support') if (ref($item) eq 'HASH');
 	};
 
 	my @output = ( );
@@ -125,14 +173,14 @@ sub forceArray {
 			foreach my $subItem (@$unknown) {
 				if (defined($subItem)) {
 					$noObjects->($subItem);
-					push(@output, split(m/,/, $subItem));
+					push(@output, split(m{ , }x, $subItem));
 				} else {
 					push(@output, $subItem);
 				}
 			}
 			next;
 		}
-		push(@output, split(m/,/, $unknown));
+		push(@output, split(m{ , }x, $unknown));
 	}
 
 	return \@output;
@@ -150,10 +198,10 @@ sub removeArrayEmptyItems {
 
 	return [ ] unless (defined($arrayRef));
 
-	die('no blessed object support') if (blessed($arrayRef));
-	die('no CODE support') if (ref($arrayRef) eq 'CODE');
-	die('no HASH support') if (ref($arrayRef) eq 'HASH');
-	die('$arrayRef must be an ARRAY ref') if (ref($arrayRef) ne 'ARRAY');
+	croak('no blessed object support') if (blessed($arrayRef));
+	croak('no CODE support') if (ref($arrayRef) eq 'CODE');
+	croak('no HASH support') if (ref($arrayRef) eq 'HASH');
+	croak('$arrayRef must be an ARRAY ref') if (ref($arrayRef) ne 'ARRAY');
 
 	my @filtered = ( );
 	my $filteredCount = 0;
@@ -169,20 +217,50 @@ sub removeArrayEmptyItems {
 	return $filteredCount == 0 ? $arrayRef : \@filtered;
 }
 
+=item C<redactConfigValue($key, $value)>
+
+Return C<'***'> when C<$key> identifies a secret configuration value.
+Otherwise, return C<$value> unmodified.
+
+=cut
+
+sub redactConfigValue {
+	my ($key, $value) = @_;
+
+	return '***' if (defined($key) && $key =~ $REDACT_CONFIG_KEY_PATTERN);
+	return $value;
+}
+
+=item C<redactingDumper($value)>
+
+Return a L<Data::Dumper> representation of C<$value> after recursively copying
+the structure and replacing values whose hash keys identify secrets with
+C<'***'>.  The original structure is not modified.
+
+=cut
+
+sub redactingDumper {
+	my ($value) = @_;
+
+	return Dumper __redactConfigStructure($value);
+}
+
 sub queryParamsHelper {
 	my ($params) = @_;
 
 	my $str = '';
 	my $counter = 0;
-	my %blacklist = map { $_ => 1 } (qw(accept book chapter translation verse version when)); # TODO: We should aim to eliminate this hack
+	my %blacklist = map { $_ => 1 } (qw(__translationsAll accept book chapter translation verse version when)); # TODO: We should aim to eliminate this hack
 
 	while (my ($k, $v) = each(%$params)) {
 		next if ($blacklist{$k});
+		my $isTranslationList = ($k eq 'translations' && ref($v) eq 'ARRAY' && scalar(@$v) > 1);
 		$v = join(',', @$v) if (ref($v) eq 'ARRAY');
-		next unless (defined($v) && length($v) > 0);
+		next if (!defined($v));
+		next if (length($v) == 0);
 
 		$str .= ($counter == 0) ? '?' : '&';
-		$v = 'all' if ($v eq 'asv,kjv' && $k eq 'translations'); # TODO: You should do this via a callback
+		$v = 'all' if ($isTranslationList && $params->{__translationsAll});
 		$str .= "${k}=${v}";
 		$counter++;
 	}
@@ -227,7 +305,7 @@ sub boolean {
 			return 1 if ($v eq $trueValues);
 		}
 
-		return ($v =~ m/^enable/);
+		return ($v =~ m{ ^enable }x);
 	};
 
 	my $isFalse = sub {
@@ -237,7 +315,7 @@ sub boolean {
 			return 1 if ($v eq $falseValues);
 		}
 
-		return ($v =~ m/^disable/);
+		return ($v =~ m{ ^disable }x);
 	};
 
 	# Let's run this block first so we trap invalid defaults even when they aren't used
@@ -246,7 +324,7 @@ sub boolean {
 		if ($isTrue->($defaultValue)) {
 			$defaultValueReturned = 1;
 		} elsif (!$isFalse->($defaultValue)) {
-			die(Chleb::Utils::BooleanParserSystemException->raise(
+			croak(Chleb::Utils::BooleanParserSystemException->raise(
 				undef,
 				"Illegal default value: '$defaultValue' for key '$key'",
 				$key,
@@ -257,8 +335,8 @@ sub boolean {
 	if (defined($value)) {
 		my $trim = sub {
 			my ($v) = @_;
-			$v =~ s/^\s+//;
-			$v =~ s/\s+$//;
+			$v =~ s{^\s+}{}x;
+			$v =~ s{\s+$}{}x;
 			return $v;
 		};
 
@@ -269,7 +347,7 @@ sub boolean {
 			return 1 if ($isTrue->($value));
 			return 0 if ($isFalse->($value));
 
-			die(Chleb::Utils::BooleanParserUserException->raise(
+			croak(Chleb::Utils::BooleanParserUserException->raise(
 				undef,
 				"Illegal user-supplied value: '$value' for key '$key'",
 				$key,
@@ -281,7 +359,7 @@ sub boolean {
 
 	return $defaultValueReturned if (defined($defaultValue)); # Apply default, if supplied/available
 
-	die(Chleb::Utils::BooleanParserUserException->raise(
+	croak(Chleb::Utils::BooleanParserUserException->raise(
 		undef,
 		"Mandatory value for key '$key' not supplied",
 		$key,
@@ -295,13 +373,13 @@ sub boolean {
 sub parseIntoType {
 	my ($outputType, $name, $value, $default) = @_;
 
-	die(Chleb::Utils::TypeParserException->raise(
+	croak(Chleb::Utils::TypeParserException->raise(
 		HTTP_INTERNAL_SERVER_ERROR,
 		'No name supplied in call to parseIntoType()',
 		undef,
 	)) if (!defined($name) || length($name) == 0);
 
-	die(Chleb::Utils::TypeParserException->raise(
+	croak(Chleb::Utils::TypeParserException->raise(
 		HTTP_INTERNAL_SERVER_ERROR,
 		sprintf("No default value supplied for '%s'", $name),
 		$name,
@@ -312,11 +390,12 @@ sub parseIntoType {
 	}
 
 	my $output;
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$output = $outputType->new({ value => $value });
-	};
+		1;
+	} or $evalOk1 = 0;
 	if (my $evalError = $EVAL_ERROR) {
-		die(Chleb::Utils::TypeParserException->raise(
+		croak(Chleb::Utils::TypeParserException->raise(
 			undef,
 			sprintf("Illegal value '%s' for '%s'", $value, $name),
 			$name,
@@ -389,6 +468,39 @@ sub colorIndexFromWord {
 	}
 
 	return $h & 63; # low 6 bits => 0..63
+}
+
+=back
+
+=head1 PRIVATE FUNCTIONS
+
+=over
+
+=item C<__redactConfigStructure($value, [$key])>
+
+Recursively copy configuration data, redacting values associated with matching
+hash keys.  Arrays are copied and traversed so hashes nested within them are
+also redacted.
+
+=cut
+
+sub __redactConfigStructure {
+	my ($value, $key) = @_;
+
+	return redactConfigValue($key, $value)
+	    if (defined($key) && $key =~ $REDACT_CONFIG_KEY_PATTERN);
+
+	if (ref($value) eq 'HASH') {
+		return {
+			map { $_ => __redactConfigStructure($value->{$_}, $_) } keys(%$value)
+		};
+	}
+
+	if (ref($value) eq 'ARRAY') {
+		return [ map { __redactConfigStructure($_) } @$value ];
+	}
+
+	return $value;
 }
 
 =back

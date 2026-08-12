@@ -31,6 +31,7 @@
 package Chleb::Utils::BooleanParserException; # nb. this is abstract, don't use it directly
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Exception';
@@ -44,11 +45,11 @@ sub raise {
 
 	my @caller = caller();
 	my $usingClass = $caller[0];
-	if ($usingClass =~ m/^Chleb::Utils::BooleanParser\w+Exception$/) {
+	if ($usingClass =~ m{ ^Chleb::Utils::BooleanParser\w+Exception$ }x) {
 		return $class->SUPER::raise($statusCode, $thing, { key => $key });
 	}
 
-	die(__PACKAGE__ . ' is abstract');
+	croak(__PACKAGE__ . ' is abstract');
 }
 
 __PACKAGE__->meta->make_immutable;

@@ -34,6 +34,7 @@ package main;
 use strict;
 use warnings;
 
+use Carp qw(croak);
 use DBI;
 use English qw(-no_match_vars);
 use IO::File;
@@ -47,11 +48,12 @@ Readonly my $OT_COUNT => 39;
 Readonly my $DATA_DIR => 'data';
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
-Readonly my $FILE_VERSION => 14;
+Readonly my $FILE_VERSION => 17;
 
 Readonly my %TRANSLATION_META => (
-	kjv => { year => 1611, language => 'en' },
-	asv => { year => 1901, language => 'en' },
+	kjv       => { year => 1611, language => 'en', properties => {} },
+	asv       => { year => 1901, language => 'en', properties => {} },
+	pickthall => { year => 1930, language => 'en', properties => { chapter_name => 'Surah', chapter_name_plural => 'Surahs' } },
 );
 
 Readonly my %BOOK_ORDINAL => (
@@ -121,6 +123,11 @@ Readonly my %BOOK_ORDINAL => (
 	'3John' => 64,
 	Jude  => 65,
 	Rev   => 66,
+	Quran => 1,
+);
+
+Readonly my %BOOK_TESTAMENT => (
+	Quran => 'O',
 );
 
 my %bookKeys = ( );
@@ -134,6 +141,11 @@ sub __inputFromTranslation {
 sub __emotionFromTranslation {
 	my ($translation) = @_;
 	return join('/', 'static', 'emotion', sprintf('%s.json', $translation));
+}
+
+sub __thesaurusFromTranslation {
+	my ($translation) = @_;
+	return join('/', 'static', sprintf('thesaurus-%s.json', $translation));
 }
 
 sub __createTables {
@@ -152,6 +164,16 @@ CREATE TABLE IF NOT EXISTS translation (
 	code CHAR(8) PRIMARY KEY,
 	year INTEGER NOT NULL,
 	language CHAR(2) NOT NULL
+)
+SQL
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS properties (
+	translation CHAR(8) NOT NULL,
+	name TEXT NOT NULL,
+	value TEXT NOT NULL,
+	PRIMARY KEY (translation, name),
+	FOREIGN KEY (translation) REFERENCES translation(code)
 )
 SQL
 
@@ -198,11 +220,30 @@ SQL
 
 	$dbh->do(<<'SQL');
 CREATE TABLE IF NOT EXISTS sentiment (
-	translation CHAR(8) NOT NULL,
-	ordinal INTEGER NOT NULL,
-	emotion TEXT NOT NULL,
-	tones TEXT NOT NULL,
-	PRIMARY KEY (translation, ordinal)
+	verse_id INTEGER NOT NULL,
+	sentiment TEXT NOT NULL,
+	kind TEXT NOT NULL CHECK (kind IN ('emotion', 'tone')),
+	PRIMARY KEY (verse_id, kind, sentiment),
+	FOREIGN KEY (verse_id) REFERENCES verse(id)
+)
+SQL
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS thesaurus_word (
+	id INTEGER PRIMARY KEY,
+	word TEXT NOT NULL UNIQUE
+)
+SQL
+
+	$dbh->do(<<'SQL');
+CREATE TABLE IF NOT EXISTS thesaurus_relation (
+	source_word_id INTEGER NOT NULL,
+	related_word_id INTEGER NOT NULL,
+	relation TEXT NOT NULL,
+	confidence REAL NOT NULL,
+	PRIMARY KEY (source_word_id, related_word_id),
+	FOREIGN KEY (source_word_id) REFERENCES thesaurus_word(id),
+	FOREIGN KEY (related_word_id) REFERENCES thesaurus_word(id)
 )
 SQL
 
@@ -217,6 +258,8 @@ sub __createIndexes {
 	# these cover the remaining hot lookups.
 	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_verse_book ON verse(book_id, ordinal_relative_to_book)');
 	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_book_trans ON book(translation, ordinal)');
+	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_sentiment_kind_value ON sentiment(kind, sentiment)');
+	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_thesaurus_relation_source ON thesaurus_relation(source_word_id)');
 
 	$fileHandle->commit();
 
@@ -281,8 +324,29 @@ SQL
 
 	foreach my $translation (@$translations) {
 		my $meta = $TRANSLATION_META{$translation}
-		    or die("No metadata (year/language) known for translation '$translation'");
+		    or croak("No metadata (year/language) known for translation '$translation'");
 		$sth->execute($translation, $meta->{year}, $meta->{language});
+	}
+
+	$fileHandle->commit();
+
+	return;
+}
+
+sub __writeProperties {
+	my ($fileHandle, $translations) = @_;
+
+	my $sth = $fileHandle->prepare(<<'SQL');
+		INSERT INTO properties (translation, name, value)
+		VALUES(?, ?, ?)
+SQL
+
+	foreach my $translation (@$translations) {
+		my $meta = $TRANSLATION_META{$translation}
+		    or croak("No metadata (year/language) known for translation '$translation'");
+		foreach my $name (keys(%{ $meta->{properties} // {} })) {
+			$sth->execute($translation, $name, $meta->{properties}->{$name});
+		}
 	}
 
 	$fileHandle->commit();
@@ -294,22 +358,95 @@ sub __writeSentiment {
 	my ($fileHandle, $translation) = @_;
 
 	my $sentiment = getSentiment($translation);
+	my $verseRows = $fileHandle->selectall_arrayref(<<'SQL', { Slice => {} }, $translation);
+		SELECT verse.id
+		  FROM verse
+		  JOIN book ON book.id = verse.book_id
+		  JOIN chapter ON chapter.id = verse.chapter_id
+		 WHERE book.translation = ?
+		 ORDER BY book.ordinal, chapter.ordinal, verse.ordinal_relative_to_chapter
+SQL
+	croak("Sentiment data for $translation does not match the verse data\n")
+	    unless (scalar(@{ $sentiment }) == scalar(@{ $verseRows }));
+
 	my $sth = $fileHandle->prepare(<<'SQL');
-		INSERT INTO sentiment (translation, ordinal, emotion, tones)
-		VALUES(?, ?, ?, ?)
+		INSERT INTO sentiment (verse_id, sentiment, kind)
+		VALUES(?, ?, ?)
 SQL
 
-	my $ordinal = 0;
-	foreach my $entry (@{ $sentiment }) {
-		$ordinal++;
+	for (my $i = 0; $i < scalar(@{ $sentiment }); $i++) {
+		my $entry = $sentiment->[$i];
 		my $emotion = $entry->{emotion} // 'neutral';
-		my $tones = encode_json($entry->{tones} // [ ]);
-		$sth->execute($translation, $ordinal, $emotion, $tones);
+		$sth->execute($verseRows->[$i]->{id}, $emotion, 'emotion');
+		foreach my $tone (@{ $entry->{tones} // [ ] }) {
+			$sth->execute($verseRows->[$i]->{id}, $tone, 'tone');
+		}
 	}
 
 	$fileHandle->commit();
 
 	return;
+}
+
+=item C<__writeThesaurus($fileHandle, $translation)>
+
+Import the normalized translation thesaurus into the SQLite word dictionary
+and relation tables when a generated thesaurus file is available.
+
+=cut
+
+sub __writeThesaurus {
+	my ($fileHandle, $translation) = @_;
+	my $path = join('/', $DATA_DIR, __thesaurusFromTranslation($translation));
+	return unless -f $path;
+
+	open(my $input, '<:encoding(UTF-8)', $path)
+	    or croak(sprintf("Failed to open '%s' -- %s", $path, $ERRNO));
+	local $/ = undef;
+	my $document = decode_json(<$input>);
+	close($input) or croak(sprintf("Failed to close '%s' -- %s", $path, $ERRNO));
+
+	my $insertWord = $fileHandle->prepare('INSERT OR IGNORE INTO thesaurus_word (word) VALUES(?)');
+	my $selectWord = $fileHandle->prepare('SELECT id FROM thesaurus_word WHERE word = ?');
+	my $insertRelation = $fileHandle->prepare(<<'SQL');
+	INSERT OR REPLACE INTO thesaurus_relation
+		(source_word_id, related_word_id, relation, confidence)
+	VALUES(?, ?, ?, ?)
+SQL
+
+	for my $sourceWord (keys %{ $document->{terms} // {} }) {
+		$insertWord->execute($sourceWord);
+		$selectWord->execute($sourceWord);
+		my ($sourceId) = $selectWord->fetchrow_array();
+		for my $term (@{ $document->{terms}{$sourceWord} // [] }) {
+			$insertWord->execute($term->{term});
+			$selectWord->execute($term->{term});
+			my ($relatedId) = $selectWord->fetchrow_array();
+			$insertRelation->execute($sourceId, $relatedId, $term->{relation}, $term->{confidence});
+		}
+	}
+	$fileHandle->commit();
+	return;
+}
+
+=item C<__verseCountFromTranslation($translation)>
+
+Return the number of verse records in the translation's input file.
+
+=cut
+
+sub __verseCountFromTranslation {
+	my ($translation) = @_;
+
+	my $fileName = join('/', $DATA_DIR, __inputFromTranslation($translation));
+	my $fh = IO::File->new($fileName, 'r')
+	    or croak(sprintf("Failed to open '%s' -- %s", $fileName, $ERRNO));
+
+	my $verseCount = 0;
+	$verseCount++ while (<$fh>);
+	$fh->close();
+
+	return $verseCount;
 }
 
 my %idCounters = ( );
@@ -378,14 +515,18 @@ sub main2 {
 	if ($translation eq 'core') {
 		my @translations = ('asv', 'kjv'); # TODO can we make this list dynamic somehow?  all might need to be an even bigger superset, or we might need to tag inputs from dirs
 		__writeTranslations($fileHandle, \@translations);
+		__writeProperties($fileHandle, \@translations);
 		foreach my $translation2 (@translations) {
 			__processVerses($fileHandle, $translation2);
 			__writeSentiment($fileHandle, $translation2);
+			__writeThesaurus($fileHandle, $translation2);
 		}
 	} else {
 		__writeTranslations($fileHandle, [$translation]);
+		__writeProperties($fileHandle, [$translation]);
 		__processVerses($fileHandle, $translation);
 		__writeSentiment($fileHandle, $translation);
+		__writeThesaurus($fileHandle, $translation);
 	}
 
 	__populateCounts($fileHandle);
@@ -406,8 +547,8 @@ SQL
 
 	my $bookKey = join(':', $translation, $bookShortName);
 	unless ($bookKeys{$bookKey}) {
-		my $ordinal = $BOOK_ORDINAL{$bookShortName} or die("Missing ordinal for '$bookShortName'");
-		my $testament = $ordinal > $OT_COUNT ? 'N' : 'O';
+		my $ordinal = $BOOK_ORDINAL{$bookShortName} or croak("Missing ordinal for '$bookShortName'");
+		my $testament = $BOOK_TESTAMENT{$bookShortName} // ($ordinal > $OT_COUNT ? 'N' : 'O');
 		my $id = __uuid('book');
 
 		my $chapterCount = 0; # populated after load by __populateCounts()
@@ -440,7 +581,7 @@ SQL
 	return;
 }
 
-sub __writeVerse {
+sub __writeVerse { ## no critic (Subroutines::ProhibitManyArgs)
 	my ($fileHandle, $translation, $bookShortName, $chapterOrdinal, $verseNumber, $verseKey, $verseText) = @_;
 
 my $sthVerse = $fileHandle->prepare(<<'SQL');
@@ -468,15 +609,15 @@ sub __processVerses {
 
 	if (my $fh = IO::File->new(join('/', $DATA_DIR, __inputFromTranslation($translation)), 'r')) {
 		while (my $line = <$fh>) {
-			my @verseData = split(m/::/, $line, 2);
+			my @verseData = split(m{ :: }x, $line, 2);
 			my ($verseKey, $verseText) = @verseData;
-			my ($translation, $bookShortName, $chapterOrdinal, $verseNumber)
-			    = split(m/:/, $verseKey, 4);
+			my ($inputTranslation, $bookShortName, $chapterOrdinal, $verseNumber)
+			    = split(m{ : }x, $verseKey, 4);
 			chomp($verseText);
 
-			__writeBook($fileHandle, $translation, $bookShortName);
-			__writeChapter($fileHandle, $translation, $bookShortName, $chapterOrdinal);
-			__writeVerse($fileHandle, $translation, $bookShortName, $chapterOrdinal, $verseNumber, $verseKey, $verseText);
+			__writeBook($fileHandle, $inputTranslation, $bookShortName);
+			__writeChapter($fileHandle, $inputTranslation, $bookShortName, $chapterOrdinal);
+			__writeVerse($fileHandle, $inputTranslation, $bookShortName, $chapterOrdinal, $verseNumber, $verseKey, $verseText);
 		}
 	}
 
@@ -490,12 +631,14 @@ sub getSentiment {
 
 	my $text;
 	if (my $fh = IO::File->new(join('/', $DATA_DIR, __emotionFromTranslation($translation)), 'r')) {
-		$text = do { local $/; <$fh> };
+		$text = do { local $/ = undef; <$fh> };
 		$fh = undef;
 	}
 
 	my $data = decode_json($text);
-	die("Sentiment data for $translation is incomplete") unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == 31_102);
+	my $verseCount = __verseCountFromTranslation($translation);
+	croak("Sentiment data for $translation is incomplete")
+	    unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == $verseCount);
 
 	return $data;
 }

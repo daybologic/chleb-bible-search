@@ -17,6 +17,8 @@ log/*.log
 cache/*.bin
 cache/startup.txt
 cache/*.sqlite
+cache/*
+!cache/.keep
 data/sessions/*
 data/static/public/privacy.html
 data/static/public/terms.html

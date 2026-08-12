@@ -30,6 +30,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package VotdServerTests;
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -66,7 +73,7 @@ sub test {
 
 	my $when = '2024-08-23T11:49:09+0100';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__votd({ accept => $mediaType, when => $when });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -81,6 +88,7 @@ sub test {
 						'encouragement',
 						'trust',
 					],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/psa/55/22',
@@ -157,7 +165,9 @@ sub test {
 			},
 		],
 		links => {
-			self => '/1/votd',
+			self => '/2/votd',
+			yesterday => '/2/votd?when=2024-08-22T00:00:00+0000',
+			tomorrow => '/2/votd?when=2024-08-24T00:00:00+0000',
 		},
 	}, "single verse JSON for $when") or diag(explain($json));
 
@@ -170,11 +180,11 @@ sub testJsonApiMediaType {
 
 	my $when = '2024-08-23T11:49:09+0100';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/vnd.api+json');
-	my $json = $self->sut->__votd({ accept => $mediaType, when => $when });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when });
 
 	is(ref($json), 'HASH', 'votd JSON:API media type returns JSON structure');
 	is($json->{data}->[0]->{type}, 'verse', 'votd JSON:API media type returns verse data');
-	is($json->{links}->{self}, '/1/votd', 'votd JSON:API media type keeps self link');
+	is($json->{links}->{self}, '/2/votd', 'votd JSON:API media type keeps self link');
 
 	return EXIT_SUCCESS;
 }
@@ -198,6 +208,7 @@ sub testV2 {
 					tones => [
 						'instruction',
 					],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/33/50',
@@ -234,6 +245,7 @@ sub testV2 {
 					ordinal => 51,
 					text => 'Speak unto the children of Israel, and say unto them, When ye are passed over Jordan into the land of Canaan;',
 					tones => ['instruction'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/33/51',
@@ -270,6 +282,7 @@ sub testV2 {
 					ordinal => 52,
 					text    => 'Then ye shall drive out all the inhabitants of the land from before you, and destroy all their pictures, and destroy all their molten images, and quite pluck down all their high places:',
 					tones => ['instruction', 'warning'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/33/52',
@@ -306,6 +319,7 @@ sub testV2 {
 					ordinal => 53,
 					text    => 'And ye shall dispossess [the inhabitants] of the land, and dwell therein: for I have given you the land to possess it.',
 					tones   => ['encouragement', 'trust'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/33/53',
@@ -383,6 +397,8 @@ sub testV2 {
 		],
 		links => {
 			self => '/2/votd',
+			yesterday => '/2/votd?when=1971-04-27T00:00:00+0000',
+			tomorrow => '/2/votd?when=1971-04-29T00:00:00+0000',
 		},
 	}, "specific JSON verses inspection for $when") or diag(explain($json));
 
@@ -409,6 +425,7 @@ sub testV2_translations_asv_asv {
 						'encouragement',
 						'prayer',
 					],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/psa/122/8',
@@ -486,6 +503,8 @@ sub testV2_translations_asv_asv {
 		],
 		links => {
 			self => '/2/votd?translations=asv',
+			yesterday => '/2/votd?translations=asv&when=2024-10-29T00:00:00+0000',
+			tomorrow => '/2/votd?translations=asv&when=2024-10-31T00:00:00+0000',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
@@ -498,7 +517,7 @@ sub testV2_translations_kjv_asv {
 
 	my $when = '2024-10-30T21:36:26+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['kjv', 'asv'] });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['asv', 'kjv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -512,16 +531,17 @@ sub testV2_translations_kjv_asv {
 						'encouragement',
 						'prayer',
 					],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/psa/122/8',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/psa/122/1?translations=all',
+					first => '/1/lookup/psa/122/1?translations=asv,kjv',
 					prev  => '/1/lookup/psa/122/7?translations=asv',
 					self  => '/1/lookup/psa/122/8?translations=asv',
 					next  => '/1/lookup/psa/122/9?translations=asv',
-					last  => '/1/lookup/psa/122/9?translations=all',
+					last  => '/1/lookup/psa/122/9?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -551,16 +571,17 @@ sub testV2_translations_kjv_asv {
 						'encouragement',
 						'prayer'
 					],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/psa/122/8',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/psa/122/1?translations=all',
+					first => '/1/lookup/psa/122/1?translations=asv,kjv',
 					prev  => '/1/lookup/psa/122/7?translations=kjv',
 					self  => '/1/lookup/psa/122/8?translations=kjv',
 					next  => '/1/lookup/psa/122/9?translations=kjv',
-					last  => '/1/lookup/psa/122/9?translations=all',
+					last  => '/1/lookup/psa/122/9?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -627,7 +648,9 @@ sub testV2_translations_kjv_asv {
 			},
 		],
 		links => {
-			self => '/2/votd?translations=all',
+			self => '/2/votd?translations=asv,kjv',
+			yesterday => '/2/votd?translations=asv,kjv&when=2024-10-29T00:00:00+0000',
+			tomorrow => '/2/votd?translations=asv,kjv&when=2024-10-31T00:00:00+0000',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
@@ -640,7 +663,7 @@ sub testV2_translations_all {
 
 	my $when = '2021-10-30T21:36:26+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['all'] });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => [ $self->coreTranslations() ] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -651,16 +674,17 @@ sub testV2_translations_all {
 					ordinal => 8,
 					text => 'And Moses said unto Korah, Hear now, ye sons of Levi:',
 					tones => [],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/num/16/8',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/7?translations=asv',
 					self  => '/1/lookup/num/16/8?translations=asv',
 					next  => '/1/lookup/num/16/9?translations=asv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -687,16 +711,17 @@ sub testV2_translations_all {
 					ordinal => 9,
 					text => '[seemeth it but] a small thing unto you, that the God of Israel hath separated you from the congregation of Israel, to bring you near to himself, to do the service of the tabernacle of Jehovah, and to stand before the congregation to minister unto them;',
 					tones => ['instruction', 'warning'],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/num/16/9',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/8?translations=asv',
 					self  => '/1/lookup/num/16/9?translations=asv',
 					next  => '/1/lookup/num/16/10?translations=asv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -723,16 +748,17 @@ sub testV2_translations_all {
 					ordinal => 10,
 					text => 'and that he hath brought thee near, and all thy brethren the sons of Levi with thee? and seek ye the priesthood also?',
 					tones => ['instruction', 'warning'],
+					year => 1901,
 					translation => 'asv',
 				},
 				id => 'asv/num/16/10',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/9?translations=asv',
 					self  => '/1/lookup/num/16/10?translations=asv',
 					next  => '/1/lookup/num/16/11?translations=asv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -759,16 +785,17 @@ sub testV2_translations_all {
 					ordinal => 8,
 					text => 'And Moses said unto Korah, Hear, I pray you, ye sons of Levi:',
 					tones => ['instruction'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/16/8',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/7?translations=kjv',
 					self  => '/1/lookup/num/16/8?translations=kjv',
 					next  => '/1/lookup/num/16/9?translations=kjv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -795,16 +822,17 @@ sub testV2_translations_all {
 					ordinal => 9,
 					text => '[Seemeth it but] a small thing unto you, that the God of Israel hath separated you from the congregation of Israel, to bring you near to himself to do the service of the tabernacle of the LORD, and to stand before the congregation to minister unto them?',
 					tones => ['instruction', 'rebuke'],
+					year => 1611,
 					translation => 'kjv',
 				},
 				id => 'kjv/num/16/9',
 				type => 'verse',
 				links => {
-					first => '/1/lookup/num/16/1?translations=all',
+					first => '/1/lookup/num/16/1?translations=asv,kjv',
 					prev  => '/1/lookup/num/16/8?translations=kjv',
 					self  => '/1/lookup/num/16/9?translations=kjv',
 					next  => '/1/lookup/num/16/10?translations=kjv',
-					last  => '/1/lookup/num/16/50?translations=all',
+					last  => '/1/lookup/num/16/50?translations=asv,kjv',
 				},
 				relationships => {
 					book => {
@@ -871,7 +899,9 @@ sub testV2_translations_all {
 			},
 		],
 		links => {
-			self => '/2/votd?translations=all',
+			self => '/2/votd?translations=asv,kjv',
+			yesterday => '/2/votd?translations=asv,kjv&when=2021-10-29T00:00:00+0000',
+			tomorrow => '/2/votd?translations=asv,kjv&when=2021-10-31T00:00:00+0000',
 		},
 	}, "specific JSON verses inspection for $when (asv)") or diag(explain($json));
 
@@ -880,7 +910,7 @@ sub testV2_translations_all {
 
 sub testHtmlNavigationKeepsAllTranslations {
 	my ($self) = @_;
-	plan tests => 4;
+	plan tests => 6;
 
 	my $when = '2024-10-30T21:36:26+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
@@ -893,10 +923,155 @@ sub testHtmlNavigationKeepsAllTranslations {
 
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
-	is_deeply(\@translations, [ 'asv', 'kjv' ], 'HTML renders both selected translations');
-	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/7\?translations=all">prev verse</a>}, 'previous verse keeps all translations');
-	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/9\?translations=all">next verse</a>}, 'next verse keeps all translations');
-	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/8\?translations=all">permalink</a>}, 'permalink keeps all translations');
+	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'HTML renders both selected translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?translations=asv,kjv&when=2024-10-29T00:00:00\+0000">yesterday</a>},
+		'VoTD HTML uses the yesterday document link');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?translations=asv,kjv&when=2024-10-31T00:00:00\+0000">tomorrow</a>},
+		'VoTD HTML uses the tomorrow document link');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/7\?translations=asv,kjv">prev verse</a>}, 'previous verse keeps selected translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/9\?translations=asv,kjv">next verse</a>}, 'next verse keeps selected translations');
+	like($html, qr{<a class="vn-link vn-verse" href="/1/lookup/psa/122/8\?translations=asv,kjv">permalink</a>}, 'permalink keeps selected translations');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlFormKeepsResultOnDatePickerPage {
+	my ($self) = @_;
+	plan tests => 17;
+
+	my $when = '2024-10-30T00:00:00+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		form => 1,
+		version => 2,
+		when => $when,
+		translations => ['asv', 'kjv'],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	like($html, qr{<title>Chleb Bible Search - Verse of The Day - 2024-10-30</title>}, 'form HTML has a dated title');
+	like($html, qr{<form class="search-form votd-form" method="GET" action="/2/votd">}, 'form submits to the v2 VoTD endpoint');
+	like($html, qr{<input type="date" id="votd-date" name="date" value="2024-10-30" required>}, 'form selects the requested date');
+	like($html, qr{<input type="hidden" id="votd-when" name="when" value="2024-10-30T00:00:00\+0000" disabled>},
+		'form carries the endpoint timestamp');
+	like($html, qr{when\.value = date\.value \+ 'T00:00:00\+0000';}, 'form submits the date as an endpoint timestamp');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?[^"]*form=1[^"]*when=2024-10-29T00:00:00\+0000">yesterday</a>},
+		'yesterday remains on the form page');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?[^"]*form=1[^"]*when=2024-10-31T00:00:00\+0000">tomorrow</a>},
+		'tomorrow remains on the form page');
+	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'form page renders the result cards');
+	like($html, qr{<a href="/1/lookup/psa/1\?translations=asv">Psa</a>}, 'VoTD card book links to its first chapter');
+	like($html, qr{<a href="/1/lookup/psa/122\?translations=asv">122</a>}, 'VoTD card chapter links to its chapter');
+	like($html, qr{<a href="/1/lookup/psa/122/8\?translations=asv">8</a>}, 'VoTD card verse links to its verse');
+	unlike($html, qr{<a href="/1/lookup/[^"]+">\s*<div class="card">}, 'form does not wrap its card in a lookup link');
+	like($html, qr{<button type="button" id="votd-home">Home</button>}, 'form has a Home button');
+	is(Chleb::Server::Dancer2::__votdFormWhen('2026-07-28'), '2026-07-28T00:00:00+0000',
+		'date picker value converts to the endpoint timestamp');
+	like($html, qr{<div class="wrapper votd-results">\s+<div class="card">}s, 'result is displayed as a card on the same page');
+
+	my @continuedVerses = (
+		$self->sut->__library->fetch('Genesis', 1, 1, { translations => ['kjv'] }),
+		$self->sut->__library->fetch('Genesis', 1, 2, { translations => ['kjv'] }),
+	);
+	my @continuedJson = map {
+		Chleb::Server::Moose::__verseToJsonApi($_, { translations => ['kjv'] })
+	} @continuedVerses;
+	push(@{ $continuedJson[0]->{data} }, $continuedJson[1]->{data}->[0]);
+	$continuedJson[0]->{links}->{yesterday} = '/2/votd?form=1&when=2024-10-29T00:00:00+0000';
+	$continuedJson[0]->{links}->{tomorrow} = '/2/votd?form=1&when=2024-10-31T00:00:00+0000';
+	my $continuedHtml = $self->sut->__votdFormToHtml(
+		\@continuedVerses,
+		[$continuedJson[0]],
+		{ form => 1, when => $when },
+	);
+
+	like(
+		$continuedHtml,
+		qr{<sup class="versenum"><a href="/1/lookup/gen/1/2\?translations=kjv">2 </a></sup>},
+		'continuation verse number links through to lookup',
+	);
+	unlike(
+		$continuedHtml,
+		qr{<a href="/1/lookup/gen/1/1[^"]*">In the beginning},
+		'card verse text does not link through to lookup',
+	);
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlNavigationDateLinksOnlyForVotd {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'psa',
+		chapter => 122,
+		verse => 8,
+	});
+
+	unlike($html, qr{>yesterday</a>}, 'lookup HTML omits the yesterday VoTD link');
+	unlike($html, qr{>tomorrow</a>}, 'lookup HTML omits the tomorrow VoTD link');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlNavigationPersistsExpandedState {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+	});
+
+	like($html, qr{var moreNavigationCookieName = 'moreNavigation';}, 'HTML uses a navigation-state cookie');
+	like($html, qr{moreNavigation\.open = readCookie\(moreNavigationCookieName\) === 'true';}, 'HTML restores the navigation state from the cookie');
+	like($html, qr{writeCookie\(moreNavigationCookieName, moreNavigation\.open \? 'true' : 'false'\);}, 'HTML saves the navigation state to the cookie');
+	like($html, qr{summary\.textContent = moreNavigation\.open \? 'Less navigation' : 'More navigation';}, 'HTML updates the navigation label when toggled');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlSortsTranslations {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => [ $self->coreTranslations() ],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'VOTD HTML sorts translations lexically');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlPreservesExplicitTranslationOrder {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $when = '2024-10-30T21:36:26+0000';
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__votd({
+		accept => $mediaType,
+		version => 2,
+		when => $when,
+		translations => ['kjv', 'asv'],
+	});
+	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
+
+	is_deeply(\@translations, [ 'kjv (1611)', 'asv (1901)' ], 'VOTD HTML preserves explicit translation order');
 
 	return EXIT_SUCCESS;
 }
@@ -904,9 +1079,10 @@ sub testHtmlNavigationKeepsAllTranslations {
 sub testRedirectV2 {
 	my ($self) = @_;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->__votd({ redirect => 1, version => 2 });
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	if (my $evalError = $EVAL_ERROR) {
 		cmp_deeply($evalError, all(
@@ -916,30 +1092,6 @@ sub testRedirectV2 {
 				statusCode  => 400,
 			),
 		), 'correct error');
-	} else {
-		fail('No exception raised, as was expected');
-	}
-
-	return EXIT_SUCCESS;
-}
-
-sub testRedirectV1 {
-	my ($self) = @_;
-
-	eval {
-		my $when = '2021-10-30T21:36:26+0000';
-		$self->sut->__votd({ redirect => 1, version => 1, when => $when });
-	};
-
-	if (my $evalError = $EVAL_ERROR) {
-		cmp_deeply($evalError, all(
-			isa('Chleb::Exception'),
-			methods(
-				description => undef,
-				location    => '/1/lookup/num/16/8',
-				statusCode  => 307,
-			),
-		), 'correct redirect');
 	} else {
 		fail('No exception raised, as was expected');
 	}

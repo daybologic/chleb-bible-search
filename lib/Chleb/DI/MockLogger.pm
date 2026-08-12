@@ -54,13 +54,28 @@ sub isLogged {
 
 	my $result = 0;
 	foreach my $msg (@{ $self->__messages }) {
-		if ($msg =~ m/$regEx/) {
+		if ($msg =~ m/$regEx/x) {
 			$result++;
 			last;
 		}
 	}
 
 	ok($result, "LOGGED: $regEx");
+	return $result;
+}
+
+sub isNotLogged {
+	my ($self, $regEx) = @_;
+
+	my $result = 1;
+	foreach my $msg (@{ $self->__messages }) {
+		if ($msg =~ m/$regEx/x) {
+			$result = 0;
+			last;
+		}
+	}
+
+	ok($result, "NOT LOGGED: $regEx");
 	return $result;
 }
 

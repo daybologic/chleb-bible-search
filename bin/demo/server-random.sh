@@ -48,7 +48,7 @@ H="$CHLEB_HOSTNAME:$CHLEB_PORT"
 
 if [ -x /usr/bin/curl ]; then
 	if [ -x /usr/bin/jq ] || [ -x /usr/local/bin/jq ]; then
-		json=$(curl -s --header 'Accept: application/json' "${CHLEB_SCHEME}://${H}/1/random?testament=new")
+		json=$(curl -s --header 'Accept: application/json' "${CHLEB_SCHEME}://${H}/2/random?testament=new")
 		i=0
 		bookId=''
 		bookName=''
@@ -85,6 +85,6 @@ if [ -x /usr/bin/curl ]; then
 			((++i))
 		done
 	else
-		curl --header 'Accept: text/html' -s "${CHLEB_SCHEME}://$H/1/random?testament=new"
+		curl --header 'Accept: text/html' -s "${CHLEB_SCHEME}://$H/2/random?testament=new"
 	fi
 fi

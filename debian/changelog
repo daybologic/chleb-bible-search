@@ -1,3 +1,62 @@
+chleb-bible-search (3.0.1) stable; urgency=medium
+
+  * ✨ support patch releases without merging master (handle patch
+    release workflow)
+  * 🐛 defer cache writes during full-Bible traversals to avoid excessive
+    rewrites in tests
+  * 🔧 restore stable Verse of the Day (VoTD) across translation
+    selections (fix regression since v3.0.0)
+  * 🔀 use signed ordinals for VoTD to map across canons with
+    incompatible verse counts (Bible/Quran)
+  * ↩️ preserve query/translation context when traversing previous
+    verses (fix single-translation context loss)
+  * 🧹 Perl::Critic linting applied to core .PL scripts
+  * 🏷️ add missing HTML page titles (fix bookmarking/usability)
+  * 🔒 redact secret keys from config traces and add deep redacting
+    Dumper to avoid leaking secrets
+  * 🧾 handle malformed lookup ordinals cleanly (robust lookup handling)
+  * 🔁 fix lookup fallback for incompatible user preferences
+  * ⚠️ reduce/configure warnings about config defaults and warn about
+    defaults only once
+  * 🔍 avoid logging full session tokens and ignore missing user-agent
+    changes in logging
+  * ➕ add home links and titles to generated legal pages
+  * 🧪 add and update tests: config redaction, preferred translations,
+    traversal, VoTD, and config_get behaviors
+  * 🛠️ various server and utility improvements and refactors (Dancer2
+    server, utils, DI/mock logger)
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Wed, 05 Aug 2026 20:30:20 +0100
+
+chleb-bible-search (3.0.0) stable; urgency=medium
+
+  * ✨ expose version build metadata by @daybologic in #209
+  * ⚡️ Redis::Fast by @daybologic in #170
+  * ✅ fix random intermittent test failure by @daybologic in #212
+  * ⚡️ share dampening state with memcached by @daybologic in #214
+  * 🧑‍💻 mocked time feature by @daybologic in #213
+  * 🔒️ dampen while using session by @daybologic in #210
+  * 🏗️ SQLite by @daybologic in #215
+  * 🏗️ SQLite - use file-based cache by @daybologic in #216
+  * 🔧 split YAML config by @daybologic in #217
+  * 🐛 prefer source data over installed data by @daybologic in #218
+  * 🐛 inconsistent card order by @daybologic in #222
+  * 🚨 increase perlcritic pedantry by @daybologic in #223
+  * 💄 extended nav persists by @daybologic in #224
+  * 🌐 Pickthall translation (Qur'an) by @daybologic in #225
+  * 🚩 mark all unit tests executable by @daybologic in #230
+  * 📝 fix PoD sections in Backend by @daybologic in #239
+  * 🔨 pass filenames to pre-commit hooks by @daybologic in #233
+  * 🔒 Logged JWT hashes were identical by @daybologic in #232
+  * 🔨 calculate server child count by @daybologic in #246
+  * 🩹 keep SQLite temp files out of /tmp by @daybologic in #248
+  * 💥 remove superseded v1 verse routes by @daybologic in #240
+  * ✨ VoTD yesterday/tomorrow links by @daybologic in #243
+  * 🔇 log fixes (1) by @daybologic in #249
+  * 🔨 release tool-chain by @daybologic in #244
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sun, 26 Jul 2026 14:28:39 +0100
+
 chleb-bible-search (2.5.1) stable; urgency=high
 
   * 🚑️ /var/run/chleb-bible-search was not being re-created on reboot, which prevented the server from starting

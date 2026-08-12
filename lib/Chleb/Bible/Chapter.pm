@@ -33,6 +33,7 @@ use strict;
 use warnings;
 use Moose;
 
+use Carp qw(croak);
 use Chleb::Exception;
 use HTTP::Status qw(:constants);
 
@@ -54,35 +55,35 @@ sub BUILD {
 sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
-	$ordinal = $self->verseCount if ($ordinal == -1);
+	if ($ordinal < 0) {
+		$ordinal = $self->verseCount + $ordinal + 1;
+	}
 
-	my $verseKey = $self->book->__makeVerseKey($self->ordinal, $ordinal);
-	# TODO: You shouldn't access __backend here
-	# but you need some more methods in the library to avoid it
-	# Perhaps have a getVerseByKey in _library?
-	if (my $text = $self->bible->__backend->getVerseDataByKey($verseKey)) {
+	my $verseKey = join(':', $self->bible->translation, $self->book->shortNameRaw, $self->ordinal, $ordinal);
+	if (my $text = $self->bible->getVerseDataByKey($verseKey)) {
 		return Chleb::Bible::Verse->new({
-			book    => $self->book,
-			chapter => $self,
-			ordinal => $ordinal,
-			text    => $text,
+			book           => $self->book,
+			chapter        => $self,
+			ordinal        => $ordinal,
+			text           => $text,
+			__queryContext => $args || {},
 		});
 	}
 
 	return if ($args->{nonFatal});
-	die Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Verse %d not found in %s', $ordinal, $self->toString()));
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf('Verse %d not found in %s', $ordinal, $self->toString())));
 }
 
 sub getVerses {
-	my ($self) = @_;
-	my $verses = $self->bible->__backend->getChapterVerseDataByKey($self->book->shortNameRaw, $self->ordinal);
+	my ($self, $args) = @_;
+	my $verses = $self->bible->getChapterVerseDataByKey($self->book->shortNameRaw, $self->ordinal);
 	return [ map {
-		my $row = $_;
 		Chleb::Bible::Verse->new({
-			book    => $self->book,
-			chapter => $self,
-			ordinal => $row->{verse_ordinal} + 0,
-			text    => $row->{text},
+			book           => $self->book,
+			chapter        => $self,
+			ordinal        => $_->{verse_ordinal} + 0,
+			text           => $_->{text},
+			__queryContext => $args || {},
 		});
 	} @{ $verses // [ ] } ];
 }
@@ -137,10 +138,10 @@ sub TO_JSON {
 
 sub __makeVerseCount {
 	my ($self) = @_;
-	my $bookInfo = $self->bible->__backend->getBookInfoByShortName($self->book->shortNameRaw);
-	die 'FIXME: ' . $self->book->shortNameRaw unless ($bookInfo);
+	my $bookInfo = $self->bible->getBookInfoByShortName($self->book->shortNameRaw);
+	croak('FIXME: ' . $self->book->shortNameRaw) unless ($bookInfo);
 	my $count = $bookInfo->{v}->{ $self->ordinal };
-	die("FIXME: ${count}, " . $self->ordinal) unless ($count);
+	croak("FIXME: ${count}, " . $self->ordinal) unless ($count);
 	return $count;
 }
 

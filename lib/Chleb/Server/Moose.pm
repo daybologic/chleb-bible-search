@@ -32,6 +32,7 @@
 package Chleb::Server::Moose;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 use utf8;
 binmode STDOUT, ":encoding(UTF-8)";
@@ -65,6 +66,7 @@ use Log::Log4perl::MDC;
 use List::Util qw(shuffle);
 use Readonly;
 use Sys::Hostname;
+use Text::LevenshteinXS qw(distance);
 use Time::Duration;
 use Time::HiRes ();
 use URI::Escape;
@@ -73,6 +75,8 @@ use UUID::Tiny ':std';
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 Readonly our $SEARCH_RESULTS_MAX_PAGE_SIZE => 2_000;
+Readonly my $SEARCH_SUGGESTIONS_MAX => 5;
+Readonly my $SEARCH_SUGGESTION_MAX_DISTANCE => 3;
 
 Readonly my $FUNCTION_RANDOM => 1;
 Readonly my $FUNCTION_VOTD => 2;
@@ -152,11 +156,12 @@ sub warmup {
 	# cache-miss round-trip per verse.  __warmBackendCaches() also primes the
 	# Storable-backed shared cache as a side-effect, so warm data survives
 	# restarts and late-spawned workers.
-	my @bibles = $self->__library->__getBible({ translations => ['all'] });
+	my @bibles = $self->__library->getBibles({ translations => ['all'] });
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s) in master process', scalar(@bibles)));
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->__warmBackendCaches();
-	};
+		1;
+	} or $evalOk1 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->dic->logger->warn("Backend cache warmup failed: $evalError");
 	}
@@ -208,10 +213,55 @@ sub __library {
 	return $self->{__library};
 }
 
+=item C<__warmBackendVerse($args)>
+
+Prime the backend caches for one verse and update warmup progress.  The
+C<$args> hash reference contains C<bible>, C<book>, C<chapterOrdinal>,
+C<verse>, C<verseIndex>, C<verseCount>, C<processedVerses>, C<totalVerses>,
+and C<lastPercent>.
+
+=cut
+
+sub __warmBackendVerse {
+	my ($self, $args) = @_;
+	my $bible = $args->{bible};
+	my $book = $args->{book};
+	my $chapterOrdinal = $args->{chapterOrdinal};
+	my $verse = $args->{verse};
+	my $verseOrdinal = $verse->{verse_ordinal} + 0;
+	my $verseKey = join(':', $bible->translation, $book->shortNameRaw, $chapterOrdinal, $verseOrdinal);
+	my $bookVerseKey = join(':', $bible->translation, $book->shortNameRaw, $verse->{book_ordinal} + 0);
+
+	$bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey);
+	$bible->__backend->getVerseDataByKey($verseKey);
+	$bible->__backend->getOrdinalByVerseKey($verseKey);
+	${ $args->{processedVerses} }++;
+	return if (
+		$args->{verseIndex} != 1
+		&& $args->{verseIndex} != $args->{verseCount}
+		&& ($args->{verseIndex} % 1000) != 0
+	);
+
+	my $overallPercent = ($args->{totalVerses} > 0)
+		? int((100 * ${ $args->{processedVerses} }) / $args->{totalVerses})
+		: 100;
+	my $progressPercent = int($overallPercent / 10) * 10;
+	return if ($progressPercent == ${ $args->{lastPercent} });
+
+	${ $args->{lastPercent} } = $progressPercent;
+	$self->dic->logger->trace(sprintf(
+		'Backend cache warmup %d%% complete (translation %s)',
+		$progressPercent,
+		$bible->translation,
+	));
+
+	return;
+}
+
 sub __warmBackendCaches {
 	my ($self, $warmBible) = @_;
 	my $startTiming = Time::HiRes::time();
-	my @bibles = defined($warmBible) ? ($warmBible) : shuffle($self->__library->__getBible({ translations => ['all'] }));
+	my @bibles = defined($warmBible) ? ($warmBible) : shuffle($self->__library->getBibles({ translations => ['all'] }));
 	my $totalVerses = 0;
 
 	foreach my $bible (@bibles) {
@@ -244,7 +294,7 @@ sub __warmBackendCaches {
 			'Backend cache warmup translation %s priming sentiment cache',
 			$bible->translation,
 		));
-		$bible->__backend->getSentimentByOrdinal(1);
+		$bible->__backend->primeSentimentCache();
 		my @books = shuffle(@{ $bible->books() });
 		foreach my $book (@books) {
 			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->shortNameRaw);
@@ -260,28 +310,17 @@ sub __warmBackendCaches {
 				my $verseIndex = 0;
 				foreach my $verse (@verses) {
 					$verseIndex++;
-					my $verseOrdinal = $verse->{verse_ordinal} + 0;
-					my $verseKey = join(':', $bible->translation, $book->shortNameRaw, $chapterOrdinal, $verseOrdinal);
-					my $bookVerseKey = join(':', $bible->translation, $book->shortNameRaw, $verse->{book_ordinal} + 0);
-					$bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey);
-					$bible->__backend->getVerseDataByKey($verseKey);
-					$bible->__backend->getOrdinalByVerseKey($verseKey);
-					$processedVerses++;
-					if ($verseIndex == 1 || $verseIndex == $verseCount || ($verseIndex % 1000) == 0) {
-						my $overallPercent = ($totalVerses > 0) ? int((100 * $processedVerses) / $totalVerses) : 100;
-						my $progressPercent = int($overallPercent / 10) * 10;
-						if ($progressPercent != $lastPercent) {
-							$lastPercent = $progressPercent;
-							$self->dic->logger->trace(sprintf(
-								'Backend cache warmup %d%% complete (translation %s, book %s, chapter %d, verse %d)',
-								$progressPercent,
-								$bible->translation,
-								$book->shortNameRaw,
-								$chapterOrdinal,
-								$verseOrdinal,
-							));
-						}
-					}
+					$self->__warmBackendVerse({
+						bible           => $bible,
+						book            => $book,
+						chapterOrdinal  => $chapterOrdinal,
+						verse           => $verse,
+						verseIndex      => $verseIndex,
+						verseCount      => $verseCount,
+						processedVerses => \$processedVerses,
+						totalVerses     => $totalVerses,
+						lastPercent     => \$lastPercent,
+					});
 				}
 			}
 		}
@@ -362,9 +401,11 @@ sub __isJsonContentType {
 	);
 }
 
-sub __lookup {
+# Called by the Dancer2 routing layer.
+sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
+	my $startTiming = Time::HiRes::time();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
 	my @verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
@@ -381,41 +422,34 @@ sub __lookup {
 		push(@{ $json[0]->{data} }, $json[$jsonI]->{data}->[0]);
 	}
 
+	my %pickVerseByType = (
+		next  => sub { return $verse[0]->getNext() },
+		prev  => sub { return $verse[0]->getPrev() },
+		first => sub { return $verse[0]->chapter->getVerseByOrdinal(1) },
+		last  => sub {
+			my $chapterVerseCount = $verse[0]->chapter->verseCount;
+			return $verse[0]->chapter->getVerseByOrdinal($chapterVerseCount);
+		},
+	);
+
 	foreach my $type (qw(next prev first last)) {
 		next unless ($json[0]->{data}->[0]->{links}->{$type});
 
-		my $pickVerse;
-		if ($type eq 'prev') {
-			if (my $prevVerse = $verse[0]->getPrev()) {
-				$pickVerse = $prevVerse;
-			} else {
-				next;
-			}
-		} elsif ($type eq 'next') {
-			if (my $nextVerse = $verse[0]->getNext()) {
-				$pickVerse = $nextVerse;
-			} else {
-				next;
-			}
-		} elsif ($type eq 'first') {
-			$pickVerse = $verse[0]->chapter->getVerseByOrdinal(1);
-		} elsif ($type eq 'last') {
-			my $chapterVerseCount = $verse[0]->chapter->verseCount;
-			$pickVerse = $verse[0]->chapter->getVerseByOrdinal($chapterVerseCount);
-		} else {
-			$pickVerse = $verse[0]->id;
-		}
+		my $pickVerse = $pickVerseByType{$type}->();
+		next unless ($pickVerse);
 
 		$json[0]->{links}->{$type} = '/' . join('/', 1, 'lookup', $pickVerse->getPath())
 		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
+	__rewriteResponseTiming(\@json, $startTiming);
+
 	if (__isJsonContentType($contentType)) {
 		if ($params->{form}) {
-			die Chleb::Exception->raise(
+			croak(Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
 				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-			);
+			));
 		}
 
 		return \@json;
@@ -423,10 +457,31 @@ sub __lookup {
 		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
+}
+
+=item C<__rewriteResponseTiming($json, $startTiming)>
+
+Replace response statistics with the elapsed server-side time after all lazy
+navigation links and JSON:API structures have been generated.
+
+=cut
+
+sub __rewriteResponseTiming {
+	my ($json, $startTiming) = @_;
+	my $msec = int(1000 * (Time::HiRes::time() - $startTiming));
+
+	foreach my $response (@{ $json }) {
+		foreach my $included (@{ $response->{included} }) {
+			next unless (($included->{type} // '') eq 'stats');
+			$included->{attributes}->{msec} = $msec;
+		}
+	}
+
+	return;
 }
 
 =item C<__random($params)>
@@ -439,7 +494,8 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 =cut
 
-sub __random {
+# Called by the Dancer2 routing layer.
+sub __random { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
 	my $version = __versionFilter($params->{version}, 1, 2);
@@ -447,7 +503,7 @@ sub __random {
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
-	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'random redirect is only supported on version 1')
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'random redirect is only supported on version 1'))
 	    if ($redirect && $version > 1);
 
 	my $verse = $self->__library->random($params);
@@ -480,14 +536,14 @@ sub __random {
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 			return $self->__verseToHtml($verse, \@json, $FUNCTION_RANDOM);
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+			croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
 		}
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_TEMPORARY_REDIRECT,
 		'/1/lookup/' . join('/', lc($verse->book->shortName), $verse->chapter->ordinal, $verse->ordinal),
-	) if ($redirect);
+	)) if ($redirect);
 
 	my $json = __verseToJsonApi($verse, $params);
 	$json->{links}->{self} =  '/' . join('/', $version, 'random') . Chleb::Utils::queryParamsHelper($params);
@@ -498,19 +554,19 @@ sub __random {
 
 	if (__isJsonContentType($contentType)) {
 		if ($params->{form}) {
-			die Chleb::Exception->raise(
+			croak(Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
 				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-			);
+			));
 		}
 
 		return $json;
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
 
 }
 
@@ -524,7 +580,44 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 =cut
 
-sub __votd {
+=item C<__votdDateLink($version, $params, $when)>
+
+Build a VoTD URL for a normalized date while preserving supported query
+parameters.
+
+=cut
+
+sub __votdDateLink {
+	my ($version, $params, $when) = @_;
+
+	my $queryParams = Chleb::Utils::queryParamsHelper($params);
+	$queryParams .= (length($queryParams) > 0 ? '&' : '?')
+	    . 'when=' . $when->strftime('%FT%T%z');
+
+	return '/' . join('/', $version, 'votd') . $queryParams;
+}
+
+=item C<__addVotdDateLinks($version, $params, $links)>
+
+Add document-level links for the preceding and following VoTD dates.
+
+=cut
+
+sub __addVotdDateLinks {
+	my ($self, $version, $params, $links) = @_;
+
+	my $when = $self->_resolveISO8601($params->{when})
+	    ->set_time_zone('UTC')
+	    ->truncate(to => 'day');
+
+	$links->{yesterday} = __votdDateLink($version, $params, $when->clone->subtract(days => 1));
+	$links->{tomorrow} = __votdDateLink($version, $params, $when->clone->add(days => 1));
+
+	return;
+}
+
+# Called by the Dancer2 routing layer.
+sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
 	my $version = $params->{version} || 1;
@@ -532,7 +625,7 @@ sub __votd {
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
-	die Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1')
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1'))
 	    if ($redirect && $version > 1);
 
 	my $verse = $self->__library->votd($params);
@@ -560,52 +653,54 @@ sub __votd {
 		}
 
 		$json[0]->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
+		__addVotdDateLinks($self, $version, $params, $json[0]->{links});
 
 		if (__isJsonContentType($contentType)) {
 			if ($params->{form}) {
-				die Chleb::Exception->raise(
+				croak(Chleb::Exception->raise(
 					HTTP_BAD_REQUEST,
 					"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-				);
+				));
 			}
 
 			return $json[0];
 		}
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return $self->__verseToHtml($verse, \@json, $FUNCTION_VOTD);
+			return $self->__votdToHtml($verse, \@json, $params);
 		} else {
-			die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+			croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
 		}
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_TEMPORARY_REDIRECT,
 		'/1/lookup/' . join('/', lc($verse->book->shortName), $verse->chapter->ordinal, $verse->ordinal),
-	) if ($redirect);
+	)) if ($redirect);
 
 	my $json = __verseToJsonApi($verse, $params);
 	$json->{links}->{self} =  '/' . join('/', $version, 'votd') . Chleb::Utils::queryParamsHelper($params);
+	__addVotdDateLinks($self, $version, $params, $json->{links});
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return $self->__verseToHtml($verse, [$json], $FUNCTION_VOTD);
+		return $self->__votdToHtml($verse, [$json], $params);
 	}
 
 	if (__isJsonContentType($contentType)) {
 		if ($params->{form}) {
-			die Chleb::Exception->raise(
+			croak(Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
 				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-			);
+			));
 		}
 
 		return $json;
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
 }
 
 =item C<__ping()>
@@ -616,7 +711,8 @@ L<https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search>.
 
 =cut
 
-sub __ping {
+# Called by the Dancer2 routing layer.
+sub __ping { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 	$params ||= {};
 	my %hash = __makeJsonApi();
@@ -642,10 +738,10 @@ sub __ping {
 		return __pingToHtml(\%attributes);
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
 }
 
 sub __pingToHtml {
@@ -673,7 +769,8 @@ disabled by the server administrator, or potentially, for any other reason.
 
 =cut
 
-sub __version {
+# Called by the Dancer2 routing layer.
+sub __version { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 	$params ||= {};
 	my %hash = __makeJsonApi();
@@ -713,10 +810,10 @@ sub __version {
 		return __versionToHtml(\%attributes);
 	}
 
-	die Chleb::Exception->raise(
+	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
-	);
+	));
 }
 
 sub __versionToHtml {
@@ -779,7 +876,8 @@ Returns a C<JSON:API> structure suitable for returning the server uptime.
 
 =cut
 
-sub __uptime {
+# Called by the Dancer2 routing layer.
+sub __uptime { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 	$params ||= {};
 	my %hash = __makeJsonApi();
@@ -807,7 +905,7 @@ sub __uptime {
 		return __uptimeToHtml($uptime, $uptimeText);
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
 }
 
 sub __uptimeToHtml {
@@ -861,7 +959,8 @@ The text the user is searching for (critereon).
 
 =cut
 
-sub __search {
+# Called by the Dancer2 routing layer.
+sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $search) = @_;
 
 	my $limit = __searchLimit($search->{limit});
@@ -873,10 +972,40 @@ sub __search {
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($search->{accept}, $CONTENT_TYPE_DEFAULT);
 
-	my $query = $self->__library->newSearchQuery($search->{term})->setLimit($limit)->setWholeword($wholeword);
-	my $results = $query->run();
-	my $totalCount = $results->count;
-	my @pageVerses = @{ $results->verses };
+	my @translations = @{ $search->{translations} || [] };
+	if (grep { $_ eq 'all' } @translations) {
+		@translations = $self->__library->availableTranslations();
+	}
+	my @queries;
+	if (scalar(@translations) > 0) {
+		foreach my $translation (@translations) {
+			my %queryParams = (
+				text => $search->{term},
+				translations => [$translation],
+			);
+			$queryParams{bookShortName} = $search->{book}
+				if (defined($search->{book}) && length($search->{book}) > 0);
+			push(@queries, $self->__library->newSearchQuery(%queryParams)->setLimit($limit)->setWholeword($wholeword));
+		}
+	} else {
+		my %queryParams = (text => $search->{term});
+		$queryParams{bookShortName} = $search->{book}
+			if (defined($search->{book}) && length($search->{book}) > 0);
+		push(@queries, $self->__library->newSearchQuery(%queryParams));
+		$queries[0]->setLimit($limit)->setWholeword($wholeword);
+	}
+
+	my @allVerses;
+	my $resultsMsec = 0;
+	foreach my $query (@queries) {
+		my $results = $query->run();
+		push(@allVerses, @{ $results->verses });
+		$resultsMsec += $results->msec;
+	}
+	splice(@allVerses, $limit);
+	my $query = $queries[0];
+	my $totalCount = scalar(@allVerses);
+	my @pageVerses = @allVerses;
 	splice(@pageVerses, 0, $offset);
 	splice(@pageVerses, $perPage);
 	my $pageCount = scalar(@pageVerses);
@@ -889,6 +1018,7 @@ sub __search {
 
 		my %attributes = ( %{ $verse->TO_JSON() } );
 		$attributes{title} = sprintf("Result %d/%d from Chleb Bible Search '%s'", $offset + $i + 1, $totalCount, $query->text);
+		$attributes{year} = $verse->book->bible->year();
 
 		push(@{ $hash{included} }, {
 			type => $verse->chapter->type,
@@ -951,7 +1081,7 @@ sub __search {
 			type => 'stats',
 			id => uuid_to_string(create_uuid()),
 			attributes => {
-				msec => int($results->msec),
+				msec => int($resultsMsec),
 			},
 			links => { },
 		},
@@ -962,7 +1092,9 @@ sub __search {
 		limit       => $limit,
 		page        => $page,
 		per_page    => $perPage,
+		book        => $search->{book},
 		term        => $query->text,
+		translations => \@translations,
 		total_pages => $totalPages,
 		wholeword   => $wholeword,
 	);
@@ -971,13 +1103,16 @@ sub __search {
 	foreach my $name (keys(%$paginationLinks)) {
 		$hash{links}->{$name} = $paginationLinks->{$name};
 	}
+	if ($totalCount == 0) {
+		$hash{suggestions} = __searchSuggestions($query->text, \@queries);
+	}
 
 	if (__isJsonContentType($contentType)) {
 		if ($search->{form}) {
-			die Chleb::Exception->raise(
+			croak(Chleb::Exception->raise(
 				HTTP_BAD_REQUEST,
 				"form mode is only supported in $Chleb::Server::MediaType::CONTENT_TYPE_HTML mode",
-			);
+			));
 		}
 
 		return (\%hash, \%hash);
@@ -986,7 +1121,42 @@ sub __search {
 		return ($html, \%hash);
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported");
+	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
+}
+
+=item C<__searchSuggestions($term, $queries)>
+
+Return up to five nearby Bible words for a search that produced no results.
+Candidates are ranked by their smallest Levenshtein distance from any word in
+the requested term and are limited to a small distance so that unrelated words
+are not presented as likely corrections.
+
+=cut
+
+sub __searchSuggestions {
+	my ($term, $queries) = @_;
+	my @requestedWords = @{ Chleb::Utils::extractWords($term) };
+	my %requested = map { lc($_) => 1 } @requestedWords;
+	my %distances;
+	for my $query (@{ $queries }) {
+		for my $candidate (@{ $query->bible->getBibleWords() }) {
+			next if ($requested{$candidate});
+			my $lowestDistance;
+			for my $word (keys(%requested)) {
+				my $candidateDistance = distance($word, $candidate);
+				$lowestDistance = $candidateDistance
+					if (!defined($lowestDistance) || $candidateDistance < $lowestDistance);
+			}
+			next if (!defined($lowestDistance) || $lowestDistance > $SEARCH_SUGGESTION_MAX_DISTANCE);
+			$distances{$candidate} = $lowestDistance
+				if (!exists($distances{$candidate}) || $lowestDistance < $distances{$candidate});
+		}
+	}
+	my @suggestions = sort {
+		$distances{$a} <=> $distances{$b} || $a cmp $b
+	} keys(%distances);
+	splice(@suggestions, $SEARCH_SUGGESTIONS_MAX);
+	return \@suggestions;
 }
 
 =item C<__searchLimit($limit)>
@@ -1002,7 +1172,7 @@ C<1> fall back to the default search result limit.
 sub __searchLimit {
 	my ($limit) = @_;
 
-	return $SEARCH_RESULTS_LIMIT unless (defined($limit) && $limit =~ m/\A[0-9]+\z/);
+	return $SEARCH_RESULTS_LIMIT unless (defined($limit) && $limit =~ m{ \A[0-9]+\z }x);
 	$limit = int($limit);
 	return $SEARCH_RESULTS_LIMIT if ($limit < 1);
 	return $limit;
@@ -1021,7 +1191,7 @@ C<1> resolve to the first page.
 sub __searchPage {
 	my ($page) = @_;
 
-	return 1 unless (defined($page) && $page =~ m/\A-?[0-9]+\z/);
+	return 1 unless (defined($page) && $page =~ m{ \A-?[0-9]+\z }x);
 	$page = int($page);
 	return $page < 1 ? 1 : $page;
 }
@@ -1040,7 +1210,7 @@ fall back to the default search result limit.
 sub __searchPerPage {
 	my ($perPage) = @_;
 
-	return $SEARCH_RESULTS_LIMIT unless (defined($perPage) && $perPage =~ m/\A[0-9]+\z/);
+	return $SEARCH_RESULTS_LIMIT unless (defined($perPage) && $perPage =~ m{ \A[0-9]+\z }x);
 	$perPage = int($perPage);
 	return $SEARCH_RESULTS_LIMIT if ($perPage < 1);
 	return $SEARCH_RESULTS_MAX_PAGE_SIZE if ($perPage > $SEARCH_RESULTS_MAX_PAGE_SIZE);
@@ -1097,6 +1267,10 @@ sub __searchPageLink {
 		'page=' . uri_escape($page),
 		'per_page=' . uri_escape($params->{per_page}),
 	);
+	push(@parts, 'book=' . uri_escape($params->{book})) if (defined($params->{book}) && length($params->{book}) > 0);
+	if (ref($params->{translations}) eq 'ARRAY' && scalar(@{ $params->{translations} }) > 0) {
+		push(@parts, 'translations=' . uri_escape(join(',', @{ $params->{translations} })));
+	}
 	push(@parts, 'form=true') if ($params->{form});
 
 	return '/1/search?' . join('&', @parts);
@@ -1110,7 +1284,8 @@ returns a C<JSON:API> (C<HASH>) or throw a L<Chleb::Exception>.
 
 =cut
 
-sub __info {
+# Called by the Dancer2 routing layer.
+sub __info { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
 	my $startTiming = Time::HiRes::time();
@@ -1123,16 +1298,20 @@ sub __info {
 	my (@bookShortNames, @bookShortNamesRaw, @bookLongNames);
 	my %uniqueBookNames = ( );
 	foreach my $bible (@{ $info->bibles }) { # translations
+		my %bibleAttributes = %{ $bible->TO_JSON() };
+		$bibleAttributes{year} = $bible->year();
 		push(@{ $hash{included} }, {
 			id => $bible->id,
 			type => $bible->type,
-			attributes => $bible->TO_JSON(),
+			attributes => \%bibleAttributes,
 		});
 		foreach my $book (@{ $bible->books }) {
-			next if (++$uniqueBookNames{ $book->shortName } > 1); # ensure book names are listed only once
-			push(@bookShortNames, $book->shortName);
-			push(@bookShortNamesRaw, $book->shortNameRaw);
-			push(@bookLongNames, $book->longName);
+			my $isNewBookName = (++$uniqueBookNames{ $book->shortName } == 1);
+			if ($isNewBookName) {
+				push(@bookShortNames, $book->shortName);
+				push(@bookShortNamesRaw, $book->shortNameRaw);
+				push(@bookLongNames, $book->longName);
+			}
 
 			push(@{ $hash{included} }, {
 				id => $book->id,
@@ -1196,7 +1375,7 @@ sub __info {
 		return __infoToHtml(\%hash);
 	}
 
-	die Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here');
+	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here'));
 }
 
 =item C<__getUptime()>
@@ -1283,6 +1462,8 @@ sub __verseToJsonApi {
 	%paramsLocal = %$params if ($params);
 	$paramsLocal{translations} = [ $verse->book->bible->translation ] if ($paramsLocal{translations});
 	my $queryParams = Chleb::Utils::queryParamsHelper(\%paramsLocal);
+	my %verseAttributes = %{ $verse->TO_JSON() };
+	$verseAttributes{year} = $verse->book->bible->year();
 
 	my %links = (
 		# TODO: But should it be 'votd' unless redirect was requested?  Which isn't supported yet
@@ -1314,7 +1495,7 @@ sub __verseToJsonApi {
 	push(@{ $hash{data} }, {
 		type => $verse->type,
 		id => $verse->id,
-		attributes => $verse->TO_JSON(),
+		attributes => \%verseAttributes,
 		links => \%links,
 		relationships => {
 			chapter => {
@@ -1365,28 +1546,137 @@ sub __verseNavigationLink {
 	return '' unless ($link);
 
 	my $selfLink = $json->{links}->{self} || '';
-	if ($selfLink =~ m/(\?.*)\z/) {
+	if ($selfLink =~ m{ (\?.*)\z }x) {
 		my $query = $1;
-		$link =~ s/\?.*\z//;
+		$link =~ s{\?.*\z}{}x;
 		$link .= $query;
 	}
 
 	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
 }
 
+=item C<__verseNavigationQuery($json)>
+
+Return the query string from the JSON response's self link for use by
+navigation links which are otherwise specific to HTML presentation.
+
+=cut
+
+sub __verseNavigationQuery {
+	my ($json) = @_;
+
+	my $selfLink = $json->{links}->{self} || '';
+	if ($selfLink =~ m{ (\?.*)\z }x) {
+		return $1;
+	}
+
+	return '';
+}
+
+=item C<__votdNavigationLink($json, $type, $label)>
+
+Build an HTML link from a document-level VoTD link.  If the requested link
+does not exist, an empty string is returned.
+
+=cut
+
+sub __votdNavigationLink {
+	my ($json, $type, $label) = @_;
+
+	my $link = $json->{links}->{$type};
+	return '' unless ($link);
+
+	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
+}
+
+=item C<__votdNavigationLinks($json, $function)>
+
+Return an C<ARRAY> reference containing the yesterday and tomorrow HTML links
+only for VoTD rendering.
+
+=cut
+
+sub __votdNavigationLinks {
+	my ($json, $function) = @_;
+
+	return [ '', '' ] unless ($function == $FUNCTION_VOTD);
+
+	return [
+		__votdNavigationLink($json, 'yesterday', 'yesterday'),
+		__votdNavigationLink($json, 'tomorrow', 'tomorrow'),
+	];
+}
+
+=item C<__votdFormToHtml($verse, $json, $params)>
+
+Render a VoTD result inside the date-picker page.  The result uses the shared
+translation cards, with continuation verse numbers linking to lookup, while
+its preceding and following day controls preserve form mode.
+
+=cut
+
+sub __votdFormToHtml {
+	my ($self, $verse, $json, $params) = @_;
+
+	my $when = $self->_resolveISO8601($params->{when})
+	    ->set_time_zone('UTC')
+	    ->truncate(to => 'day');
+	my $date = $when->strftime('%F');
+	my $pageTitle = "Chleb Bible Search - Verse of The Day - $date";
+	my $verseHtmlData = __verseHtmlData($verse, $json);
+	my $cards = __verseHtmlCards($verseHtmlData, $pageTitle);
+	my ($yesterdayLink, $tomorrowLink) = @{ __votdNavigationLinks($json->[0], $FUNCTION_VOTD) };
+
+	my $output = Chleb::Server::Dancer2::fetchStaticPage('generic_head', { TITLE => $pageTitle });
+	$output .= Chleb::Server::Dancer2::fetchStaticPage('votd', {
+		VOTD_CARDS => $cards,
+		VOTD_DATE => $date,
+		VOTD_TOMORROW => $tomorrowLink,
+		VOTD_WHEN => $when->strftime('%FT%T%z'),
+		VOTD_YESTERDAY => $yesterdayLink,
+	});
+	$output .= __timingHtml($json->[0]);
+	$output .= Chleb::Server::Dancer2::fetchStaticPage('generic_tail');
+
+	return $output;
+}
+
+=item C<__votdToHtml($verse, $json, $params)>
+
+Select the standalone or form-page VoTD HTML renderer.
+
+=cut
+
+sub __votdToHtml {
+	my ($self, $verse, $json, $params) = @_;
+
+	return $self->__votdFormToHtml($verse, $json, $params) if ($params->{form});
+	return $self->__verseToHtml($verse, $json, $FUNCTION_VOTD);
+}
+
+=item C<__verseToHtml($verse, $json, $function)>
+
+Render a verse response as the HTML verse page, including translation cards and
+book, chapter, and verse navigation.
+
+=cut
+
 sub __verseToHtml {
 	my ($self, $verse, $json, $function) = @_;
 
-	my $includedCount = scalar(@{ $json->[0]->{included} });
-	my %rawBookNameMap = ( );
-	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
-		my $includedItem = $json->[0]->{included}->[$includedIndex];
-		my $type = $includedItem->{type};
-		next if ($type ne 'book');
-
-		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
-		    = $includedItem->{attributes}->{short_name_raw};
+	my $verseHtmlData = __verseHtmlData($verse, $json);
+	my $reference = $verseHtmlData->{reference};
+	my $title = 'FIXME';
+	if ($function == $FUNCTION_RANDOM) {
+		$title = 'Random Verse';
+	} elsif ($function == $FUNCTION_VOTD) {
+		$title = 'Verse of The Day';
+	} else {
+		$title = 'Lookup';
 	}
+	my $pageTitle = "Chleb Bible Search - ${title}";
+	my $output = __verseHtmlCards($verseHtmlData, $pageTitle);
+	$output .= __timingHtml($json->[0]);
 
 	my $random;
 	{
@@ -1399,116 +1689,29 @@ sub __verseToHtml {
 		}
 	}
 
-	my $verseCount = scalar(@{ $json->[0]->{data} });
-	my $reference;
-	my @translationOrder;
-	my %translationSections;
-	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
-		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
-		my $bookName = $attributes->{book};
-		my $bookNameRaw = $rawBookNameMap{$bookName};
-		my $chapter = $attributes->{chapter};
-		my $verseOrdinal = $attributes->{ordinal};
-		my $translation = $attributes->{translation};
-
-		if ($verseIndex == 0) {
-			$reference = sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal);
-		}
-
-		if (!exists($translationSections{$translation})) {
-			push(@translationOrder, $translation);
-			$translationSections{$translation} = {
-				emotion => $attributes->{emotion},
-				html => '',
-				last_continues => 0,
-				tones => [],
-				verse_count => 0,
-			};
-		}
-
-		my $section = $translationSections{$translation};
-		if ($section->{verse_count} > 0) {
-			$section->{html} .= '<br /><br />' unless ($section->{last_continues});
-			$section->{html} .= "\r\n";
-			$section->{html} .= '<sup class="versenum">';
-			$section->{html} .= sprintf('<a href="/1/lookup/%s/%d/%d">', $bookName, $chapter, $verseOrdinal);
-			$section->{html} .= "${verseOrdinal} </a></sup>";
-		}
-
-		$section->{html} .= $attributes->{text};
-
-		my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
-		$section->{last_continues} = $thisVerse->continues ? 1 : 0;
-		foreach my $tone (@{ $attributes->{tones} }) {
-			push(@{ $section->{tones} }, $tone);
-		}
-		$section->{verse_count}++;
-	}
-
-	my $title = 'FIXME';
-	if ($function == $FUNCTION_RANDOM) {
-		$title = 'Random Verse';
-	} elsif ($function == $FUNCTION_VOTD) {
-		$title = 'Verse of The Day';
-	} else {
-		$title = 'Lookup';
-	}
-	my $pageTitle = "Chleb Bible Search - ${title}";
-
-	my $output = '';
-	foreach my $translation (@translationOrder) {
-		my $section = $translationSections{$translation};
-		my $sentiments = '';
-		my %toneSeen;
-
-		foreach my $sentiment ($section->{emotion}, @{ $section->{tones} }) {
-			next if ($toneSeen{$sentiment});
-			my $colorIndex = Chleb::Utils::colorIndexFromWord($sentiment);
-			$sentiments .= "<span class=\"tag tag-color-${colorIndex}\">$sentiment</span> ";
-			$toneSeen{$sentiment}++;
-		}
-
-		$output .= "\t\t\t\t\t\t<div class=\"card\">\n";
-		$output .= "\t\t\t\t\t\t\t<div class=\"subtitle\">$pageTitle</div>\n";
-		$output .= "\n";
-		$output .= "\t\t\t\t\t\t\t<h1>$reference</h1>\n";
-		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translation</div>\n";
-		$output .= "\n";
-		$output .= "\t\t\t\t\t\t\t<div>\n";
-		$output .= "\t\t\t\t\t\t\t\t<blockquote>\n";
-		$output .= "\t\t\t\t\t\t\t\t\t" . $section->{html} . "\n";
-		$output .= "\t\t\t\t\t\t\t\t</blockquote>\n";
-		$output .= "\t\t\t\t\t\t\t</div>\n";
-		$output .= "\n";
-		$output .= "\t\t\t\t\t\t\t<div>\n";
-		$output .= "\t\t\t\t\t\t\t\t<blockquote>\n";
-		$output .= "\t\t\t\t\t\t\t\t\t$sentiments\n";
-		$output .= "\t\t\t\t\t\t\t\t</blockquote>\n";
-		$output .= "\t\t\t\t\t\t\t</div>\n";
-		$output .= "\t\t\t\t\t\t</div>\n";
-	}
-
 	my $firstVerseObject = $verse;
 	$firstVerseObject = $firstVerseObject->[0] if (ref($firstVerseObject) eq 'ARRAY');
+	my $navigationQuery = __verseNavigationQuery($json->[0]);
+	my ($yesterdayLink, $tomorrowLink) = @{__votdNavigationLinks($json->[0], $function)};
 
 	my $prevBookLink = '';
 	if (my $prevBook = $firstVerseObject->book->getPrev()) {
-		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1">prev book</a>';
+		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1' . $navigationQuery . '">prev book</a>';
 	}
 
 	my $prevChapterLink = '';
 	if (my $prevChapter = $firstVerseObject->chapter->getPrev()) {
-		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . '">prev chapter</a>';
+		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . $navigationQuery . '">prev chapter</a>';
 	}
 
 	my $nextBookLink = '';
 	if (my $nextBook = $firstVerseObject->book->getNext()) {
-		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1">next book</a>';
+		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1' . $navigationQuery . '">next book</a>';
 	}
 
 	my $nextChapterLink = '';
 	if (my $nextChapter = $firstVerseObject->chapter->getNext()) {
-		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . '">next chapter</a>';
+		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . $navigationQuery . '">next chapter</a>';
 	}
 
 	my $lastChapterLink = '';
@@ -1519,44 +1722,49 @@ sub __verseToHtml {
 			push(@chapters, $chapter);
 		} else {
 			$self->dic->logger->error("Can't get chapter $chapterCount from book " . $firstVerseObject->book->shortName
-			    . 'even though it logically exists, so LAST_CHAPTER_URL will be broken');
+				. 'even though it logically exists, so LAST_CHAPTER_URL will be broken');
 		}
 	}
 
 	if ($firstVerseObject->chapter->ordinal < $chapterCount) {
 		my $lastChapter = $chapters[-1];
-		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . '">last chapter</a>';
+		$lastChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $lastChapter->getPath() . $navigationQuery . '">last chapter</a>';
 	}
 
-	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1">%s</a>';
+	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1' . $navigationQuery . '">%s</a>';
 
 	my $browsingLeft;
 	{
 		my $chapterLinks = '';
+		my $bible = $firstVerseObject->book->bible;
+		my $chapterName = $bible->getProperty('chapter_name');
+		my $chapterNamePlural = $bible->getProperty('chapter_name_plural') // 'Chapters';
 		foreach my $chapter (@chapters) {
 			my $classCurrent = '';
 			if ($chapter->ordinal == $firstVerseObject->chapter->ordinal) {
 				$classCurrent = 'class="current" ';
 			}
-			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s">%s %d</a><br />', $classCurrent, $chapter->getPath(),
-			    $chapter->book->shortNameRaw, $chapter->ordinal);
+			$chapterLinks .= sprintf('<a %shref="/1/lookup/%s%s">%s %d</a><br />', $classCurrent, $chapter->getPath(), $navigationQuery,
+				(defined($chapterName) && length($chapterName) > 0 ? $chapterName : $chapter->book->shortNameRaw),
+				$chapter->ordinal);
 		}
 		$browsingLeft = Chleb::Server::Dancer2::fetchStaticPage('browsing_left', {
-			CHAPTER_LINKS => $chapterLinks,
+			CHAPTER_LINKS     => $chapterLinks,
+			CHAPTER_NAV_TITLE => $chapterNamePlural,
 		});
 	}
 
 	my $thisChapter = $json->[0]->{data}->[0]->{links}->{first};
 	$self->dic->logger->trace("Link kludge in effect (pre): ${thisChapter}");
 	my $thisChapter_KLUDGE = $thisChapter;
-	$thisChapter_KLUDGE =~ s@/1(?=\?)@@; # TODO: This is a kludge, the JSON should provide it somehow.
+	$thisChapter_KLUDGE =~ s@/1(?=\?)@@x; # TODO: This is a kludge, the JSON should provide it somehow.
 	if ($thisChapter_KLUDGE eq $thisChapter) {
-		$thisChapter_KLUDGE =~ s@/1$@@; # TODO: This is a kludge, the JSON should provide it somehow.
+		$thisChapter_KLUDGE =~ s@/1$@@x; # TODO: This is a kludge, the JSON should provide it somehow.
 	}
 	$self->dic->logger->trace("Link kludge in effect (post): ${thisChapter_KLUDGE}");
 	my $settingsLink = '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-label="Settings">'
-	    . '<span class="vn-settings-icon" aria-hidden="true">⚙</span>'
-	    . '<span class="vn-settings-text"> Settings</span></a>';
+		. '<span class="vn-settings-icon" aria-hidden="true">⚙</span>'
+		. '<span class="vn-settings-text"> Settings</span></a>';
 
 	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
 		PREV_BOOK_URL => $prevBookLink,
@@ -1571,8 +1779,10 @@ sub __verseToHtml {
 		FIRST_VERSE_URL => __verseNavigationLink($json->[0], 'first', 'first verse'),
 		FIRST_CHAPTER_URL => sprintf($bookLinkFormat, 'first chapter'),
 		LAST_CHAPTER_URL => $lastChapterLink,
+		YESTERDAY_URL => $yesterdayLink,
 		PREV_VERSE_URL => __verseNavigationLink($json->[0], 'prev', 'prev verse'),
 		NEXT_VERSE_URL => __verseNavigationLink($json->[0], 'next', 'next verse'),
+		TOMORROW_URL => $tomorrowLink,
 		LAST_VERSE_URL => __verseNavigationLink($json->[0], 'last', 'last verse'),
 		RANDOM_URL => $random,
 		BOOKS => $self->__makeBooks($firstVerseObject->book),
@@ -1588,20 +1798,157 @@ sub __verseToHtml {
 	});
 }
 
+=item C<__verseHtmlData($verse, $json, [$options])>
+
+Collect the verse reference and translation sections used by the HTML renderer.
+The order in which translations first appear is retained for card rendering.
+Set C<linkVerses> false in C<$options> to render continuation verse numbers
+without lookup links.
+
+=cut
+
+sub __verseHtmlData {
+	my ($verse, $json, $options) = @_;
+	$options ||= { };
+
+	my $includedCount = scalar(@{ $json->[0]->{included} });
+	my %rawBookNameMap = ( );
+	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
+		my $includedItem = $json->[0]->{included}->[$includedIndex];
+		my $type = $includedItem->{type};
+		next if ($type ne 'book');
+
+		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
+		    = $includedItem->{attributes}->{short_name_raw};
+	}
+
+	my $verseCount = scalar(@{ $json->[0]->{data} });
+	my $reference;
+	my @translationOrder;
+	my %translationSections;
+	for (my $verseIndex = 0; $verseIndex < $verseCount; $verseIndex++) {
+		my $attributes = $json->[0]->{data}->[$verseIndex]->{attributes};
+		my $bookName = $attributes->{book};
+		my $thisVerse = (ref($verse) eq 'ARRAY') ? $verse->[$verseIndex] : $verse;
+		my $bookNameRaw = $rawBookNameMap{$bookName} // $thisVerse->book->shortNameRaw;
+		my $chapter = $attributes->{chapter};
+		my $verseOrdinal = $attributes->{ordinal};
+		my $translation = $attributes->{translation};
+
+		if ($verseIndex == 0) {
+			$reference = sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal);
+		}
+
+		if (!exists($translationSections{$translation})) {
+			push(@translationOrder, $translation);
+			$translationSections{$translation} = {
+				book => lc($bookName),
+				book_name_raw => $bookNameRaw,
+				chapter => $chapter,
+				emotion => $attributes->{emotion},
+				html => '',
+				last_continues => 0,
+				ordinal => $verseOrdinal,
+				reference => sprintf('%s %d:%d', $bookNameRaw, $chapter, $verseOrdinal),
+				tones => [],
+				year => $thisVerse->book->bible->year(),
+				verse_count => 0,
+			};
+		}
+
+		my $section = $translationSections{$translation};
+		if ($section->{verse_count} > 0) {
+			$section->{html} .= '<br /><br />' unless ($section->{last_continues});
+			$section->{html} .= "\r\n";
+			$section->{html} .= '<sup class="versenum">';
+			my $verseLink = $json->[0]->{data}->[$verseIndex]->{links}->{self};
+			$section->{html} .= sprintf('<a href="%s">', $verseLink) if (!exists($options->{linkVerses}) || $options->{linkVerses});
+			$section->{html} .= "${verseOrdinal} ";
+			$section->{html} .= '</a>' if (!exists($options->{linkVerses}) || $options->{linkVerses});
+			$section->{html} .= '</sup>';
+		}
+
+		$section->{html} .= $attributes->{text};
+
+		$section->{last_continues} = $thisVerse->continues ? 1 : 0;
+		foreach my $tone (@{ $attributes->{tones} }) {
+			push(@{ $section->{tones} }, $tone);
+		}
+		$section->{verse_count}++;
+	}
+
+	return {
+		reference => $reference,
+		translationOrder => \@translationOrder,
+		translationSections => \%translationSections,
+	};
+}
+
+=item C<__verseHtmlCards($data, $pageTitle)>
+
+Render the ordered translation sections as HTML cards.
+
+=cut
+
+sub __verseHtmlCards {
+	my ($data, $pageTitle) = @_;
+	my $output = '';
+	foreach my $translation (@{ $data->{translationOrder} }) {
+		my $section = $data->{translationSections}->{$translation};
+		my $translationLabel = lc($translation);
+		$translationLabel .= sprintf(' (%d)', $section->{year}) if (defined($section->{year}));
+		my $lookupBase = sprintf('/1/lookup/%s', $section->{book});
+		my $translationQuery = sprintf('?translations=%s', lc($translation));
+		my $referenceHtml = sprintf(
+			'<a href="%s/1%s">%s</a> <a href="%s/%d%s">%d</a>:<a href="%s/%d/%d%s">%d</a>',
+			$lookupBase, $translationQuery, $section->{book_name_raw},
+			$lookupBase, $section->{chapter}, $translationQuery, $section->{chapter},
+			$lookupBase, $section->{chapter}, $section->{ordinal}, $translationQuery, $section->{ordinal},
+		);
+		my $sentiments = '';
+		my %toneSeen;
+
+		foreach my $sentiment ($section->{emotion}, @{ $section->{tones} }) {
+			next if ($toneSeen{$sentiment});
+			my $colorIndex = Chleb::Utils::colorIndexFromWord($sentiment);
+			$sentiments .= "<span class=\"tag tag-color-${colorIndex}\">$sentiment</span> ";
+			$toneSeen{$sentiment}++;
+		}
+
+		$output .= "\t\t\t\t\t\t<div class=\"card\">\n";
+		$output .= "\t\t\t\t\t\t\t<div class=\"subtitle\">$pageTitle</div>\n";
+		$output .= "\n";
+		$output .= "\t\t\t\t\t\t\t<h1>$referenceHtml</h1>\n";
+		$output .= "\t\t\t\t\t\t\t<div class=\"translation\">$translationLabel</div>\n";
+		$output .= "\n";
+		$output .= "\t\t\t\t\t\t\t<div>\n";
+		$output .= "\t\t\t\t\t\t\t\t<blockquote>\n";
+		$output .= "\t\t\t\t\t\t\t\t\t" . $section->{html} . "\n";
+		$output .= "\t\t\t\t\t\t\t\t</blockquote>\n";
+		$output .= "\t\t\t\t\t\t\t</div>\n";
+		$output .= "\n";
+		$output .= "\t\t\t\t\t\t\t<div>\n";
+		$output .= "\t\t\t\t\t\t\t\t<blockquote>\n";
+		$output .= "\t\t\t\t\t\t\t\t\t$sentiments\n";
+		$output .= "\t\t\t\t\t\t\t\t</blockquote>\n";
+		$output .= "\t\t\t\t\t\t\t</div>\n";
+		$output .= "\t\t\t\t\t\t</div>\n";
+	}
+
+	return $output;
+}
+
 sub __makeBooks {
 	my ($self, $currentBook) = @_;
 
-	my $thisBookName;
-	if ($currentBook) {
-		$thisBookName = $currentBook->shortName;
-	} else {
-		$thisBookName = Chleb::Server::Dancer2::_param('book');
-	}
-
-	my $books = $self->__library->info->bibles->[0]->books; # TODO: do we need info, or can we skip it somehow?
+	my $currentTranslation = $currentBook ? $currentBook->bible->translation : '';
+	my $currentBookName = $currentBook ? $currentBook->shortName : Chleb::Server::Dancer2::getParam('book');
+	my $books = $currentBook ? $currentBook->bible->books : [];
+	my @translations = $self->__library->availableTranslations();
+	my @translationOptions = map { $self->__makeTranslationOption($_, $currentTranslation) } @translations;
 	my @options = ( );
 	foreach my $book (@$books) {
-		my $isSelected = ($thisBookName eq $book->shortName);
+		my $isSelected = (defined($currentBookName) && $currentBookName eq $book->shortName);
 		push(@options, sprintf('<option value="%s"%s>%s (%d)</option>',
 			$book->shortName,
 			($isSelected ? ' selected' : ''),
@@ -1610,17 +1957,92 @@ sub __makeBooks {
 		));
 	}
 
-	my $html='<form action="/1/lookup" method="GET">
-		<select name="book">
-	';
+	my $html = "<form class=\"verse-book-form\" action=\"/1/lookup\" method=\"GET\">\n"
+		. "                <select id=\"verse-nav-translation\" name=\"translations\" aria-label=\"Translation\">\n"
+		. join("\r\n", @translationOptions)
+		. "\n                </select>\n"
+		. "                <select id=\"verse-nav-book\" name=\"book\" aria-label=\"Book\">\n"
+		. '        ';
 
 	$html .= join("\r\n", @options)
-	    . '</select>
-		<input type="hidden" name="chapter" value="1">
-		<button>→</button>
-	</form>';
+		. "</select>\n"
+		. "                <input type=\"hidden\" name=\"chapter\" value=\"1\">\n"
+		. "                <input type=\"hidden\" name=\"navigation\" value=\"1\">\n"
+		. "                <button type=\"submit\">Select</button>\n"
+		. "        </form>\n"
+		. "        <script>\n"
+		. "                (function () {\n"
+		. "                        var translation = document.getElementById('verse-nav-translation');\n"
+		. "                        var book = document.getElementById('verse-nav-book');\n"
+		. "                        var selectedBook = " . JSON::to_json($currentBookName // '') . ";\n"
+		. "                        var isKindleBrowser = /Kindle|Silk/i.test(navigator.userAgent || '');\n"
+		. "                        var booksByTranslation = {};\n"
+		. "                        var booksLoaded = false;\n"
+		. "                        var translationChangePending = false;\n"
+		. "                        function populateBooks() {\n"
+		. "                                var books = booksByTranslation[translation.value] || [];\n"
+		. "                                book.innerHTML = '';\n"
+		. "                                books.forEach(function (item) {\n"
+		. "                                        var option = document.createElement('option');\n"
+		. "                                        option.value = item.shortName;\n"
+		. "                                        option.textContent = item.name;\n"
+		. "                                        option.selected = item.shortName === selectedBook;\n"
+		. "                                        book.appendChild(option);\n"
+		. "                                });\n"
+		. "                        }\n"
+		. "                        function submitFirstBook() {\n"
+		. "                                if (book.options.length > 0) {\n"
+		. "                                        book.selectedIndex = 0;\n"
+		. "                                        book.form.submit();\n"
+		. "                                }\n"
+		. "                        }\n"
+		. "                        translation.addEventListener('change', function () {\n"
+		. "                                selectedBook = '';\n"
+		. "                                translationChangePending = true;\n"
+		. "                                populateBooks();\n"
+		. "                                if (booksLoaded && !isKindleBrowser) { submitFirstBook(); }\n"
+		. "                        });\n"
+		. "                        book.addEventListener('change', function () {\n"
+		. "                                if (!isKindleBrowser) { book.form.submit(); }\n"
+		. "                        });\n"
+		. "                        fetch('/1/info', { headers: { Accept: 'application/vnd.api+json' } })\n"
+		. "                                .then(function (response) { return response.json(); })\n"
+		. "                                .then(function (json) {\n"
+		. "                                        (json.included || []).forEach(function (item) {\n"
+		. "                                                if (item.type !== 'book') { return; }\n"
+		. "                                                var attributes = item.attributes;\n"
+		. "                                                if (!booksByTranslation[attributes.translation]) { booksByTranslation[attributes.translation] = []; }\n"
+		. "                                                booksByTranslation[attributes.translation].push({\n"
+		. "                                                        name: attributes.long_name + ' (' + attributes.chapter_count + ')',\n"
+		. "                                                        shortName: attributes.short_name\n"
+		. "                                                });\n"
+		. "                                        });\n"
+		. "                                        booksLoaded = true;\n"
+		. "                                        populateBooks();\n"
+		. "                                        if (translationChangePending && !isKindleBrowser) { submitFirstBook(); }\n"
+		. "                                });\n"
+		. "                }());\n"
+		. "        </script>";
 
 	return $html;
+}
+
+=item C<__makeTranslationOption($translation, $currentTranslation)>
+
+Return one verse-navigation translation C<option>, including its lowercase
+label and publication year.
+
+=cut
+
+sub __makeTranslationOption {
+	my ($self, $translation, $currentTranslation) = @_;
+
+	my $label = lc($translation);
+	my $year = $self->__library->bibles($translation)->year();
+	$label .= sprintf(' (%d)', $year) if (defined($year));
+
+	return sprintf('<option value="%s"%s>%s</option>', $translation,
+		($translation eq $currentTranslation ? ' selected' : ''), $label);
 }
 
 sub __searchResultsToHtml {
@@ -1628,7 +2050,17 @@ sub __searchResultsToHtml {
 	$options ||= {};
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
-		return Chleb::Server::Dancer2::fetchStaticPage('no_results');
+		my $message = 'Sorry, no results match your query';
+		if (ref($json->{suggestions}) eq 'ARRAY' && scalar(@{ $json->{suggestions} }) > 0) {
+			my $selfLink = $json->{links}->{self} // '/1/search';
+			my @suggestions = map { __searchSuggestionLink($_, $selfLink) } @{ $json->{suggestions} };
+			$message = 'Did you mean: ' . join(', ', @suggestions);
+		}
+		my $noResults = Chleb::Server::Dancer2::fetchStaticPage('no_results', {
+			NO_RESULTS_MESSAGE => $message,
+		});
+		$noResults = '' unless (defined($noResults));
+		return $noResults . __timingHtml($json);
 	}
 
 	my $includedCount = scalar(@{ $json->{included} });
@@ -1648,6 +2080,7 @@ sub __searchResultsToHtml {
 	$text .= "<table class=\"info-table\">\r\n";
 	$text .= "<tr>\r\n";
 	$text .= "<th>Result</th>\r\n";
+	$text .= "<th>Translation</th>\r\n";
 	$text .= "<th>Verse</th>\r\n";
 	$text .= "<th>Text</th>\r\n";
 	$text .= "</tr>\r\n";
@@ -1667,15 +2100,54 @@ sub __searchResultsToHtml {
 
 		$text .= "<tr>\r\n";
 		$text .= sprintf("<td>%s</td>\r\n", $attributes->{title});
+		$text .= sprintf("<td>%s</td>\r\n", $attributes->{translation});
 		$text .= sprintf("<td>%s</td>\r\n", $linkToVerse);
 		$text .= sprintf("<td>%s</td>\r\n", $attributes->{text});
 		$text .= "</tr>\r\n";
 	}
 
 	$text .= "</table>\r\n";
+	$text .= __timingHtml($json);
 	$text .= __searchPaginationToHtml($json);
 
 	return $text;
+}
+
+=item C<__searchSuggestionLink($suggestion, $selfLink)>
+
+Build an HTML link for a suggestion while preserving the existing search URL
+parameters and replacing only its C<term> value.
+
+=cut
+
+sub __searchSuggestionLink {
+	my ($suggestion, $selfLink) = @_;
+	my $href = $selfLink;
+	$href =~ s{([?&]term=)[^&]*}{$1 . uri_escape($suggestion)}ex;
+	return sprintf(
+		'<a href="%s">%s</a>',
+		Chleb::Utils::htmlEscape($href),
+		Chleb::Utils::htmlEscape($suggestion),
+	);
+}
+
+=item C<__timingHtml($json)>
+
+Render the response timing statistic in seconds for HTML responses.  Return an
+empty string when the response does not contain a stats inclusion.
+
+=cut
+
+sub __timingHtml {
+	my ($json) = @_;
+	return '' unless (ref($json) eq 'HASH' && ref($json->{included}) eq 'ARRAY');
+	for my $included (@{ $json->{included} }) {
+		next unless ($included->{type} // '') eq 'stats';
+		my $msec = $included->{attributes}->{msec};
+		next unless (defined($msec) && $msec =~ /\A\d+\z/x);
+		return sprintf("<p>Sought in %.3f seconds</p>\r\n", $msec / 1000);
+	}
+	return '';
 }
 
 =item C<__searchPaginationToHtml($json)>
@@ -1701,7 +2173,7 @@ sub __searchPaginationToHtml {
 		}
 	}
 
-	return '' unless ($summary && $summary->{total_pages} > 1);
+	return '' if (!$summary || $summary->{total_pages} <= 1);
 
 	my $page = $summary->{page};
 	my $totalPages = $summary->{total_pages};
@@ -1733,7 +2205,7 @@ parameters unchanged.
 
 sub __replaceSearchLinkPage {
 	my ($link, $page) = @_;
-	$link =~ s/([?&]page=)[^&]*/$1$page/;
+	$link =~ s{([?&]page=)[^&]*}{$1$page}x;
 	return $link;
 }
 
@@ -1752,7 +2224,7 @@ sub __linkToVerse {
 
 		foreach my $option (keys(%$options)) {
 			next if ($knownOptions{$option});
-			die('unknown option -- ' . $option);
+			croak('unknown option -- ' . $option);
 		}
 	}
 
@@ -1800,10 +2272,9 @@ sub __infoToHtml {
 	my $linkToChapter = sub {
 		my ($linkText, $bookShortName, $chapterOrdinal) = @_;
 		return sprintf(
-			'<a href="/1/lookup/%s/%d/%d">%s</a>',
+			'<a href="/1/lookup/%s/%d">%s</a>',
 			$bookShortName,
 			$chapterOrdinal,
-			1,  # FIXME: At time of writing, it isn't possible to link to a whole chapter, which will be a shorter link
 			$linkText,
 		);
 	};
@@ -1883,6 +2354,7 @@ sub __infoToHtml {
 	}
 
 	$text .= "</table>\r\n";
+	$text .= __timingHtml($json);
 
 	return $text;
 }
@@ -1900,7 +2372,7 @@ sub __versionFilter {
 	my ($version, $minimum, $maximum) = @_;
 
 	$version = int($version);
-	die Chleb::Exception->raise(HTTP_BAD_REQUEST, "endpoint version must be between $minimum and $maximum, you said $version")
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "endpoint version must be between $minimum and $maximum, you said $version"))
 	    if ($version < $minimum || $version > $maximum);
 
 	return $version;
@@ -1919,7 +2391,7 @@ sub __removeUptime {
 	return;
 }
 
-has __warnedSessionToken => (is => 'rw', isa => 'Bool', default => 0);
+has __loggedUsingSessionToken => (is => 'rw', isa => 'Bool', default => 0);
 
 =over
 
@@ -1941,7 +2413,7 @@ has __damper => (
 sub logRequest {
 	my ($self) = @_;
 
-	my $request = Chleb::Server::Dancer2::_request();
+	my $request = Chleb::Server::Dancer2::getRequest();
 	my $ipAddress = $request->address();
 	Log::Log4perl::MDC->put(address => $ipAddress);
 	my $path = $request->path();
@@ -1951,23 +2423,38 @@ sub logRequest {
 	return;
 }
 
+=head1 __userAgentChanged($previous, $current)
+
+Return true when a previously recorded user agent differs from the current
+one.  An empty previous value represents a token whose user-agent metadata was
+not persisted, such as a JWT, rather than an observed change.
+
+=cut
+
+sub __userAgentChanged {
+	my ($previous, $current) = @_;
+
+	return (length($previous) > 0 && $previous ne $current);
+}
+
 sub handleSessionToken {
 	my ($self) = @_;
 
 	my $supportSessions = $self->dic->config->get('features', 'sessions', 'false', 1);
-	return unless ($supportSessions);
 
-	unless ($self->__warnedSessionToken) {
-		$self->dic->logger->warn('Using experimental session cookie support, alpha quality, there are known bugs and limitations');
-		$self->__warnedSessionToken(1);
+	unless ($self->__loggedUsingSessionToken) {
+		$self->dic->logger->debug('session cookie support ' . ($supportSessions ? 'on' : 'off'));
+		$self->__loggedUsingSessionToken(1);
 	}
 
-	my $request = Chleb::Server::Dancer2::_request();
+	return unless ($supportSessions);
+
+	my $request = Chleb::Server::Dancer2::getRequest();
 	my $ipAddress = $request->address() // '';
 	my $userAgent = $request->agent() // '';
 
 	my $tokenRepo = $self->dic->tokenRepo;
-	my $sessionToken = Chleb::Server::Dancer2::_cookie('sessionToken');
+	my $sessionToken = Chleb::Server::Dancer2::getCookie('sessionToken');
 
 	if (!$sessionToken) {
 		if ($self->__damper->dampen($ipAddress)) {
@@ -1984,23 +2471,25 @@ sub handleSessionToken {
 		$sessionToken->ipAddress($ipAddress);
 		$sessionToken->userAgent($userAgent);
 
-		eval {
+		my $evalOk2; $evalOk2 = eval {
 			$tokenRepo->save($sessionToken); # save via all configured backends
-		};
+			1;
+		} or $evalOk2 = 0;
 		if (my $exception = $EVAL_ERROR) {
 			Chleb::Server::Dancer2::handleException($exception);
 		}
 
 		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
-		Chleb::Server::Dancer2::_cookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
+		Chleb::Server::Dancer2::setCookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
 
 		return;
 	}
 
 	$self->dic->logger->trace("Got session token '$sessionToken' from client");
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$sessionToken = $tokenRepo->load($sessionToken);
-	};
+		1;
+	} or $evalOk3 = 0;
 	if (my $exception = $EVAL_ERROR) {
 		Chleb::Server::Dancer2::handleException($exception);
 	}
@@ -2017,7 +2506,7 @@ sub handleSessionToken {
 		));
 	}
 
-	if ($self->__damper->dampenSession($sessionToken->value)) {
+	if ($self->__damper->dampenSession($sessionToken)) {
 		my $retryAfterSeconds = $self->dic->config->get('rate_limit', 'session_window_seconds', 60);
 		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
 			HTTP_TOO_MANY_REQUESTS,
@@ -2027,23 +2516,24 @@ sub handleSessionToken {
 	}
 
 	if ($sessionToken->ipAddress ne $ipAddress) {
-		$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',
-		    $sessionToken->toString(), $sessionToken->ipAddress, $ipAddress));
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed IP address from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->ipAddress, $ipAddress));
 
 		$sessionToken->ipAddress($ipAddress);
 	}
 
-	if ($sessionToken->userAgent ne $userAgent) {
-		$self->dic->logger->info(sprintf('%s the client changed user agent from %s to %s',
-		    $sessionToken->toString(), $sessionToken->userAgent, $userAgent));
+	if (__userAgentChanged($sessionToken->userAgent, $userAgent)) {
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed user agent from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->userAgent, $userAgent));
 
 		$sessionToken->userAgent($userAgent);
 	}
 
 	if ($sessionToken->dirty) {
-		eval {
+		my $evalOk4; $evalOk4 = eval {
 			$tokenRepo->save($sessionToken); # save via all configured backends
-		};
+			1;
+		} or $evalOk4 = 0;
 		if (my $exception = $EVAL_ERROR) {
 			Chleb::Server::Dancer2::handleException($exception);
 		}

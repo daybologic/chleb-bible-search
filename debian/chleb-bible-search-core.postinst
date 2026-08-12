@@ -73,7 +73,8 @@ chown $SERVER_USER \
 installJwtSecret "$@"
 
 echo 'clearing bible translation cache'
-rm -f /var/cache/chleb-bible-search/*.bin
+find /var/cache/chleb-bible-search -mindepth 1 ! -type d -delete
+find /var/cache/chleb-bible-search -mindepth 1 -depth -type d -delete
 
 echo 'removing expired session files'
 /usr/share/chleb-bible-search/session-clean.sh -t 30

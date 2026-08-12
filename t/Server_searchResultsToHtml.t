@@ -30,8 +30,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package SearchResultsToHtmlServerTests;
+## no critic (RegularExpressions::ProhibitComplexRegexes)
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -63,21 +70,54 @@ sub setUp {
 sub testEmpty {
 	my ($self) = @_;
 	plan tests => 1;
+	local $SIG{__WARN__} = sub { croak(@_); };
 
 	$self->mock('Chleb::Server::Dancer2', 'fetchStaticPage');
 
-	my %json = ( data => [ ] );
+	my %json = ( data => [ ], included => [ ] );
 	Chleb::Server::Moose::__searchResultsToHtml(\%json);
 
 	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'fetchStaticPage');
-	cmp_deeply($mockCalls, [['no_results']], "calls to fetchStaticPage for 'no_results'") or diag(explain($mockCalls));
+	cmp_deeply($mockCalls->[-1], ['no_results', { NO_RESULTS_MESSAGE => 'Sorry, no results match your query' }], "calls to fetchStaticPage for 'no_results'") or diag(explain($mockCalls));
+
+	return EXIT_SUCCESS;
+}
+
+sub testSuggestions {
+	my ($self) = @_;
+	plan tests => 4;
+	local $SIG{__WARN__} = sub { croak(@_); };
+
+	$self->mock('Chleb::Server::Dancer2', 'fetchStaticPage');
+
+	my %json = (
+		data => [ ],
+		suggestions => [ 'dropping', 'dropped' ],
+		links => { self => '/1/search?term=droppng&wholeword=1&per_page=5' },
+		included => [ { type => 'stats', attributes => { msec => 123 } } ],
+	);
+	Chleb::Server::Moose::__searchResultsToHtml(\%json);
+
+	my $mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'fetchStaticPage');
+	cmp_deeply($mockCalls->[-1], ['no_results', { NO_RESULTS_MESSAGE => 'Did you mean: <a href="/1/search?term=dropping&amp;wholeword=1&amp;per_page=5">dropping</a>, <a href="/1/search?term=dropped&amp;wholeword=1&amp;per_page=5">dropped</a>' }], 'suggestions become links preserving search criteria') or diag(explain($mockCalls));
+
+	my $html = Chleb::Server::Moose::__searchResultsToHtml(\%json);
+	like($html, qr{Sought \s+ in \s+ 0[.]123 \s+ seconds}x, 'search HTML displays timing');
+	unlike($html, qr{\\r\\n}x, 'search HTML does not expose escaped newlines');
+
+	my %unsafeJson = (data => [ ], suggestions => [ '<script>' ]);
+	$self->mock('Chleb::Server::Dancer2', 'fetchStaticPage');
+	Chleb::Server::Moose::__searchResultsToHtml(\%unsafeJson);
+	$mockCalls = $self->mockCallsWithObject('Chleb::Server::Dancer2', 'fetchStaticPage');
+	like($mockCalls->[-1]->[1]->{NO_RESULTS_MESSAGE}, qr{&lt;script&gt;}, 'suggestions are HTML escaped');
 
 	return EXIT_SUCCESS;
 }
 
 sub testResultsTable {
 	my ($self) = @_;
-	plan tests => 7;
+	plan tests => 8;
+	local $SIG{__WARN__} = sub { croak(@_); };
 
 	my %json = (
 		data => [
@@ -88,6 +128,7 @@ sub testResultsTable {
 					ordinal => 1,
 					text => 'In the beginning God created the heaven and the earth.',
 					title => "Result 1/1 from Chleb Bible Search 'beginning'",
+					translation => 'kjv',
 				},
 			},
 		],
@@ -106,6 +147,7 @@ sub testResultsTable {
 	like($html, qr{<a class="vn-link vn-home" href="/">home</a>}, 'home link is present by default');
 	like($html, qr{<table class="info-table">}, 'search results use info table');
 	like($html, qr{<th>Result</th>}, 'result header is present');
+	like($html, qr{<td>kjv</td>}, 'translation is in a table cell');
 	like($html, qr{<th>Verse</th>}, 'verse header is present');
 	like($html, qr{<a href="/1/lookup/gen/1/1">Gen \[1:1\]</a>}, 'verse link is present');
 	like($html, qr{<td>In the beginning God created the heaven and the earth\.</td>}, 'verse text is in a table cell');

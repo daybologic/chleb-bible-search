@@ -75,9 +75,9 @@ sub __makeRefs {
 
 	while (my $ref = $refs->[$i++]) {
 		my ($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd);
-		if ($ref =~ m/^(\w+)\s+(\d+):(\d+)-(\d+)$/) {
+		if ($ref =~ m{ ^(\w+)\s+(\d+):(\d+)-(\d+)$ }x) {
 			($bookName, $chapterOrdinal, $verseOrdinalStart, $verseOrdinalEnd) = ($1, $2, $3, $4);
-		} elsif ($ref =~ m/^(\w+)\s+(\d+):(\d+)$/) {
+		} elsif ($ref =~ m{ ^(\w+)\s+(\d+):(\d+)$ }x) {
 			($bookName, $chapterOrdinal, $verseOrdinalStart) = ($1, $2, $3);
 		} else {
 			$self->dic->logger->error(sprintf('%s has been ignored because the format was not recognized', $key));
@@ -87,12 +87,14 @@ sub __makeRefs {
 			my $verse;
 			$verseOrdinalEnd = $verseOrdinalStart if (!$verseOrdinalEnd || $verseOrdinalEnd < $verseOrdinalStart);
 			for (my $verseOrdinal = $verseOrdinalStart; $verseOrdinal <= $verseOrdinalEnd; $verseOrdinal++) {
-				eval {
+				my $evalOk = eval {
 					# FIXME: Deprecated!  This is highly unreliable and you need to find a new
 					# way to access the library afore it goes away!
 					$verse = $self->dic->bible->fetch($bookName, $chapterOrdinal, $verseOrdinal);
+					1;
 				};
-				if (my $evalError = $EVAL_ERROR) {
+				if (!$evalOk) {
+					my $evalError = $EVAL_ERROR;
 					$self->dic->logger->error(sprintf('%s load failed: %s', $key, $evalError));
 				} else {
 					push(@refs, $verse);

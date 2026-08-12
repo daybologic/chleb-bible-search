@@ -31,6 +31,10 @@
 
 #!/usr/bin/perl
 package Book_equalsTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -98,9 +102,10 @@ sub __checkWrongObject {
 	my ($self, $object) = @_;
 	plan tests => 1;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->equals($object);
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	my $expectDescription = 'Not a book, in Book/equals()';
 	if (my $evalError = $EVAL_ERROR) {

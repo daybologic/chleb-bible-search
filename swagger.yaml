@@ -35,11 +35,102 @@ info:
     url: https://opensource.org/licenses/BSD-3-Clause
   title: Chleb Bible Search
   description: Query the bible, or get a verse of the day.
-  version: 2.5.1
+  version: 3.0.1
 servers:
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
 paths:
+  /1/test/http/{statusCode}:
+    get:
+      summary: Generate a registered HTTP error
+      operationId: getTestHttpError
+      description: Deliberately return any registered, non-obsolete HTTP client or server error to test handling, content negotiation, protocol headers, and monitoring
+      security: [] # No security
+      parameters:
+        - name: statusCode
+          in: path
+          required: true
+          description: Registered HTTP error status to return
+          schema:
+            type: integer
+            enum: [400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 421, 422, 423, 424, 425, 426, 428, 429, 431, 451, 500, 501, 502, 503, 504, 505, 506, 507, 508, 511]
+      responses:
+        '400':
+          $ref: '#/components/responses/TestHttpError'
+        '401':
+          $ref: '#/components/responses/TestHttpError'
+        '402':
+          $ref: '#/components/responses/TestHttpError'
+        '403':
+          $ref: '#/components/responses/TestHttpError'
+        '404':
+          $ref: '#/components/responses/TestHttpError'
+        '405':
+          $ref: '#/components/responses/TestHttpError'
+        '406':
+          $ref: '#/components/responses/TestHttpError'
+        '407':
+          $ref: '#/components/responses/TestHttpError'
+        '408':
+          $ref: '#/components/responses/TestHttpError'
+        '409':
+          $ref: '#/components/responses/TestHttpError'
+        '410':
+          $ref: '#/components/responses/TestHttpError'
+        '411':
+          $ref: '#/components/responses/TestHttpError'
+        '412':
+          $ref: '#/components/responses/TestHttpError'
+        '413':
+          $ref: '#/components/responses/TestHttpError'
+        '414':
+          $ref: '#/components/responses/TestHttpError'
+        '415':
+          $ref: '#/components/responses/TestHttpError'
+        '416':
+          $ref: '#/components/responses/TestHttpError'
+        '417':
+          $ref: '#/components/responses/TestHttpError'
+        '421':
+          $ref: '#/components/responses/TestHttpError'
+        '422':
+          $ref: '#/components/responses/TestHttpError'
+        '423':
+          $ref: '#/components/responses/TestHttpError'
+        '424':
+          $ref: '#/components/responses/TestHttpError'
+        '425':
+          $ref: '#/components/responses/TestHttpError'
+        '426':
+          $ref: '#/components/responses/TestHttpError'
+        '428':
+          $ref: '#/components/responses/TestHttpError'
+        '429':
+          $ref: '#/components/responses/TestHttpError'
+        '431':
+          $ref: '#/components/responses/TestHttpError'
+        '451':
+          $ref: '#/components/responses/TestHttpError'
+        '500':
+          $ref: '#/components/responses/TestHttpError'
+        '501':
+          $ref: '#/components/responses/TestHttpError'
+        '502':
+          $ref: '#/components/responses/TestHttpError'
+        '503':
+          $ref: '#/components/responses/TestHttpError'
+        '504':
+          $ref: '#/components/responses/TestHttpError'
+        '505':
+          $ref: '#/components/responses/TestHttpError'
+        '506':
+          $ref: '#/components/responses/TestHttpError'
+        '507':
+          $ref: '#/components/responses/TestHttpError'
+        '508':
+          $ref: '#/components/responses/TestHttpError'
+        '511':
+          $ref: '#/components/responses/TestHttpError'
   /1/info:
     get:
       summary: Get global facts
@@ -65,6 +156,7 @@ paths:
                     type: array
                     items:
                       oneOf:
+                        - $ref: '#/components/schemas/Bible'
                         - $ref: '#/components/schemas/Book'
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
@@ -141,77 +233,6 @@ paths:
           description: Forbidden
         '429':
           $ref: '#/components/responses/RateLimited'
-  /1/random:
-    get:
-      summary: Random Verse
-      operationId: getRandom
-      description: Retrieve one verse from The Bible, at random.
-      parameters:
-        - in: query
-          name: translations
-          schema:
-            type: array
-            items:
-              $ref: '#/components/schemas/Translation'
-          required: false
-          style: form
-          explode: false
-          description: Requested/accepted bible translations
-        - in: query
-          name: testament
-          schema:
-            type: string
-            enum:
-              - any
-              - old
-              - new
-            default: any
-          required: false
-          description: Only retrieve a verse from the given testament
-        - in: query
-          name: parental
-          schema:
-            type: boolean
-            default: false
-          required: false
-          description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
-        - in: query
-          name: redirect
-          schema:
-            type: boolean
-            default: false
-          required: false
-          description: Provide a 307 redirect to the appropriate verse lookup
-      security: [] # No security
-      responses:
-        '200':
-          description: Successfully retrieved verse
-          content:
-            text/html:
-              schema:
-                type: string
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Verse'
-                  included:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Stats'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          description: Internal Server Error
-        '502':
-          description: Bad gateway
-        '503':
-          description: Service Unavailable
-        '504':
-          description: Gateway Timeout
   /2/random:
     get:
       summary: Random Verse
@@ -265,75 +286,10 @@ paths:
                   included:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Stats'
-        '429':
-          $ref: '#/components/responses/RateLimited'
-        '500':
-          description: Internal Server Error
-        '502':
-          description: Bad gateway
-        '503':
-          description: Service Unavailable
-        '504':
-          description: Gateway Timeout
-  /1/votd:
-    get:
-      summary: Verse of The Day
-      operationId: getVotd
-      description: Retrieve one verse from The Bible, for the given day
-      parameters:
-        - in: query
-          name: when
-          schema:
-            type: string
-            default: (current date)
-            example: 2024-07-29T23:35:31+0100
-          required: false
-          description: Date in ISO-8601, for viewing previous verses of the day
-        - in: query
-          name: parental
-          schema:
-            type: boolean
-            default: false
-          required: false
-          description: Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative
-        - in: query
-          name: redirect
-          schema:
-            type: boolean
-            default: false
-          required: false
-          description: Provide a 307 redirect to the appropriate verse lookup
-        - in: query
-          name: testament
-          schema:
-            type: string
-            enum:
-              - any
-              - old
-              - new
-            default: any
-          required: false
-          description: Only retrieve a verse from the given testament
-      security: [] # No security
-      responses:
-        '200':
-          description: Successfully retrieved verse
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Verse'
-                  included:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Stats'
-        '307':
-          description: Temporary Redirect
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -358,6 +314,21 @@ paths:
             example: 2024-07-29T23:35:31+0100
           required: false
           description: Date in ISO-8601, for viewing previous verses of the day
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+            example: 2026-07-28
+          required: false
+          description: Date-picker fallback used by form mode; converted to midnight UTC when when is absent
+        - in: query
+          name: form
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: In text/html mode, display the date picker and VoTD result cards on the same page
         - in: query
           name: parental
           schema:
@@ -402,10 +373,22 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Verse'
+                  suggestions:
+                    type: array
+                    maxItems: 5
+                    items:
+                      type: string
+                    description: >-
+                      Up to five Bible words with the smallest Levenshtein
+                      distance from the requested term. This property is
+                      present only for JSON searches that return no results.
                   included:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Stats'
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -420,7 +403,11 @@ paths:
     get:
       summary: Bible search
       operationId: search
-      description: Search for criteria in the whole bible
+      description: >-
+        Search for criteria in the whole bible. Ordinary searches may also
+        match translation-specific thesaurus terms, so equivalent wording
+        used by a selected translation can be found. Set `wholeword` to true
+        to require an exact whole-word match without thesaurus expansion.
       parameters:
         - in: query
           name: form
@@ -433,7 +420,11 @@ paths:
           schema:
             type: string
           required: false
-          description: Critereon for search, not required if you want the form mode, which is only valid in text/html mode
+          description: >-
+            Criterion for search, not required if you want the form mode, which
+            is only valid in text/html mode. Ordinary searches may include
+            related thesaurus terms; use `wholeword` for an exact whole-word
+            search.
         - in: query
           name: limit
           schema:
@@ -465,7 +456,7 @@ paths:
             type: boolean
             default: false
           required: false
-          description: Require whitespace or end of verse after the requested term
+          description: Require an exact whole-word match, with whitespace or end of verse after the requested term; disables thesaurus expansion
         - in: query
           name: translations
           schema:
@@ -526,19 +517,19 @@ paths:
             oneOf:
               - type: string
               - type: integer
-          required: true
+          required: false
           description: Book of the bible
         - in: query
           name: chapter
           schema:
             type: integer
-          required: true
+          required: false
           description: Chapter within book (ordinal)
         - in: query
           name: verse
           schema:
             type: integer
-          required: true
+          required: false
           description: Verse within chapter (ordinal)
         - in: query
           name: translations
@@ -550,8 +541,34 @@ paths:
           style: form
           explode: false
           description: Requested/accepted bible translations
+        - in: query
+          name: form
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: In text/html mode, display the lookup form
+        - in: query
+          name: navigation
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Redirect to the lookup URL for the selected translation
+        - in: query
+          name: submit
+          schema:
+            type: string
+          required: false
+          description: Form submit action; use `lookup` to perform the compatibility lookup
       security: [] # No security
       responses:
+        '200':
+          description: Search form or lookup form
+          content:
+            text/html:
+              schema:
+                type: string
         '307':
           description: Temporary redirect
         '400':
@@ -606,16 +623,9 @@ paths:
                 type: string
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Verse'
-                  included:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Stats'
+                type: array
+                items:
+                  $ref: '#/components/schemas/LookupDocument'
         '400':
           description: Bad request
         '404':
@@ -685,7 +695,10 @@ paths:
                   included:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Stats'
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
         '400':
           description: Bad request
         '404':
@@ -702,6 +715,24 @@ paths:
           description: Gateway Timeout
 components:
   responses:
+    TestHttpError:
+      description: Deliberate registered HTTP error response. Status-specific protocol headers are included where applicable.
+      content:
+        text/html:
+          schema:
+            type: string
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: integer
+              title:
+                type: string
+              message:
+                type: string
+              exception:
+                type: string
     RateLimited:
       description: Rate-limited
       headers:
@@ -717,6 +748,53 @@ components:
           schema:
             $ref: '#/components/schemas/JsonApiErrorDocument'
   schemas:
+    LookupDocument:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Verse'
+        included:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/Book'
+              - $ref: '#/components/schemas/Chapter'
+              - $ref: '#/components/schemas/Stats'
+        links:
+          $ref: '#/components/schemas/JsonApiLinks'
+    Bible:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["bible"]
+        attributes:
+          type: object
+          properties:
+            book_count:
+              type: integer
+            book_names_long:
+              type: array
+              items:
+                type: string
+            book_names_short:
+              type: array
+              items:
+                type: string
+            book_names_short_raw:
+              type: array
+              items:
+                type: string
+            translation:
+              $ref: '#/components/schemas/Translation'
+            verse_count:
+              type: integer
+            year:
+              type: integer
     JsonApiErrorDocument:
       type: object
       properties:
@@ -939,13 +1017,14 @@ components:
               example: 1 minute and 30 seconds
     Translation:
       type: string
-      enum: ["all", "asv", "kjv"]
       default: "kjv"
+      description: Translation code, or the reserved value "all". Additional translation codes may be installed dynamically.
+      example: "kjv"
     Verse:
       type: object
       properties:
         id:
-          type: integer
+          type: string
         type:
           type: string
           enum: ["verse"]
@@ -980,6 +1059,10 @@ components:
                 example: encouragement
             translation:
               $ref: '#/components/schemas/Translation'
+            year:
+              type: integer
+              description: Publication year of the translation
+              example: 1611
     Stats:
       type: object
       properties:
@@ -1040,6 +1123,14 @@ components:
           type: string
           description: URL for the current page of search results
           example: /1/search?term=peter&wholeword=1&limit=153&page=2&per_page=50
+        yesterday:
+          type: string
+          description: URL for the previous verse of the day
+          example: /2/votd?when=2024-08-22T00:00:00+0000
+        tomorrow:
+          type: string
+          description: URL for the following verse of the day
+          example: /2/votd?when=2024-08-24T00:00:00+0000
         prev:
           type: string
           description: URL for the previous page of search results, omitted on the first page

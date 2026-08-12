@@ -30,8 +30,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package TokenRepositoryTests;
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
@@ -67,12 +73,13 @@ sub testRedisLoadFailureRaisesChlebException {
 		    if ($filename eq 'Chleb/Token/Repository/Redis.pm');
 		return;
 	}, @INC);
-	local $INC{'Chleb/Token/Repository/Redis.pm'};
+	local $INC{'Chleb/Token/Repository/Redis.pm'} = $INC{'Chleb/Token/Repository/Redis.pm'};
 	delete($INC{'Chleb/Token/Repository/Redis.pm'});
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		$self->sut->repo('Redis');
-	};
+		1;
+	} or $evalOk1 = 0;
 
 	cmp_deeply($EVAL_ERROR, all(
 		isa('Chleb::Exception'),
@@ -96,18 +103,20 @@ sub testRedisUnavailableWithoutClientModule {
 		    if ($filename eq 'Redis/Fast.pm' || $filename eq 'Redis.pm');
 		return;
 	}, @INC);
-	local @INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)};
+	local @INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)}
+		= @INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)};
 	delete(@INC{qw(Chleb/Token/Repository/Redis.pm Redis/Fast.pm Redis.pm)});
 
 	my $evalError;
 	{
-		no strict qw(refs);
-		local ${'Chleb::Token::Repository::Redis::REDIS_CLASS'};
+		local $Chleb::Token::Repository::Redis::REDIS_CLASS
+			= $Chleb::Token::Repository::Redis::REDIS_CLASS;
 
 		my $repo = $self->sut->repo('Redis');
-		eval {
+		my $evalOk2; $evalOk2 = eval {
 			$repo->do();
-		};
+			1;
+		} or $evalOk2 = 0;
 		$evalError = $EVAL_ERROR;
 	}
 
@@ -142,9 +151,9 @@ sub testRedisFastPreferredWhenAvailable {
 sub __writeFile {
 	my ($path, $content) = @_;
 
-	open(my $fh, '>', $path) or die("open $path: $ERRNO");
+	open(my $fh, '>', $path) or croak("open $path: $ERRNO");
 	print $fh $content;
-	close($fh) or die("close $path: $ERRNO");
+	close($fh) or croak("close $path: $ERRNO");
 
 	return;
 }

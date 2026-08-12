@@ -31,22 +31,20 @@
 
 set -eu
 
-# perlcritic wrapper: advisory mode (never fails the build)
+# perlcritic wrapper
 # - Accepts multiple file arguments (works with: find ... -exec ... {} +)
 # - Calls the real perlcritic
-# - Always exits 0, but preserves perlcritic output to stdout/stderr.
+# - Preserves perlcritic output to stdout/stderr.
 
 # Locate perlcritic
 PERLCRITIC_BIN="${PERLCRITIC_BIN:-perlcritic}"
 
+# Locate the repository profile independently of the caller's working directory.
+scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+repoRoot=$(CDPATH= cd -- "$scriptDir/../.." && pwd)
+
 # Default options (override by setting PERLCRITIC_OPTS in environment if you want)
-# levels:
-#  * brutal
-#  * cruel
-#  * harsh
-#  * stern
-#  * gentle
-DEFAULT_OPTS="--stern --nocolor --profile-strictness quiet --quiet"
+DEFAULT_OPTS="--profile $repoRoot/.perlcriticrc --nocolor --profile-strictness quiet --quiet"
 
 # If you want to pass extra flags, do:
 #   PERLCRITIC_OPTS="--severity 3" bin/maint/perlcritic.sh lib/Foo.pm
@@ -57,24 +55,23 @@ if [ "$#" -eq 0 ]; then
 	exit 0
 fi
 
-# Run perlcritic over each file.  Test scripts conventionally end by switching
+# Run perlcritic over each file. Test scripts conventionally end by switching
 # back to package main for the runnable harness, so allow multiple package
 # declarations only for top-level t/*.t files.
-# We intentionally ignore exit status to make it "information-only".
-# perlcritic exits:
-#   0 = no violations
-#   1 = perlcritic error (e.g., profile/policy issue)
-#   2 = violations found
-# We don't want any of these to fail CI here.
+status=0
 for file in "$@"; do
 	case "$file" in
 		t/*.t|*/t/*.t)
-			"$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS --exclude Modules::ProhibitMultiplePackages "$file" || true
+			if ! "$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS --exclude Modules::ProhibitMultiplePackages "$file"; then
+				status=1
+			fi
 			;;
 		*)
-			"$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS "$file" || true
+			if ! "$PERLCRITIC_BIN" $DEFAULT_OPTS $PERLCRITIC_OPTS "$file"; then
+				status=1
+			fi
 			;;
 	esac
 done
 
-exit 0
+exit "$status"

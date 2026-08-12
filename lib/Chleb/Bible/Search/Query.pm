@@ -31,6 +31,7 @@
 package Chleb::Bible::Search::Query;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 use Moose::Util::TypeConstraints;
 
@@ -78,10 +79,36 @@ sub setWholeword {
 	return $self;
 }
 
+=item C<expandedWords()>
+
+Return the normalized search words grouped with their translation-specific
+thesaurus alternatives.  The original word is always first in each group.
+
+=cut
+
+sub expandedWords {
+	my ($self) = @_;
+	my @words = ($self->text =~ /[\w]+(?:['-][\w]+)*/gx);
+	my @groups;
+	my %seenGroups;
+	for my $word (@words) {
+		my $normalized = lc($word);
+		next if $seenGroups{$normalized}++;
+		my %seen = ($normalized => 1);
+		my @expanded = ($normalized);
+		for my $term (@{ $self->bible->getThesaurusTerms($normalized) }) {
+			next if $seen{$term}++;
+			push(@expanded, $term);
+		}
+		push(@groups, \@expanded);
+	}
+	return \@groups;
+}
+
 sub run {
 	my ($self) = @_;
 	my $startTiming = Time::HiRes::time();
-	my $backend = $self->bible->__backend;
+	my $bible = $self->bible;
 
 	my @booksToQuery = ( );
 	if ($self->bookShortName) {
@@ -91,18 +118,19 @@ sub run {
 	}
 
 	my @verses = ( );
-	$backend->deferSharedCacheWrites(1);
-	eval {
+	$bible->deferSharedCacheWrites(1);
+	my $evalOk1; $evalOk1 = eval {
 		foreach my $book (@booksToQuery) {
 			next if ($self->testament && $self->testament ne $book->testament);
 			my $bookVerses = $book->search($self);
 			push(@verses, @$bookVerses);
 		}
-	};
+		1;
+	} or $evalOk1 = 0;
 	my $evalError = $EVAL_ERROR;
-	$backend->deferSharedCacheWrites(0);
-	$backend->flushSharedCache();
-	die($evalError) if ($evalError);
+	$bible->deferSharedCacheWrites(0);
+	$bible->flushSharedCache();
+	croak($evalError) if ($evalError);
 
 	splice(@verses, $self->limit);
 

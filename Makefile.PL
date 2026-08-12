@@ -29,12 +29,11 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-package main;
-
 use ExtUtils::MakeMaker;
 #use ExtUtils::MakeMaker::Coverage;
 use strict;
 use warnings;
+use Carp qw(croak);
 
 sub invoke {
 	my ($command) = @_;
@@ -42,14 +41,14 @@ sub invoke {
 	my $rc = system($command);
 
 	if ($rc == -1) {
-		die("failed to execute: $!\n");
+		croak("failed to execute: $!\n");
 	} elsif ($rc & 127) {
-		die(sprintf("child died with signal %d, %s coredump\n",
+		croak(sprintf("child died with signal %d, %s coredump\n",
 		    ($rc & 127), ($rc & 128) ? 'with' : 'without'));
 	} else {
 		my $exit_code = $rc >> 8;
 		if ($exit_code != 0) {
-			die("command exited with code $exit_code\n");
+			croak("command exited with code $exit_code\n");
 		} else {
 			return 0;
 		}
@@ -60,14 +59,13 @@ sub can_write_hooks_dir {
 	my $testPath = '.git/hooks/.codex-write-test';
 	return 0 unless (-d '.git/hooks');
 
-	my $fh;
-	if (!open($fh, '>', $testPath)) {
-		return 0;
+	if (open(my $fh, '>', $testPath)) {
+		close($fh);
+		unlink($testPath);
+		return 1;
 	}
 
-	close($fh);
-	unlink($testPath);
-	return 1;
+	return 0;
 }
 
 invoke('bin/maint/pkg-info.sh'); # needs to run really early doors
@@ -75,7 +73,7 @@ invoke('bin/maint/synology.sh');
 invoke('bin/maint/git-install-local-hooks.sh') if (can_write_hooks_dir());
 invoke('bin/maint/make-legal-notices.sh');
 
-my @exeFiles = glob q('data/*.bin.gz');
+my @exeFiles = ( );
 push @exeFiles, glob q('bin/core/*.psgi');
 push @exeFiles, glob q('bin/core/*.sh');
 push @exeFiles, glob q('bin/core/*.pl');
@@ -88,9 +86,6 @@ WriteMakefile(
 	INSTALLVENDORSCRIPT => '/usr/share/chleb-bible-search',
 	EXE_FILES    => \@exeFiles,
 
-	clean => {
-		FILES => [glob q('data/*.bin.gz')],
-	},
 	PREREQ_PM => {
 		'Cache::Memcached' => 0,
 		'DBI'              => 0,
@@ -113,7 +108,7 @@ WriteMakefile(
 package MY;
 
 sub MY::postamble {
-    return q~
+my $message = <<'END_POSTABLE';
 deb :: pure_all
 	sbuild -A
 
@@ -138,8 +133,9 @@ data ::
 
 # Extend test target
 test :: data http-test
+END_POSTABLE
 
-    ~;
+	return $message;
 }
 
 1;

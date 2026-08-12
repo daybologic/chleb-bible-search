@@ -30,6 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Book_getVerseByOrdinalTests;
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';

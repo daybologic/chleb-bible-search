@@ -30,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Server_Dancer2_preferredTranslationsTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 use strict;
 use warnings;
 use Moose;
@@ -38,16 +42,20 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 
 extends 'Test::Module::Runnable';
 
+use English qw(-no_match_vars);
 use Chleb::Server::Dancer2;
+use HTTP::Status qw(HTTP_BAD_REQUEST);
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
 
 sub testCookiePreference {
 	my ($self) = @_;
-	plan tests => 8;
+	plan tests => 10;
 
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv'), [ 'asv' ], 'ASV cookie is used');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'kjv'), [ 'kjv' ], 'KJV cookie is used');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'pickthall'), [ 'pickthall' ], 'Pickthall cookie is used');
+	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'pickthall', [ 'asv', 'kjv', 'pickthall' ]), [ 'pickthall' ], 'available translations are accepted as an array reference');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv,kjv'), [ 'asv', 'kjv' ], 'combined cookie is used');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'asv,kjv,asv'), [ 'asv', 'kjv' ], 'duplicate cookie values are ignored');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(0, undef, 'all'), [ 'all' ], 'all cookie is used');
@@ -65,6 +73,48 @@ sub testExplicitPreference {
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(1, 'kjv', 'asv'), [ 'kjv' ], 'explicit translation overrides cookie');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(1, 'asv,kjv', 'kjv'), [ 'asv', 'kjv' ], 'explicit translation list is preserved');
 	is_deeply(Chleb::Server::Dancer2::__preferredTranslations(1, '', 'asv'), [], 'explicit empty translation suppresses cookie');
+
+	return EXIT_SUCCESS;
+}
+
+sub testLookupBookFallback {
+	my ($self) = @_;
+	my $library = Chleb->new();
+	plan skip_all => 'Pickthall test data is not installed'
+		unless (scalar(grep { $_ eq 'pickthall' } $library->availableTranslations()) > 0);
+	plan tests => 2;
+
+	is_deeply(
+		Chleb::Server::Dancer2::__lookupTranslationsForBook(['pickthall'], 'eph', $library),
+		[],
+		'preferred translation falls back when it does not contain the requested book',
+	);
+	is_deeply(
+		Chleb::Server::Dancer2::__lookupTranslationsForBook(['pickthall'], 'quran', $library),
+		['pickthall'],
+		'preferred translation remains selected when it contains the requested book',
+	);
+
+	return EXIT_SUCCESS;
+}
+
+sub testLookupOrdinalValidation {
+	my ($self) = @_;
+	plan tests => 4;
+
+	foreach my $ordinals (
+		[ '6&translations=all' ],
+		[ 6, '7&translations=all' ],
+	) {
+		my $error;
+		eval {
+			Chleb::Server::Dancer2::__validateLookupOrdinals(@$ordinals);
+			1;
+		} or $error = $EVAL_ERROR;
+
+		isa_ok($error, 'Chleb::Exception', 'malformed lookup ordinal returns a Chleb exception');
+		is($error->statusCode, HTTP_BAD_REQUEST, 'malformed lookup ordinal returns HTTP 400 Bad Request');
+	}
 
 	return EXIT_SUCCESS;
 }

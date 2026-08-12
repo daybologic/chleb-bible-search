@@ -36,5 +36,6 @@ page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/sear
 grep -q '<link href="/style.css?v=' <<< "$page"
 grep -q '<table class="info-table">' <<< "$page"
 grep -q '<th>Result</th>' <<< "$page"
+grep -q '<th>Translation</th>' <<< "$page"
 grep -q '<th>Verse</th>' <<< "$page"
 grep -q '<th>Text</th>' <<< "$page"

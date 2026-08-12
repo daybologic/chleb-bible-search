@@ -30,6 +30,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package main;
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
 use strict;
 use warnings;
 

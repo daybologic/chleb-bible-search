@@ -30,8 +30,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package DampenServerTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
 use strict;
 use warnings;
+use Carp qw(croak);
 use lib 't/lib';
 use Moose;
 
@@ -44,6 +48,10 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Dampen;
+use Chleb::Server::Moose;
+use Chleb::Token;
+use Chleb::Token::Repository;
+use Digest::SHA qw(sha256_hex);
 use File::Temp qw(tempdir);
 use Test::More 0.96;
 
@@ -55,7 +63,7 @@ sub setUp {
 	}
 
 	my $dir = tempdir(CLEANUP => 1);
-	open(my $fh, '>', "$dir/main.yaml") or die("open $dir/main.yaml: $!");
+	open(my $fh, '>', "$dir/main.yaml") or croak("open $dir/main.yaml: $!");
 	print {$fh} <<'EOF';
 rate_limit:
   backend: memory
@@ -64,13 +72,13 @@ rate_limit:
   session_churn_window_seconds: 300
   session_churn_limit: 10
 EOF
-	close($fh) or die("close $dir/main.yaml: $!");
+	close($fh) or croak("close $dir/main.yaml: $!");
 
 	my $dic = Chleb::DI::Container->instance;
 	$dic->config(Chleb::DI::Config->new({ dic => $dic, path => $dir }));
 	$dic->logger(Chleb::DI::MockLogger->new());
 	$self->sut(Chleb::Server::Dampen->new({ dic => $dic }));
-	$self->sut->dic->time->set(2_000_000_000);
+	$self->sut->dic->time->setMockedTime(2_000_000_000);
 
 	return EXIT_SUCCESS;
 }
@@ -89,7 +97,7 @@ sub testIpDampenDeniesSameSecond {
 sub testSessionWindowAllows {
 	my ($self) = @_;
 
-	my $token = 'token-allow-test';
+	my $token = $self->__makeToken('token-allow-test');
 	my $allowed = 1;
 	for (my $requestI = 1; $requestI <= 100; $requestI++) {
 		$allowed &&= ($self->sut->dampenSession($token) == 0);
@@ -102,11 +110,14 @@ sub testSessionWindowAllows {
 sub testSessionWindowDenies {
 	my ($self) = @_;
 
-	my $token = 'token-deny-test';
+	my $token = $self->__makeToken('eyJhbGciOiJIUzI1NiJ9.eyJpYXQiOjF9.signature', 1);
 	for (1..100) {
 		$self->sut->dampenSession($token);
 	}
 	is($self->sut->dampenSession($token), 1, 'request over limit is denied');
+	$self->sut->dic->logger->isLogged(
+		qr/Session @{[substr(sha256_hex($token->value), 0, $Chleb::Token::LENGTH_SHORT)]} exceeded 100 requests in 60s window, denying/,
+	);
 
 	return EXIT_SUCCESS;
 }
@@ -114,7 +125,7 @@ sub testSessionWindowDenies {
 sub testSessionWindowExpiry {
 	my ($self) = @_;
 
-	my $token = 'token-expiry-test';
+	my $token = $self->__makeToken('token-expiry-test');
 	for (1..100) {
 		$self->sut->dampenSession($token);
 	}
@@ -122,6 +133,17 @@ sub testSessionWindowExpiry {
 	is($self->sut->dampenSession($token), 0, 'expired timestamps are pruned and request is allowed');
 
 	return EXIT_SUCCESS;
+}
+
+sub __makeToken {
+	my ($self, $value, $isJWT) = @_;
+	my $repo = Chleb::Token::Repository->new({ dic => $self->sut->dic });
+	my $source = $repo->repo($isJWT ? 'JWT' : 'Local');
+	return Chleb::Token->new({
+		_repo => $repo,
+		_source => $source,
+		_value => $value,
+	});
 }
 
 sub testChurnAllows {
@@ -158,6 +180,16 @@ sub testChurnExpiry {
 	}
 	$self->sut->dic->time->sleep(301);
 	is($self->sut->dampenChurn($ip, 'token-fresh'), 0, 'expired churn entries are pruned and request is allowed');
+
+	return EXIT_SUCCESS;
+}
+
+sub testUserAgentChangeIgnoresMissingPreviousValue {
+	plan tests => 3;
+
+	ok(!Chleb::Server::Moose::__userAgentChanged('', 'Mozilla/5.0'), 'missing previous user agent is not a change');
+	ok(!Chleb::Server::Moose::__userAgentChanged('Mozilla/5.0', 'Mozilla/5.0'), 'same user agent is not a change');
+	ok(Chleb::Server::Moose::__userAgentChanged('Mozilla/5.0', 'Safari/605.1.15'), 'different recorded user agent is a change');
 
 	return EXIT_SUCCESS;
 }

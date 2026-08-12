@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Chleb Bible Search
+# Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL).
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/release-common"
+require_repo
+require_clean_worktree
+
+version=$(read_version)
+expected_branch=$(version_branch "$version")
+current_branch=$(git branch --show-current)
+[[ "$current_branch" == "$expected_branch" ]] || die "release $version must be made from $expected_branch, currently on '$current_branch'"
+
+printf 'Generating build metadata with ./Makefile.PL...\n'
+./Makefile.PL
+
+test_file='t/version.t'
+[[ -f "$test_file" ]] || test_file='t/Server_version.t'
+[[ -f "$test_file" ]] || die 'cannot find t/version.t or t/Server_version.t'
+
+printf 'Running version test: perl -I lib %s\n' "$test_file"
+perl -I lib "$test_file"
+
+command -v make >/dev/null 2>&1 || die 'make is required'
+command -v sbuild >/dev/null 2>&1 || die 'sbuild is required to build the Debian package'
+
+printf 'Building Debian package with sbuild via make deb...\n'
+make deb
+
+tag="v$version"
+if git show-ref --tags --verify --quiet "refs/tags/$tag"; then
+	die "tag '$tag' already exists"
+fi
+
+tag_message=$(awk '
+	NR == 1 { print; next }
+	/^ -- / { exit }
+	{ print }
+' debian/changelog)
+printf '%s\n' "$tag_message" | git tag --annotate "$tag" --file=-
+printf 'Created tag %s.\n' "$tag"

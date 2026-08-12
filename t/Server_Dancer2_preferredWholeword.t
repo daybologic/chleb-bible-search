@@ -30,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Server_Dancer2_preferredWholewordTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
 use strict;
 use warnings;
 use Moose;

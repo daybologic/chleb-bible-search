@@ -63,7 +63,7 @@ sub byLine {
 	if ($self->params) {
 		foreach my $k (keys(%{ $self->params })) {
 			my $v = $self->params->{$k};
-			$line =~ s/\Q$k\E/$v/;
+			$line =~ s{\Q$k\E}{$v}x;
 		}
 	}
 

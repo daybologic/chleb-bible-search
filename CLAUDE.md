@@ -41,13 +41,13 @@ Functional tests require: HTTPie installed, Nginx running with the project confi
 HTTP Request → Chleb::Server::Dancer2 (routing)
                 → Chleb::Server::Moose (business logic)
                   → Chleb::Bible (core object)
-                    → Chleb::Bible::Backend (loads/caches .bin.gz data files)
+                    → Chleb::Bible::Backend (loads/caches SQLite data files)
 ```
 
 ### Key Components
 
 - **`lib/Chleb/Bible.pm`** — Main Bible object; entry point for search, lookup, random, and VOTD operations.
-- **`lib/Chleb/Bible/Backend.pm`** — Loads Bible data from compressed `.bin.gz` files (Storable format, versioned at v12). Caches decompressed data in `cache/`.
+- **`lib/Chleb/Bible/Backend.pm`** — Loads Bible data from compressed SQLite files. Caches decompressed data in `cache/`.
 - **`lib/Chleb/Bible/Search/Query.pm`** — Query builder; supports whole-word matching, testament filtering (Old/New), and book filtering. Call `->run()` to execute. Default limit: 50 verses.
 - **`lib/Chleb/Server/Dancer2.pm`** — Dancer2-based HTTP server with route definitions.
 - **`lib/Chleb/Server/Moose.pm`** — Business logic for all API endpoints.

@@ -30,6 +30,10 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package UtilsBooleanTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use Moose;

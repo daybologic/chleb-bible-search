@@ -57,8 +57,8 @@ Key files and directories:
 
 - `lib/Chleb/Bible.pm`: main Bible object and entry point for search, lookup,
   random, and verse-of-the-day operations.
-- `lib/Chleb/Bible/Backend.pm`: loads compressed `.bin.gz` Bible data files
-  using Storable format and caches decompressed data in `cache/`.
+- `lib/Chleb/Bible/Backend.pm`: loads compressed SQLite Bible data files and
+  caches decompressed data in `cache/`.
 - `lib/Chleb/Bible/Search/Query.pm`: query builder for whole-word matching,
   testament filtering, and book filtering. Call `->run()` to execute. Default
   limit is 50 verses.
@@ -97,6 +97,13 @@ Key files and directories:
   `English qw(-no_match_vars)` over raw `$!`.
 - In Perl PoD, use only `=head1` headings. Do not add `=head2` or lower
   heading levels.
+- In Perl PoD, always follow `=cut` with two newline characters before the
+  next code or POD element.
+- In Perl PoD, keep `=over` active through its `=item` entries.  Put a
+  section-level `=cut` only after `=back`; when moving entries, do not move
+  section delimiters as part of an individual item block.
+- When adding or extracting a named Perl subroutine, add or update its PoD
+  `=item` documentation in the surrounding section.
 - Keep changes scoped to the library, server layer, config, or packaging area
   implied by the task.
 

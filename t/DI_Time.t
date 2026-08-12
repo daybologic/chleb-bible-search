@@ -66,7 +66,7 @@ sub testSetPinsTime {
 	my ($self) = @_;
 	plan tests => 2;
 
-	is($self->sut->set(1234), 1234, 'set returns mocked time');
+	is($self->sut->setMockedTime(1234), 1234, 'setMockedTime returns mocked time');
 	is($self->sut->get(), 1234, 'get returns mocked time');
 
 	return EXIT_SUCCESS;
@@ -76,7 +76,7 @@ sub testSleepAdvancesMockedTime {
 	my ($self) = @_;
 	plan tests => 2;
 
-	$self->sut->set(1234);
+	$self->sut->setMockedTime(1234);
 	is($self->sut->sleep(5), 1239, 'sleep returns advanced mocked time');
 	is($self->sut->get(), 1239, 'sleep updates mocked time');
 

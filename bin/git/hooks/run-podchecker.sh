@@ -31,9 +31,11 @@
 
 set -euo pipefail
 
-scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repoRoot=$(CDPATH= cd -- "$scriptDir/../../.." && pwd)
+if [ "$#" -eq 0 ]; then
+	exit 0
+fi
 
-while IFS= read -r -d '' f; do
-	"${scriptDir}/../../maint/podchecker.sh" "$f"
-done < <(find "$repoRoot/lib" -name '*.pm' -type f -print0)
+scriptDir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+for file in "$@"; do
+	"${scriptDir}/../../maint/podchecker.sh" "$file"
+done

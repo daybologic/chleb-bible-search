@@ -31,7 +31,7 @@
 
 set -euo pipefail
 
-page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html)
+page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html translations==asv,kjv)
 
 grep -q '<link href="/style.css?v=' <<< "$page"
 ! grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
@@ -42,3 +42,17 @@ grep -q '<details class="verse-nav-more">' <<< "$page"
 grep -q '<summary>More navigation</summary>' <<< "$page"
 grep -q '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-label="Settings">' <<< "$page"
 grep -q '<span class="vn-settings-icon" aria-hidden="true">⚙</span>' <<< "$page"
+
+mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "$page" | sed -E 's#.*>([^<]+)</div>#\1#')
+[[ "${translations[*]}" == 'asv (1901) kjv (1611)' ]]
+
+orderedPage=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd Accept:text/html translations==kjv,asv)
+mapfile -t translations < <(grep -o '<div class="translation">[^<]*</div>' <<< "$orderedPage" | sed -E 's#.*>([^<]+)</div>#\1#')
+[[ "${translations[*]}" == 'kjv (1611) asv (1901)' ]]
+
+formPage=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/votd \
+	Accept:text/html form==true when=='2026-07-28T00:00:00+0000')
+grep -q '<input type="date" id="votd-date" name="date" value="2026-07-28" required>' <<< "$formPage"
+grep -q '<div class="wrapper votd-results">' <<< "$formPage"
+grep -q '>yesterday</a>' <<< "$formPage"
+grep -q '>tomorrow</a>' <<< "$formPage"

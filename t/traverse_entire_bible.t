@@ -30,6 +30,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package TraverseEntireBibleTests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (Subroutines::ProtectPrivateSubs)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
 use lib 't/lib';
@@ -144,11 +149,14 @@ sub __checkTraversalWork {
 
 	my $previousVerse;
 	my $actualBibleVerseCount = 0;
+	$bible[0]->deferSharedCacheWrites(1);
 	do {
 		$actualBibleVerseCount++;
 		$previousVerse = $verse;
 		$verse = $verse->getNext();
 	} while ($verse);
+	$bible[0]->deferSharedCacheWrites(0);
+	$bible[0]->flushSharedCache();
 
 	$verse = $previousVerse;
 	cmp_deeply($verse, all(
@@ -190,11 +198,14 @@ sub __testTraversalReverseWork {
 
 	my $previousVerse;
 	my $actualBibleVerseCount = 0;
+	$bible[0]->deferSharedCacheWrites(1);
 	do {
 		$actualBibleVerseCount++;
 		$previousVerse = $verse;
 		$verse = $verse->getPrev();
 	} while ($verse);
+	$bible[0]->deferSharedCacheWrites(0);
+	$bible[0]->flushSharedCache();
 
 	$verse = $previousVerse;
 	cmp_deeply($verse, all(

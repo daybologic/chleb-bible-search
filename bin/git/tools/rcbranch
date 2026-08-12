@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# Chleb Bible Search
+# Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL).
+
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/release-common"
+require_repo
+require_clean_worktree
+command -v dch >/dev/null 2>&1 || die 'dch is required to prepare the release changelog'
+
+purpose=''
+merge_master=1
+for arg in "$@"; do
+	case "$arg" in
+		--no-merge) merge_master=0 ;;
+		major|minor|patch|1|2|3)
+			[[ -z "$purpose" ]] || die 'release type was specified more than once'
+			purpose=$arg
+			;;
+		*) die "unsupported argument '$arg'" ;;
+	esac
+done
+
+if [[ -z "$purpose" ]]; then
+	printf '%s\n' 'What is the purpose of this release?' '  1) major' '  2) minor' '  3) patch'
+	read -r -p 'Release type (major/minor/patch, empty to abort): ' purpose
+fi
+case "$purpose" in
+	1|major) purpose=major ;;
+	2|minor) purpose=minor ;;
+	3|patch) purpose=patch ;;
+	*) die "unsupported release type '$purpose'" ;;
+esac
+[[ "$merge_master" == 1 || "$purpose" == patch ]] || die '--no-merge is supported only for patch releases'
+
+current_version=$(read_version)
+IFS=. read -r major minor patch <<< "$current_version"
+latest=$(latest_release_branch)
+[[ -n "$latest" ]] || die 'no existing rel/X.Y branch was found'
+
+case "$purpose" in
+	major)
+		target_branch="rel/$((major + 1)).0"
+		next_version="$((major + 1)).0.0"
+		;;
+	minor)
+		target_branch="rel/$major.$((minor + 1))"
+		next_version="$major.$((minor + 1)).0"
+		;;
+	patch)
+		target_branch="$latest"
+		next_version="$major.$minor.$((patch + 1))"
+		;;
+esac
+
+start_changelog() {
+	local notes_file
+	local note=''
+	local line
+	local first_note=1
+	printf 'Preparing debian/changelog for version %s with dch...\n' "$next_version"
+	notes_file=$(bin/git/tools/changelog-ai.pl "$current_version" "$next_version")
+	append_note() {
+		[[ -n "$note" ]] || return 0
+		if (( first_note )); then
+			dch --newversion="$next_version" --distribution=stable --urgency=medium "$note"
+			first_note=0
+		else
+			dch --append "$note"
+		fi
+		note=''
+	}
+	while IFS= read -r line; do
+		[[ -n "$line" ]] || continue
+		if [[ "$line" == '  * '* ]]; then
+			append_note
+			note=${line#'  * '}
+		elif [[ "$line" == '    '* && -n "$note" ]]; then
+			note+=$'\n'"${line#'    '}"
+		else
+			die "malformed release note line: $line"
+		fi
+	done < "$notes_file"
+	append_note
+	rm -f "$notes_file"
+	(( first_note == 0 )) || die 'no release notes were supplied'
+}
+
+if [[ "$purpose" == patch ]]; then
+	[[ "$target_branch" == "rel/$major.$minor" ]] || die "changelog version $current_version does not belong to $target_branch"
+	git show-ref --verify --quiet "refs/heads/$target_branch" || die "local branch '$target_branch' does not exist"
+	if (( merge_master )); then
+		git switch "$target_branch"
+		git merge master --no-ff
+	else
+		current_branch=$(git branch --show-current)
+		[[ "$current_branch" == "$target_branch" ]] || die "--no-merge requires the current branch to be '$target_branch'"
+	fi
+	start_changelog
+	if (( merge_master )); then
+		printf 'Merged master into %s for patch release preparation.\n' "$target_branch"
+	else
+		printf 'Prepared patch release on %s without merging master.\n' "$target_branch"
+	fi
+	exit 0
+fi
+
+if git show-ref --verify --quiet "refs/heads/$target_branch"; then
+	die "local branch '$target_branch' already exists"
+fi
+git switch master
+git switch --create "$target_branch"
+start_changelog
+printf 'Created release branch %s from master.\n' "$target_branch"

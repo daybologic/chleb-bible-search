@@ -42,6 +42,7 @@ use Readonly;
 
 Readonly our $DEFAULT_TTL => 604_800; # one week
 Readonly our $DATA_VERSION_MAJOR => 3;
+Readonly our $LENGTH_SHORT => 12;
 
 has ttl => (is => 'ro', isa => 'Int', required => 1, default => $DEFAULT_TTL);
 
@@ -90,13 +91,34 @@ has dirty => (is => 'rw', isa => 'Bool', default => 0);
 
 has isNew => (is => 'rw', isa => 'Bool', default => 1);
 
+=head1 METHODS
+
+=over
+
+=item C<logValue($value, $isJWT)>
+
+Returns a short value suitable for logging. JWT values are represented by the
+first C<$LENGTH_SHORT> hexadecimal characters from their SHA-256 digest; other
+token values retain their existing first C<$LENGTH_SHORT> characters.
+
+=back
+
+=cut
+
+sub logValue {
+	my ($class, $value, $isJWT) = @_;
+	return substr(Digest::SHA::sha256_hex($value), 0, $LENGTH_SHORT) if ($isJWT);
+	return substr($value, 0, $LENGTH_SHORT);
+}
+
 sub __markDirty {
 	my ($self) = @_;
 	$self->dirty(1);
 	return;
 }
 
-sub _generate {
+# Invoked by Moose as the lazy builder for the value attribute.
+sub _generate { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $sha = Digest::SHA->new(256);
@@ -104,9 +126,10 @@ sub _generate {
 	return $sha->add($PID, $time, rand($time))->hexdigest;
 }
 
-sub _makeShortValue {
+# Invoked by Moose as the lazy builder for the shortValue attribute.
+sub _makeShortValue { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
-	return substr($self->value, 0, 12);
+	return $self->logValue($self->value, $self->source->isa('Chleb::Token::Repository::JWT'));
 }
 
 sub save {

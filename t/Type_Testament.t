@@ -30,8 +30,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package TypeTestamentTests;
+## no critic (RegularExpressions::RequireExtendedFormatting)
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+## no critic (BuiltinFunctions::ProhibitUniversalIsa)
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 use lib 'externals/libtest-module-runnable-perl/lib';
@@ -140,7 +146,7 @@ sub testNotEquals {
 
 	ok(!$self->sut->equals({ }), 'HASH');
 	ok(!$self->sut->equals({ }), 'ARRAY');
-	ok(!$self->sut->equals(sub { die("Won't be called") }), 'CODE');
+	ok(!$self->sut->equals(sub { croak("Won't be called") }), 'CODE');
 
 	my $string = 'Noah';
 	ok(!$self->sut->equals(\$string), 'SCALAR');

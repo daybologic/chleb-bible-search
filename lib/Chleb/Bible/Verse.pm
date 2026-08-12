@@ -43,8 +43,6 @@ has emotion => (is => 'ro', isa => 'Str', required => 1, lazy => 1, default => \
 
 has ordinal => (is => 'ro', isa => 'Int', required => 1);
 
-has ordinalAbsolute => (is => 'ro', isa => 'Int', lazy => 1, default => \&__makeOrdinalAbsolute);
-
 has text => (is => 'ro', isa => 'Str', required => 1);
 
 has tones => (is => 'ro', isa => 'ArrayRef[Str]', required => 1, lazy => 1, default => \&__makeTones);
@@ -60,6 +58,8 @@ has continues => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeContin
 has parental => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeParental);
 
 has key => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeKey);
+
+has __queryContext => (is => 'ro', isa => 'HashRef', required => 0, default => sub { {} });
 
 has previous => (is => 'ro', isa => 'Maybe[Chleb::Bible::Verse]', lazy => 1, init_arg => undef, builder => 'getPrev');
 
@@ -82,13 +82,14 @@ sub getNext {
 
 sub getPrev {
 	my ($self) = @_;
+	my $args = { %{$self->__queryContext || {}}, nonFatal => 1 };
 
 	if ($self->ordinal == 1) {
 		if (my $chapter = $self->chapter->getPrev()) {
-			return $chapter->getVerseByOrdinal(-1);
+			return $chapter->getVerseByOrdinal(-1, $args);
 		}
 	} else {
-		return $self->chapter->getVerseByOrdinal($self->ordinal - 1, { nonFatal => 1 });
+		return $self->chapter->getVerseByOrdinal($self->ordinal - 1, $args);
 	}
 
 	return;
@@ -122,7 +123,7 @@ sub TO_JSON {
 
 sub getPath {
 	my ($self) = @_;
-	my @id = split(m@/@, $self->id);
+	my @id = split(m@/@x, $self->id);
 	shift(@id);
 	return join('/', @id);
 }
@@ -162,12 +163,7 @@ sub __makeTones {
 
 sub __makeSentiment {
 	my ($self) = @_;
-	return $self->book->bible->__backend->getSentimentByOrdinal($self->ordinalAbsolute);
-}
-
-sub __makeOrdinalAbsolute {
-	my ($self) = @_;
-	return $self->book->bible->__backend->getOrdinalByVerseKey($self->key);
+	return $self->book->bible->getSentimentByVerseKey($self->key);
 }
 
 sub __makeKey {

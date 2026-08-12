@@ -30,6 +30,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 package Utils_OSError_Mapper_Tests;
+## no critic (Modules::RequireEndWithOne)
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
 use strict;
 use warnings;
 use lib 't/lib';

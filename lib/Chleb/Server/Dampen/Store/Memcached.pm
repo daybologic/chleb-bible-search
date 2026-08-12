@@ -157,7 +157,7 @@ sub dampenSession {
 	return $count > $maxRequests ? 1 : 0;
 }
 
-=item C<dampenChurn($ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit)>
+=item C<dampenChurn($args)>
 
 Applies the session-token churn limit for an IP address.  Distinct token values
 are tracked with C<add>, and a separate counter records how many unique tokens
@@ -169,7 +169,9 @@ allowed, or C<undef> when the shared store is unavailable.
 =cut
 
 sub dampenChurn {
-	my ($self, $ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit) = @_;
+	my ($self, $args) = @_;
+	my ($ipAddress, $tokenValue, $currentTime, $churnWindow, $churnLimit) =
+		@{$args}{qw(ipAddress tokenValue currentTime churnWindow churnLimit)};
 	return unless ($self->available);
 
 	my $bucket = int($currentTime / $churnWindow);
@@ -196,7 +198,8 @@ short-lived key.
 
 =cut
 
-sub __makeAvailable {
+# Invoked by Moose as the lazy builder for the __available attribute.
+sub __makeAvailable { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	return 0 unless ($self->__client());
@@ -232,13 +235,15 @@ fallback warning if the module or client cannot be created.
 
 =cut
 
-sub __makeClient {
+# Invoked by Moose as the lazy builder for the __clientObject attribute.
+sub __makeClient { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
-	eval {
+	my $evalOk1; $evalOk1 = eval {
 		require Cache::Memcached;
 		Cache::Memcached->import();
-	};
+		1;
+	} or $evalOk1 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->__warnUnavailable("Cannot load Cache::Memcached for dampening: $evalError");
 		return;
@@ -249,12 +254,13 @@ sub __makeClient {
 	$servers = [ $servers ] unless (ref($servers) eq 'ARRAY');
 
 	my $client;
-	eval {
+	my $evalOk2; $evalOk2 = eval {
 		$client = Cache::Memcached->new({
 			servers => $servers,
 			compress_threshold => 10_000,
 		});
-	};
+		1;
+	} or $evalOk2 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->__warnUnavailable("Cannot create memcached client for dampening: $evalError");
 		return;
@@ -298,9 +304,10 @@ sub __call {
 	my ($self, $method, @args) = @_;
 
 	my $result;
-	eval {
+	my $evalOk3; $evalOk3 = eval {
 		$result = $self->__client()->$method(@args);
-	};
+		1;
+	} or $evalOk3 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$self->__available(0);
 		$self->__warnUnavailable("memcached dampening operation failed: $evalError");
@@ -330,7 +337,8 @@ uses C<chleb:dampen> when the setting is absent.
 
 =cut
 
-sub __makePrefix {
+# Invoked by Moose as the lazy builder for the __prefix attribute.
+sub __makePrefix { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my $config = $self->dic->config->get('rate_limit', 'backend_memcached', {});
 	return $config->{prefix} // 'chleb:dampen';
@@ -347,7 +355,7 @@ sub __warnUnavailable {
 	my ($self, $message) = @_;
 	return if ($self->__warned);
 	$self->__warned(1);
-	if ($message !~ m/falling back to per-process memory store/) {
+	if ($message !~ m{ falling[ ]back[ ]to[ ]per-process[ ]memory[ ]store }x) {
 		$message .= '; falling back to per-process memory store';
 	}
 	$self->dic->logger->warn($message);

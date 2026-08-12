@@ -31,6 +31,7 @@
 package Chleb::DI::Config;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 extends 'Chleb::Bible::Base';
@@ -49,7 +50,6 @@ C<tokens.yaml> are merged over it when present.
 =cut
 
 use Chleb::Utils;
-use Data::Dumper;
 use English qw(-no_match_vars);
 use IO::File;
 use Readonly;
@@ -63,6 +63,7 @@ Readonly my @SPLIT_CONFIG_FILE_NAMES => qw(
 );
 
 has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
+has __warnedDefaults => (is => 'ro', isa => 'HashRef[Bool]', lazy => 1, default => sub { {} });
 
 =head1 ATTRIBUTES
 
@@ -94,11 +95,11 @@ sub BUILD {
 	my ($self) = @_;
 
 	if (!-d $self->path) {
-		die("Config path is not a directory: " . $self->path);
+		croak("Config path is not a directory: " . $self->path);
 	}
 
 	if (!-e $self->path . '/main.yaml') {
-		die("No config available (" . $self->path . '/main.yaml)');
+		croak("No config available (" . $self->path . '/main.yaml)');
 	}
 
 	return;
@@ -116,15 +117,26 @@ sub get {
 	my ($self, $section, $key, $default, $isBoolean) = @_;
 
 	my $defaultUsed = 0;
-	my $value = $self->__get($section, $key, $default, $isBoolean, \$defaultUsed);
-	my $valuePrintable = (defined($value) && ref($value)) ? (Dumper $value) : $value;
-	my $defaultPrintable = (defined($default) && ref($default)) ? (Dumper $default) : $default;
+	my $value = $self->__get({
+		section      => $section,
+		key          => $key,
+		default      => $default,
+		isBoolean    => $isBoolean,
+		pDefaultUsed => \$defaultUsed,
+	});
+	my $valuePrintable = Chleb::Utils::redactConfigValue($key, $value);
+	$valuePrintable = Chleb::Utils::redactingDumper($valuePrintable)
+	    if (defined($valuePrintable) && ref($valuePrintable));
+	my $defaultPrintable = Chleb::Utils::redactConfigValue($key, $default);
+	$defaultPrintable = Chleb::Utils::redactingDumper($defaultPrintable)
+	    if (defined($defaultPrintable) && ref($defaultPrintable));
 	my $msg = sprintf('[%s] %s: %s (default %s)', $section, $key, $valuePrintable, $defaultPrintable);
 
 	my $level = 'trace';
-	if ($defaultUsed) {
+	if ($defaultUsed && !$self->__warnedDefaults->{join("\0", $section, $key)}) {
 		$level = 'warn';
-		$msg .= ' -- default used!  We recommend you set this value explicitly in your config!';
+		$self->__warnedDefaults->{join("\0", $section, $key)}++;
+		$msg .= ' -- default used because this value is not configured!  We recommend you set it explicitly in your config!';
 	}
 
 	$self->dic->logger->$level($msg);
@@ -144,7 +156,8 @@ file list from C<__configPaths> and recursively merges each file that exists.
 
 =cut
 
-sub __makeData {
+# Invoked by Moose as the lazy builder for the __data attribute.
+sub __makeData { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my $data = { };
 
@@ -156,7 +169,7 @@ sub __makeData {
 	return $data;
 }
 
-=item C<__get($section, $key, $default, $isBoolean, $pDefaultUsed)>
+=item C<__get($args)>
 
 Internal implementation for C<get>.  It performs the actual section/key lookup,
 fills missing keys in nested hashes from hash defaults, applies boolean parsing
@@ -165,7 +178,9 @@ when requested, and reports whether the outer default was used.
 =cut
 
 sub __get {
-	my ($self, $section, $key, $default, $isBoolean, $pDefaultUsed) = @_;
+	my ($self, $args) = @_;
+	my ($section, $key, $default, $isBoolean, $pDefaultUsed) =
+		@{$args}{qw(section key default isBoolean pDefaultUsed)};
 
 	if (defined($self->__data->{$section}->{$key})) {
 		my $value = $self->__data->{$section}->{$key};
@@ -183,18 +198,20 @@ sub __get {
 			foreach my $k (keys(%allKeys)) {
 				my $v;
 				if (exists($self->__data->{$section}->{$key}->{$k})) {
-					$self->dic->logger->trace(Dumper $self->__data);
+					$self->dic->logger->trace(Chleb::Utils::redactingDumper($self->__data));
 					$v = $self->__data->{$section}->{$key}->{$k};
-					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from real config)");
+					my $printableValue = Chleb::Utils::redactConfigValue($k, $v);
+					$self->dic->logger->trace("$section -> $key -> $k: '$printableValue' (from real config)");
 				} else {
 					$v = $default->{$k};
-					$self->dic->logger->trace("$section -> $key -> $k: '$v' (from default)");
+					my $printableValue = Chleb::Utils::redactConfigValue($k, $v);
+					$self->dic->logger->trace("$section -> $key -> $k: '$printableValue' (from default)");
 				}
 
 				$ephemeralSection{$k} = $v;
 			}
 
-			$self->dic->logger->trace('Ephemeral section content: ' . Dumper \%ephemeralSection);
+			$self->dic->logger->trace('Ephemeral section content: ' . Chleb::Utils::redactingDumper(\%ephemeralSection));
 			return \%ephemeralSection;
 		}
 

@@ -31,6 +31,7 @@
 package Chleb::Args::Base;
 use strict;
 use warnings;
+use Carp qw(croak);
 use Moose;
 
 use Chleb::Server::MediaType::Args::ToString;
@@ -41,7 +42,7 @@ sub makeDummy {
 	my ($class, $args) = @_;
 	if ($args) {
 		return $args if ($args->isa($class));
-		die('$args must be of type ' . $class);
+		croak('$args must be of type ' . $class);
 	}
 	return $class->new();
 }

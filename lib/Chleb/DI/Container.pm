@@ -31,6 +31,7 @@
 package Chleb::DI::Container;
 use MooseX::Singleton;
 use Moose;
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -166,7 +167,8 @@ This is the recommended approach.
 
 =cut
 
-sub _makeLogger {
+# Invoked by Moose as the lazy builder for the logger attribute.
+sub _makeLogger { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $paths = $self->__makePathsFor('log4perl.conf');
@@ -192,7 +194,8 @@ This is the recommended approach.
 
 =cut
 
-sub _makeConfig {
+# Invoked by Moose as the lazy builder for the config attribute.
+sub _makeConfig { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 
 	my $configFileName = 'main.yaml';
@@ -202,7 +205,7 @@ sub _makeConfig {
 		return Chleb::DI::Config->new({ dic => $self, path => $dirName });
 	}
 
-	die("No config available ($configFileName)");
+	croak("No config available ($configFileName)");
 }
 
 =item C<_makeExclusions()>
@@ -211,7 +214,8 @@ The default lazy-initializer for L</exclusions>.
 
 =cut
 
-sub _makeExclusions {
+# Invoked by Moose as the lazy builder for the exclusions attribute.
+sub _makeExclusions { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return Chleb::Bible::Exclusions->new({ dic => $self });
 }
@@ -222,7 +226,8 @@ The default lazy-initializer for L</tokenRepo>.
 
 =cut
 
-sub _makeTokenRepo {
+# Invoked by Moose as the lazy builder for the tokenRepo attribute.
+sub _makeTokenRepo { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return Chleb::Token::Repository->new({ dic => $self });
 }
@@ -233,7 +238,8 @@ The default lazy-initializer for L</time>.
 
 =cut
 
-sub _makeTime {
+# Invoked by Moose as the lazy builder for the time attribute.
+sub _makeTime { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return Chleb::DI::Time->new();
 }
@@ -244,7 +250,8 @@ Constructs a L<Chleb::Utils::OSError::Mapper> for L</errorMapper>.
 
 =cut
 
-sub _makeErrorMapper {
+# Invoked by Moose as the lazy builder for the errorMapper attribute.
+sub _makeErrorMapper { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return Chleb::Utils::OSError::Mapper->new({ dic => $self });
 }
