@@ -405,6 +405,7 @@ sub __isJsonContentType {
 sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
+	my $startTiming = Time::HiRes::time();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
 	my @verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
@@ -441,6 +442,8 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
+	__rewriteResponseTiming(\@json, $startTiming);
+
 	if (__isJsonContentType($contentType)) {
 		if ($params->{form}) {
 			croak(Chleb::Exception->raise(
@@ -458,6 +461,27 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		HTTP_NOT_ACCEPTABLE,
 		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
 	));
+}
+
+=item C<__rewriteResponseTiming($json, $startTiming)>
+
+Replace response statistics with the elapsed server-side time after all lazy
+navigation links and JSON:API structures have been generated.
+
+=cut
+
+sub __rewriteResponseTiming {
+	my ($json, $startTiming) = @_;
+	my $msec = int(1000 * (Time::HiRes::time() - $startTiming));
+
+	foreach my $response (@{ $json }) {
+		foreach my $included (@{ $response->{included} }) {
+			next unless (($included->{type} // '') eq 'stats');
+			$included->{attributes}->{msec} = $msec;
+		}
+	}
+
+	return;
 }
 
 =item C<__random($params)>
