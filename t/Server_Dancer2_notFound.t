@@ -38,9 +38,10 @@ use strict;
 use warnings;
 use Moose;
 
+use lib 't/lib';
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb::Server::Dancer2;
 use Chleb::Server::MediaType;
