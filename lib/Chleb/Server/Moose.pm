@@ -1611,6 +1611,7 @@ sub __votdFormToHtml {
 		VOTD_WHEN => $when->strftime('%FT%T%z'),
 		VOTD_YESTERDAY => $yesterdayLink,
 	});
+	$output .= __timingHtml($json->[0]);
 	$output .= Chleb::Server::Dancer2::fetchStaticPage('generic_tail');
 
 	return $output;
@@ -1651,6 +1652,7 @@ sub __verseToHtml {
 	}
 	my $pageTitle = "Chleb Bible Search - ${title}";
 	my $output = __verseHtmlCards($verseHtmlData, $pageTitle);
+	$output .= __timingHtml($json->[0]);
 
 	my $random;
 	{
@@ -2030,9 +2032,11 @@ sub __searchResultsToHtml {
 			my @suggestions = map { __searchSuggestionLink($_, $selfLink) } @{ $json->{suggestions} };
 			$message = 'Did you mean: ' . join(', ', @suggestions);
 		}
-		return Chleb::Server::Dancer2::fetchStaticPage('no_results', {
+		my $noResults = Chleb::Server::Dancer2::fetchStaticPage('no_results', {
 			NO_RESULTS_MESSAGE => $message,
 		});
+		$noResults = '' unless (defined($noResults));
+		return $noResults . __timingHtml($json);
 	}
 
 	my $includedCount = scalar(@{ $json->{included} });
@@ -2079,6 +2083,7 @@ sub __searchResultsToHtml {
 	}
 
 	$text .= "</table>\r\n";
+	$text .= __timingHtml($json);
 	$text .= __searchPaginationToHtml($json);
 
 	return $text;
@@ -2100,6 +2105,25 @@ sub __searchSuggestionLink {
 		Chleb::Utils::htmlEscape($href),
 		Chleb::Utils::htmlEscape($suggestion),
 	);
+}
+
+=item C<__timingHtml($json)>
+
+Render the response timing statistic in seconds for HTML responses.  Return an
+empty string when the response does not contain a stats inclusion.
+
+=cut
+
+sub __timingHtml {
+	my ($json) = @_;
+	return '' unless (ref($json) eq 'HASH' && ref($json->{included}) eq 'ARRAY');
+	for my $included (@{ $json->{included} }) {
+		next unless ($included->{type} // '') eq 'stats';
+		my $msec = $included->{attributes}->{msec};
+		next unless (defined($msec) && $msec =~ /\A\d+\z/x);
+		return sprintf("<p>Sought in %.3f seconds</p>\r\n", $msec / 1000);
+	}
+	return '';
 }
 
 =item C<__searchPaginationToHtml($json)>
@@ -2306,6 +2330,7 @@ sub __infoToHtml {
 	}
 
 	$text .= "</table>\r\n";
+	$text .= __timingHtml($json);
 
 	return $text;
 }

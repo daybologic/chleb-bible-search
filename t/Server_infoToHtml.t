@@ -21,10 +21,14 @@ use Test::More 0.96;
 
 sub testBookLinks {
 	my ($self) = @_;
-	plan tests => 3;
+	plan tests => 4;
 
 	my $html = Chleb::Server::Moose::__infoToHtml({
 		included => [
+			{
+				type => 'stats',
+				attributes => { msec => 123 },
+			},
 			{
 				type => 'book',
 				attributes => {
@@ -53,6 +57,7 @@ sub testBookLinks {
 	like($html, qr{href="/1/lookup/gen/1">Genesis</a>}x, 'Book column links to the first chapter');
 	like($html, qr{href="/1/lookup/gen/2">2</a>}x, 'Chapter column links to the selected chapter');
 	unlike($html, qr{href="/1/lookup/gen/2/1">2</a>}x, 'Chapter column does not link to verse one');
+	like($html, qr{Sought \s+ in \s+ 0[.]123 \s+ seconds}x, 'info HTML displays timing');
 
 	return EXIT_SUCCESS;
 }
