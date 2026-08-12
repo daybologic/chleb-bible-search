@@ -156,6 +156,7 @@ paths:
                     type: array
                     items:
                       oneOf:
+                        - $ref: '#/components/schemas/Bible'
                         - $ref: '#/components/schemas/Book'
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
@@ -282,19 +283,13 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Verse'
-                  suggestions:
-                    type: array
-                    maxItems: 5
-                    items:
-                      type: string
-                    description: >-
-                      Up to five Bible words with the smallest Levenshtein
-                      distance from the requested term. This property is
-                      present only for JSON searches that return no results.
                   included:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Stats'
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -378,10 +373,22 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Verse'
+                  suggestions:
+                    type: array
+                    maxItems: 5
+                    items:
+                      type: string
+                    description: >-
+                      Up to five Bible words with the smallest Levenshtein
+                      distance from the requested term. This property is
+                      present only for JSON searches that return no results.
                   included:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Stats'
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -510,19 +517,19 @@ paths:
             oneOf:
               - type: string
               - type: integer
-          required: true
+          required: false
           description: Book of the bible
         - in: query
           name: chapter
           schema:
             type: integer
-          required: true
+          required: false
           description: Chapter within book (ordinal)
         - in: query
           name: verse
           schema:
             type: integer
-          required: true
+          required: false
           description: Verse within chapter (ordinal)
         - in: query
           name: translations
@@ -534,8 +541,34 @@ paths:
           style: form
           explode: false
           description: Requested/accepted bible translations
+        - in: query
+          name: form
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: In text/html mode, display the lookup form
+        - in: query
+          name: navigation
+          schema:
+            type: boolean
+            default: false
+          required: false
+          description: Redirect to the lookup URL for the selected translation
+        - in: query
+          name: submit
+          schema:
+            type: string
+          required: false
+          description: Form submit action; use `lookup` to perform the compatibility lookup
       security: [] # No security
       responses:
+        '200':
+          description: Search form or lookup form
+          content:
+            text/html:
+              schema:
+                type: string
         '307':
           description: Temporary redirect
         '400':
@@ -590,16 +623,9 @@ paths:
                 type: string
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Verse'
-                  included:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Stats'
+                type: array
+                items:
+                  $ref: '#/components/schemas/LookupDocument'
         '400':
           description: Bad request
         '404':
@@ -669,7 +695,10 @@ paths:
                   included:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Stats'
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
         '400':
           description: Bad request
         '404':
@@ -719,6 +748,53 @@ components:
           schema:
             $ref: '#/components/schemas/JsonApiErrorDocument'
   schemas:
+    LookupDocument:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Verse'
+        included:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/Book'
+              - $ref: '#/components/schemas/Chapter'
+              - $ref: '#/components/schemas/Stats'
+        links:
+          $ref: '#/components/schemas/JsonApiLinks'
+    Bible:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["bible"]
+        attributes:
+          type: object
+          properties:
+            book_count:
+              type: integer
+            book_names_long:
+              type: array
+              items:
+                type: string
+            book_names_short:
+              type: array
+              items:
+                type: string
+            book_names_short_raw:
+              type: array
+              items:
+                type: string
+            translation:
+              $ref: '#/components/schemas/Translation'
+            verse_count:
+              type: integer
+            year:
+              type: integer
     JsonApiErrorDocument:
       type: object
       properties:
@@ -948,7 +1024,7 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: string
         type:
           type: string
           enum: ["verse"]
