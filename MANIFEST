@@ -450,6 +450,7 @@ t/Server_ping.t
 t/Server_random.t
 t/Server_search.t
 t/Server_searchResultsToHtml.t
+t/Server_infoToHtml.t
 t/Server_uptime.t
 t/Server_version.t
 t/Server_versionFilter.t

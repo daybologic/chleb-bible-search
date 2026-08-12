@@ -2224,10 +2224,9 @@ sub __infoToHtml {
 	my $linkToChapter = sub {
 		my ($linkText, $bookShortName, $chapterOrdinal) = @_;
 		return sprintf(
-			'<a href="/1/lookup/%s/%d/%d">%s</a>',
+			'<a href="/1/lookup/%s/%d">%s</a>',
 			$bookShortName,
 			$chapterOrdinal,
-			1,  # FIXME: At time of writing, it isn't possible to link to a whole chapter, which will be a shorter link
 			$linkText,
 		);
 	};
