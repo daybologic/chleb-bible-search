@@ -71,3 +71,34 @@ The next most important gaps are:
 3. Search pagination and page-link semantics.
 4. HTML no-result suggestions and suggestion links.
 5. JSON response-content assertions rather than success-only smoke checks.
+
+## Scope of completing the high-priority gaps
+
+Covering all high-priority gaps is reasonable as one coordinated coverage
+effort, but it is larger than a mechanical test-writing pass. The gaps span
+lookup route/form/error semantics; search pagination, suggestions, thesaurus,
+and translation behavior; random filtering and response contents; VoTD date,
+filter, and translation stability; and HTTP error/content-negotiation details.
+
+Some tests can be added immediately. Others may expose implementation or
+Swagger inconsistencies, especially:
+
+- `/1/lookup/{book}/{chapter}`;
+- `testament` and `parental` filtering;
+- Pickthall and all-translation behavior;
+- `date` versus `when` precedence;
+- pagination edge cases;
+- HTML suggestion links.
+
+A practical execution sequence is:
+
+1. Add tests for behavior already supported by the implementation.
+2. Run the functional suite and classify failures.
+3. Fix implementation or documentation mismatches.
+4. Add the remaining assertions and edge cases.
+5. Commit the completed coverage as one focused change, or split it if fixes
+   become materially independent.
+
+The expected scope is approximately 15–25 functional scenarios, with several
+iterations likely because some tests may reveal real implementation defects or
+out-of-date Swagger descriptions.
