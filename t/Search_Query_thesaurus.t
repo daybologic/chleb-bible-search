@@ -13,9 +13,10 @@ use File::Temp qw(tempfile);
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use Moose;
 
+use lib 't/lib';
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb::Bible;
 use Chleb::Bible::Backend;
@@ -24,7 +25,9 @@ use Test::More 0.96;
 
 sub setUp {
 	my ($self, %params) = @_;
-	$self->SUPER::setUp(%params);
+	if (EXIT_SUCCESS != $self->SUPER::setUp(%params)) {
+		return EXIT_FAILURE;
+	}
 
 	my ($handle, $database) = tempfile(SUFFIX => '.sqlite', UNLINK => 1);
 	close($handle) or die("Cannot close temporary database: $!\n");
