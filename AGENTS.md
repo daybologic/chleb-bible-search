@@ -131,7 +131,9 @@ Key files and directories:
   emojis that exist under `data/gitmoji/`.
 - Add `Co-Authored-By: Codex <noreply@openai.com>` to commits made by Codex.
 - Keep commit messages focused on the change being made.
-- Wrap long commit-message body or description lines at 120 columns.
+- Wrap commit-message body paragraphs at 120 columns.  Do not leave a long
+  explanatory paragraph as one line merely because it happens to fit within
+  the limit.
 
 ## Agent Notes
 
