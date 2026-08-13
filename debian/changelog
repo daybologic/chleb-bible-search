@@ -1,3 +1,35 @@
+chleb-bible-search (3.1.0) stable; urgency=medium
+
+  * ✨ Add thesaurus and "Did you mean:" dictionary features with HTML
+    search suggestions and translation expansion
+  * 🔎 Centralize Bible word extraction and HTML escaping utilities used
+    by search and thesaurus
+  * 🧭 Improve book and chapter info links and link search suggestion
+    items to lookup/navigation
+  * ⚡ Measure and render lookup and HTML generation timings in the UI
+  * 🛠️ Keep Bible Verse‑of‑The‑Day references stable and anchor
+    compatible translations to canonical references
+  * 🐛 Fix duplicate lookup ordinal validation and preserve malformed
+    ordinals on HTTP 400 path with regression tests
+  * 🔕 Silence noisy test log output by mocking token repository and
+    HTTP/error tests to prevent Log4perl warnings
+  * 🧪 Restore and standardize functional tests including thesaurus, HTTP
+    error, redirect and form tests; cover high‑priority functional paths
+    and add coverage reports
+  * 🌐 Add negotiated HTML error pages and illustrated images for many
+    HTTP status codes; normalize template and image filenames and
+    preserve details in 404 responses
+  * 💾 Defer cache writes during whole‑Bible traversal tests to avoid
+    expensive repeated shared cache rewrites
+  * 📚 Add interactive Verse of the Day form and link VoTD
+    references/subscripts to lookup navigation
+  * 📝 Align and document OpenAPI/Swagger responses and document
+    not‑found and thesaurus behaviors
+  * ⚙️ Add FUNDING.yml and project metadata files; update MANIFEST and
+    test reports
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Thu, 13 Aug 2026 01:24:18 +0100
+
 chleb-bible-search (3.0.1) stable; urgency=medium
 
   * ✨ support patch releases without merging master (handle patch
