@@ -876,6 +876,16 @@ for other requests.
 
 sub __registerNotFoundRoute {
 	any qr{ .* }x => sub {
+		# A missing image must not receive the illustrated HTML 404 page.  That
+		# page references an image itself, so returning it for a missing image
+		# creates a browser-side request loop when an asset is absent in a
+		# deployment.
+		if (request()->path() =~ m{ \A/images/ }x) {
+			status HTTP_NOT_FOUND;
+			content_type 'text/plain';
+			return 'Image not found';
+		}
+
 		my $accept = Chleb::Server::MediaType->parseAcceptHeader(request()->header('Accept'));
 		if (my $html = __notFoundHtml($accept)) {
 			status HTTP_NOT_FOUND;

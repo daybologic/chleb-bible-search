@@ -40,7 +40,15 @@ if [ "$httpResult" -eq 4 ] \
 	&& grep -qi '^Content-Type: text/html' <<< "$response" \
 	&& grep -q '<h1>Page not found</h1>' <<< "$response" \
 	&& grep -q 'src="/images/404_not_found.webp"' <<< "$response"; then
-	exit 0
+	imageResponse=$(http --print=hb --pretty=none --check-status GET chleb-api.example.org/images/404_not_found.webp Accept:image/webp 2>/dev/null)
+	imageResult=$?
+	imageStatusCode=$(head -n 1 <<< "$imageResponse" | awk '{print $2}')
+
+	if [ "$imageResult" -eq 0 ] \
+		&& [[ "$imageStatusCode" == "200" ]] \
+		&& grep -qi '^Content-Type: image/webp' <<< "$imageResponse"; then
+		exit 0
+	fi
 fi
 
 exit 1
