@@ -29,9 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+set -uo pipefail
 
-echo '❌ TODO form mode is only supported in HTML mode; the code is correct, the test exits 4, we need to handle that better'
-exit 0
-
-http --check-status GET chleb-api.example.org/1/search Accept:application/json term==fire wholeword==true form==true
+http --check-status GET chleb-api.example.org/1/search Accept:application/json term==fire wholeword==true form==true >/dev/null 2>&1
+[[ $? -eq 4 ]]

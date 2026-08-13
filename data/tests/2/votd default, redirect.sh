@@ -29,9 +29,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+set -uo pipefail
 
-echo '❌ FIXME: default should be HTML, this returns JSON, but the 400 error is correct'
-exit 0
-
-http --check-status GET chleb-api.example.org/2/votd redirect==true
+http --check-status GET chleb-api.example.org/2/votd redirect==true >/dev/null 2>&1
+[[ $? -eq 4 ]]
