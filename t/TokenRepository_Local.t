@@ -67,9 +67,9 @@ sub setUp {
 
 	$self->dic(Chleb::DI::Container->instance);
 	$self->dic->configPaths(['etc-local']);
+	$self->dic->logger(Chleb::DI::MockLogger->new());
 	$self->dic->time->setMockedTime(2_000_000_000);
 	$self->sut(Chleb::Token::Repository::Local->new({ dic => $self->dic }));
-	$self->__mockLogger();
 
 	return EXIT_SUCCESS;
 }
@@ -202,12 +202,6 @@ sub testLoadNotInvalidHash {
 	ok(!$token, 'token not set');
 
 	return EXIT_SUCCESS;
-}
-
-sub __mockLogger {
-	my ($self) = @_;
-	$self->sut->dic->logger(Chleb::DI::MockLogger->new());
-	return;
 }
 
 package main;

@@ -38,9 +38,10 @@ use strict;
 use warnings;
 use Moose;
 
+use lib 't/lib';
 use lib 'externals/libtest-module-runnable-perl/lib';
 
-extends 'Test::Module::Runnable';
+extends 'Test::Module::Runnable::Local';
 
 use Chleb::Server::Dancer2;
 use Chleb::Server::MediaType;
@@ -161,6 +162,9 @@ sub testRoutePreservesJson {
 sub testDeliberateInternalServerErrorRoute {
 	my ($self) = @_;
 	plan tests => 8;
+	my $stderr = q{};
+	open(my $stderrHandle, '>', \$stderr) or die("Cannot capture STDERR: $!\n");
+	local *STDERR = $stderrHandle;
 
 	my $app = Chleb::Server::Dancer2->to_app();
 	test_psgi($app, sub {
@@ -216,6 +220,9 @@ sub testAllDeliberateHttpErrorRoutes {
 	my ($self) = @_;
 	my @codes = @{ Chleb::Server::Dancer2::httpErrorCodes() };
 	plan tests => scalar(@codes) * 4;
+	my $stderr = q{};
+	open(my $stderrHandle, '>', \$stderr) or die("Cannot capture STDERR: $!\n");
+	local *STDERR = $stderrHandle;
 
 	my $app = Chleb::Server::Dancer2->to_app();
 	test_psgi($app, sub {
