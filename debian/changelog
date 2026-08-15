@@ -1,3 +1,11 @@
+chleb-bible-search (3.1.1) stable; urgency=high
+
+    ⚡ avoid full-table scans for random verses
+    🐛 package HTTP error templates
+    🐛 prevent recursive missing-image 404s
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 15 Aug 2026 06:36:40 +0100
+
 chleb-bible-search (3.1.0) stable; urgency=medium
 
   * ✨ Add thesaurus and "Did you mean:" dictionary features with HTML
