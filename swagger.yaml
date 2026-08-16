@@ -37,9 +37,59 @@ info:
   description: Query the bible, or get a verse of the day.
   version: 3.1.1
 servers:
+  - url: /
+    description: This server
   - url: https://chleb-api.daybologic.co.uk
     description: Published API, production
 paths:
+  /openapi.yaml:
+    get:
+      summary: Get the OpenAPI document in YAML format
+      operationId: getOpenapiYaml
+      security: []
+      responses:
+        '200':
+          description: OpenAPI 3.0 document
+          content:
+            application/yaml:
+              schema:
+                type: string
+        '404':
+          description: OpenAPI document not found
+  /openapi.json:
+    get:
+      summary: Get the OpenAPI document in JSON format
+      operationId: getOpenapiJson
+      security: []
+      responses:
+        '200':
+          description: OpenAPI 3.0 document
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: OpenAPI document not found
+  /docs:
+    get:
+      summary: Get interactive HTML API documentation
+      operationId: getOpenapiDocs
+      security: []
+      responses:
+        '200':
+          description: Swagger UI documentation
+          content:
+            application/yaml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: object
+            text/html:
+              schema:
+                type: string
+        '404':
+          description: Documentation page not found
   /1/test/http/{statusCode}:
     get:
       summary: Generate a registered HTTP error
@@ -160,6 +210,9 @@ paths:
                         - $ref: '#/components/schemas/Book'
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
         '429':
           $ref: '#/components/responses/RateLimited'
   /1/uptime:
@@ -180,6 +233,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Uptime'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
             text/html:
               schema:
                 type: string
@@ -203,6 +259,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Pong'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
             text/html:
               schema:
                 type: string
@@ -226,6 +285,9 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Version'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
             text/html:
               schema:
                 type: string
@@ -290,6 +352,9 @@ paths:
                         - $ref: '#/components/schemas/Book'
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -389,6 +454,9 @@ paths:
                         - $ref: '#/components/schemas/Book'
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -493,6 +561,9 @@ paths:
                         - $ref: '#/components/schemas/Stats'
                   links:
                     $ref: '#/components/schemas/JsonApiLinks'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
         '400':
           description: Bad request
         '429':
@@ -626,6 +697,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LookupDocument'
+            application/vnd.api+json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LookupDocument'
         '400':
           description: Bad request
         '404':
@@ -686,19 +762,14 @@ paths:
                 type: string
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Verse'
-                  included:
-                    type: array
-                    items:
-                      oneOf:
-                        - $ref: '#/components/schemas/Book'
-                        - $ref: '#/components/schemas/Chapter'
-                        - $ref: '#/components/schemas/Stats'
+                type: array
+                items:
+                  $ref: '#/components/schemas/LookupDocument'
+            application/vnd.api+json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LookupDocument'
         '400':
           description: Bad request
         '404':
@@ -748,6 +819,23 @@ components:
           schema:
             $ref: '#/components/schemas/JsonApiErrorDocument'
   schemas:
+    JsonApiDocument:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          description: JSON:API primary data
+          items:
+            type: object
+        included:
+          type: array
+          description: Related resources included in the document
+          items:
+            type: object
+        links:
+          $ref: '#/components/schemas/JsonApiLinks'
     LookupDocument:
       type: object
       properties:
