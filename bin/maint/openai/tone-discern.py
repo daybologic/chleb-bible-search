@@ -52,7 +52,7 @@ PRIMARY_EMOTIONS = [
 
 TONES = [
     "comfort", "encouragement", "lament", "rebuke", "warning",
-    "praise", "thanksgiving", "confession", "trust", "perseverance", "instruction", "challenge"
+    "praise", "thanksgiving", "confession", "trust", "perseverance", "instruction", "challenge", "humility"
 ]
 
 client = OpenAI()
@@ -227,10 +227,23 @@ Here is the verse:
         print(output_text)
         raise e
 
+    obj = _discard_unknown_tones([obj])[0]
     if not _valid_tagged_list([verse], [obj]):
         raise ValueError(f"Invalid tag returned for verse {verse['id']}: {obj}")
 
     return obj
+
+
+def _discard_unknown_tones(tagged_list: Any):
+    """Remove unrecognised tones so they do not force an API retry."""
+    if not isinstance(tagged_list, list):
+        return tagged_list
+
+    for tags in tagged_list:
+        if isinstance(tags, dict) and isinstance(tags.get("tones"), list):
+            tags["tones"] = [tone for tone in tags["tones"] if tone in TONES][:3]
+
+    return tagged_list
 
 
 def _tagged_list_error(batch: List[Dict[str, Any]], tagged_list: Any):
@@ -275,6 +288,7 @@ def tag_batch(batch: List[Dict[str, Any]], translation: str, model: str) -> List
         print("JSON parse error in batch; will fall back to smaller units.")
         tagged_list = None
 
+    tagged_list = _discard_unknown_tones(tagged_list)
     if _valid_tagged_list(batch, tagged_list):
         return tagged_list
 
