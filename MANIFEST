@@ -316,6 +316,7 @@ data/tests/1/template.sh
 'data/tests/2/votd HTML.sh'
 'data/tests/2/votd JSON, redirect.sh'
 'data/tests/2/votd JSON.sh'
+'data/tests/openapi formats.sh'
 data/tests/httpie-collection-chleb-bible-search.json
 debian/changelog
 debian/chleb-bible-search-core.dirs
