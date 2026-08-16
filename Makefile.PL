@@ -72,6 +72,7 @@ invoke('bin/maint/pkg-info.sh'); # needs to run really early doors
 invoke('bin/maint/synology.sh');
 invoke('bin/maint/git-install-local-hooks.sh') if (can_write_hooks_dir());
 invoke('bin/maint/make-legal-notices.sh');
+invoke('bin/maint/openapi-publish.sh');
 
 my @exeFiles = ( );
 push @exeFiles, glob q('bin/core/*.psgi');

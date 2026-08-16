@@ -53,6 +53,7 @@ use Chleb::Server::Moose;
 use Chleb::TemplateProcessor;
 use Chleb::Utils::OSError::Mapper;
 use Chleb::Utils::SecureString;
+use Cwd qw(abs_path);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
 use POSIX qw(EXIT_SUCCESS);
@@ -925,6 +926,64 @@ sub __configSetPublicDir {
 	return;
 }
 
+=head1 __publishedOpenapiPath($name)
+
+Return the installed or source-checkout path for a published OpenAPI asset.
+The source checkout is preferred so development always serves the generated
+assets from the current checkout; the installed path supports Debian
+deployments.
+
+=cut
+
+sub __publishedOpenapiPath {
+	my ($name) = @_;
+	my @paths = (
+		"./data/static/public/${name}",
+		"/usr/share/chleb-bible-search/public/${name}",
+	);
+
+	foreach my $path (@paths) {
+		return abs_path($path) if (-e $path);
+	}
+
+	return $paths[-1];
+}
+
+=head1 __openapiRepresentation($accept)
+
+Choose the published OpenAPI representation for an C<Accept> header.  HTML
+is the default for browsers and wildcard requests; JSON and YAML are selected
+when explicitly requested.  An array reference containing the asset name and
+content type is returned.
+
+=cut
+
+sub __openapiRepresentation {
+	my ($accept) = @_;
+	my $parsed = Chleb::Server::MediaType->parseAcceptHeader($accept);
+
+	foreach my $item (@{ $parsed->items }) {
+		next if ($item->weight == 0);
+
+		my $major = $item->major;
+		my $minor = $item->minor;
+		return [ 'openapi.yaml', 'application/yaml' ]
+		    if (($major eq 'application' || $major eq 'text') && ($minor eq 'yaml' || $minor eq 'x-yaml'));
+		return [ 'openapi.json', 'application/json' ]
+		    if ($major eq 'application' && $minor eq 'json');
+		return [ 'docs.html', 'text/html' ]
+		    if ($major eq 'text' && $minor eq 'html');
+		return [ 'openapi.json', 'application/json' ]
+		    if ($major eq 'application' && $minor eq '*');
+		return [ 'docs.html', 'text/html' ]
+		    if ($major eq 'text' && $minor eq '*');
+		return [ 'docs.html', 'text/html' ]
+		    if ($major eq '*' && $minor eq '*');
+	}
+
+	return [ 'docs.html', 'text/html' ];
+}
+
 sub __detaint {
 	my ($value, $name) = @_;
 
@@ -965,6 +1024,35 @@ Register the home page and settings routes.
 
 # Invoked during module initialization to register Dancer routes.
 sub __registerPageRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/docs' => sub {
+		my $representation = __openapiRepresentation(request()->header('Accept'));
+		return send_file(__publishedOpenapiPath($representation->[0]),
+			system_path => 1,
+			content_type => $representation->[1],
+		);
+	};
+
+	get '/openapi.yaml' => sub {
+		return send_file(__publishedOpenapiPath('openapi.yaml'),
+			system_path => 1,
+			content_type => 'application/yaml',
+		);
+	};
+
+	get '/openapi.json' => sub {
+		return send_file(__publishedOpenapiPath('openapi.json'),
+			system_path => 1,
+			content_type => 'application/json',
+		);
+	};
+
+	get '/docs.html' => sub {
+		return send_file(__publishedOpenapiPath('docs.html'),
+			system_path => 1,
+			content_type => 'text/html',
+		);
+	};
+
 	get '/' => sub {
 	$server->logRequest();
 	$server->handleSessionToken();
