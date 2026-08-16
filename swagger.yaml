@@ -213,6 +213,9 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/JsonApiDocument'
+            text/x-yaml:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
         '429':
           $ref: '#/components/responses/RateLimited'
   /1/uptime:
@@ -234,6 +237,9 @@ paths:
                     items:
                       $ref: '#/components/schemas/Uptime'
             application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
+            text/x-yaml:
               schema:
                 $ref: '#/components/schemas/JsonApiDocument'
             text/html:
@@ -262,6 +268,9 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/JsonApiDocument'
+            text/x-yaml:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
             text/html:
               schema:
                 type: string
@@ -286,6 +295,9 @@ paths:
                     items:
                       $ref: '#/components/schemas/Version'
             application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
+            text/x-yaml:
               schema:
                 $ref: '#/components/schemas/JsonApiDocument'
             text/html:
@@ -353,6 +365,9 @@ paths:
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
             application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
+            text/x-yaml:
               schema:
                 $ref: '#/components/schemas/JsonApiDocument'
         '429':
@@ -455,6 +470,9 @@ paths:
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
             application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
+            text/x-yaml:
               schema:
                 $ref: '#/components/schemas/JsonApiDocument'
         '429':
@@ -562,6 +580,9 @@ paths:
                   links:
                     $ref: '#/components/schemas/JsonApiLinks'
             application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/JsonApiDocument'
+            text/x-yaml:
               schema:
                 $ref: '#/components/schemas/JsonApiDocument'
         '400':
@@ -729,6 +750,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LookupDocument'
+            text/x-yaml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LookupDocument'
         '400':
           description: Bad request
         '404':
@@ -807,6 +833,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/LookupDocument'
             application/vnd.api+json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LookupDocument'
+            text/x-yaml:
               schema:
                 type: array
                 items:
