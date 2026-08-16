@@ -33,4 +33,10 @@ if [ "$#" -eq 0 ]; then
 	set -- swagger.yaml
 fi
 
-npx @redocly/cli lint --extends=recommended "$@"
+redocly='./node_modules/.bin/redocly'
+if [ ! -x "$redocly" ]; then
+	echo "ERROR: Redocly CLI is not installed at $redocly; run npm ci first" >&2
+	exit 1
+fi
+
+exec "$redocly" lint --extends=recommended "$@"
