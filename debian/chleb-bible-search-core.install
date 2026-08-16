@@ -4,5 +4,6 @@ etc/nginx/*.example /etc/nginx/sites-available/
 debian/etc/*.conf /etc/chleb-bible-search/
 debian/etc/*.yaml /etc/chleb-bible-search/
 data/static/*.html /usr/share/chleb-bible-search/
+data/static/http/*.html /usr/share/chleb-bible-search/http/
 data/static/public/* /usr/share/chleb-bible-search/public/
 debian/etc/cron.monthly/chleb-bible-search /etc/cron.monthly/

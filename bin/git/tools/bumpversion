@@ -46,7 +46,11 @@ elif [[ -f t/Server_version.t ]]; then
 else
 	die 'cannot find t/version.t or t/Server_version.t'
 fi
-NEW_VERSION="$new_version" perl -0pi -e 's{(version\s*=>\s*["'"'"'])[0-9]+\.[0-9]+\.[0-9]+(["'"'"'])}{$1$ENV{NEW_VERSION}$2}g; s{(<td>)[0-9]+\.[0-9]+\.[0-9]+(</td>)}{$1$ENV{NEW_VERSION}$2}g' "$test_file"
+NEW_VERSION="$new_version" perl -0pi -e '
+	my $regex_version = join(q{\.}, split(m{\.}, $ENV{NEW_VERSION}));
+	s{(version\s*=>\s*["'"'"'])[0-9]+\.[0-9]+\.[0-9]+(["'"'"'])}{$1$ENV{NEW_VERSION}$2}g;
+	s{(<td>)[0-9]+\\\.[0-9]+\\\.[0-9]+(</td>)}{$1$regex_version$2}g;
+' "$test_file"
 
 printf 'Updated release references to %s.\n' "$new_version"
 git diff --stat -- README.md swagger.yaml t/version.t t/Server_version.t lib

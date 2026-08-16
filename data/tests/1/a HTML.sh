@@ -31,12 +31,16 @@
 
 set -uo pipefail
 
-statusCode=$(http --print=h --pretty=none --check-status GET chleb-api.example.org/1/a Accept:text/html 2>/dev/null | head -n 1 | awk '{print $2}')
+response=$(http --print=hb --pretty=none --check-status GET chleb-api.example.org/1/lookup/wibble/1/1 Accept:text/html 2>/dev/null)
+httpResult=$?
+statusCode=$(head -n 1 <<< "$response" | awk '{print $2}')
 
-if [ $? -eq 4 ]; then
-	if [[ "$statusCode" == "404" ]]; then
-		exit 0
-	fi
+if [ "$httpResult" -eq 4 ] \
+	&& [[ "$statusCode" == "404" ]] \
+	&& grep -qi '^Content-Type: text/html' <<< "$response" \
+	&& grep -q '<h1>Page not found</h1>' <<< "$response" \
+	&& grep -q 'did you mean' <<< "$response"; then
+	exit 0
 fi
 
 exit 1

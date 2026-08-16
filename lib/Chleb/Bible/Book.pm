@@ -172,9 +172,11 @@ If the C<Verse> cannot be found, a fatal error is thrown.
 =cut
 
 sub getVerseByOrdinal {
-	my ($self, $ordinal) = @_;
+	my ($self, $ordinal, $args) = @_;
 
-	$ordinal = $self->verseCount if ($ordinal == -1);
+	if ($ordinal < 0) {
+		$ordinal = $self->verseCount + $ordinal + 1;
+	}
 
 	my $bookVerseKey = join(':', $self->bible->translation, $self->shortNameRaw, $ordinal);
 	if (my $verseKey = $self->bible->getVerseKeyByBookVerseKey($bookVerseKey)) {
@@ -182,10 +184,11 @@ sub getVerseByOrdinal {
 		if (my $text = $self->bible->getVerseDataByKey($verseKey)) {
 			my $chapter = $self->getChapterByOrdinal($chapterNumber);
 			return Chleb::Bible::Verse->new({
-				book    => $self,
-				chapter => $chapter,
-				ordinal => $verseNumber,
-				text    => $text,
+				book           => $self,
+				chapter        => $chapter,
+				ordinal        => $verseNumber,
+				text           => $text,
+				__queryContext => $args || {},
 			});
 		} else {
 			croak("I don't think you can reach this");
@@ -232,7 +235,7 @@ if nothing has matched.
 =cut
 
 sub search {
-	my ($self, $query) = @_;
+	my ($self, $query, $args) = @_;
 	my @verses;
 
 	my $qtext = $query->text;
@@ -247,10 +250,8 @@ sub search {
 		# Boundary: start/end OR a char that is NOT [\w'-]
 		$rx[0] = qr/(?<![\w'-])$phrase(?![\w'-])/ix;
 	} else {
-		# Extract words including internal apostrophes/hyphens
-		my @words = ($qtext =~ /[\w]+(?:['-][\w]+)*/gx);
-
-		@rx = map { qr/\Q$_\E/ix } @words;
+		my $wordGroups = $query->expandedWords();
+		@rx = map { __wordGroupRegex($_) } @$wordGroups;
 	}
 
 	CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
@@ -276,10 +277,11 @@ sub search {
 
 			if ($doPush) {
 				push(@verses, Chleb::Bible::Verse->new({
-                                        book    => $self,
-                                        chapter => $chapter,
-                                        ordinal => $verseOrdinal,
-                                        text    => $text,
+					book           => $self,
+					chapter        => $chapter,
+					ordinal        => $verseOrdinal,
+					text           => $text,
+					__queryContext => $args || {},
 				}));
 
 				last CHAPTER if (scalar(@verses) >= $query->limit);
@@ -288,6 +290,19 @@ sub search {
 	}
 
 	return \@verses;
+}
+
+=item C<__wordGroupRegex($words)>
+
+Build a case-insensitive regular expression matching one word or any of its
+translation-specific thesaurus alternatives.
+
+=cut
+
+sub __wordGroupRegex {
+	my ($words) = @_;
+	my $pattern = join('|', map { quotemeta($_) } @$words);
+	return qr/(?:$pattern)/ix;
 }
 
 =item C<randomVerse()>

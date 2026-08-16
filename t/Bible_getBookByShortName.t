@@ -104,10 +104,34 @@ sub testNotFound {
 
 sub testNotFoundNonFatal {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my @bible = $self->sut->__getBible();
 	is($bible[0]->getBookByShortName('jes', { nonFatal => 1 }), undef, '<undef> returned');
+	$bible[0]->dic->logger->isLogged(qr/Short[ ]book[ ]name[ ]'jes'[ ]is[ ]not[ ]a[ ]book/x);
+
+	return EXIT_SUCCESS;
+}
+
+sub testFindNotFound {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my @bible = $self->sut->__getBible();
+	my $messageCount = scalar(@{ $bible[0]->dic->logger->__messages });
+	is($bible[0]->findBookByShortName('jes'), undef, '<undef> returned');
+	is(scalar(@{ $bible[0]->dic->logger->__messages }), $messageCount, 'unsuccessful find is not logged');
+
+	return EXIT_SUCCESS;
+}
+
+sub testFindSuccess {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my @bible = $self->sut->__getBible();
+	my $book = $bible[0]->findBookByShortName('prov');
+	is($book->shortName, 'prov', 'shortName is prov');
 
 	return EXIT_SUCCESS;
 }

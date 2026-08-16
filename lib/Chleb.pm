@@ -102,10 +102,11 @@ sub fetch {
 	my (@bible) = $self->__getBible($args);
 
 	my @verse;
+	my @suggestions;
 	for (my $bibleI = 0; $bibleI < scalar(@bible); $bibleI++) {
 		my $resolvedBook;
 		my $resolvedOk = eval {
-			$resolvedBook = $bible[$bibleI]->resolveBook($book);
+			$resolvedBook = $bible[$bibleI]->resolveBook($book, { suggestions => \@suggestions });
 			1;
 		};
 		next unless ($resolvedOk && $resolvedBook);
@@ -119,8 +120,13 @@ sub fetch {
 		}
 	}
 
-	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, "Book '$book' was not found in any requested translation"))
-	    if (scalar(@verse) == 0);
+	if (scalar(@verse) == 0) {
+		my %seen;
+		@suggestions = sort(grep { !$seen{$_}++ } @suggestions);
+		my $description = "Book '$book' was not found in any requested translation";
+		$description .= ', did you mean ' . join(', ', @suggestions) . '?' if (scalar(@suggestions) > 0);
+		croak(Chleb::Exception->raise(HTTP_NOT_FOUND, $description));
+	}
 
 	my $endTiming = Time::HiRes::time();
 	my $msec = int(1000 * ($endTiming - $startTiming));
@@ -269,42 +275,47 @@ sub votd {
 	$self->dic->logger->trace('Looking for testament: ' . $testament->toString());
 
 	my (@bible) = $self->__getBible($args);
+	my $anchorBible = $self->__votdAnchorBible();
 	$when = $self->_resolveISO8601($when);
 	$when = $when->set_time_zone('UTC')->truncate(to => 'day');
 
-	my ($verse, $verseOrdinal, @verses);
+	my ($verse, @verses);
+	OFFSET:
 	for (my $offset = 0; $offset > -1; $offset++) {
 		my $seed = crc32($when->epoch + $offset);
 		$self->dic->logger->debug(sprintf('Looking up VoTD for %s', $when->ymd));
 		$self->dic->logger->trace(sprintf('Using seed %d', $seed));
 
-		# TODO: Will this work with the Apocrypha, especially if more than one translation is specified?
-		$verseOrdinal = 1 + ($seed % $bible[0]->verseCount);
-		$verse = $bible[0]->getVerseByOrdinal($verseOrdinal, $args);
-		next unless ($self->__isTestamentMatch($verse, $testament));
-
-		if ($parental && $verse->parental) {
-			$self->dic->logger->debug('Skipping ' . $verse->toString() . ' because of parental mode');
-			next;
+		my $anchorVerseCount = $anchorBible->verseCount;
+		my $anchorOrdinal = ($seed % (2 * $anchorVerseCount)) - $anchorVerseCount;
+		$anchorOrdinal = -$anchorVerseCount if ($anchorOrdinal == 0);
+		my $anchorVerse = $anchorBible->getVerseByOrdinal($anchorOrdinal, $args);
+		while ($anchorVerse->previous && $anchorVerse->previous->continues) {
+			$anchorVerse = $anchorVerse->previous;
 		}
 
-		while ($verse->previous && $verse->previous->continues) {
-			# look upwards until we are not on a continuation, to give increased context
-			$verse = $verse->previous;
-		}
+		my @candidateVerses;
+		foreach my $candidateBible (@bible) {
+			my $candidateVerse = $self->__votdVerseForTranslation(
+				$candidateBible,
+				$anchorVerse,
+				$seed,
+				$args,
+			);
+			next OFFSET unless ($candidateVerse);
+			next OFFSET unless ($self->__isTestamentMatch($candidateVerse, $testament));
 
-		my $verseAvailable = 1;
-		@verses = ($verse);
-		for (my $candidateI = 1; $candidateI < scalar(@bible); $candidateI++) {
-			my $candidateBible = $bible[$candidateI];
-			my $candidateVerse = $self->__getRelatedRandomVerse($candidateBible, $verse, $verseOrdinal, $args);
-			unless ($candidateVerse) {
-				$verseAvailable = 0;
-				last;
+			if ($parental && $candidateVerse->parental) {
+				$self->dic->logger->debug('Skipping ' . $candidateVerse->toString() . ' because of parental mode');
+				next OFFSET;
 			}
-			push(@verses, $candidateVerse);
+
+			push(@candidateVerses, $candidateVerse);
 		}
-		last if ($verseAvailable);
+
+		@verses = @candidateVerses;
+		$verse = $verses[0];
+		last;
 	}
 
 	$self->dic->logger->debug($verse->toString());
@@ -464,6 +475,51 @@ sub __makeAvailableTranslations {
 	return [ $bible->__backend->getAvailableTranslations() ];
 }
 
+=item C<__votdAnchorBible()>
+
+Return the stable translation used to choose the Bible VoTD reference.  Prefer
+the default translation when it is installed, regardless of which translations
+the caller requested.
+
+=cut
+
+sub __votdAnchorBible {
+	my ($self) = @_;
+	my @translations = $self->__allTranslationsList();
+	my %available = map { $_ => 1 } @translations;
+	my $translation = $available{$TRANSLATION_DEFAULT} ? $TRANSLATION_DEFAULT : $translations[0];
+	return $self->bibles($translation);
+}
+
+=item C<__votdVerseForTranslation($bible, $anchorVerse, $seed, $args)>
+
+Return the VoTD candidate for C<$bible>.  Translations containing the anchor
+book use the anchor's exact chapter and verse.  Translations with an
+incompatible canon use their own deterministic ordinal and context boundary.
+
+=cut
+
+sub __votdVerseForTranslation {
+	my ($self, $bible, $anchorVerse, $seed, $args) = @_;
+
+	my ($book) = grep { $_->equals($anchorVerse->book->shortName) } @{ $bible->books };
+	if ($book) {
+		my $chapter = $book->getChapterByOrdinal($anchorVerse->chapter->ordinal, { nonFatal => 1 });
+		return unless ($chapter);
+		return $chapter->getVerseByOrdinal($anchorVerse->ordinal, { %{$args // {}}, nonFatal => 1 });
+	}
+
+	my $verseCount = $bible->verseCount;
+	my $signedOrdinal = ($seed % (2 * $verseCount)) - $verseCount;
+	$signedOrdinal = -$verseCount if ($signedOrdinal == 0);
+	my $verse = $bible->getVerseByOrdinal($signedOrdinal, $args);
+	while ($verse->previous && $verse->previous->continues) {
+		$verse = $verse->previous;
+	}
+
+	return $verse;
+}
+
 =item C<__getRelatedRandomVerse($bible, $anchorVerse, $verseOrdinal, $args)>
 
 Return the corresponding random verse from another translation.  Translations
@@ -475,7 +531,7 @@ with a different canon fall back to their own verse ordinal.
 sub __getRelatedRandomVerse {
 	my ($self, $bible, $anchorVerse, $verseOrdinal, $args) = @_;
 
-	my $book = $bible->getBookByShortName($anchorVerse->book->shortName, { nonFatal => 1 });
+	my $book = $bible->findBookByShortName($anchorVerse->book->shortName);
 	if ($book) {
 		my $chapter = $book->getChapterByOrdinal($anchorVerse->chapter->ordinal, { nonFatal => 1 });
 		return if (!$chapter);

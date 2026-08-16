@@ -128,11 +128,87 @@ sub testV2 {
 	return EXIT_SUCCESS;
 }
 
+sub testV2TranslationIndependentDailyVerse {
+	my ($self) = @_;
+	plan skip_all => 'Pickthall test data is not installed' unless ($self->hasTranslation('pickthall'));
+	plan tests => 5;
+
+	my $when = '2026-08-05T12:00:00+0100';
+	my @cases = (
+		[ [ 'asv' ], [ 'asv:Ezra 2:43' ] ],
+		[ [ 'kjv' ], [ 'kjv:Ezra 2:43' ] ],
+		[ [ 'pickthall' ], [ 'pickthall:Quran 3:111' ] ],
+		[ [ 'asv', 'pickthall' ], [ 'asv:Ezra 2:43', 'pickthall:Quran 3:111' ] ],
+		[ [ 'pickthall', 'asv' ], [ 'pickthall:Quran 3:111', 'asv:Ezra 2:43' ] ],
+	);
+
+	foreach my $case (@cases) {
+		my ($translations, $expected) = @$case;
+		my $verses = $self->sut->votd({
+			version      => 2,
+			when         => $when,
+			parental     => 0,
+			translations => $translations,
+		});
+		my %seenTranslation;
+		my @references = map {
+			join(':', $_->book->bible->translation, sprintf('%s %d:%d',
+				$_->book->longName, $_->chapter->ordinal, $_->ordinal));
+		} grep {
+			!$seenTranslation{$_->book->bible->translation}++;
+		} @$verses;
+
+		is_deeply(\@references, $expected,
+			'VoTD references are independent of the selected translation set and preserve request order');
+	}
+
+	return EXIT_SUCCESS;
+}
+
+sub testV2BibleTranslationsShareDailyReference {
+	my ($self) = @_;
+	plan skip_all => 'ASV, KJV and Pickthall test data are not installed'
+	    unless ($self->hasTranslation('asv') && $self->hasTranslation('kjv')
+	        && $self->hasTranslation('pickthall'));
+	plan tests => 5;
+
+	my $when = '2026-08-06T12:00:00+0100';
+	my @cases = (
+		[ [ 'asv' ], [ 'asv:2 Samuel 3:19' ] ],
+		[ [ 'kjv' ], [ 'kjv:2 Samuel 3:19' ] ],
+		[ [ 'asv', 'kjv' ], [ 'asv:2 Samuel 3:19', 'kjv:2 Samuel 3:19' ] ],
+		[ [ 'kjv', 'asv' ], [ 'kjv:2 Samuel 3:19', 'asv:2 Samuel 3:19' ] ],
+		[ [ 'all' ], [ 'asv:2 Samuel 3:19', 'kjv:2 Samuel 3:19', 'pickthall:Quran 53:36' ] ],
+	);
+
+	foreach my $case (@cases) {
+		my ($translations, $expected) = @$case;
+		my $verses = $self->sut->votd({
+			version      => 2,
+			when         => $when,
+			parental     => 0,
+			translations => $translations,
+		});
+		my %seenTranslation;
+		my @references = map {
+			join(':', $_->book->bible->translation, sprintf('%s %d:%d',
+				$_->book->longName, $_->chapter->ordinal, $_->ordinal));
+		} grep {
+			!$seenTranslation{$_->book->bible->translation}++;
+		} @$verses;
+
+		is_deeply(\@references, $expected,
+			'Bible VoTD references share the canonical reference and preserve request order');
+	}
+
+	return EXIT_SUCCESS;
+}
+
 sub testParentalTerm {
 	my ($self) = @_;
 	plan tests => 2;
 
-	my $when = '1980-04-12T12:00:00+0100';
+	my $when = '1979-01-22T12:00:00+0000';
 	my $verse = $self->sut->votd({ version => 1, when => $when, parental => 0 });
 	cmp_deeply($verse, all(
 		isa('Chleb::Bible::Verse'),
@@ -140,21 +216,50 @@ sub testParentalTerm {
 			book    => all(
 				isa('Chleb::Bible::Book'),
 				methods(
-					longName => 'Jeremiah',
-					shortName => 'jer',
-					shortNameRaw => 'Jer',
+					longName => 'Galatians',
+					shortName => 'gal',
+					shortNameRaw => 'Gal',
 				),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
-				methods(ordinal => 5),
+				methods(ordinal => 2),
 			),
-			ordinal => 7,
+			ordinal => 12,
 			text    => ignore(),
 		),
 	), 'verse inspection') or diag(explain($verse->toString()));
 
 	$verse = $self->sut->votd({ version => 1, when => $when, parental => 1 });
+	cmp_deeply($verse, all(
+		isa('Chleb::Bible::Verse'),
+		methods(
+			book    => all(
+				isa('Chleb::Bible::Book'),
+				methods(
+					longName => 'Exodus',
+					shortName => 'exo',
+					shortNameRaw => 'Exo',
+				),
+			),
+			chapter => all(
+				isa('Chleb::Bible::Chapter'),
+				methods(ordinal => 19),
+			),
+			ordinal => 1,
+			text    => ignore(),
+		),
+	), 'verse inspection, parental') or diag(explain($verse->toString()));
+
+	return EXIT_SUCCESS;
+}
+
+sub testParentalRef {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $when = '1971-12-22T12:00:00+0000';
+	my $verse = $self->sut->votd({ version => 1, when => $when, parental => 0 });
 	cmp_deeply($verse, all(
 		isa('Chleb::Bible::Verse'),
 		methods(
@@ -168,38 +273,9 @@ sub testParentalTerm {
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
-				methods(ordinal => 42),
+				methods(ordinal => 19),
 			),
-			ordinal => 3,
-			text    => ignore(),
-		),
-	), 'verse inspection, parental') or diag(explain($verse->toString()));
-
-	return EXIT_SUCCESS;
-}
-
-sub testParentalRef {
-	my ($self) = @_;
-	plan tests => 2;
-
-	my $when = '1980-09-8T12:00:00+0100';
-	my $verse = $self->sut->votd({ version => 1, when => $when, parental => 0 });
-	cmp_deeply($verse, all(
-		isa('Chleb::Bible::Verse'),
-		methods(
-			book    => all(
-				isa('Chleb::Bible::Book'),
-				methods(
-					longName => 'Deuteronomy',
-					shortName => 'deu',
-					shortNameRaw => 'Deu',
-				),
-			),
-			chapter => all(
-				isa('Chleb::Bible::Chapter'),
-				methods(ordinal => 22),
-			),
-			ordinal => 20,
+			ordinal => 8,
 			text    => ignore(),
 		),
 	), 'verse inspection') or diag(explain($verse->toString()));
@@ -211,16 +287,16 @@ sub testParentalRef {
 			book    => all(
 				isa('Chleb::Bible::Book'),
 				methods(
-					longName => 'Isaiah',
-					shortName => 'isa',
-					shortNameRaw => 'Isa',
+					longName => 'Judges',
+					shortName => 'judg',
+					shortNameRaw => 'Judg',
 				),
 			),
 			chapter => all(
 				isa('Chleb::Bible::Chapter'),
-				methods(ordinal => 37),
+				methods(ordinal => 15),
 			),
-			ordinal => 18,
+			ordinal => 7,
 			text    => ignore(),
 		),
 	), 'verse inspection, parental') or diag(explain($verse->toString()));

@@ -50,11 +50,13 @@ use Storable qw(nstore_fd retrieve);
 use Digest::SHA qw(sha1_hex);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
+use Chleb::Utils;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
 Readonly my $SHARED_CACHE_FORMAT_VERSION => 1;
+Readonly my $VERSE_ORDINAL_CACHE_VERSION => 2;
 
 Readonly my $OT_COUNT => 39;
 
@@ -314,6 +316,32 @@ hash ref.
 =cut
 
 has __propertyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__thesaurusCache>
+
+Process-local cache of translation-specific thesaurus terms keyed by source
+word, initialized lazily to an empty hash ref.
+
+=cut
+
+has __thesaurusCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
+=item C<__bibleWordsCache>
+
+Process-local cache of the normalized words present in the current translation.
+
+=cut
+
+has __bibleWordsCache => (is => 'ro', isa => 'ArrayRef', lazy => 1, builder => '__makeBibleWords');
+
+=item C<__thesaurusAvailable>
+
+Boolean indicating whether the current SQLite source contains the thesaurus
+tables, initialized lazily from the database schema.
+
+=cut
+
+has __thesaurusAvailable => (is => 'ro', isa => 'Bool', lazy => 1, builder => '__makeThesaurusAvailable');
 
 =item C<__sentimentCache>
 
@@ -734,6 +762,52 @@ SQL
 	return $value;
 }
 
+=item C<getThesaurusTerms($word)>
+
+Return the normalized related words for C<$word> in the current translation.
+An empty array reference is returned when no thesaurus table or source word is
+available.
+
+=cut
+
+sub getThesaurusTerms {
+	my ($self, $word) = @_;
+	$word = lc($word // '');
+	return [] if length($word) == 0;
+	return $self->__thesaurusCache->{$word}
+		if (exists($self->__thesaurusCache->{$word}));
+	return $self->__thesaurusCache->{$word} = [] unless $self->__thesaurusAvailable;
+
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $word, $word, $word);
+		SELECT CASE
+				 WHEN source.word = ? THEN related.word
+				 ELSE source.word
+			   END AS term
+		  FROM thesaurus_relation AS relation
+		  JOIN thesaurus_word AS source ON source.id = relation.source_word_id
+		  JOIN thesaurus_word AS related ON related.id = relation.related_word_id
+		 WHERE source.word = ? OR related.word = ?
+		 ORDER BY term
+SQL
+	my @terms;
+	while (my ($term) = $sth->fetchrow_array()) {
+		push(@terms, $term);
+	}
+	$self->__thesaurusCache->{$word} = \@terms;
+	return \@terms;
+}
+
+=item C<getBibleWords()>
+
+Return the normalized distinct words present in the current translation.
+
+=cut
+
+sub getBibleWords {
+	my ($self) = @_;
+	return $self->__bibleWordsCache;
+}
+
 =item C<getSentimentByOrdinal($ordinal)>
 
 Return sentiment data for the verse at an absolute ordinal.  When no verse or
@@ -939,7 +1013,8 @@ sub getVerseKeyByOrdinal {
 		$self->__verseKeyCache->{$cacheKey} = $mapped;
 		return $mapped;
 	}
-	if (my $cached = $self->__sharedCacheGet('versekey', $cacheKey)) {
+	my $sharedCacheKey = join(':', $VERSE_ORDINAL_CACHE_VERSION, $cacheKey);
+	if (my $cached = $self->__sharedCacheGet('versekey', $sharedCacheKey)) {
 		$self->__verseKeyCache->{$cacheKey} = $cached;
 		return $cached;
 	}
@@ -967,7 +1042,7 @@ SQL
 	my ($mappedTranslation, $mappedBookShortName, $mappedChapterNumber, $mappedVerseNumber) = split(m{ : }x, $key, 4);
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{__ordinalToKey}->{$ordinal} = $key;
 	$self->__verseKeyOrdinalCache->{$mappedTranslation}->{$mappedBookShortName}->{$mappedChapterNumber}->{$mappedVerseNumber} = $ordinal;
-	$self->__sharedCacheSet('versekey', $cacheKey, $key);
+	$self->__sharedCacheSet('versekey', $sharedCacheKey, $key);
 	return $key;
 }
 
@@ -1360,6 +1435,47 @@ sub __makeData {
 			sqlite_unicode => 1,
 		}
 	);
+}
+
+=item C<__makeThesaurusAvailable()>
+
+Inspect the SQLite schema once and report whether the thesaurus relation table
+is available for the current translation.
+
+=cut
+
+sub __makeThesaurusAvailable { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my ($available) = $self->data->selectrow_array(<<'SQL');
+		SELECT EXISTS(
+			SELECT 1
+			  FROM sqlite_master
+			 WHERE type = 'table'
+			   AND name = 'thesaurus_relation'
+		)
+SQL
+	return $available ? 1 : 0;
+}
+
+=item C<__makeBibleWords()>
+
+Load and normalize the distinct words present in the current translation.
+
+=cut
+
+sub __makeBibleWords { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my %words;
+	my $sth = $self->__prepareSelect($self->data, <<'SQL');
+		SELECT text
+		  FROM verse
+SQL
+	while (my ($text) = $sth->fetchrow_array()) {
+		for my $word (@{ Chleb::Utils::extractWords($text) }) {
+			$words{lc($word)} = 1;
+		}
+	}
+	return [sort keys(%words)];
 }
 
 =item C<__makeDataDir()>

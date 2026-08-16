@@ -30,6 +30,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-system('cd data/ && ./Makefile');
+package main;
+use strict;
+use warnings;
 
+system('cd data/ && ./Makefile');
 exit 0

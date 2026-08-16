@@ -79,6 +79,32 @@ sub setWholeword {
 	return $self;
 }
 
+=item C<expandedWords()>
+
+Return the normalized search words grouped with their translation-specific
+thesaurus alternatives.  The original word is always first in each group.
+
+=cut
+
+sub expandedWords {
+	my ($self) = @_;
+	my @words = ($self->text =~ /[\w]+(?:['-][\w]+)*/gx);
+	my @groups;
+	my %seenGroups;
+	for my $word (@words) {
+		my $normalized = lc($word);
+		next if $seenGroups{$normalized}++;
+		my %seen = ($normalized => 1);
+		my @expanded = ($normalized);
+		for my $term (@{ $self->bible->getThesaurusTerms($normalized) }) {
+			next if $seen{$term}++;
+			push(@expanded, $term);
+		}
+		push(@groups, \@expanded);
+	}
+	return \@groups;
+}
+
 sub run {
 	my ($self) = @_;
 	my $startTiming = Time::HiRes::time();

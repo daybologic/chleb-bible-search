@@ -29,6 +29,7 @@ data/*.sqlite
 data/*.sqlite.gz
 data/sessions
 externals
+node_modules
 *.build
 lib/Chleb/Generated/*
 .git-changeset

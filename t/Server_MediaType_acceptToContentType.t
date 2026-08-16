@@ -215,6 +215,19 @@ sub testAcceptApplicationJsonOnly {
 	return EXIT_SUCCESS;
 }
 
+sub testAcceptYamlOnly {
+	my ($self) = @_;
+	plan tests => 3;
+
+	foreach my $header (qw(application/yaml text/yaml text/x-yaml)) {
+		my $mediaType = Chleb::Server::MediaType->parseAcceptHeader($header);
+		my $contentType = Chleb::Server::MediaType::acceptToContentType($mediaType, $self->uniqueStr());
+		is($contentType, 'text/x-yaml', "$header selects YAML");
+	}
+
+	return EXIT_SUCCESS;
+}
+
 sub testAcceptApplicationTypoOnly {
 	my ($self) = @_;
 	plan tests => 1;

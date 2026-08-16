@@ -39,8 +39,8 @@ grep -q '<title>Chleb Bible Search: Bible info</title>' <<< "$page"
 grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
 grep -q '<table class="info-table">' <<< "$page"
 grep -q '<th>Book</th>' <<< "$page"
-grep -q '<a href="/1/lookup/gen/1/1">Genesis</a>' <<< "$page"
-(( "$(grep -o '<a href="/1/lookup/gen/1/1">Genesis</a>' <<< "$page" | wc -l)" > 1 ))
+grep -q '<a href="/1/lookup/gen/1">Genesis</a>' <<< "$page"
+(( "$(grep -o '<a href="/1/lookup/gen/1">Genesis</a>' <<< "$page" | wc -l)" > 1 ))
 grep -q 'table.info-table {' <<< "$style"
 grep -q 'background-color: #e8d4f2;' <<< "$style"
 grep -q 'border: 2px solid #8a6a99;' <<< "$style"

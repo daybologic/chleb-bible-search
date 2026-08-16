@@ -3,6 +3,7 @@ Section: contrib/perl
 Priority: optional
 Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
+ jq,
  libdbd-sqlite3-perl,
  libplack-perl,
 Build-Depends-Indep:
@@ -30,6 +31,7 @@ Build-Depends-Indep:
  libtime-duration-perl,
  libuuid-tiny-perl,
  libyaml-libyaml-perl,
+ libyaml-perl,
  pre-commit,
 Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
@@ -50,6 +52,7 @@ Depends: ${shlibs:Depends},
  jq,
  libplack-perl,
  libyaml-libyaml-perl,
+ libyaml-perl,
  swaks,
 Recommends:
  memcached,

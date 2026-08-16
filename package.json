@@ -1,0 +1,22 @@
+{
+  "name": "chleb-bible-search",
+  "version": "1.0.0",
+  "description": "[GitHub release](https://github.com/daybologic/chleb-bible-search)",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "//mnt/totem/vcs/palmer/git/m6kvm/chleb-bible-search.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@redocly/cli": "^2.11.1"
+  }
+}

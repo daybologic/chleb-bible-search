@@ -66,6 +66,7 @@ use Log::Log4perl::MDC;
 use List::Util qw(shuffle);
 use Readonly;
 use Sys::Hostname;
+use Text::LevenshteinXS qw(distance);
 use Time::Duration;
 use Time::HiRes ();
 use URI::Escape;
@@ -74,6 +75,8 @@ use UUID::Tiny ':std';
 Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESULTS_LIMIT;
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 Readonly our $SEARCH_RESULTS_MAX_PAGE_SIZE => 2_000;
+Readonly my $SEARCH_SUGGESTIONS_MAX => 5;
+Readonly my $SEARCH_SUGGESTION_MAX_DISTANCE => 3;
 
 Readonly my $FUNCTION_RANDOM => 1;
 Readonly my $FUNCTION_VOTD => 2;
@@ -395,6 +398,7 @@ sub __isJsonContentType {
 	return (
 		$contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON
 		|| $contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API
+		|| $contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_YAML
 	);
 }
 
@@ -402,6 +406,7 @@ sub __isJsonContentType {
 sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
 
+	my $startTiming = Time::HiRes::time();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
 
 	my @verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
@@ -438,6 +443,8 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		    . Chleb::Utils::queryParamsHelper($params);
 	}
 
+	__rewriteResponseTiming(\@json, $startTiming);
+
 	if (__isJsonContentType($contentType)) {
 		if ($params->{form}) {
 			croak(Chleb::Exception->raise(
@@ -453,8 +460,29 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
+}
+
+=item C<__rewriteResponseTiming($json, $startTiming)>
+
+Replace response statistics with the elapsed server-side time after all lazy
+navigation links and JSON:API structures have been generated.
+
+=cut
+
+sub __rewriteResponseTiming {
+	my ($json, $startTiming) = @_;
+	my $msec = int(1000 * (Time::HiRes::time() - $startTiming));
+
+	foreach my $response (@{ $json }) {
+		foreach my $included (@{ $response->{included} }) {
+			next unless (($included->{type} // '') eq 'stats');
+			$included->{attributes}->{msec} = $msec;
+		}
+	}
+
+	return;
 }
 
 =item C<__random($params)>
@@ -538,7 +566,7 @@ sub __random { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
 
 }
@@ -672,7 +700,7 @@ sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
 }
 
@@ -713,7 +741,7 @@ sub __ping { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
 }
 
@@ -785,7 +813,7 @@ sub __version { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
 }
 
@@ -1076,6 +1104,9 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	foreach my $name (keys(%$paginationLinks)) {
 		$hash{links}->{$name} = $paginationLinks->{$name};
 	}
+	if ($totalCount == 0) {
+		$hash{suggestions} = __searchSuggestions($query->text, \@queries);
+	}
 
 	if (__isJsonContentType($contentType)) {
 		if ($search->{form}) {
@@ -1092,6 +1123,41 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	}
 
 	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
+}
+
+=item C<__searchSuggestions($term, $queries)>
+
+Return up to five nearby Bible words for a search that produced no results.
+Candidates are ranked by their smallest Levenshtein distance from any word in
+the requested term and are limited to a small distance so that unrelated words
+are not presented as likely corrections.
+
+=cut
+
+sub __searchSuggestions {
+	my ($term, $queries) = @_;
+	my @requestedWords = @{ Chleb::Utils::extractWords($term) };
+	my %requested = map { lc($_) => 1 } @requestedWords;
+	my %distances;
+	for my $query (@{ $queries }) {
+		for my $candidate (@{ $query->bible->getBibleWords() }) {
+			next if ($requested{$candidate});
+			my $lowestDistance;
+			for my $word (keys(%requested)) {
+				my $candidateDistance = distance($word, $candidate);
+				$lowestDistance = $candidateDistance
+					if (!defined($lowestDistance) || $candidateDistance < $lowestDistance);
+			}
+			next if (!defined($lowestDistance) || $lowestDistance > $SEARCH_SUGGESTION_MAX_DISTANCE);
+			$distances{$candidate} = $lowestDistance
+				if (!exists($distances{$candidate}) || $lowestDistance < $distances{$candidate});
+		}
+	}
+	my @suggestions = sort {
+		$distances{$a} <=> $distances{$b} || $a cmp $b
+	} keys(%distances);
+	splice(@suggestions, $SEARCH_SUGGESTIONS_MAX);
+	return \@suggestions;
 }
 
 =item C<__searchLimit($limit)>
@@ -1570,6 +1636,7 @@ sub __votdFormToHtml {
 		VOTD_WHEN => $when->strftime('%FT%T%z'),
 		VOTD_YESTERDAY => $yesterdayLink,
 	});
+	$output .= __timingHtml($json->[0]);
 	$output .= Chleb::Server::Dancer2::fetchStaticPage('generic_tail');
 
 	return $output;
@@ -1610,6 +1677,7 @@ sub __verseToHtml {
 	}
 	my $pageTitle = "Chleb Bible Search - ${title}";
 	my $output = __verseHtmlCards($verseHtmlData, $pageTitle);
+	$output .= __timingHtml($json->[0]);
 
 	my $random;
 	{
@@ -1983,7 +2051,17 @@ sub __searchResultsToHtml {
 	$options ||= {};
 
 	if (0 == scalar(@{ $json->{data} })) { # no results?
-		return Chleb::Server::Dancer2::fetchStaticPage('no_results');
+		my $message = 'Sorry, no results match your query';
+		if (ref($json->{suggestions}) eq 'ARRAY' && scalar(@{ $json->{suggestions} }) > 0) {
+			my $selfLink = $json->{links}->{self} // '/1/search';
+			my @suggestions = map { __searchSuggestionLink($_, $selfLink) } @{ $json->{suggestions} };
+			$message = 'Did you mean: ' . join(', ', @suggestions);
+		}
+		my $noResults = Chleb::Server::Dancer2::fetchStaticPage('no_results', {
+			NO_RESULTS_MESSAGE => $message,
+		});
+		$noResults = '' unless (defined($noResults));
+		return $noResults . __timingHtml($json);
 	}
 
 	my $includedCount = scalar(@{ $json->{included} });
@@ -2030,9 +2108,47 @@ sub __searchResultsToHtml {
 	}
 
 	$text .= "</table>\r\n";
+	$text .= __timingHtml($json);
 	$text .= __searchPaginationToHtml($json);
 
 	return $text;
+}
+
+=item C<__searchSuggestionLink($suggestion, $selfLink)>
+
+Build an HTML link for a suggestion while preserving the existing search URL
+parameters and replacing only its C<term> value.
+
+=cut
+
+sub __searchSuggestionLink {
+	my ($suggestion, $selfLink) = @_;
+	my $href = $selfLink;
+	$href =~ s{([?&]term=)[^&]*}{$1 . uri_escape($suggestion)}ex;
+	return sprintf(
+		'<a href="%s">%s</a>',
+		Chleb::Utils::htmlEscape($href),
+		Chleb::Utils::htmlEscape($suggestion),
+	);
+}
+
+=item C<__timingHtml($json)>
+
+Render the response timing statistic in seconds for HTML responses.  Return an
+empty string when the response does not contain a stats inclusion.
+
+=cut
+
+sub __timingHtml {
+	my ($json) = @_;
+	return '' unless (ref($json) eq 'HASH' && ref($json->{included}) eq 'ARRAY');
+	for my $included (@{ $json->{included} }) {
+		next unless ($included->{type} // '') eq 'stats';
+		my $msec = $included->{attributes}->{msec};
+		next unless (defined($msec) && $msec =~ /\A\d+\z/x);
+		return sprintf("<p>Sought in %.3f seconds</p>\r\n", $msec / 1000);
+	}
+	return '';
 }
 
 =item C<__searchPaginationToHtml($json)>
@@ -2157,10 +2273,9 @@ sub __infoToHtml {
 	my $linkToChapter = sub {
 		my ($linkText, $bookShortName, $chapterOrdinal) = @_;
 		return sprintf(
-			'<a href="/1/lookup/%s/%d/%d">%s</a>',
+			'<a href="/1/lookup/%s/%d">%s</a>',
 			$bookShortName,
 			$chapterOrdinal,
-			1,  # FIXME: At time of writing, it isn't possible to link to a whole chapter, which will be a shorter link
 			$linkText,
 		);
 	};
@@ -2240,6 +2355,7 @@ sub __infoToHtml {
 	}
 
 	$text .= "</table>\r\n";
+	$text .= __timingHtml($json);
 
 	return $text;
 }
@@ -2306,6 +2422,20 @@ sub logRequest {
 	$self->dic->logger->debug("Received request $path from $ipAddress");
 
 	return;
+}
+
+=head1 __userAgentChanged($previous, $current)
+
+Return true when a previously recorded user agent differs from the current
+one.  An empty previous value represents a token whose user-agent metadata was
+not persisted, such as a JWT, rather than an observed change.
+
+=cut
+
+sub __userAgentChanged {
+	my ($previous, $current) = @_;
+
+	return (length($previous) > 0 && $previous ne $current);
 }
 
 sub handleSessionToken {
@@ -2387,15 +2517,15 @@ sub handleSessionToken {
 	}
 
 	if ($sessionToken->ipAddress ne $ipAddress) {
-		$self->dic->logger->info(sprintf('%s the client changed IP address from %s to %s',
-		    $sessionToken->toString(), $sessionToken->ipAddress, $ipAddress));
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed IP address from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->ipAddress, $ipAddress));
 
 		$sessionToken->ipAddress($ipAddress);
 	}
 
-	if ($sessionToken->userAgent ne $userAgent) {
-		$self->dic->logger->info(sprintf('%s the client changed user agent from %s to %s',
-		    $sessionToken->toString(), $sessionToken->userAgent, $userAgent));
+	if (__userAgentChanged($sessionToken->userAgent, $userAgent)) {
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed user agent from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->userAgent, $userAgent));
 
 		$sessionToken->userAgent($userAgent);
 	}
