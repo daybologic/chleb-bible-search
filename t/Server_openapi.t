@@ -42,7 +42,7 @@ sub testPublishedOpenapiDocuments {
 			'published JSON has an application/json content type');
 		like($json->decoded_content(), qr{ \A\{ }x,
 			'published JSON is an object');
-		like($json->decoded_content(), qr{ "openapi":"3\.0\.0" }x,
+		like($json->decoded_content(), qr{ "openapi"\s*:\s*"3\.0\.0" }x,
 			'published JSON contains the OpenAPI version');
 
 		my $html = $callback->(GET('/docs.html'));
@@ -63,7 +63,7 @@ sub testPublishedOpenapiDocuments {
 		is($docsJson->code(), 200, '/docs negotiates JSON');
 		is($docsJson->header('Content-Type'), 'application/json',
 			'/docs JSON response has the JSON content type');
-		like($docsJson->decoded_content(), qr{ "openapi":"3\.0\.0" }x,
+		like($docsJson->decoded_content(), qr{ "openapi"\s*:\s*"3\.0\.0" }x,
 			'/docs JSON response contains the OpenAPI document');
 
 		my $docsHtml = $callback->(GET('/docs', Accept => 'text/html'));
