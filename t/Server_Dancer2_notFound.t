@@ -84,6 +84,35 @@ sub testJsonNotFoundPage {
 	return EXIT_SUCCESS;
 }
 
+=head1 testMissingImageDoesNotRecurse()
+
+Ensure a missing image receives a non-illustrated 404 response, preventing
+recursive browser requests when an image asset is unavailable.
+
+=cut
+
+sub testMissingImageDoesNotRecurse {
+	my ($self) = @_;
+	plan tests => 3;
+	my $stderr = q{};
+	open(my $stderrHandle, '>', \$stderr) or die("Cannot capture STDERR: $!\n");
+	local *STDERR = $stderrHandle;
+
+	my $app = Chleb::Server::Dancer2->to_app();
+	test_psgi($app, sub {
+		my ($callback) = @_;
+		my $response = $callback->(GET('/images/does-not-exist.webp', Accept => 'text/html'));
+
+		is($response->code(), 404, 'missing image returns 404');
+		like($response->header('Content-Type'), qr{ \Atext/plain }x,
+			'missing image response is plain text even for an HTML request');
+		unlike($response->decoded_content(), qr{ <img }x,
+			'missing image response does not contain another image reference');
+	});
+
+	return EXIT_SUCCESS;
+}
+
 sub testHtmlInternalServerErrorPage {
 	my ($self) = @_;
 	plan tests => 6;

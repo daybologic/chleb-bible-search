@@ -317,26 +317,44 @@ before access.  Please note that ordinals start at C<1>, not C<0>.
 sub getVerseByOrdinal {
 	my ($self, $ordinal, $args) = @_;
 
-	if (my $verseKey = $self->__backend->getVerseKeyByOrdinal($ordinal)) {
-		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $verseKey, 4);
-		if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
-			if (my $book = $self->getBookByShortName($bookShortName, $args)) {
-				my $chapter = $book->getChapterByOrdinal($chapterNumber, $args);
+	my $requestedOrdinal = $ordinal;
+	my $verseCount = $self->verseCount;
+	$ordinal = $verseCount + $ordinal + 1 if ($ordinal < 0);
 
-				return Chleb::Bible::Verse->new({
-					book           => $book,
-					chapter        => $chapter,
-					ordinal        => $verseNumber,
-					text           => $text,
-					__queryContext => $args || {},
-				});
+	if ($ordinal >= 1 && $ordinal <= $verseCount) {
+		my $relativeOrdinal = $ordinal;
+		my $book;
+		foreach my $candidateBook (@{ $self->books }) {
+			my $candidateVerseCount = $candidateBook->verseCount;
+			if ($relativeOrdinal <= $candidateVerseCount) {
+				$book = $candidateBook;
+				last;
 			}
-		} else {
-		croak("I don't think you can reach this");
+			$relativeOrdinal -= $candidateVerseCount;
+		}
+
+		my $bookVerseKey = join(':', $self->translation, $book->shortNameRaw, $relativeOrdinal);
+		if (my $verseKey = $self->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
+			my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $verseKey, 4);
+			if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
+				if (my $resolvedBook = $self->getBookByShortName($bookShortName, $args)) {
+					my $chapter = $resolvedBook->getChapterByOrdinal($chapterNumber, $args);
+
+					return Chleb::Bible::Verse->new({
+						book           => $resolvedBook,
+						chapter        => $chapter,
+						ordinal        => $verseNumber,
+						text           => $text,
+						__queryContext => $args || {},
+					});
+				}
+			} else {
+				croak("I don't think you can reach this");
+			}
 		}
 	}
 
-	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf("Verse %d not found in '%s'", $ordinal, $self->translation)));
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, sprintf("Verse %d not found in '%s'", $requestedOrdinal, $self->translation)));
 }
 
 =item C<$newSearchQuery(@args)>
