@@ -112,7 +112,7 @@ You are tagging verses from {source} with emotional and communicative labels.
 
 For EACH verse, you must output an object with:
 - "id": exactly the id of the verse I give you
-- "primary_emotion": ONE item from this list (string only):
+- "primary_emotion": ONE single-word label (string only). Suggested labels:
   {PRIMARY_EMOTIONS}
 - "tones": a list of up to 3 items from this list:
   {TONES}
@@ -122,7 +122,7 @@ Rules:
 - If no strong emotion stands out, use "neutral".
 - "challenge" is a tone, never a primary emotion.
 - "tones" can be empty if nothing fits clearly.
-- Do NOT invent new labels.
+- Do not use multiple words for "primary_emotion".
 
 Return a single JSON array, and NOTHING else.
 Each element of the array corresponds to one input verse, in the same order.
@@ -189,7 +189,7 @@ You are tagging ONE verse from {source} with emotional and communicative labels.
 
 Return a single JSON object with:
 - "id": exactly the id I give you
-- "primary_emotion": ONE item from this list (string only):
+- "primary_emotion": ONE single-word label (string only). Suggested labels:
   {PRIMARY_EMOTIONS}
 - "tones": a list of up to 3 items from this list:
   {TONES}
@@ -199,7 +199,7 @@ Rules:
 - If no strong emotion stands out, use "neutral".
 - "challenge" is a tone, never a primary emotion.
 - "tones" can be empty if nothing fits clearly.
-- Do NOT invent new labels.
+- Do not use multiple words for "primary_emotion".
 
 Return ONLY the JSON object, and NOTHING else.
 Do NOT wrap it in backticks or code fences.
@@ -253,8 +253,9 @@ def _tagged_list_error(batch: List[Dict[str, Any]], tagged_list: Any):
     for index, (verse, tags) in enumerate(zip(batch, tagged_list), start=1):
         if not isinstance(tags, dict) or tags.get("id") != verse.get("id"):
             return f"item {index} has an invalid id"
-        if tags.get("primary_emotion") not in PRIMARY_EMOTIONS:
-            return f"item {index} has unsupported primary emotion {tags.get('primary_emotion')!r}"
+        emotion = tags.get("primary_emotion")
+        if not isinstance(emotion, str) or re.fullmatch(r"\S+", emotion) is None:
+            return f"item {index} has a primary emotion that is not one word"
         tones = tags.get("tones")
         if not isinstance(tones, list) or len(tones) > 3:
             return f"item {index} has an invalid tones list"
