@@ -47,7 +47,7 @@ MODEL = "gpt-5.4-mini"  # current mini model for high-volume workloads
 # Define the labels you want
 PRIMARY_EMOTIONS = [
     "joy", "hope", "peace", "fear", "grief", "anger",
-    "confusion", "guilt", "shame", "neutral"
+    "confusion", "guilt", "shame", "humility", "neutral"
 ]
 
 TONES = [
@@ -233,22 +233,26 @@ Here is the verse:
     return obj
 
 
-def _valid_tagged_list(batch: List[Dict[str, Any]], tagged_list: Any) -> bool:
+def _tagged_list_error(batch: List[Dict[str, Any]], tagged_list: Any):
     if not isinstance(tagged_list, list) or len(tagged_list) != len(batch):
-        return False
+        return f"expected {len(batch)} items, got {len(tagged_list) if isinstance(tagged_list, list) else 'invalid JSON'}"
 
-    for verse, tags in zip(batch, tagged_list):
+    for index, (verse, tags) in enumerate(zip(batch, tagged_list), start=1):
         if not isinstance(tags, dict) or tags.get("id") != verse.get("id"):
-            return False
+            return f"item {index} has an invalid id"
         if tags.get("primary_emotion") not in PRIMARY_EMOTIONS:
-            return False
+            return f"item {index} has unsupported primary emotion {tags.get('primary_emotion')!r}"
         tones = tags.get("tones")
         if not isinstance(tones, list) or len(tones) > 3:
-            return False
+            return f"item {index} has an invalid tones list"
         if any(tone not in TONES for tone in tones):
-            return False
+            return f"item {index} has an unsupported tone"
 
-    return True
+    return None
+
+
+def _valid_tagged_list(batch: List[Dict[str, Any]], tagged_list: Any) -> bool:
+    return _tagged_list_error(batch, tagged_list) is None
 
 
 def tag_batch(batch: List[Dict[str, Any]], translation: str, model: str) -> List[Dict[str, Any]]:
@@ -281,9 +285,10 @@ def tag_batch(batch: List[Dict[str, Any]], translation: str, model: str) -> List
         tagged_count = "parse error"
     else:
         tagged_count = "invalid JSON shape"
+    validation_error = _tagged_list_error(batch, tagged_list)
     print(
-        f"Warning: expected {len(batch)} tags, got {tagged_count}; "
-        "falling back to smaller batches."
+        f"Warning: expected {len(batch)} tags, got {tagged_count} "
+        f"({validation_error}); falling back to smaller batches."
     )
 
     # If batch has more than 1 verse, split it into halves and recurse
