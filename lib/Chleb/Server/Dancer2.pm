@@ -151,6 +151,26 @@ sub __setJsonResponseContentType {
 	return;
 }
 
+=head1 __sendStructuredResponse($accept, $default, $result)
+
+Serialize a structured JSON:API response according to the negotiated media
+type.  YAML uses Dancer2's YAML serializer; JSON responses retain the normal
+application serializer and content-type handling.
+
+=cut
+
+sub __sendStructuredResponse {
+	my ($accept, $default, $result) = @_;
+	my $contentType = Chleb::Server::MediaType::acceptToContentType($accept, $default);
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_YAML) {
+		content_type $Chleb::Server::MediaType::CONTENT_TYPE_YAML;
+		return send_as YAML => $result;
+	}
+
+	__setJsonResponseContentType($accept, $default);
+	return $result;
+}
+
 =head1 __preferredTranslations($paramPresent, $paramValue, $preferredTranslation, $availableTranslations)
 
 Resolves the translation filters for a request which supports preferred
@@ -1049,8 +1069,7 @@ sub __registerVerseRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubr
 	}
 
 	$server->dic->logger->trace('2/random returned as JSON');
-	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
-	return $result;
+	return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $result);
 };
 
 get '/2/votd' => sub {
@@ -1100,8 +1119,7 @@ get '/2/votd' => sub {
 	}
 
 	$server->dic->logger->trace('2/votd returned as JSON');
-	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
-	return $result;
+	return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $result);
 };
 	return;
 }
@@ -1201,8 +1219,7 @@ get '/1/lookup/:book/:chapter' => sub {
 	}
 
 	$server->dic->logger->trace('1/lookup chapter returned as JSON');
-	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
-	return $result;
+	return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $result);
 };
 
 get '/1/lookup/:book/:chapter/:verse' => sub {
@@ -1251,8 +1268,7 @@ get '/1/lookup/:book/:chapter/:verse' => sub {
 	}
 
 	$server->dic->logger->trace('1/lookup verse returned as JSON');
-	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
-	return $result;
+	return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $result);
 };
 	return;
 }
@@ -1376,8 +1392,7 @@ sub __registerSearchRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	}
 
 	$server->dic->logger->trace('1/search returned as JSON');
-	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
-	return $result;
+	return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $result);
 };
 	return;
 }
@@ -1431,8 +1446,7 @@ sub __registerStatusRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	}
 
 	if (ref($ping) eq 'HASH') {
-		__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
-		return $ping;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON, $ping);
 	} elsif (ref($ping) eq '') {
 		my $resultHtml = fetchStaticPage('generic_head', { TITLE => "${PROJECT}: Ping" });
 		$resultHtml .= $ping;
@@ -1465,8 +1479,7 @@ get '/1/version' => sub {
 	}
 
 	if (ref($version) eq 'HASH') {
-		__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
-		return $version;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON, $version);
 	} elsif (ref($version) eq '' && $version eq '403') {
 		send_error('Disabled by server administrator', $version);
 	} elsif (ref($version) eq '') {
@@ -1510,8 +1523,7 @@ get '/1/uptime' => sub {
 	}
 
 	$server->dic->logger->trace('1/uptime returned as JSON');
-	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON);
-	return $result;
+	return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON, $result);
 };
 
 get '/1/info' => sub {
@@ -1548,8 +1560,7 @@ get '/1/info' => sub {
 	}
 
 	$server->dic->logger->trace('1/info returned as JSON');
-	__setJsonResponseContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
-	return $result;
+	return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $result);
 };
 	return;
 }

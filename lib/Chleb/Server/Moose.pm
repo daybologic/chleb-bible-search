@@ -398,6 +398,7 @@ sub __isJsonContentType {
 	return (
 		$contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON
 		|| $contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API
+		|| $contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_YAML
 	);
 }
 
@@ -459,7 +460,7 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
 }
 
@@ -565,7 +566,7 @@ sub __random { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
 
 }
@@ -699,7 +700,7 @@ sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
 }
 
@@ -740,7 +741,7 @@ sub __ping { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
 }
 
@@ -812,7 +813,7 @@ sub __version { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	croak(Chleb::Exception->raise(
 		HTTP_NOT_ACCEPTABLE,
-		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML and $Chleb::Server::MediaType::CONTENT_TYPE_JSON are supported",
+		"Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML, $Chleb::Server::MediaType::CONTENT_TYPE_JSON and $Chleb::Server::MediaType::CONTENT_TYPE_YAML are supported",
 	));
 }
 

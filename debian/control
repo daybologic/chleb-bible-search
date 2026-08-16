@@ -30,6 +30,7 @@ Build-Depends-Indep:
  libtime-duration-perl,
  libuuid-tiny-perl,
  libyaml-libyaml-perl,
+ libyaml-perl,
  pre-commit,
 Standards-Version: 4.6.2
 Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
@@ -50,6 +51,7 @@ Depends: ${shlibs:Depends},
  jq,
  libplack-perl,
  libyaml-libyaml-perl,
+ libyaml-perl,
  swaks,
 Recommends:
  memcached,
