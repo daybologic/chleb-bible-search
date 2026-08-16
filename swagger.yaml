@@ -589,19 +589,33 @@ paths:
               - type: string
               - type: integer
           required: false
-          description: Book of the bible
+          description: >-
+            Book of the Bible. Use a long name such as `John`, a short name such
+            as `john`, or its ordinal such as `43`.
+          examples:
+            longName:
+              summary: Long book name
+              value: John
+            shortName:
+              summary: Short book name
+              value: john
+            ordinal:
+              summary: Book ordinal
+              value: 43
         - in: query
           name: chapter
           schema:
             type: integer
           required: false
-          description: Chapter within book (ordinal)
+          description: Chapter within book (ordinal), for example `3` for John chapter 3
+          example: 3
         - in: query
           name: verse
           schema:
             type: integer
           required: false
-          description: Verse within chapter (ordinal)
+          description: Verse within chapter (ordinal), for example `16` for John 3:16
+          example: 16
         - in: query
           name: translations
           schema:
@@ -667,13 +681,26 @@ paths:
               - type: string
               - type: integer
           required: true
-          description: Book of the bible
+          description: >-
+            Book of the Bible. Use a long name such as `John`, a short name such
+            as `john`, or its ordinal such as `43`.
+          examples:
+            longName:
+              summary: Long book name
+              value: John
+            shortName:
+              summary: Short book name
+              value: john
+            ordinal:
+              summary: Book ordinal
+              value: 43
         - in: path
           name: chapter
           schema:
             type: integer
           required: true
-          description: Chapter within book (ordinal)
+          description: Chapter within book (ordinal), for example `3` for John chapter 3
+          example: 3
         - in: query
           name: translations
           schema:
@@ -729,19 +756,33 @@ paths:
               - type: string
               - type: integer
           required: true
-          description: Book of the bible
+          description: >-
+            Book of the Bible. Use a long name such as `John`, a short name such
+            as `john`, or its ordinal such as `43`.
+          examples:
+            longName:
+              summary: Long book name
+              value: John
+            shortName:
+              summary: Short book name
+              value: john
+            ordinal:
+              summary: Book ordinal
+              value: 43
         - in: path
           name: chapter
           schema:
             type: integer
           required: true
-          description: Chapter within book (ordinal)
+          description: Chapter within book (ordinal), for example `3` for John chapter 3
+          example: 3
         - in: path
           name: verse
           schema:
             type: integer
           required: true
-          description: Verse within chapter (ordinal)
+          description: Verse within chapter (ordinal), for example `16` for John 3:16
+          example: 16
         - in: query
           name: translations
           schema:
