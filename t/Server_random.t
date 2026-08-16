@@ -378,6 +378,20 @@ sub test_json_api_media_type {
 	return EXIT_SUCCESS;
 }
 
+sub test_yaml_media_type {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/yaml');
+	my $yaml = $self->sut->__random({ accept => $mediaType, translations => ['kjv'], version => 2 });
+
+	is(ref($yaml), 'HASH', 'YAML media type returns the JSON:API structure');
+	is($yaml->{data}->[0]->{type}, 'verse', 'YAML media type returns verse data');
+	is($yaml->{links}->{self}, '/2/random?translations=kjv', 'YAML media type keeps self link');
+
+	return EXIT_SUCCESS;
+}
+
 sub test_html_translation_order {
 	my ($self) = @_;
 	plan tests => 2;

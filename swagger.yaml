@@ -160,6 +160,22 @@ paths:
                         - $ref: '#/components/schemas/Book'
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
+            text/x-yaml:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Info'
+                  included:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/Bible'
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
         '429':
           $ref: '#/components/responses/RateLimited'
   /1/uptime:
@@ -173,6 +189,14 @@ paths:
           description: Successfully retrieved server uptime
           content:
             application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Uptime'
+            text/x-yaml:
               schema:
                 type: object
                 properties:
@@ -203,6 +227,14 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Pong'
+            text/x-yaml:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Pong'
             text/html:
               schema:
                 type: string
@@ -219,6 +251,14 @@ paths:
           description: Successfully retrieved server version
           content:
             application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Version'
+            text/x-yaml:
               schema:
                 type: object
                 properties:
@@ -276,6 +316,21 @@ paths:
               schema:
                 type: string
             application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
+            text/x-yaml:
               schema:
                 type: object
                 properties:
@@ -389,6 +444,30 @@ paths:
                         - $ref: '#/components/schemas/Book'
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
+            text/x-yaml:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  suggestions:
+                    type: array
+                    maxItems: 5
+                    items:
+                      type: string
+                    description: >-
+                      Up to five Bible words with the smallest Levenshtein
+                      distance from the requested term. This property is
+                      present only for JSON searches that return no results.
+                  included:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -476,6 +555,24 @@ paths:
               schema:
                 type: string
             application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/SearchResultsSummary'
+                        - $ref: '#/components/schemas/Stats'
+                  links:
+                    $ref: '#/components/schemas/JsonApiLinks'
+            text/x-yaml:
               schema:
                 type: object
                 properties:
@@ -626,6 +723,11 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/LookupDocument'
+            text/x-yaml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LookupDocument'
         '400':
           description: Bad request
         '404':
@@ -699,6 +801,21 @@ paths:
                         - $ref: '#/components/schemas/Book'
                         - $ref: '#/components/schemas/Chapter'
                         - $ref: '#/components/schemas/Stats'
+            text/x-yaml:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verse'
+                  included:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/Book'
+                        - $ref: '#/components/schemas/Chapter'
+                        - $ref: '#/components/schemas/Stats'
         '400':
           description: Bad request
         '404':
@@ -733,6 +850,18 @@ components:
                 type: string
               exception:
                 type: string
+        text/x-yaml:
+          schema:
+            type: object
+            properties:
+              status:
+                type: integer
+              title:
+                type: string
+              message:
+                type: string
+              exception:
+                type: string
     RateLimited:
       description: Rate-limited
       headers:
@@ -745,6 +874,9 @@ components:
           schema:
             $ref: '#/components/schemas/JsonApiErrorDocument'
         application/json:
+          schema:
+            $ref: '#/components/schemas/JsonApiErrorDocument'
+        text/x-yaml:
           schema:
             $ref: '#/components/schemas/JsonApiErrorDocument'
   schemas:

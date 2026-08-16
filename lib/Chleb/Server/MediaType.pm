@@ -59,6 +59,7 @@ Readonly my $MINIMUM_LENGTH => 3;
 Readonly our $CONTENT_TYPE_HTML     => 'text/html';
 Readonly our $CONTENT_TYPE_JSON     => 'application/json';
 Readonly our $CONTENT_TYPE_JSON_API => 'application/vnd.api+json';
+Readonly our $CONTENT_TYPE_YAML     => 'text/x-yaml';
 
 =head1 ATTRIBUTES
 
@@ -188,12 +189,20 @@ sub acceptToContentType {
 					$contentType = $CONTENT_TYPE_HTML;
 					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
 					last;
+				} elsif ($item->minor eq 'yaml' || $item->minor eq 'x-yaml') {
+					$contentType = $CONTENT_TYPE_YAML;
+					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
+					last;
 				} elsif ($item->minor ne '*') {
 					$contentType = '';
 					$logBecause = sprintf("invalid minor '%s' for major supported type '%s'", $item->minor, $item->major);
 				}
 			} elsif ($item->major eq 'application') {
-				if ($item->minor eq 'vnd.api+json' || $item->minor eq '*') {
+				if ($item->minor eq 'yaml') {
+					$contentType = $CONTENT_TYPE_YAML;
+					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
+					last;
+				} elsif ($item->minor eq 'vnd.api+json' || $item->minor eq '*') {
 					$contentType = $CONTENT_TYPE_JSON_API;
 					$logBecause = 'user specified ' . join('/', $item->major, $item->minor);
 					last;
