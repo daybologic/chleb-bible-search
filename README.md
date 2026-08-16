@@ -19,7 +19,7 @@ not runtime dependencies of the installed core service package.
 
 For up to date documentation, please ensure you are viewing the latest copy at [GitHub](https://github.com/daybologic/chleb-bible-search/blob/master/README.md)
 
-For API documentation, please use the documentation published at [SwaggerHub](https://app.swaggerhub.com/apis/M6KVM/chleb-bible-search/2.4.0)
+For API documentation, please use the locally published [interactive OpenAPI documentation](https://chleb-api.daybologic.co.uk/docs).  The raw [OpenAPI YAML](https://chleb-api.daybologic.co.uk/openapi.yaml) and [OpenAPI JSON](https://chleb-api.daybologic.co.uk/openapi.json) documents are also available.  Self-hosted deployments publish these at `/docs`, `/openapi.yaml`, and `/openapi.json`.
 
 ### Legal
 - [Privacy Policy](./PRIVACY.md)
