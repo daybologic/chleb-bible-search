@@ -122,6 +122,25 @@ sub __verseParts {
 	return ($chapter, $verse, $text);
 }
 
+=head1 __containsVerseParagraph($node)
+
+Return true when a node contains a paragraph beginning with a verse marker.
+
+=cut
+
+sub __containsVerseParagraph {
+	my ($node) = @_;
+	my $paragraph = $node->look_down(
+		_tag => 'p',
+		sub {
+			my ($child) = @_;
+			my @parts = __verseParts($child->as_text);
+			return scalar(@parts) > 0;
+		},
+	);
+	return defined($paragraph);
+}
+
 sub __writeVerses {
 	my ($html, $output) = @_;
 	my $tree = HTML::TreeBuilder->new;
@@ -136,7 +155,7 @@ sub __writeVerses {
 	my $chapter;
 	my $verseOrdinal = 0;
 	my %seenBooks;
-	for my $node ($tree->look_down(_tag => qr/\A(?:a|h1|p)\z/x)) {
+	for my $node ($tree->look_down(_tag => qr/\A(?:a|h1|p|div)\z/x)) {
 		my $nodeBookIndex = __bookIndexForNode($node);
 		if (defined($nodeBookIndex)) {
 			$bookIndex = $nodeBookIndex;
@@ -147,6 +166,11 @@ sub __writeVerses {
 		}
 
 		next unless (defined($bookIndex));
+	if ($node->tag eq 'div') {
+		# A wrapper containing ordinary paragraphs will be visited through those
+		# paragraphs; process only divs which hold an otherwise unvisited verse.
+		next if (__containsVerseParagraph($node));
+	}
 		my $text = $node->as_text;
 		my $headingChapter = __chapterFromHeading($text);
 		if (defined($headingChapter)) {
