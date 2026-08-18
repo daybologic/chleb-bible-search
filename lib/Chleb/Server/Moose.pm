@@ -2221,7 +2221,7 @@ sub __linkToVerse {
 	my ($linkText, $bookShortName, $chapterOrdinal, $verseOrdinal, $options) = @_;
 
 	if ($options) {
-		my %knownOptions = map { $_ => 1 } (qw(includeBookName));
+		my %knownOptions = map { $_ => 1 } (qw(includeBookName translation));
 
 		foreach my $option (keys(%$options)) {
 			next if ($knownOptions{$option});
@@ -2237,11 +2237,15 @@ sub __linkToVerse {
 		}
 	}
 
+	my $translationQuery = ($options && defined($options->{translation}))
+		? '?translations=' . uri_escape($options->{translation})
+		: '';
 	return sprintf(
-		'<a href="/1/lookup/%s/%d/%d">%s</a>',
+		'<a href="/1/lookup/%s/%d/%d%s">%s</a>',
 		lc($bookShortName), # this is not ideal, we have a mixture of shortName and shortNameRaw callers
 		$chapterOrdinal,
 		$verseOrdinal,
+		$translationQuery,
 		$linkText,
 	);
 }
@@ -2271,18 +2275,20 @@ sub __infoToHtml {
 	$text .= "</tr>\r\n";
 
 	my $linkToChapter = sub {
-		my ($linkText, $bookShortName, $chapterOrdinal) = @_;
+		my ($linkText, $bookShortName, $chapterOrdinal, $translation) = @_;
+		my $translationQuery = defined($translation) ? '?translations=' . uri_escape($translation) : '';
 		return sprintf(
-			'<a href="/1/lookup/%s/%d">%s</a>',
+			'<a href="/1/lookup/%s/%d%s">%s</a>',
 			$bookShortName,
 			$chapterOrdinal,
+			$translationQuery,
 			$linkText,
 		);
 	};
 
 	my $linkToBook = sub {
-		my ($linkText, $bookShortName) = @_;
-		return $linkToChapter->($linkText, $bookShortName, 1);
+		my ($linkText, $bookShortName, $translation) = @_;
+		return $linkToChapter->($linkText, $bookShortName, 1, $translation);
 	};
 
 	for (my $includedI = 0; $includedI < scalar(@{ $json->{included} }); $includedI++) {
@@ -2291,7 +2297,7 @@ sub __infoToHtml {
 
 		my $attributes = $included->{attributes};
 
-		$bookCache{ $attributes->{short_name} } = {
+		$bookCache{ join(':', $attributes->{translation}, $attributes->{short_name}) } = {
 			longName => $attributes->{long_name},
 			shortName => $attributes->{short_name},
 		};
@@ -2300,6 +2306,7 @@ sub __infoToHtml {
 		$text .= $printCell->($linkToBook->(
 			$attributes->{long_name},
 			$attributes->{short_name},
+			$attributes->{translation},
 		));
 		$text .= $printCell->($attributes->{ordinal}, 1);
 		$text .= $printCell->($attributes->{chapter_count}, 1);
@@ -2314,6 +2321,7 @@ sub __infoToHtml {
 				$attributes->{short_name},
 				$attributes->{sample_verse_chapter_ordinal},
 				$attributes->{sample_verse_ordinal_in_chapter},
+				{ translation => $attributes->{translation} },
 			),
 		));
 		$text .= "</tr>\r\n";
@@ -2324,6 +2332,7 @@ sub __infoToHtml {
 	$text .= "<table class=\"info-table\">\r\n";
 
 	$text .= "<tr>\r\n";
+	$text .= $printCell->("Translation", 0, 1);
 	$text .= $printCell->("Book", 0, 1);
 	$text .= $printCell->("Chapter", 0, 1);
 	$text .= $printCell->("Verses", 0, 1);
@@ -2336,20 +2345,24 @@ sub __infoToHtml {
 		my $attributes = $included->{attributes};
 
 		$text .= "<tr>\r\n";
+		$text .= $printCell->($attributes->{translation});
 		$text .= $printCell->($linkToBook->(
-			$bookCache{ $attributes->{book} }->{longName},
-			$bookCache{ $attributes->{book} }->{shortName},
+			$bookCache{ join(':', $attributes->{translation}, $attributes->{book}) }->{longName},
+			$bookCache{ join(':', $attributes->{translation}, $attributes->{book}) }->{shortName},
+			$attributes->{translation},
 		));
 		$text .= $printCell->($linkToChapter->(
 			$attributes->{ordinal},
 			$attributes->{book},
 			$attributes->{ordinal},
+			$attributes->{translation},
 		));
 		$text .= $printCell->(__linkToVerse(
 			$attributes->{verse_count},
 			$attributes->{book},
 			$attributes->{ordinal},
 			$attributes->{verse_count},
+			{ translation => $attributes->{translation} },
 		));
 		$text .= "</tr>\r\n";
 	}

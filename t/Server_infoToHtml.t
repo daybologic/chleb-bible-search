@@ -21,7 +21,7 @@ use Test::More 0.96;
 
 sub testBookLinks {
 	my ($self) = @_;
-	plan tests => 4;
+	plan tests => 7;
 
 	my $html = Chleb::Server::Moose::__infoToHtml({
 		included => [
@@ -34,6 +34,7 @@ sub testBookLinks {
 				attributes => {
 					long_name => 'Genesis',
 					short_name => 'gen',
+					translation => 'kjv',
 					ordinal => 1,
 					chapter_count => 1,
 					testament => 'old',
@@ -48,14 +49,18 @@ sub testBookLinks {
 				attributes => {
 					book => 'gen',
 					ordinal => 2,
+					translation => 'kjv',
 					verse_count => 25,
 				},
 			},
 		],
 	});
 
-	like($html, qr{href="/1/lookup/gen/1">Genesis</a>}x, 'Book column links to the first chapter');
-	like($html, qr{href="/1/lookup/gen/2">2</a>}x, 'Chapter column links to the selected chapter');
+	like($html, qr{href="/1/lookup/gen/1\?translations=kjv">Genesis</a>}x, 'Book column links to the first chapter');
+	like($html, qr{<th>Translation</th>}x, 'chapter table labels the translation column');
+	like($html, qr{<td>kjv</td>}x, 'chapter table displays the translation');
+	like($html, qr{href="/1/lookup/gen/2\?translations=kjv">2</a>}x, 'Chapter column links to the selected chapter');
+	like($html, qr{href="/1/lookup/gen/2/25\?translations=kjv">25</a>}x, 'Verse column links preserve the translation');
 	unlike($html, qr{href="/1/lookup/gen/2/1">2</a>}x, 'Chapter column does not link to verse one');
 	like($html, qr{Sought \s+ in \s+ 0[.]123 \s+ seconds}x, 'info HTML displays timing');
 
