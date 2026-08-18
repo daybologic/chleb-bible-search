@@ -1160,8 +1160,10 @@ Return the long name for a book short name, caching the lookup in the process.
 
 sub __bookLongName {
 	my ($self, $shortNameRaw) = @_;
-	return $DR_BOOK_LONG_NAMES{$shortNameRaw} // $shortNameRaw
-	    if ($self->bible->translation eq 'dr');
+	if ($self->bible->translation eq 'dr') {
+		return $DR_BOOK_LONG_NAMES{$shortNameRaw}
+		    // ($BOOK_LONG_NAMES{$shortNameRaw} // $shortNameRaw);
+	}
 	return $BOOK_NAMES{$shortNameRaw} //= ($BOOK_LONG_NAMES{$shortNameRaw} // $shortNameRaw);
 }
 
