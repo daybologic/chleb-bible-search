@@ -74,6 +74,54 @@ sub __bookIndex {
 	return __bookIndexFromNumber($bookNumber);
 }
 
+=head1 __chapterFromHeading($text)
+
+Return the chapter number from a Gutenberg chapter heading, if C<$text> is a
+chapter heading rather than verse content.
+
+=cut
+
+sub __chapterFromHeading {
+	my ($text) = @_;
+	my ($chapter) = $text =~ /\A\s*(?:[A-Za-z0-9 ]+)\s+Chapter\s+(\d+)\b/x;
+	return $chapter if (defined($chapter));
+	($chapter) = $text =~ /\A\s*\(Psalm\s+Chapter\s+(\d+)\s+according\b/x;
+	return $chapter if (defined($chapter));
+	return;
+}
+
+=head1 __bookIndexForNode($node)
+
+Return a book index when C<$node> identifies the start of a Gutenberg book.
+
+=cut
+
+sub __bookIndexForNode {
+	my ($node) = @_;
+	return __bookIndex($node) if ($node->tag eq 'h1');
+	return unless ($node->tag eq 'a' && defined($node->attr('id')));
+	my ($bookNumber) = $node->attr('id') =~ /\ABook(\d{2})\z/x;
+	return unless (defined($bookNumber));
+	return __bookIndexFromNumber($bookNumber);
+}
+
+=head1 __verseParts($text)
+
+Return the chapter, verse, and normalized text from a numbered verse paragraph.
+
+=cut
+
+sub __verseParts {
+	my ($text) = @_;
+	my ($chapter, $verse) = $text =~ /\A\s*(\d+)[.:](\d+)\.\s*/x;
+	return unless (defined($chapter) && defined($verse));
+	$text =~ s/\A\s*\d+[.:]\d+\.\s*//x;
+	$text =~ s/\s+/ /gx;
+	$text =~ s/\s+\z//x;
+	return if (length($text) == 0);
+	return ($chapter, $verse, $text);
+}
+
 sub __writeVerses {
 	my ($html, $output) = @_;
 	my $tree = HTML::TreeBuilder->new;
@@ -85,29 +133,36 @@ sub __writeVerses {
 	my $bookIndex;
 	my $verseCount = 0;
 	my $bookCount = 0;
+	my $chapter;
+	my $verseOrdinal = 0;
 	my %seenBooks;
 	for my $node ($tree->look_down(_tag => qr/\A(?:a|h1|p)\z/x)) {
-		my $nodeBookIndex;
-		$nodeBookIndex = __bookIndex($node) if ($node->tag eq 'h1');
-		if ($node->tag eq 'a' && defined($node->attr('id'))
-			&& $node->attr('id') =~ /\ABook(\d{2})\z/x) {
-			$nodeBookIndex = __bookIndexFromNumber($1);
-		}
+		my $nodeBookIndex = __bookIndexForNode($node);
 		if (defined($nodeBookIndex)) {
 			$bookIndex = $nodeBookIndex;
+			$chapter = undef;
+			$verseOrdinal = 0;
 			$bookCount++ unless ($seenBooks{$bookIndex}++);
 			next;
 		}
 
 		next unless (defined($bookIndex));
 		my $text = $node->as_text;
-		my ($chapter, $verse) = $text =~ /\A\s*(\d+)[.:](\d+)\.\s*/x;
-		next unless (defined($chapter) && defined($verse));
-		$text =~ s/\A\s*\d+[.:]\d+\.\s*//x;
-		$text =~ s/\s+/ /gx;
-		$text =~ s/\s+\z//x;
-		next if (length($text) == 0);
-		printf {$file} "dr:%s:%d:%d::%s\n", $BOOK_CODES[$bookIndex], $chapter, $verse, $text;
+		my $headingChapter = __chapterFromHeading($text);
+		if (defined($headingChapter)) {
+			$verseOrdinal = 0 if (!defined($chapter) || $headingChapter != $chapter);
+			$chapter = $headingChapter;
+			next;
+		}
+		my ($markerChapter, $verse, $verseText) = __verseParts($text);
+		next unless (defined($markerChapter));
+		if ($verseOrdinal > 0 && defined($chapter) && $markerChapter > $chapter) {
+			$chapter = $markerChapter;
+			$verseOrdinal = 0;
+		}
+		my $outputChapter = $chapter // $markerChapter;
+		$verseOrdinal++;
+		printf {$file} "dr:%s:%d:%d::%s\n", $BOOK_CODES[$bookIndex], $outputChapter, $verseOrdinal, $verseText;
 		$verseCount++;
 	}
 
