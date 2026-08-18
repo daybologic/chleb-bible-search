@@ -130,17 +130,28 @@ Readonly my %BOOK_ORDINAL => (
 Readonly my %TRANSLATION_BOOK_ORDINAL => (
 	dr => {
 		Gen => 1, Exo => 2, Lev => 3, Num => 4, Deu => 5, Josh => 6, Judg => 7, Ruth => 8,
-		'1Ki' => 9, '2Ki' => 10, '3Ki' => 11, '4Ki' => 12, '1Ch' => 13, '2Ch' => 14,
-		Ezr => 15, Neh => 16, Tob => 17, Jdt => 18, Est => 19, Job => 20, Psa => 21,
-		Pro => 22, Ecc => 23, Song => 24, Wis => 25, Sir => 26, Isa => 27, Jer => 28,
-		Lam => 29, Bar => 30, Eze => 31, Dan => 32, Hos => 33, Joe => 34, Amo => 35,
-		Oba => 36, Jon => 37, Mic => 38, Nah => 39, Hab => 40, Zep => 41, Hag => 42,
+		'1Sam' => 9, '2Sam' => 10, '1Ki' => 11, '2Ki' => 12, '1Chr' => 13, '2Chr' => 14,
+		Ezra => 15, Neh => 16, Tob => 17, Jdt => 18, Est => 19, Job => 20, Psa => 21,
+		Prov => 22, Eccl => 23, Song => 24, Wis => 25, Sir => 26, Isa => 27, Jer => 28,
+		Lam => 29, Bar => 30, Ezek => 31, Dan => 32, Hosea => 33, Joel => 34, Amos => 35,
+		Oba => 36, Jonah => 37, Micah => 38, Nahum => 39, Hab => 40, Zep => 41, Hag => 42,
 		Zec => 43, Mal => 44, '1Ma' => 45, '2Ma' => 46, Mat => 47, Mark => 48,
-		Luke => 49, John => 50, Acts => 51, Rom => 52, '1Co' => 53, '2Co' => 54,
-		Gal => 55, Eph => 56, Phi => 57, Col => 58, '1Th' => 59, '2Th' => 60,
-		'1Ti' => 61, '2Ti' => 62, Tit => 63, Phile => 64, Heb => 65, Jam => 66,
-		'1Pe' => 67, '2Pe' => 68, '1Jo' => 69, '2Jo' => 70, '3Jo' => 71, Jud => 72,
+		Luke => 49, John => 50, Acts => 51, Rom => 52, '1Cor' => 53, '2Cor' => 54,
+		Gal => 55, Eph => 56, Phil => 57, Col => 58, '1Th' => 59, '2Th' => 60,
+		'1Tim' => 61, '2Tim' => 62, Titus => 63, Phile => 64, Heb => 65, James => 66,
+		'1Pet' => 67, '2Pet' => 68, '1John' => 69, '2John' => 70, '3John' => 71, Jude => 72,
 		Rev => 73,
+	},
+);
+
+Readonly my %TRANSLATION_BOOK_CODE => (
+	dr => {
+		'1Ki' => '1Sam', '2Ki' => '2Sam', '3Ki' => '1Ki', '4Ki' => '2Ki',
+		'1Ch' => '1Chr', '2Ch' => '2Chr', Ezr => 'Ezra', Pro => 'Prov', Ecc => 'Eccl',
+		Eze => 'Ezek', Hos => 'Hosea', Joe => 'Joel', Amo => 'Amos', Jon => 'Jonah',
+		Mic => 'Micah', Nah => 'Nahum', '1Co' => '1Cor', '2Co' => '2Cor', Phi => 'Phil',
+		'1Ti' => '1Tim', '2Ti' => '2Tim', Tit => 'Titus', Jam => 'James', '1Pe' => '1Pet',
+		'2Pe' => '2Pet', '1Jo' => '1John', '2Jo' => '2John', '3Jo' => '3John', Jud => 'Jude',
 	},
 );
 
@@ -163,6 +174,18 @@ sub __inputFromTranslation {
 sub __emotionFromTranslation {
 	my ($translation) = @_;
 	return join('/', 'static', 'emotion', sprintf('%s.json', $translation));
+}
+
+=item C<__canonicalBookCode($translation, $bookShortName)>
+
+Return the canonical book code used by the database for a translation input
+book code.
+
+=cut
+
+sub __canonicalBookCode {
+	my ($translation, $bookShortName) = @_;
+	return ($TRANSLATION_BOOK_CODE{$translation} // {})->{$bookShortName} // $bookShortName;
 }
 
 sub __thesaurusFromTranslation {
@@ -640,6 +663,7 @@ sub __processVerses {
 			my ($verseKey, $verseText) = @verseData;
 			my ($lineTranslation, $bookShortName, $chapterOrdinal, $verseNumber)
 			    = split(m{ : }x, $verseKey, 4);
+			$bookShortName = __canonicalBookCode($lineTranslation, $bookShortName);
 			chomp($verseText);
 
 			__writeBook($fileHandle, $lineTranslation, $bookShortName);
