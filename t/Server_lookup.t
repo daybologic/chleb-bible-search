@@ -48,6 +48,7 @@ extends 'Test::Module::Runnable::Local';
 
 use English qw(-no_match_vars);
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
+use Storable qw(dclone);
 use Chleb::DI::Container;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Dancer2;
@@ -69,11 +70,26 @@ sub setUp {
 
 sub test_translation_all {
 	my ($self) = @_;
-	plan tests => 1;
+	plan tests => 2;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
 	my $json = $self->sut->__lookup({ accept => $mediaType, book => 'Psalms', chapter => 110, verse => 1, translations => [ 'all' ] });
-	cmp_deeply($json, [
+	my @translations = sort map { $_->{data}->[0]->{attributes}->{translation} } @{$json};
+	is_deeply(\@translations, [qw(asv dr kjv)], 'all compatible translations are returned');
+	my @legacyExpectedTranslations = map { dclone($_) } grep {
+		$_->{data}->[0]->{attributes}->{translation} ne 'dr'
+	} @{$json};
+	for my $response (@legacyExpectedTranslations) {
+		$response->{data} = [ grep {
+			$_->{attributes}->{translation} ne 'dr'
+		} @{ $response->{data} } ];
+		$response->{included} = [ grep {
+			!defined($_->{attributes})
+				|| !defined($_->{attributes}->{translation})
+				|| $_->{attributes}->{translation} ne 'dr'
+		} @{ $response->{included} } ];
+	}
+	cmp_deeply(\@legacyExpectedTranslations, [
 		{
 			data => [
 				{

@@ -178,7 +178,12 @@ sub testV2BibleTranslationsShareDailyReference {
 		[ [ 'kjv' ], [ 'kjv:2 Samuel 3:19' ] ],
 		[ [ 'asv', 'kjv' ], [ 'asv:2 Samuel 3:19', 'kjv:2 Samuel 3:19' ] ],
 		[ [ 'kjv', 'asv' ], [ 'kjv:2 Samuel 3:19', 'asv:2 Samuel 3:19' ] ],
-		[ [ 'all' ], [ 'asv:2 Samuel 3:19', 'kjv:2 Samuel 3:19', 'pickthall:Quran 53:36' ] ],
+		[ [ 'all' ], [
+			'asv:2 Samuel 3:19',
+			'dr:2 Samuel 3:19',
+			'kjv:2 Samuel 3:19',
+			'pickthall:Quran 53:36',
+		] ],
 	);
 
 	foreach my $case (@cases) {
