@@ -136,6 +136,7 @@ sub testResultsTable {
 			{
 				type => 'book',
 				attributes => {
+					long_name => 'Genesis',
 					short_name => 'gen',
 					short_name_raw => 'Gen',
 				},
@@ -149,7 +150,8 @@ sub testResultsTable {
 	like($html, qr{<th>Result</th>}, 'result header is present');
 	like($html, qr{<td>kjv</td>}, 'translation is in a table cell');
 	like($html, qr{<th>Verse</th>}, 'verse header is present');
-	like($html, qr{<a href="/1/lookup/gen/1/1">Gen \[1:1\]</a>}, 'verse link is present');
+	like($html, qr{<a href="/1/lookup/gen/1/1[?]translations=kjv">Genesis \[1:1\]</a>},
+		'verse link uses the long book name and selected translation');
 	like($html, qr{<td>In the beginning God created the heaven and the earth\.</td>}, 'verse text is in a table cell');
 
 	my $htmlWithoutHome = Chleb::Server::Moose::__searchResultsToHtml(\%json, { includeHome => 0 });

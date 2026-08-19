@@ -346,7 +346,7 @@ sub __searchFormOptions {
 			"<option value=\"%s\"%s>%s</option>\n",
 			__htmlEscape($book->shortName),
 			defined($selectedBook) && $selectedBook eq $book->shortName ? ' selected' : '',
-			__htmlEscape($book->shortNameRaw),
+			__htmlEscape($book->longName),
 		);
 	}
 

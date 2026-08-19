@@ -2066,13 +2066,15 @@ sub __searchResultsToHtml {
 
 	my $includedCount = scalar(@{ $json->{included} });
 	my %rawBookNameMap = ( );
+	my %longBookNameMap = ( );
 	for (my $includedIndex = 0; $includedIndex < $includedCount; $includedIndex++) {
 		my $includedItem = $json->{included}->[$includedIndex];
 		my $type = $includedItem->{type};
 		next if ($type ne 'book');
 
-		$rawBookNameMap{ $includedItem->{attributes}->{short_name} }
-		    = $includedItem->{attributes}->{short_name_raw};
+		my $attributes = $includedItem->{attributes};
+		$rawBookNameMap{ $attributes->{short_name} } = $attributes->{short_name_raw};
+		$longBookNameMap{ $attributes->{short_name} } = $attributes->{long_name};
 	}
 
 
@@ -2090,13 +2092,17 @@ sub __searchResultsToHtml {
 		my $verse = $json->{data}->[$resultI];
 		my $attributes = $verse->{attributes};
 		my $bookShortName = $rawBookNameMap{ $attributes->{book} };
+		my $bookLongName = $longBookNameMap{ $attributes->{book} } // $bookShortName;
 
 		my $linkToVerse = __linkToVerse(
-			undef,
+			sprintf('%s [%d:%d]', $bookLongName, $attributes->{chapter}, $attributes->{ordinal}),
 			$bookShortName,
 			$attributes->{chapter},
 			$attributes->{ordinal},
-			{ includeBookName => 1 },
+			{
+				includeBookName => 1,
+				translation => $attributes->{translation},
+			},
 		);
 
 		$text .= "<tr>\r\n";
