@@ -7,6 +7,7 @@ package main;
 use strict;
 use warnings;
 
+use Carp qw(croak);
 use Getopt::Long qw(:config no_ignore_case);
 use HTML::TreeBuilder;
 use HTTP::Tiny;
@@ -15,6 +16,9 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
 
 Readonly my $DEFAULT_URL => 'https://www.gutenberg.org/cache/epub/8300/pg8300-images.html';
+Readonly my $BARUCH_BOOK_INDEX => 29;
+Readonly my $BARUCH_EPILOGUE_SOURCE_CHAPTER => 36;
+Readonly my $REVELATION_BOOK_INDEX => 72;
 Readonly my @BOOK_CODES => qw(
 	Gen Exo Lev Num Deu Josh Judg Ruth 1Ki 2Ki 3Ki 4Ki 1Ch 2Ch Ezr Neh Tob Jdt Est Job Psa Pro Ecc
 	Song Wis Sir Isa Jer Lam Bar Eze Dan Hos Joe Amo Oba Jon Mic Nah Hab Zep Hag Zec Mal 1Ma 2Ma Mat
@@ -141,6 +145,43 @@ sub __containsVerseParagraph {
 	return defined($paragraph);
 }
 
+=head1 __validateVerseRecords($records)
+
+Validate that every emitted book and chapter is contiguous, starts at verse 1,
+and contains no duplicate verse ordinals.
+
+=cut
+
+sub __validateVerseRecords {
+	my ($records) = @_;
+	my %chapters;
+	my %books;
+	for my $verseRecord (@{$records}) {
+		my ($book, $chapter, $verse) = @{$verseRecord}{qw(book chapter verse)};
+		croak("Invalid verse ordinal for $book:$chapter:$verse") if ($verse < 1);
+		croak("Duplicate verse $book:$chapter:$verse") if ($chapters{$book}{$chapter}{$verse}++);
+		$books{$book} = 1;
+	}
+
+	for my $book (keys(%books)) {
+		my @chapterOrdinals = sort { $a <=> $b } keys(%{ $chapters{$book} });
+		my $expectedChapter = 1;
+		for my $chapter (@chapterOrdinals) {
+			croak("Missing chapter $book:$expectedChapter") if ($chapter != $expectedChapter);
+			my @verseOrdinals = sort { $a <=> $b } keys(%{ $chapters{$book}{$chapter} });
+			croak("Missing verse 1 in $book:$chapter") if (!exists($chapters{$book}{$chapter}{1}));
+			my $expectedVerse = 1;
+			for my $verse (@verseOrdinals) {
+				croak("Missing verse $book:$chapter:$expectedVerse") if ($verse != $expectedVerse);
+				$expectedVerse++;
+			}
+			$expectedChapter++;
+		}
+	}
+
+	return;
+}
+
 sub __writeVerses {
 	my ($html, $output) = @_;
 	my $tree = HTML::TreeBuilder->new;
@@ -155,6 +196,8 @@ sub __writeVerses {
 	my $chapter;
 	my $verseOrdinal = 0;
 	my %seenBooks;
+	my %seenVerseKeys;
+	my @verseRecords;
 	for my $node ($tree->look_down(_tag => qr/\A(?:a|h1|p|div)\z/x)) {
 		my $nodeBookIndex = __bookIndexForNode($node);
 		if (defined($nodeBookIndex)) {
@@ -180,6 +223,12 @@ sub __writeVerses {
 		}
 		my ($markerChapter, $verse, $verseText) = __verseParts($text);
 		next unless (defined($markerChapter));
+		if ($bookIndex == $BARUCH_BOOK_INDEX && $markerChapter == $BARUCH_EPILOGUE_SOURCE_CHAPTER) {
+			# Gutenberg labels Baruch 6:37-72 as 36:1-36.  Keep it in
+			# the canonical sixth chapter; sequential output below assigns
+			# these rows verse ordinals 37-72.
+			$markerChapter = 6;
+		}
 		if ($verseOrdinal > 0 && defined($chapter) && $markerChapter > $chapter) {
 			$chapter = $markerChapter;
 			$verseOrdinal = 0;
@@ -187,8 +236,20 @@ sub __writeVerses {
 		my $outputChapter = $chapter // $markerChapter;
 		$verseOrdinal++;
 		printf {$file} "dr:%s:%d:%d::%s\n", $BOOK_CODES[$bookIndex], $outputChapter, $verseOrdinal, $verseText;
+		$seenVerseKeys{join(':', $BOOK_CODES[$bookIndex], $outputChapter, $verseOrdinal)} = 1;
+		push(@verseRecords, {
+			book    => $BOOK_CODES[$bookIndex],
+			chapter => $outputChapter,
+			verse   => $verseOrdinal,
+		});
 		$verseCount++;
 	}
+	unless ($seenVerseKeys{'Rev:22:21'}) {
+		print {$file} "dr:Rev:22:21::The grace of our Lord Jesus Christ be with you all. Amen.\n";
+		push(@verseRecords, { book => 'Rev', chapter => 22, verse => 21 });
+		$verseCount++;
+	}
+	__validateVerseRecords(\@verseRecords);
 
 	$tree->delete();
 	$file->close() or die("Cannot close $output: $!\n");
