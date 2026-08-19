@@ -44,8 +44,6 @@ use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
 use YAML::XS qw(LoadFile);
 
-Readonly my $OT_COUNT => 39;
-
 Readonly my $DATA_DIR => 'data';
 Readonly my $SPINE_FILE => join('/', $DATA_DIR, 'static', 'spine.yaml');
 
@@ -59,102 +57,8 @@ Readonly my %TRANSLATION_META => (
 	pickthall => { year => 1930, language => 'en', properties => { chapter_name => 'Surah', chapter_name_plural => 'Surahs' } },
 );
 
-Readonly my %BOOK_ORDINAL => (
-	Gen   => 1,
-	Exo   => 2,
-	Lev   => 3,
-	Num   => 4,
-	Deu   => 5,
-	Josh  => 6,
-	Judg  => 7,
-	Ruth  => 8,
-	'1Sam' => 9,
-	'2Sam' => 10,
-	'1Ki'  => 11,
-	'2Ki'  => 12,
-	'1Chr' => 13,
-	'2Chr' => 14,
-	Ezra  => 15,
-	Neh   => 16,
-	Est   => 17,
-	Job   => 18,
-	Psa   => 19,
-	Prov  => 20,
-	Eccl  => 21,
-	Song  => 22,
-	Isa   => 23,
-	Jer   => 24,
-	Lam   => 25,
-	Ezek  => 26,
-	Dan   => 27,
-	Hosea => 28,
-	Joel  => 29,
-	Amos  => 30,
-	Oba   => 31,
-	Jonah => 32,
-	Micah => 33,
-	Nahum => 34,
-	Hab   => 35,
-	Zep   => 36,
-	Hag   => 37,
-	Zec   => 38,
-	Mal   => 39,
-	Mat   => 40,
-	Mark  => 41,
-	Luke  => 42,
-	John  => 43,
-	Acts  => 44,
-	Rom   => 45,
-	'1Cor' => 46,
-	'2Cor' => 47,
-	Gal   => 48,
-	Eph   => 49,
-	Phil  => 50,
-	Col   => 51,
-	'1Th'  => 52,
-	'2Th'  => 53,
-	'1Tim' => 54,
-	'2Tim' => 55,
-	Titus => 56,
-	Phile => 57,
-	Heb   => 58,
-	James => 59,
-	'1Pet' => 60,
-	'2Pet' => 61,
-	'1John' => 62,
-	'2John' => 63,
-	'3John' => 64,
-	Jude  => 65,
-	Rev   => 66,
-	Quran => 1,
-);
-
-Readonly my %TRANSLATION_BOOK_ORDINAL => (
-	dr => {
-		Gen => 1, Exo => 2, Lev => 3, Num => 4, Deu => 5, Josh => 6, Judg => 7, Ruth => 8,
-		'1Sam' => 9, '2Sam' => 10, '1Ki' => 11, '2Ki' => 12, '1Chr' => 13, '2Chr' => 14,
-		Ezra => 15, Neh => 16, Tob => 17, Jdt => 18, Est => 19, Job => 20, Psa => 21,
-		Prov => 22, Eccl => 23, Song => 24, Wis => 25, Sir => 26, Isa => 27, Jer => 28,
-		Lam => 29, Bar => 30, Ezek => 31, Dan => 32, Hosea => 33, Joel => 34, Amos => 35,
-		Oba => 36, Jonah => 37, Micah => 38, Nahum => 39, Hab => 40, Zep => 41, Hag => 42,
-		Zec => 43, Mal => 44, '1Ma' => 45, '2Ma' => 46, Mat => 47, Mark => 48,
-		Luke => 49, John => 50, Acts => 51, Rom => 52, '1Cor' => 53, '2Cor' => 54,
-		Gal => 55, Eph => 56, Phil => 57, Col => 58, '1Th' => 59, '2Th' => 60,
-		'1Tim' => 61, '2Tim' => 62, Titus => 63, Phile => 64, Heb => 65, James => 66,
-		'1Pet' => 67, '2Pet' => 68, '1John' => 69, '2John' => 70, '3John' => 71, Jude => 72,
-		Rev => 73,
-	},
-);
-
 my %TRANSLATION_BOOK_CODE = ( );
-
-Readonly my %TRANSLATION_OT_COUNT => (
-	dr => 46,
-);
-
-Readonly my %BOOK_TESTAMENT => (
-	Quran => 'O',
-);
+my %TRANSLATION_BOOK_META = ( );
 
 my %bookKeys = ( );
 my %chapterKeys = ( );
@@ -181,6 +85,33 @@ sub __canonicalBookCode {
 	return ($TRANSLATION_BOOK_CODE{$translation} // {})->{$bookShortName} // $bookShortName;
 }
 
+=item C<__spineBookMetadata($bookId, $translation, $metadata, $testament)>
+
+Validate and normalize one translation's book metadata from the spine.
+
+=cut
+
+sub __spineBookMetadata {
+	my ($bookId, $translation, $metadata, $testament) = @_;
+	my $ordinal = $metadata->{ordinal};
+	croak("Spine book '$bookId' has no ordinal for '$translation'")
+	    unless (defined($ordinal) && $ordinal =~ m/\A[0-9]+\z/x);
+	croak("Spine book '$bookId' has no testament")
+	    unless (defined($testament) && $testament =~ m/\A(?:old|new)\z/x);
+	my $bookMetadata = {
+		ordinal => $ordinal,
+		testament => $testament eq 'new' ? 'N' : 'O',
+		shortName => $metadata->{short_name},
+		shortNameRaw => $metadata->{short_name_raw},
+		longName => $metadata->{long_name},
+	};
+	croak("Spine book '$bookId' has incomplete names for '$translation'")
+	    unless (defined($bookMetadata->{shortName})
+		&& defined($bookMetadata->{shortNameRaw})
+		&& defined($bookMetadata->{longName}));
+	return $bookMetadata;
+}
+
 =item C<__loadSpineBookCodes()>
 
 Load source-to-canonical book-code mappings from C<spine.yaml>.
@@ -193,23 +124,15 @@ sub __loadSpineBookCodes {
 	    unless (ref($spine) eq 'HASH' && ref($spine->{books}) eq 'ARRAY');
 
 	%TRANSLATION_BOOK_CODE = ( );
+	%TRANSLATION_BOOK_META = ( );
 	foreach my $book (@{ $spine->{books} }) {
 		my $bookId = $book->{book_id} // '';
-		$bookId =~ s/\A_//x;
 		croak("Spine book is missing book_id") if (length($bookId) == 0);
 
 		my $translations = $book->{translations};
 		croak("Spine book '$bookId' is missing translations") unless (ref($translations) eq 'HASH');
 
-		# The ASV/KJV entry supplies the canonical code where the spine ID is
-		# a historical cross-translation name, for example _1Esd -> Ezra.
 		my $canonicalCode = $bookId;
-		foreach my $referenceTranslation (qw(asv kjv)) {
-			my $reference = $translations->{$referenceTranslation};
-			next if (ref($reference) ne 'HASH' || $reference->{absent});
-			$canonicalCode = $reference->{short_name_raw} // $canonicalCode;
-			last;
-		}
 
 		foreach my $translation (keys(%$translations)) {
 			my $metadata = $translations->{$translation};
@@ -222,6 +145,9 @@ sub __loadSpineBookCodes {
 				croak("Spine maps '$translation:$sourceCode' to multiple canonical books");
 			}
 			$TRANSLATION_BOOK_CODE{$translation}->{$sourceCode} = $canonicalCode;
+			my $bookMetadata = __spineBookMetadata($bookId, $translation, $metadata, $book->{testament});
+			$TRANSLATION_BOOK_META{$translation}->{$sourceCode} = $bookMetadata;
+			$TRANSLATION_BOOK_META{$translation}->{$canonicalCode} = $bookMetadata;
 		}
 	}
 
@@ -266,6 +192,9 @@ SQL
 CREATE TABLE IF NOT EXISTS book (
 	id INTEGER PRIMARY KEY,
 	code CHAR(8) NOT NULL,
+	short_name CHAR(8) NOT NULL,
+	short_name_raw CHAR(8) NOT NULL,
+	long_name TEXT NOT NULL,
 	translation CHAR(8) NOT NULL,
 	testament CHAR(1) NOT NULL CHECK (testament IN ('O', 'N')),
 	ordinal INTEGER NOT NULL,
@@ -628,21 +557,21 @@ sub __writeBook {
 	my ($fileHandle, $translation, $bookShortName) = @_;
 
 my $sthBook = $fileHandle->prepare(<<'SQL');
-	INSERT INTO book (id, code, translation, testament, ordinal, chapter_count)
-	VALUES(?, ?, ?, ?, ?, ?)
+	INSERT INTO book (id, code, short_name, short_name_raw, long_name, translation, testament, ordinal, chapter_count)
+	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
 SQL
 
 	my $bookKey = join(':', $translation, $bookShortName);
 	unless ($bookKeys{$bookKey}) {
-		my $ordinal = ($TRANSLATION_BOOK_ORDINAL{$translation} // {})->{$bookShortName}
-		    // $BOOK_ORDINAL{$bookShortName}
-		    // croak("Missing ordinal for '$bookShortName' in translation '$translation'");
-		my $otCount = $TRANSLATION_OT_COUNT{$translation} // $OT_COUNT;
-		my $testament = $BOOK_TESTAMENT{$bookShortName} // ($ordinal > $otCount ? 'N' : 'O');
+		my $metadata = ($TRANSLATION_BOOK_META{$translation} // {})->{$bookShortName}
+		    // croak("Missing spine metadata for '$bookShortName' in translation '$translation'");
+		my $ordinal = $metadata->{ordinal};
+		my $testament = $metadata->{testament};
 		my $id = __uuid('book');
 
 		my $chapterCount = 0; # populated after load by __populateCounts()
-		$sthBook->execute($id, $bookShortName, $translation, $testament, $ordinal, $chapterCount);
+		$sthBook->execute($id, $bookShortName, $metadata->{shortName}, $metadata->{shortNameRaw},
+		    $metadata->{longName}, $translation, $testament, $ordinal, $chapterCount);
 		$bookKeys{$bookKey} = $id;
 	}
 

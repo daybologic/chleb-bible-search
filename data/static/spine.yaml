@@ -34,7 +34,7 @@
 
 ---
 books:
-  - book_id: _Gen
+  - book_id: Gen
     chapters: 50
     testament: "old"
     translations:
@@ -56,7 +56,7 @@ books:
         long_name: "Genesis"
         ordinal: 1
         chapters: 50
-  - book_id: _Exo
+  - book_id: Exo
     chapters: 40
     testament: "old"
     translations:
@@ -78,7 +78,7 @@ books:
         long_name: "Exodus"
         ordinal: 2
         chapters: 40
-  - book_id: _Lev
+  - book_id: Lev
     chapters: 27
     testament: "old"
     translations:
@@ -100,7 +100,7 @@ books:
         long_name: "Leviticus"
         ordinal: 3
         chapters: 27
-  - book_id: _Num
+  - book_id: Num
     chapters: 36
     testament: "old"
     translations:
@@ -122,7 +122,7 @@ books:
         long_name: "Numbers"
         ordinal: 4
         chapters: 36
-  - book_id: _Deu
+  - book_id: Deu
     chapters: 34
     testament: "old"
     translations:
@@ -144,7 +144,7 @@ books:
         long_name: "Deuteronomy"
         ordinal: 5
         chapters: 34
-  - book_id: _Josh
+  - book_id: Josh
     chapters: 24
     testament: "old"
     translations:
@@ -166,7 +166,7 @@ books:
         long_name: "Joshua"
         ordinal: 6
         chapters: 24
-  - book_id: _Judg
+  - book_id: Judg
     chapters: 21
     testament: "old"
     translations:
@@ -188,7 +188,7 @@ books:
         long_name: "Judges"
         ordinal: 7
         chapters: 21
-  - book_id: _Ruth
+  - book_id: Ruth
     chapters: 4
     testament: "old"
     translations:
@@ -210,7 +210,7 @@ books:
         long_name: "Ruth"
         ordinal: 8
         chapters: 4
-  - book_id: _1Ki
+  - book_id: 1Ki
     chapters: 31
     testament: "old"
     translations:
@@ -232,7 +232,7 @@ books:
         long_name: "I Samuel"
         ordinal: 9
         chapters: 31
-  - book_id: _2Ki
+  - book_id: 2Ki
     chapters: 24
     testament: "old"
     translations:
@@ -254,7 +254,7 @@ books:
         long_name: "II Samuel"
         ordinal: 10
         chapters: 24
-  - book_id: _3Ki
+  - book_id: 3Ki
     chapters: 22
     testament: "old"
     translations:
@@ -276,7 +276,7 @@ books:
         long_name: "I Kings"
         ordinal: 11
         chapters: 22
-  - book_id: _4Ki
+  - book_id: 4Ki
     chapters: 25
     testament: "old"
     translations:
@@ -298,7 +298,7 @@ books:
         long_name: "II Kings"
         ordinal: 12
         chapters: 25
-  - book_id: _1Chr
+  - book_id: 1Chr
     chapters: 29
     testament: "old"
     translations:
@@ -320,7 +320,7 @@ books:
         long_name: "I Chronicles"
         ordinal: 13
         chapters: 29
-  - book_id: _2Chr
+  - book_id: 2Chr
     chapters: 36
     testament: "old"
     translations:
@@ -342,7 +342,7 @@ books:
         long_name: "II Chronicles"
         ordinal: 14
         chapters: 36
-  - book_id: _1Esd
+  - book_id: 1Esd
     chapters: 10
     testament: "old"
     translations:
@@ -364,7 +364,7 @@ books:
         long_name: "Ezra"
         ordinal: 15
         chapters: 10
-  - book_id: _2Esd
+  - book_id: 2Esd
     chapters: 13
     testament: "old"
     translations:
@@ -386,7 +386,7 @@ books:
         long_name: "Nehemiah"
         ordinal: 16
         chapters: 13
-  - book_id: _Tob
+  - book_id: Tob
     chapters: 14
     testament: "old"
     translations:
@@ -400,7 +400,7 @@ books:
         chapters: 14
       kjv:
         absent: true
-  - book_id: _Jdt
+  - book_id: Jdt
     chapters: 16
     testament: "old"
     translations:
@@ -414,7 +414,7 @@ books:
         chapters: 16
       kjv:
         absent: true
-  - book_id: _Est
+  - book_id: Est
     chapters: 10
     testament: "old"
     translations:
@@ -436,7 +436,7 @@ books:
         long_name: "Esther"
         ordinal: 17
         chapters: 10
-  - book_id: _Job
+  - book_id: Job
     chapters: 42
     testament: "old"
     translations:
@@ -458,7 +458,7 @@ books:
         long_name: "Job"
         ordinal: 18
         chapters: 42
-  - book_id: _Psa
+  - book_id: Psa
     chapters: 150
     testament: "old"
     translations:
@@ -480,7 +480,7 @@ books:
         long_name: "Psalms"
         ordinal: 19
         chapters: 150
-  - book_id: _Prov
+  - book_id: Prov
     chapters: 31
     testament: "old"
     translations:
@@ -502,7 +502,7 @@ books:
         long_name: "Proverbs"
         ordinal: 20
         chapters: 31
-  - book_id: _Eccl
+  - book_id: Eccl
     chapters: 12
     testament: "old"
     translations:
@@ -524,7 +524,7 @@ books:
         long_name: "Ecclesiastes"
         ordinal: 21
         chapters: 12
-  - book_id: _Song
+  - book_id: Song
     chapters: 8
     testament: "old"
     translations:
@@ -546,7 +546,7 @@ books:
         long_name: "Song of Solomon"
         ordinal: 22
         chapters: 8
-  - book_id: _Wis
+  - book_id: Wis
     chapters: 19
     testament: "old"
     translations:
@@ -560,7 +560,7 @@ books:
         chapters: 19
       kjv:
         absent: true
-  - book_id: _Sir
+  - book_id: Sir
     chapters: 51
     testament: "old"
     translations:
@@ -574,7 +574,7 @@ books:
         chapters: 51
       kjv:
         absent: true
-  - book_id: _Isa
+  - book_id: Isa
     chapters: 66
     testament: "old"
     translations:
@@ -596,7 +596,7 @@ books:
         long_name: "Isaiah"
         ordinal: 23
         chapters: 66
-  - book_id: _Jer
+  - book_id: Jer
     chapters: 52
     testament: "old"
     translations:
@@ -618,7 +618,7 @@ books:
         long_name: "Jeremiah"
         ordinal: 24
         chapters: 52
-  - book_id: _Lam
+  - book_id: Lam
     chapters: 5
     testament: "old"
     translations:
@@ -640,7 +640,7 @@ books:
         long_name: "Lamentations"
         ordinal: 25
         chapters: 5
-  - book_id: _Bar
+  - book_id: Bar
     chapters: 6
     testament: "old"
     translations:
@@ -654,7 +654,7 @@ books:
         chapters: 6
       kjv:
         absent: true
-  - book_id: _Ezek
+  - book_id: Ezek
     chapters: 48
     testament: "old"
     translations:
@@ -676,7 +676,7 @@ books:
         long_name: "Ezekiel"
         ordinal: 26
         chapters: 48
-  - book_id: _Dan
+  - book_id: Dan
     chapters: 12
     testament: "old"
     translations:
@@ -698,7 +698,7 @@ books:
         long_name: "Daniel"
         ordinal: 27
         chapters: 12
-  - book_id: _Hosea
+  - book_id: Hosea
     chapters: 14
     testament: "old"
     translations:
@@ -720,7 +720,7 @@ books:
         long_name: "Hosea"
         ordinal: 28
         chapters: 14
-  - book_id: _Joel
+  - book_id: Joel
     chapters: 3
     testament: "old"
     translations:
@@ -742,7 +742,7 @@ books:
         long_name: "Joel"
         ordinal: 29
         chapters: 3
-  - book_id: _Amos
+  - book_id: Amos
     chapters: 9
     testament: "old"
     translations:
@@ -764,7 +764,7 @@ books:
         long_name: "Amos"
         ordinal: 30
         chapters: 9
-  - book_id: _Oba
+  - book_id: Oba
     chapters: 1
     testament: "old"
     translations:
@@ -786,7 +786,7 @@ books:
         long_name: "Obadiah"
         ordinal: 31
         chapters: 1
-  - book_id: _Jonah
+  - book_id: Jonah
     chapters: 4
     testament: "old"
     translations:
@@ -808,7 +808,7 @@ books:
         long_name: "Jonah"
         ordinal: 32
         chapters: 4
-  - book_id: _Micah
+  - book_id: Micah
     chapters: 7
     testament: "old"
     translations:
@@ -830,7 +830,7 @@ books:
         long_name: "Micah"
         ordinal: 33
         chapters: 7
-  - book_id: _Nahum
+  - book_id: Nahum
     chapters: 3
     testament: "old"
     translations:
@@ -852,7 +852,7 @@ books:
         long_name: "Nahum"
         ordinal: 34
         chapters: 3
-  - book_id: _Hab
+  - book_id: Hab
     chapters: 3
     testament: "old"
     translations:
@@ -874,7 +874,7 @@ books:
         long_name: "Habakkuk"
         ordinal: 35
         chapters: 3
-  - book_id: _Zep
+  - book_id: Zep
     chapters: 3
     testament: "old"
     translations:
@@ -896,7 +896,7 @@ books:
         long_name: "Zephaniah"
         ordinal: 36
         chapters: 3
-  - book_id: _Hag
+  - book_id: Hag
     chapters: 2
     testament: "old"
     translations:
@@ -918,7 +918,7 @@ books:
         long_name: "Haggai"
         ordinal: 37
         chapters: 2
-  - book_id: _Zec
+  - book_id: Zec
     chapters: 14
     testament: "old"
     translations:
@@ -940,7 +940,7 @@ books:
         long_name: "Zechariah"
         ordinal: 38
         chapters: 14
-  - book_id: _Mal
+  - book_id: Mal
     chapters: 4
     testament: "old"
     translations:
@@ -962,7 +962,7 @@ books:
         long_name: "Malachi"
         ordinal: 39
         chapters: 4
-  - book_id: _1Ma
+  - book_id: 1Ma
     chapters: 16
     testament: "old"
     translations:
@@ -976,7 +976,7 @@ books:
         chapters: 16
       kjv:
         absent: true
-  - book_id: _2Ma
+  - book_id: 2Ma
     chapters: 15
     testament: "old"
     translations:
@@ -990,7 +990,7 @@ books:
         chapters: 15
       kjv:
         absent: true
-  - book_id: _Mat
+  - book_id: Mat
     chapters: 28
     testament: "new"
     translations:
@@ -1012,7 +1012,7 @@ books:
         long_name: "Matthew"
         ordinal: 40
         chapters: 28
-  - book_id: _Mark
+  - book_id: Mark
     chapters: 16
     testament: "new"
     translations:
@@ -1034,7 +1034,7 @@ books:
         long_name: "Mark"
         ordinal: 41
         chapters: 16
-  - book_id: _Luke
+  - book_id: Luke
     chapters: 24
     testament: "new"
     translations:
@@ -1056,7 +1056,7 @@ books:
         long_name: "Luke"
         ordinal: 42
         chapters: 24
-  - book_id: _John
+  - book_id: John
     chapters: 21
     testament: "new"
     translations:
@@ -1078,7 +1078,7 @@ books:
         long_name: "John"
         ordinal: 43
         chapters: 21
-  - book_id: _Acts
+  - book_id: Acts
     chapters: 28
     testament: "new"
     translations:
@@ -1100,7 +1100,7 @@ books:
         long_name: "Acts"
         ordinal: 44
         chapters: 28
-  - book_id: _Rom
+  - book_id: Rom
     chapters: 16
     testament: "new"
     translations:
@@ -1122,7 +1122,7 @@ books:
         long_name: "Romans"
         ordinal: 45
         chapters: 16
-  - book_id: _1Cor
+  - book_id: 1Cor
     chapters: 16
     testament: "new"
     translations:
@@ -1144,7 +1144,7 @@ books:
         long_name: "I Corinthians"
         ordinal: 46
         chapters: 16
-  - book_id: _2Cor
+  - book_id: 2Cor
     chapters: 13
     testament: "new"
     translations:
@@ -1166,7 +1166,7 @@ books:
         long_name: "II Corinthians"
         ordinal: 47
         chapters: 13
-  - book_id: _Gal
+  - book_id: Gal
     chapters: 6
     testament: "new"
     translations:
@@ -1188,7 +1188,7 @@ books:
         long_name: "Galatians"
         ordinal: 48
         chapters: 6
-  - book_id: _Eph
+  - book_id: Eph
     chapters: 6
     testament: "new"
     translations:
@@ -1210,7 +1210,7 @@ books:
         long_name: "Ephesians"
         ordinal: 49
         chapters: 6
-  - book_id: _Phil
+  - book_id: Phil
     chapters: 4
     testament: "new"
     translations:
@@ -1232,7 +1232,7 @@ books:
         long_name: "Philippians"
         ordinal: 50
         chapters: 4
-  - book_id: _Col
+  - book_id: Col
     chapters: 4
     testament: "new"
     translations:
@@ -1254,7 +1254,7 @@ books:
         long_name: "Colossians"
         ordinal: 51
         chapters: 4
-  - book_id: _1Th
+  - book_id: 1Th
     chapters: 5
     testament: "new"
     translations:
@@ -1276,7 +1276,7 @@ books:
         long_name: "I Thessalonians"
         ordinal: 52
         chapters: 5
-  - book_id: _2Th
+  - book_id: 2Th
     chapters: 3
     testament: "new"
     translations:
@@ -1298,7 +1298,7 @@ books:
         long_name: "II Thessalonians"
         ordinal: 53
         chapters: 3
-  - book_id: _1Tim
+  - book_id: 1Tim
     chapters: 6
     testament: "new"
     translations:
@@ -1320,7 +1320,7 @@ books:
         long_name: "I Timothy"
         ordinal: 54
         chapters: 6
-  - book_id: _2Tim
+  - book_id: 2Tim
     chapters: 4
     testament: "new"
     translations:
@@ -1342,7 +1342,7 @@ books:
         long_name: "II Timothy"
         ordinal: 55
         chapters: 4
-  - book_id: _Titus
+  - book_id: Titus
     chapters: 3
     testament: "new"
     translations:
@@ -1364,7 +1364,7 @@ books:
         long_name: "Titus"
         ordinal: 56
         chapters: 3
-  - book_id: _Phile
+  - book_id: Phile
     chapters: 1
     testament: "new"
     translations:
@@ -1386,7 +1386,7 @@ books:
         long_name: "Philemon"
         ordinal: 57
         chapters: 1
-  - book_id: _Heb
+  - book_id: Heb
     chapters: 13
     testament: "new"
     translations:
@@ -1408,7 +1408,7 @@ books:
         long_name: "Hebrews"
         ordinal: 58
         chapters: 13
-  - book_id: _James
+  - book_id: James
     chapters: 5
     testament: "new"
     translations:
@@ -1430,7 +1430,7 @@ books:
         long_name: "James"
         ordinal: 59
         chapters: 5
-  - book_id: _1Pet
+  - book_id: 1Pet
     chapters: 5
     testament: "new"
     translations:
@@ -1452,7 +1452,7 @@ books:
         long_name: "I Peter"
         ordinal: 60
         chapters: 5
-  - book_id: _2Pet
+  - book_id: 2Pet
     chapters: 3
     testament: "new"
     translations:
@@ -1474,7 +1474,7 @@ books:
         long_name: "II Peter"
         ordinal: 61
         chapters: 3
-  - book_id: _1John
+  - book_id: 1John
     chapters: 5
     testament: "new"
     translations:
@@ -1496,7 +1496,7 @@ books:
         long_name: "I John"
         ordinal: 62
         chapters: 5
-  - book_id: _2John
+  - book_id: 2John
     chapters: 1
     testament: "new"
     translations:
@@ -1518,7 +1518,7 @@ books:
         long_name: "II John"
         ordinal: 63
         chapters: 1
-  - book_id: _3John
+  - book_id: 3John
     chapters: 1
     testament: "new"
     translations:
@@ -1540,7 +1540,7 @@ books:
         long_name: "III John"
         ordinal: 64
         chapters: 1
-  - book_id: _Jude
+  - book_id: Jude
     chapters: 1
     testament: "new"
     translations:
@@ -1562,7 +1562,7 @@ books:
         long_name: "Jude"
         ordinal: 65
         chapters: 1
-  - book_id: _Rev
+  - book_id: Rev
     chapters: 22
     testament: "new"
     translations:
@@ -1574,7 +1574,7 @@ books:
         chapters: 22
       dr:
         short_name_raw: "Apoc"
-        short_name: "apoc"
+        short_name: "rev"
         long_name: "Apocalypse"
         ordinal: 73
         chapters: 22
@@ -1584,7 +1584,7 @@ books:
         long_name: "Revelation of John"
         ordinal: 66
         chapters: 22
-  - book_id: _Quran
+  - book_id: Quran
     chapters: 114
     testament: "old"
     translations:

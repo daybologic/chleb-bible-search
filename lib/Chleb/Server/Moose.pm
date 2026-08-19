@@ -229,8 +229,8 @@ sub __warmBackendVerse {
 	my $chapterOrdinal = $args->{chapterOrdinal};
 	my $verse = $args->{verse};
 	my $verseOrdinal = $verse->{verse_ordinal} + 0;
-	my $verseKey = join(':', $bible->translation, $book->shortNameRaw, $chapterOrdinal, $verseOrdinal);
-	my $bookVerseKey = join(':', $bible->translation, $book->shortNameRaw, $verse->{book_ordinal} + 0);
+	my $verseKey = join(':', $bible->translation, $book->canonicalCode, $chapterOrdinal, $verseOrdinal);
+	my $bookVerseKey = join(':', $bible->translation, $book->canonicalCode, $verse->{book_ordinal} + 0);
 
 	$bible->__backend->getVerseKeyByBookVerseKey($bookVerseKey);
 	$bible->__backend->getVerseDataByKey($verseKey);
@@ -272,7 +272,7 @@ sub __warmBackendCaches {
 					$self->dic->logger->warn(sprintf(
 						'Skipping missing chapter %d in %s during backend cache warmup',
 						$chapterOrdinal,
-						$book->shortNameRaw,
+						$book->canonicalCode,
 					));
 					next;
 				}
@@ -297,14 +297,14 @@ sub __warmBackendCaches {
 		$bible->__backend->primeSentimentCache();
 		my @books = shuffle(@{ $bible->books() });
 		foreach my $book (@books) {
-			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->shortNameRaw);
+			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->canonicalCode);
 			my %chapterVerses;
 			foreach my $row (@{ $bookVerses // [ ] }) {
 				push(@{ $chapterVerses{ $row->{chapter_ordinal} } }, $row);
 			}
 			my @chapterOrdinals = shuffle(1 .. $book->chapterCount);
 			foreach my $chapterOrdinal (@chapterOrdinals) {
-				$bible->__backend->getChapterVerseDataByKey($book->shortNameRaw, $chapterOrdinal);
+				$bible->__backend->getChapterVerseDataByKey($book->canonicalCode, $chapterOrdinal);
 				my @verses = shuffle(@{ $chapterVerses{$chapterOrdinal} // [ ] });
 				my $verseCount = scalar(@verses);
 				my $verseIndex = 0;

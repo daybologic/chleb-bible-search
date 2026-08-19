@@ -55,156 +55,8 @@ use Chleb::Utils;
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
-Readonly my $SHARED_CACHE_FORMAT_VERSION => 1;
+Readonly my $SHARED_CACHE_FORMAT_VERSION => 3;
 Readonly my $VERSE_ORDINAL_CACHE_VERSION => 2;
-
-Readonly my $OT_COUNT => 39;
-
-my %BOOK_NAMES;
-Readonly my %BOOK_LONG_NAMES => (
-	Gen => 'Genesis',
-	Exo => 'Exodus',
-	Lev => 'Leviticus',
-	Num => 'Numbers',
-	Deu => 'Deuteronomy',
-	Josh => 'Joshua',
-	Judg => 'Judges',
-	Ruth => 'Ruth',
-	'1Sam' => '1 Samuel',
-	'2Sam' => '2 Samuel',
-	'1Ki' => 'I Kings',
-	'2Ki' => 'II Kings',
-	'1Chr' => 'I Chronicles',
-	'2Chr' => 'II Chronicles',
-	Ezra => 'Ezra',
-	Neh => 'Nehemiah',
-	Est => 'Esther',
-	Job => 'Job',
-	Psa => 'Psalms',
-	Prov => 'Proverbs',
-	Eccl => 'Ecclesiastes',
-	Song => 'Song of Solomon',
-	Isa => 'Isaiah',
-	Jer => 'Jeremiah',
-	Lam => 'Lamentations',
-	Ezek => 'Ezekiel',
-	Dan => 'Daniel',
-	Hosea => 'Hosea',
-	Joel => 'Joel',
-	Amos => 'Amos',
-	Oba => 'Obadiah',
-	Jonah => 'Jonah',
-	Micah => 'Micah',
-	Nahum => 'Nahum',
-	Hab => 'Habakkuk',
-	Zep => 'Zephaniah',
-	Hag => 'Haggai',
-	Zec => 'Zechariah',
-	Mal => 'Malachi',
-	Mat => 'Matthew',
-	Mark => 'Mark',
-	Luke => 'Luke',
-	John => 'John',
-	Acts => 'Acts',
-	Rom => 'Romans',
-	'1Cor' => 'I Corinthians',
-	'2Cor' => 'II Corinthians',
-	Gal => 'Galatians',
-	Eph => 'Ephesians',
-	Phil => 'Philippians',
-	Col => 'Colossians',
-	'1Th' => 'I Thessalonians',
-	'2Th' => 'II Thessalonians',
-	'1Tim' => 'I Timothy',
-	'2Tim' => 'II Timothy',
-	Titus => 'Titus',
-	Phile => 'Philemon',
-	Heb => 'Hebrews',
-	James => 'James',
-	'1Pet' => 'I Peter',
-	'2Pet' => 'II Peter',
-	'1John' => 'I John',
-	'2John' => 'II John',
-	'3John' => 'III John',
-	Jude => 'Jude',
-	Rev => 'Revelation of John',
-);
-
-Readonly my %DR_BOOK_LONG_NAMES => (
-	Gen => 'Genesis',
-	Exo => 'Exodus',
-	Lev => 'Leviticus',
-	Num => 'Numbers',
-	Deu => 'Deuteronomy',
-	Josh => 'Josue',
-	Judg => 'Judges',
-	Ruth => 'Ruth',
-	'1Ki' => 'I Kings',
-	'2Ki' => 'II Kings',
-	'3Ki' => 'III Kings',
-	'4Ki' => 'IV Kings',
-	'1Ch' => 'I Paralipomenon',
-	'2Ch' => 'II Paralipomenon',
-	Ezr => 'I Esdras',
-	Neh => 'II Esdras',
-	Tob => 'Tobias',
-	Jdt => 'Judith',
-	Est => 'Esther',
-	Job => 'Job',
-	Psa => 'Psalms',
-	Pro => 'Proverbs',
-	Ecc => 'Ecclesiastes',
-	Song => 'Canticle of Canticles',
-	Wis => 'Wisdom',
-	Sir => 'Ecclesiasticus',
-	Isa => 'Isaias',
-	Jer => 'Jeremias',
-	Lam => 'Lamentations',
-	Bar => 'Baruch',
-	Eze => 'Ezechiel',
-	Dan => 'Daniel',
-	Hos => 'Osee',
-	Joe => 'Joel',
-	Amo => 'Amos',
-	Oba => 'Abdias',
-	Jon => 'Jonas',
-	Mic => 'Micheas',
-	Nah => 'Nahum',
-	Hab => 'Habacuc',
-	Zep => 'Sophonias',
-	Hag => 'Aggeus',
-	Zec => 'Zacharias',
-	Mal => 'Malachias',
-	'1Ma' => 'I Machabees',
-	'2Ma' => 'II Machabees',
-	Mat => 'Matthew',
-	Mark => 'Mark',
-	Luke => 'Luke',
-	John => 'John',
-	Acts => 'Acts',
-	Rom => 'Romans',
-	'1Co' => 'I Corinthians',
-	'2Co' => 'II Corinthians',
-	Gal => 'Galatians',
-	Eph => 'Ephesians',
-	Phi => 'Philippians',
-	Col => 'Colossians',
-	'1Th' => 'I Thessalonians',
-	'2Th' => 'II Thessalonians',
-	'1Ti' => 'I Timothy',
-	'2Ti' => 'II Timothy',
-	Tit => 'Titus',
-	Phile => 'Philemon',
-	Heb => 'Hebrews',
-	Jam => 'James',
-	'1Pe' => 'I Peter',
-	'2Pe' => 'II Peter',
-	'1Jo' => 'I John',
-	'2Jo' => 'II John',
-	'3Jo' => 'III John',
-	Jud => 'Jude',
-	Rev => 'Apocalypse',
-);
 
 =head1 ATTRIBUTES
 
@@ -540,7 +392,8 @@ sub getBookInfoByShortName {
 		return $cached;
 	}
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $shortNameRaw);
-		SELECT book.id, book.code, book.testament, book.chapter_count
+		SELECT book.id, book.code, book.short_name, book.short_name_raw,
+		       book.long_name, book.testament, book.chapter_count
 		  FROM book
 		 WHERE book.code = ?
 SQL
@@ -549,7 +402,7 @@ SQL
 
 	my $bookInfo = {
 		c => $row->{chapter_count} + 0,
-		n => $self->__bookLongName($shortNameRaw),
+		n => $row->{long_name},
 		t => $row->{testament},
 		v => $self->__bookVerseCounts($row->{id}),
 	};
@@ -621,7 +474,8 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 
 	my @bookRows = ( );
 	my $sth = $self->__prepareSelect($self->data, <<'SQL', $self->bible->translation);
-		SELECT book.id, book.code, book.translation, book.testament, book.ordinal,
+		SELECT book.id, book.code, book.short_name, book.short_name_raw,
+		       book.long_name, book.translation, book.testament, book.ordinal,
 		       book.chapter_count
 		  FROM book
 		 WHERE book.translation = ?
@@ -629,11 +483,13 @@ sub getBooks { # returns ARRAY of Chleb::Bible::Book
 SQL
 	my $bookIndex = 0;
 	while (my $row = $sth->fetchrow_hashref()) {
-		my $shortNameRaw = $row->{code};
+		my $shortNameRaw = $row->{short_name_raw};
 		$bookRows[$bookIndex] = {
+			canonicalCode => $row->{code},
 			ordinal      => $row->{ordinal} + 0,
+			shortName    => $row->{short_name},
 			shortNameRaw => $shortNameRaw,
-			longName     => $self->__bookLongName($shortNameRaw),
+			longName     => $row->{long_name},
 			chapterCount => $row->{chapter_count} + 0,
 				verseCount   => $self->__bookVerseCount($row->{id}),
 				testament    => $row->{testament},
@@ -1152,21 +1008,6 @@ sub __bibleFileName {
 	return $fileName;
 }
 
-=item C<__bookLongName($shortNameRaw)>
-
-Return the long name for a book short name, caching the lookup in the process.
-
-=cut
-
-sub __bookLongName {
-	my ($self, $shortNameRaw) = @_;
-	if ($self->bible->translation eq 'dr') {
-		return $DR_BOOK_LONG_NAMES{$shortNameRaw}
-		    // ($BOOK_LONG_NAMES{$shortNameRaw} // $shortNameRaw);
-	}
-	return $BOOK_NAMES{$shortNameRaw} //= ($BOOK_LONG_NAMES{$shortNameRaw} // $shortNameRaw);
-}
-
 =item C<__bookVerseCount($bookId)>
 
 Return and cache the number of verses belonging to a book ID.
@@ -1299,7 +1140,9 @@ sub __makeBooksFromRows {
 	my @books = map {
 		Chleb::Bible::Book->new({
 			bible        => $self->bible,
+			canonicalCode => $_->{canonicalCode},
 			ordinal      => $_->{ordinal},
+			shortName    => $_->{shortName},
 			shortNameRaw => $_->{shortNameRaw},
 			longName     => $_->{longName},
 			chapterCount => $_->{chapterCount},

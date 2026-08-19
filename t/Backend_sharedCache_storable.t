@@ -229,13 +229,13 @@ sub __makeSourceFile {
 	$dbh->do(q{INSERT INTO master (sig, version) VALUES ('178d4220-2531-11f1-8c59-ab2e7e0be878', 17)});
 	$dbh->do('CREATE TABLE translation (code TEXT NOT NULL)');
 	$dbh->do('CREATE TABLE properties (translation TEXT NOT NULL, name TEXT NOT NULL, value TEXT NOT NULL)');
-	$dbh->do('CREATE TABLE book (id INTEGER PRIMARY KEY, code TEXT NOT NULL, translation TEXT NOT NULL, testament TEXT NOT NULL, ordinal INTEGER NOT NULL, chapter_count INTEGER NOT NULL)');
+	$dbh->do('CREATE TABLE book (id INTEGER PRIMARY KEY, code TEXT NOT NULL, short_name TEXT NOT NULL, short_name_raw TEXT NOT NULL, long_name TEXT NOT NULL, translation TEXT NOT NULL, testament TEXT NOT NULL, ordinal INTEGER NOT NULL, chapter_count INTEGER NOT NULL)');
 	$dbh->do('CREATE TABLE chapter (id INTEGER PRIMARY KEY, book_id INTEGER NOT NULL, translation TEXT NOT NULL, book_code TEXT NOT NULL, ordinal INTEGER NOT NULL, verse_count INTEGER NOT NULL)');
 	$dbh->do('CREATE TABLE verse (id INTEGER PRIMARY KEY, book_id INTEGER NOT NULL, chapter_id INTEGER NOT NULL, ordinal_relative_to_book INTEGER NOT NULL, ordinal_relative_to_chapter INTEGER NOT NULL, text TEXT NOT NULL)');
 	$dbh->do('CREATE TABLE sentiment (verse_id INTEGER NOT NULL, sentiment TEXT NOT NULL, kind TEXT NOT NULL, PRIMARY KEY (verse_id, kind, sentiment))');
 	foreach my $translation (@{ $translations }) {
 		$dbh->do('INSERT INTO translation (code) VALUES (?)', undef, $translation);
-		$dbh->do(q{INSERT INTO book (id, code, translation, testament, ordinal, chapter_count) VALUES (1, 'Gen', ?, 'O', 1, 1)}, undef, $translation);
+	$dbh->do(q{INSERT INTO book (id, code, short_name, short_name_raw, long_name, translation, testament, ordinal, chapter_count) VALUES (1, 'Gen', 'gen', 'Gen', 'Genesis', ?, 'O', 1, 1)}, undef, $translation);
 		$dbh->do(q{INSERT INTO chapter (id, book_id, translation, book_code, ordinal, verse_count) VALUES (1, 1, ?, 'Gen', 1, 1)}, undef, $translation);
 		$dbh->do(q{INSERT INTO verse (id, book_id, chapter_id, ordinal_relative_to_book, ordinal_relative_to_chapter, text) VALUES (1, 1, 1, 1, 1, 'text')});
 		$dbh->do(q{INSERT INTO sentiment (verse_id, sentiment, kind) VALUES (1, 'joy', 'emotion')});

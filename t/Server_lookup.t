@@ -188,6 +188,7 @@ sub test_translation_all {
 				},
 				{
 					attributes => {
+						canonical_code => 'Psa',
 						chapter_count => 150,
 						long_name => 'Psalms',
 						ordinal => re(qr/^\d{1,2}$/),
@@ -282,6 +283,7 @@ sub test_translation_all {
 				},
 				{
 					attributes => {
+						canonical_code => 'Psa',
 						chapter_count => 150,
 						long_name => 'Psalms',
 						ordinal => re(qr/^\d{1,2}$/),

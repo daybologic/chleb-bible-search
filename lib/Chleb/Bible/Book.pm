@@ -68,6 +68,14 @@ another bible translation, once created.
 
 has bible => (is => 'ro', isa => 'Chleb::Bible', required => 1);
 
+=item C<canonicalCode>
+
+The canonical book code shared by equivalent books in different translations.
+
+=cut
+
+has canonicalCode => (is => 'ro', isa => 'Str', lazy => 1, default => sub { $_[0]->shortNameRaw });
+
 =item C<ordinal>
 
 Number in which the book appears in the associated L</bible>.
@@ -99,7 +107,7 @@ This cannot be changed.
 =cut
 
 has [qw(shortNameRaw longName)] => (is => 'ro', isa => 'Str', required => 1);
-has shortName => (is => 'ro', isa => 'Str', lazy => 1, init_arg => undef, default => \&__makeShortName);
+has shortName => (is => 'ro', isa => 'Str', lazy => 1, default => \&__makeShortName);
 
 =item C<chapterCount>
 
@@ -178,7 +186,7 @@ sub getVerseByOrdinal {
 		$ordinal = $self->verseCount + $ordinal + 1;
 	}
 
-	my $bookVerseKey = join(':', $self->bible->translation, $self->shortNameRaw, $ordinal);
+	my $bookVerseKey = join(':', $self->bible->translation, $self->canonicalCode, $ordinal);
 	if (my $verseKey = $self->bible->getVerseKeyByBookVerseKey($bookVerseKey)) {
 		my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $verseKey, 4);
 		if (my $text = $self->bible->getVerseDataByKey($verseKey)) {
@@ -348,6 +356,7 @@ sub TO_JSON {
 	my $sampleVerse = $self->randomVerse();
 
 	return {
+		canonical_code => $self->canonicalCode,
 		chapter_count  => $self->chapterCount+0,
 		long_name      => $self->longName,
 		ordinal        => $self->ordinal+0,
@@ -417,6 +426,7 @@ sub equals {
 	my $shortName = $otherBook; # otherBook is *NOT* an object, rename for simplicity, so we're not confused
 
 	return 1 if ($self->shortNameRaw eq $shortName);
+	return 1 if ($self->canonicalCode eq $shortName);
 
 	if ($shortName =~ m{ ^(\d)(\w+)$ }x) {
 		$shortName = "$1\u$2";
@@ -424,7 +434,7 @@ sub equals {
 		$shortName = "\u$shortName";
 	}
 
-	return ($self->shortNameRaw eq $shortName);
+	return ($self->shortNameRaw eq $shortName || $self->canonicalCode eq $shortName);
 }
 
 =back
@@ -443,7 +453,7 @@ Perhaps this would be better within the Backend, or as a Utils?
 
 sub __makeVerseKey {
 	my ($self, $chapterOrdinal, $verseOrdinal) = @_;
-	return join(':', $self->bible->translation, $self->shortNameRaw, $chapterOrdinal, $verseOrdinal);
+	return join(':', $self->bible->translation, $self->canonicalCode, $chapterOrdinal, $verseOrdinal);
 }
 
 =item C<__makeId()>
