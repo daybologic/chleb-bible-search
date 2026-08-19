@@ -42,10 +42,12 @@ use Getopt::Long qw(:config no_ignore_case);
 use JSON;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
+use YAML::XS qw(LoadFile);
 
 Readonly my $OT_COUNT => 39;
 
 Readonly my $DATA_DIR => 'data';
+Readonly my $SPINE_FILE => join('/', $DATA_DIR, 'static', 'spine.yaml');
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
@@ -144,17 +146,7 @@ Readonly my %TRANSLATION_BOOK_ORDINAL => (
 	},
 );
 
-Readonly my %TRANSLATION_BOOK_CODE => (
-	dr => {
-		'1Ki' => '1Sam', '2Ki' => '2Sam', '3Ki' => '1Ki', '4Ki' => '2Ki',
-		'1Ch' => '1Chr', '2Ch' => '2Chr', Ezr => 'Ezra', Pro => 'Prov', Ecc => 'Eccl',
-		Eze => 'Ezek', Hos => 'Hosea', Joe => 'Joel', Amo => 'Amos', Jon => 'Jonah',
-		Mic => 'Micah', Nah => 'Nahum', '1Co' => '1Cor', '2Co' => '2Cor', Phi => 'Phil',
-		'1Ti' => '1Tim', '2Ti' => '2Tim', Tit => 'Titus', Jam => 'James', '1Pe' => '1Pet',
-		'2Pe' => '2Pet', '1Jo' => '1John', '2Jo' => '2John', '3Jo' => '3John', Jud => 'Jude',
-		Apoc => 'Rev',
-	},
-);
+my %TRANSLATION_BOOK_CODE = ( );
 
 Readonly my %TRANSLATION_OT_COUNT => (
 	dr => 46,
@@ -187,6 +179,53 @@ book code.
 sub __canonicalBookCode {
 	my ($translation, $bookShortName) = @_;
 	return ($TRANSLATION_BOOK_CODE{$translation} // {})->{$bookShortName} // $bookShortName;
+}
+
+=item C<__loadSpineBookCodes()>
+
+Load source-to-canonical book-code mappings from C<spine.yaml>.
+
+=cut
+
+sub __loadSpineBookCodes {
+	my $spine = LoadFile($SPINE_FILE);
+	croak("Spine file '$SPINE_FILE' does not contain a books array")
+	    unless (ref($spine) eq 'HASH' && ref($spine->{books}) eq 'ARRAY');
+
+	%TRANSLATION_BOOK_CODE = ( );
+	foreach my $book (@{ $spine->{books} }) {
+		my $bookId = $book->{book_id} // '';
+		$bookId =~ s/\A_//x;
+		croak("Spine book is missing book_id") if (length($bookId) == 0);
+
+		my $translations = $book->{translations};
+		croak("Spine book '$bookId' is missing translations") unless (ref($translations) eq 'HASH');
+
+		# The ASV/KJV entry supplies the canonical code where the spine ID is
+		# a historical cross-translation name, for example _1Esd -> Ezra.
+		my $canonicalCode = $bookId;
+		foreach my $referenceTranslation (qw(asv kjv)) {
+			my $reference = $translations->{$referenceTranslation};
+			next if (ref($reference) ne 'HASH' || $reference->{absent});
+			$canonicalCode = $reference->{short_name_raw} // $canonicalCode;
+			last;
+		}
+
+		foreach my $translation (keys(%$translations)) {
+			my $metadata = $translations->{$translation};
+			next if (ref($metadata) ne 'HASH' || $metadata->{absent});
+			my $sourceCode = $metadata->{short_name_raw};
+			croak("Spine book '$bookId' has no source code for '$translation'")
+			if (!defined($sourceCode) || length($sourceCode) == 0);
+			if (exists($TRANSLATION_BOOK_CODE{$translation}->{$sourceCode})
+			    && $TRANSLATION_BOOK_CODE{$translation}->{$sourceCode} ne $canonicalCode) {
+				croak("Spine maps '$translation:$sourceCode' to multiple canonical books");
+			}
+			$TRANSLATION_BOOK_CODE{$translation}->{$sourceCode} = $canonicalCode;
+		}
+	}
+
+	return;
 }
 
 sub __thesaurusFromTranslation {
@@ -548,6 +587,8 @@ sub main2 {
 		printf(STDERR "You must specify the name!\n");
 		return EXIT_FAILURE;
 	}
+
+	__loadSpineBookCodes();
 
 	my $translationFileName = __translationFileName($name);
 	my $fileHandle = __connect($translationFileName);

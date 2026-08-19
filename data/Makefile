@@ -40,20 +40,20 @@ ifneq ($(wildcard static/pickthall.txt),)
 all: pickthall.sqlite.gz
 endif
 
-asv.sqlite.gz: static/asv.txt ../bin/import/text-to-asv.sh ../bin/import/text-to-sqlite.pl
+asv.sqlite.gz: static/asv.txt static/spine.yaml ../bin/import/text-to-asv.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-asv.sh
 
-core.sqlite.gz: static/kjv.txt ../bin/import/text-to-core.sh ../bin/import/text-to-sqlite.pl
+core.sqlite.gz: static/kjv.txt static/spine.yaml ../bin/import/text-to-core.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-core.sh
 
-dr.sqlite.gz: static/dr.txt ../bin/import/text-to-dr.sh ../bin/import/text-to-sqlite.pl
+dr.sqlite.gz: static/dr.txt static/spine.yaml ../bin/import/text-to-dr.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-dr.sh
 
-kjv.sqlite.gz: static/kjv.txt ../bin/import/text-to-kjv.sh ../bin/import/text-to-sqlite.pl
+kjv.sqlite.gz: static/kjv.txt static/spine.yaml ../bin/import/text-to-kjv.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-kjv.sh
 
 ifneq ($(wildcard static/pickthall.txt),)
-pickthall.sqlite.gz: static/pickthall.txt ../bin/import/text-to-pickthall.sh ../bin/import/text-to-sqlite.pl
+pickthall.sqlite.gz: static/pickthall.txt static/spine.yaml ../bin/import/text-to-pickthall.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-pickthall.sh
 endif
 
