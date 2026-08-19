@@ -23432,42 +23432,42 @@ dr:Bar:6:33::And whether it be evil that one doth unto them, or good, they are n
 dr:Bar:6:34::In like manner they can neither give riches, nor requite evil. If a man make a vow to them, and perform it not: they cannot require it.
 dr:Bar:6:35::They cannot deliver a man from death, nor save the weak from the mighty.
 dr:Bar:6:36::They cannot restore the blind man to his sight: nor deliver a man from distress.
-dr:Bar:36:1::They shall not pity the widow, nor do good to the fatherless.
-dr:Bar:36:2::Their gods, of wood, and of stone, and of gold, and of silver, are like the stones that are hewn out of the mountains: and they that worship them shall be confounded.
-dr:Bar:36:3::How then is it to be supposed, or to be said, that they are gods?
-dr:Bar:36:4::Even the Chaldeans themselves dishonor them: who when they here of one dumb that cannot speak, they present him to Bel, entreating him, that he may speak.
-dr:Bar:36:5::As though they could be sensible that have no motion themselves: and they, when they shall perceive this, will leave them: for their gods themselves have no sense.
-dr:Bar:36:6::The women also, with cords about them, sit in the ways, burning olive-stones.
-dr:Bar:36:7::And when any one of them, drawn away by some passenger, lieth with him, she upbraideth her neighbor, that she was not thought as worthy as herself, nor her cord broken.
-dr:Bar:36:8::But all things that are done about them, are false: how is it then to be thought, or to be said, that they are gods?
-dr:Bar:36:9::And they are made by workmen, and by goldsmiths. They shall be nothing else but what the priests will have them to be.
-dr:Bar:36:10::For the artificers themselves that make them, are of no long continuance. Can those things then that are made by them, be gods?
-dr:Bar:36:11::But they have left false things and reproach to them that come after.
-dr:Bar:36:12::For when war cometh upon them, or evils: the priests consult with themselves, where they may hide themselves with them.
-dr:Bar:36:13::How then can they be thought to be gods, that can neither deliver themselves from war, nor save themselves from evils?
-dr:Bar:36:14::For seeing they are but of wood, and laid over with gold, and with silver, it shall be known hereafter that they are false things, by all nations, and kings: and it shall be manifest that they are no gods, but the work of men's hands, and that there is no work of God in them.
-dr:Bar:36:15::Whence, therefore, is it known that they are not gods, but the work of men's hands, and no work of God is in them?
-dr:Bar:36:16::They cannot set up a king over the land, nor give rain to men.
-dr:Bar:36:17::They determine no causes, nor deliver countries from oppression: because they can do nothing, and are as daws between heaven and earth.
-dr:Bar:36:18::For when fire shall fall upon the house of these gods of wood, and of silver, and of gold, their priests indeed will flee away, and be saved: but they themselves shall be burnt in the midst like beams.
-dr:Bar:36:19::And they cannot withstand a king and war. How then can it be supposed, or admitted, that they are gods?
-dr:Bar:36:20::Neither are these gods of wood, and of stone, and laid over with gold, and with silver, able to deliver themselves from thieves or robbers: they that are stronger than them,
-dr:Bar:36:21::Shall take from them the gold, and silver, and the raiment wherewith they are clothed, and shall go their way, neither shall they help themselves.
-dr:Bar:36:22::Therefore it is better to be a king that sheweth his power: or else a profitable vessel in the house, with which the owner thereof will be well satisfied: or a door in the house, to keep things safe that are therein, than such false gods.
-dr:Bar:36:23::The sun, and the moon, and the stars being bright, and sent forth for profitable uses, are obedient.
-dr:Bar:36:24::In like manner the lightning, when it breaketh forth, is easy to be seen: and after the same manner the wind bloweth in every country.
-dr:Bar:36:25::And the clouds, when God commandeth them to go over the whole world, do that which is commanded them.
-dr:Bar:36:26::The fire also being sent from above to consume mountains, and woods, doth as it is commanded. But these neither in shew, nor in power, are alike to any one of them.
-dr:Bar:36:27::Wherefore it is neither to be thought, nor to be said, that they are gods: since they are neither able to judge causes, nor to do any good to men.
-dr:Bar:36:28::Knowing, therefore, that they are not gods, fear them not.
-dr:Bar:36:29::For neither can they curse kings, nor bless them.
-dr:Bar:36:30::Neither do they shew signs in the heaven to the nations, nor shine as the sun, nor give light as the moon.
-dr:Bar:36:31::Beasts are better than they, which can fly under a covert, and help themselves.
-dr:Bar:36:32::Therefore there is no manner of appearance that they are gods: so fear them not.
-dr:Bar:36:33::For as a scarecrow in a garden of cucumbers keepeth nothing, so are their gods of wood, and of silver, and laid over with gold.
-dr:Bar:36:34::They are no better than a white thorn in a garden, upon which every bird sitteth. In like manner also their gods of wood, and laid over with gold, and with silver, are like to a dead body cast forth in the dark.
-dr:Bar:36:35::By the purple also and the scarlet which are motheaten upon them, you shall know that they are not gods. And they themselves at last are consumed, and shall be a reproach in the country.
-dr:Bar:36:36::Better, therefore, is the just man that hath no idols: for he shall be far from reproach.
+dr:Bar:6:37::They shall not pity the widow, nor do good to the fatherless.
+dr:Bar:6:38::Their gods, of wood, and of stone, and of gold, and of silver, are like the stones that are hewn out of the mountains: and they that worship them shall be confounded.
+dr:Bar:6:39::How then is it to be supposed, or to be said, that they are gods?
+dr:Bar:6:40::Even the Chaldeans themselves dishonor them: who when they here of one dumb that cannot speak, they present him to Bel, entreating him, that he may speak.
+dr:Bar:6:41::As though they could be sensible that have no motion themselves: and they, when they shall perceive this, will leave them: for their gods themselves have no sense.
+dr:Bar:6:42::The women also, with cords about them, sit in the ways, burning olive-stones.
+dr:Bar:6:43::And when any one of them, drawn away by some passenger, lieth with him, she upbraideth her neighbor, that she was not thought as worthy as herself, nor her cord broken.
+dr:Bar:6:44::But all things that are done about them, are false: how is it then to be thought, or to be said, that they are gods?
+dr:Bar:6:45::And they are made by workmen, and by goldsmiths. They shall be nothing else but what the priests will have them to be.
+dr:Bar:6:46::For the artificers themselves that make them, are of no long continuance. Can those things then that are made by them, be gods?
+dr:Bar:6:47::But they have left false things and reproach to them that come after.
+dr:Bar:6:48::For when war cometh upon them, or evils: the priests consult with themselves, where they may hide themselves with them.
+dr:Bar:6:49::How then can they be thought to be gods, that can neither deliver themselves from war, nor save themselves from evils?
+dr:Bar:6:50::For seeing they are but of wood, and laid over with gold, and with silver, it shall be known hereafter that they are false things, by all nations, and kings: and it shall be manifest that they are no gods, but the work of men's hands, and that there is no work of God in them.
+dr:Bar:6:51::Whence, therefore, is it known that they are not gods, but the work of men's hands, and no work of God is in them?
+dr:Bar:6:52::They cannot set up a king over the land, nor give rain to men.
+dr:Bar:6:53::They determine no causes, nor deliver countries from oppression: because they can do nothing, and are as daws between heaven and earth.
+dr:Bar:6:54::For when fire shall fall upon the house of these gods of wood, and of silver, and of gold, their priests indeed will flee away, and be saved: but they themselves shall be burnt in the midst like beams.
+dr:Bar:6:55::And they cannot withstand a king and war. How then can it be supposed, or admitted, that they are gods?
+dr:Bar:6:56::Neither are these gods of wood, and of stone, and laid over with gold, and with silver, able to deliver themselves from thieves or robbers: they that are stronger than them,
+dr:Bar:6:57::Shall take from them the gold, and silver, and the raiment wherewith they are clothed, and shall go their way, neither shall they help themselves.
+dr:Bar:6:58::Therefore it is better to be a king that sheweth his power: or else a profitable vessel in the house, with which the owner thereof will be well satisfied: or a door in the house, to keep things safe that are therein, than such false gods.
+dr:Bar:6:59::The sun, and the moon, and the stars being bright, and sent forth for profitable uses, are obedient.
+dr:Bar:6:60::In like manner the lightning, when it breaketh forth, is easy to be seen: and after the same manner the wind bloweth in every country.
+dr:Bar:6:61::And the clouds, when God commandeth them to go over the whole world, do that which is commanded them.
+dr:Bar:6:62::The fire also being sent from above to consume mountains, and woods, doth as it is commanded. But these neither in shew, nor in power, are alike to any one of them.
+dr:Bar:6:63::Wherefore it is neither to be thought, nor to be said, that they are gods: since they are neither able to judge causes, nor to do any good to men.
+dr:Bar:6:64::Knowing, therefore, that they are not gods, fear them not.
+dr:Bar:6:65::For neither can they curse kings, nor bless them.
+dr:Bar:6:66::Neither do they shew signs in the heaven to the nations, nor shine as the sun, nor give light as the moon.
+dr:Bar:6:67::Beasts are better than they, which can fly under a covert, and help themselves.
+dr:Bar:6:68::Therefore there is no manner of appearance that they are gods: so fear them not.
+dr:Bar:6:69::For as a scarecrow in a garden of cucumbers keepeth nothing, so are their gods of wood, and of silver, and laid over with gold.
+dr:Bar:6:70::They are no better than a white thorn in a garden, upon which every bird sitteth. In like manner also their gods of wood, and laid over with gold, and with silver, are like to a dead body cast forth in the dark.
+dr:Bar:6:71::By the purple also and the scarlet which are motheaten upon them, you shall know that they are not gods. And they themselves at last are consumed, and shall be a reproach in the country.
+dr:Bar:6:72::Better, therefore, is the just man that hath no idols: for he shall be far from reproach.
 dr:Eze:1:1::Now it came to pass in the thirtieth year, in the fourth month, on the fifth day of the month, when I was in the midst of the captives by the river Chobar, the heavens were opened, and I saw the visions of God.
 dr:Eze:1:2::On the fifth day of the month, the same was the fifth year of the captivity of king Joachin,
 dr:Eze:1:3::The word of the Lord came to Ezechiel the priest the son of Buzi in the land of the Chaldeans, by the river Chobar: and the hand of the Lord was there upon him.
