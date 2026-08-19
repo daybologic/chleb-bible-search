@@ -209,6 +209,10 @@ sub findBookByShortName {
 	$args //= { };
 
 	foreach my $book (@{ $self->books }) {
+		return $book if ($book->shortName eq lc($shortName));
+	}
+
+	foreach my $book (@{ $self->books }) {
 		return $book if ($book->equals($shortName));
 	}
 

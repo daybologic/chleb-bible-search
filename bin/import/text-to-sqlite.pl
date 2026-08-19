@@ -146,7 +146,6 @@ sub __loadSpineBookCodes {
 			}
 			$TRANSLATION_BOOK_CODE{$translation}->{$sourceCode} = $canonicalCode;
 			my $bookMetadata = __spineBookMetadata($bookId, $translation, $metadata, $book->{testament});
-			$TRANSLATION_BOOK_META{$translation}->{$sourceCode} = $bookMetadata;
 			$TRANSLATION_BOOK_META{$translation}->{$canonicalCode} = $bookMetadata;
 		}
 	}

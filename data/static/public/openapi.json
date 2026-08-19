@@ -1,37 +1,7 @@
 {
   "components": {
     "responses": {
-      "TestHttpError": {
-        "content": {
-          "text/html": {
-            "schema": {
-              "type": "string"
-            }
-          },
-          "application/json": {
-            "schema": {
-              "properties": {
-                "exception": {
-                  "type": "string"
-                },
-                "status": {
-                  "type": "integer"
-                },
-                "message": {
-                  "type": "string"
-                },
-                "title": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          }
-        },
-        "description": "Deliberate registered HTTP error response. Status-specific protocol headers are included where applicable."
-      },
       "RateLimited": {
-        "description": "Rate-limited",
         "content": {
           "application/json": {
             "schema": {
@@ -44,22 +14,554 @@
             }
           }
         },
+        "description": "Rate-limited",
         "headers": {
           "Retry-After": {
-            "description": "Number of seconds the client should wait before retrying.",
             "schema": {
               "type": "integer"
+            },
+            "description": "Number of seconds the client should wait before retrying."
+          }
+        }
+      },
+      "TestHttpError": {
+        "description": "Deliberate registered HTTP error response. Status-specific protocol headers are included where applicable.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "exception": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "text/html": {
+            "schema": {
+              "type": "string"
             }
           }
         }
       }
     },
     "schemas": {
-      "SearchResultsSummary": {
+      "JsonApiLinks": {
+        "type": "object",
         "properties": {
+          "tomorrow": {
+            "description": "URL for the following verse of the day",
+            "example": "/2/votd?when=2024-08-24T00:00:00+0000",
+            "type": "string"
+          },
+          "last": {
+            "description": "URL for the last page of search results",
+            "example": "/1/search?term=peter&wholeword=1&limit=153&page=4&per_page=50",
+            "type": "string"
+          },
+          "yesterday": {
+            "example": "/2/votd?when=2024-08-22T00:00:00+0000",
+            "type": "string",
+            "description": "URL for the previous verse of the day"
+          },
+          "next": {
+            "description": "URL for the next page of search results, omitted on the last page",
+            "type": "string",
+            "example": "/1/search?term=peter&wholeword=1&limit=153&page=3&per_page=50"
+          },
+          "prev": {
+            "example": "/1/search?term=peter&wholeword=1&limit=153&page=1&per_page=50",
+            "type": "string",
+            "description": "URL for the previous page of search results, omitted on the first page"
+          },
+          "self": {
+            "description": "URL for the current page of search results",
+            "type": "string",
+            "example": "/1/search?term=peter&wholeword=1&limit=153&page=2&per_page=50"
+          },
+          "first": {
+            "example": "/1/search?term=peter&wholeword=1&limit=153&page=1&per_page=50",
+            "type": "string",
+            "description": "URL for the first page of search results"
+          }
+        }
+      },
+      "Book": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "book"
+            ],
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "sample_verse_text": {
+                "example": "The gates of the rivers shall be opened, and the palace shall be dissolved.",
+                "type": "string"
+              },
+              "translation": {
+                "example": "kjv",
+                "type": "string"
+              },
+              "ordinal": {
+                "type": "integer",
+                "example": "4"
+              },
+              "chapter_count": {
+                "example": "28",
+                "type": "integer"
+              },
+              "short_name_raw": {
+                "type": "string",
+                "example": "Mat"
+              },
+              "canonical_code": {
+                "type": "string",
+                "example": "Rev",
+                "description": "Canonical book code shared by equivalent books across translations."
+              },
+              "sample_verse_chapter_ordinal": {
+                "description": "Which chapter the sample verse (sample_verse_text) came from",
+                "type": "integer",
+                "example": "1"
+              },
+              "testament": {
+                "enum": [
+                  "old",
+                  "new"
+                ],
+                "type": "string"
+              },
+              "short_name": {
+                "example": "mat",
+                "type": "string"
+              },
+              "long_name": {
+                "type": "string",
+                "example": "Matthew"
+              },
+              "sample_verse_ordinal_in_chapter": {
+                "description": "The sample_verse_text verse number within a the chapter (sample_verse_chapter_ordinal).",
+                "example": "1",
+                "type": "integer"
+              },
+              "verse_count": {
+                "example": "1071",
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "type": "object"
+      },
+      "Bible": {
+        "properties": {
+          "type": {
+            "enum": [
+              "bible"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "book_count": {
+                "type": "integer"
+              },
+              "book_names_long": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "book_names_short_raw": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "year": {
+                "type": "integer"
+              },
+              "verse_count": {
+                "type": "integer"
+              },
+              "book_names_short": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "translation": {
+                "$ref": "#/components/schemas/Translation"
+              }
+            }
+          }
+        },
+        "type": "object"
+      },
+      "Version": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "build_arch": {
+                "description": "Architecture where this build was created",
+                "type": "string",
+                "example": "x86_64"
+              },
+              "changeset": {
+                "description": "Git changeset captured when this build was created",
+                "example": "7f4c2d4d9f0a",
+                "type": "string"
+              },
+              "build_host": {
+                "type": "string",
+                "example": "grable.daybologic.co.uk",
+                "description": "Hostname where this build was created"
+              },
+              "build_time": {
+                "example": "2026-06-18T08:06:34+0000",
+                "type": "string",
+                "description": "Build timestamp captured when this build was created"
+              },
+              "admin_email": {
+                "description": "Email address to contact the server administrator",
+                "type": "string",
+                "example": "example@example.org"
+              },
+              "perl_version": {
+                "description": "Perl version used when this build was created",
+                "example": "v5.40.1 (5.040001)",
+                "type": "string"
+              },
+              "build_os": {
+                "description": "Operating system where this build was created",
+                "example": "GNU/Linux",
+                "type": "string"
+              },
+              "server_host": {
+                "description": "Machine name",
+                "type": "string",
+                "example": "sprat.example.org"
+              },
+              "version": {
+                "example": "1.2.3-prerelease",
+                "type": "string",
+                "description": "Version string in opaque, non-processable format"
+              },
+              "admin_name": {
+                "type": "string",
+                "example": "Rev. Duncan Ross Palmer",
+                "description": "Nam of the server administrator"
+              },
+              "build_user": {
+                "description": "User which created this build",
+                "type": "string",
+                "example": "palmer"
+              }
+            }
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "version"
+            ]
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Chapter": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "verse_count": {
+                "example": "404",
+                "type": "integer"
+              },
+              "book": {
+                "type": "string",
+                "example": "rev"
+              },
+              "translation": {
+                "example": "asv",
+                "type": "string"
+              },
+              "ordinal": {
+                "type": "integer",
+                "example": "13"
+              }
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "chapter"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "JsonApiError": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "example": "Request rate exceeded for this session"
+          },
+          "title": {
+            "example": "Too Many Requests",
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "example": "429"
+          }
+        },
+        "type": "object"
+      },
+      "JsonApiDocument": {
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "included": {
+            "description": "Related resources included in the document",
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "JSON:API primary data"
+          },
           "links": {
+            "$ref": "#/components/schemas/JsonApiLinks"
+          }
+        },
+        "type": "object"
+      },
+      "Uptime": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "uptime"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "uptime": {
+                "description": "Number of seconds since startup",
+                "example": "90",
+                "type": "integer"
+              },
+              "text": {
+                "type": "string",
+                "example": "1 minute and 30 seconds",
+                "description": "Description of uptime in human-readable text"
+              }
+            }
+          }
+        },
+        "type": "object"
+      },
+      "Info": {
+        "properties": {
+          "type": {
+            "enum": [
+              "info"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "attributes": {
+            "properties": {
+              "book_names_short_raw": {
+                "type": "array",
+                "items": {
+                  "description": "The short name of the book, which is used for logging, backend lookups in the database, verse attributions",
+                  "example": "2Cor",
+                  "type": "string"
+                }
+              },
+              "book_names_long": {
+                "items": {
+                  "description": "The full name of the book, arbitary length",
+                  "type": "string",
+                  "example": "II Corinthians"
+                },
+                "type": "array"
+              },
+              "book_count": {
+                "example": "66",
+                "type": "integer",
+                "description": "How many unique books available to query, across all translations, ie. could be more than 66 depending on translations loaded"
+              },
+              "book_names_short": {
+                "items": {
+                  "example": "2cor",
+                  "type": "string",
+                  "description": "The short name of the book, which is used in all REST-related queries"
+                },
+                "type": "array"
+              },
+              "translations": {
+                "type": "array",
+                "items": {
+                  "description": "Translations immediately available such as 'asv', 'kjv', and any additional translations loaded dynamically into the server, the reserved words 'any' and 'all' are not listed but are always available.",
+                  "example": "asv",
+                  "type": "string"
+                }
+              },
+              "translation_count": {
+                "type": "integer",
+                "example": "2",
+                "description": "How many translations are immediately available, includes core and plugin translations"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "Pong": {
+        "properties": {
+          "attributes": {
+            "properties": {
+              "message": {
+                "description": "a message whose content doesn't really matter",
+                "example": "Ahoy-hoy!",
+                "type": "string"
+              }
+            },
             "type": "object"
           },
+          "type": {
+            "type": "string",
+            "enum": [
+              "pong"
+            ]
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Stats": {
+        "properties": {
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "msec": {
+                "description": "ms for core request resolution, without overhead, for debugging core algorithm degradation and loading only",
+                "type": "integer",
+                "example": "189"
+              }
+            }
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Verse": {
+        "type": "object",
+        "properties": {
+          "attributes": {
+            "properties": {
+              "book": {
+                "description": "Book in which this verse appears",
+                "example": "Gen",
+                "type": "string"
+              },
+              "year": {
+                "description": "Publication year of the translation",
+                "type": "integer",
+                "example": "1611"
+              },
+              "text": {
+                "type": "string",
+                "example": "Thus did Noah; according to all that God commanded him, so did he.",
+                "description": "Verbatim and unedited text from the Holy Bible."
+              },
+              "chapter": {
+                "description": "Chapter number in which verse appears",
+                "example": "6",
+                "type": "integer"
+              },
+              "ordinal": {
+                "description": "Verse number within chapter",
+                "example": "22",
+                "type": "integer"
+              },
+              "translation": {
+                "$ref": "#/components/schemas/Translation"
+              },
+              "tones": {
+                "type": "array",
+                "items": {
+                  "example": "encouragement",
+                  "type": "string",
+                  "description": "Additional sentiment(s) detected for the verse"
+                }
+              },
+              "emotion": {
+                "description": "Primary emotional sentiment of the verse",
+                "example": "hope",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "verse"
+            ]
+          },
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "SearchResultsSummary": {
+        "properties": {
           "type": {
             "type": "string",
             "enum": [
@@ -68,6 +570,9 @@
           },
           "id": {
             "type": "string"
+          },
+          "links": {
+            "type": "object"
           },
           "attributes": {
             "type": "object",
@@ -82,403 +587,34 @@
                 "type": "integer",
                 "description": "Total number of results considered after applying the search limit"
               },
-              "per_page": {
-                "example": "50",
-                "type": "integer",
-                "description": "Number of results requested per page after normalisation"
-              },
-              "total_pages": {
-                "type": "integer",
-                "description": "Total number of pages available for the current search",
-                "example": "4"
-              },
               "count": {
                 "type": "integer",
-                "description": "Number of results returned on this page",
-                "example": "50"
-              }
-            }
-          }
-        },
-        "type": "object"
-      },
-      "Chapter": {
-        "type": "object",
-        "properties": {
-          "attributes": {
-            "type": "object",
-            "properties": {
-              "verse_count": {
-                "type": "integer",
-                "example": "404"
+                "example": "50",
+                "description": "Number of results returned on this page"
               },
-              "book": {
-                "type": "string",
-                "example": "rev"
-              },
-              "ordinal": {
-                "example": "13",
+              "per_page": {
+                "description": "Number of results requested per page after normalisation",
+                "example": "50",
                 "type": "integer"
               },
-              "translation": {
-                "example": "asv",
-                "type": "string"
+              "total_pages": {
+                "description": "Total number of pages available for the current search",
+                "type": "integer",
+                "example": "4"
               }
             }
-          },
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "enum": [
-              "chapter"
-            ],
-            "type": "string"
-          }
-        }
-      },
-      "JsonApiError": {
-        "properties": {
-          "detail": {
-            "example": "Request rate exceeded for this session",
-            "type": "string"
-          },
-          "title": {
-            "example": "Too Many Requests",
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "example": "429"
           }
         },
         "type": "object"
       },
-      "Uptime": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "enum": [
-              "uptime"
-            ],
-            "type": "string"
-          },
-          "attributes": {
-            "type": "object",
-            "properties": {
-              "uptime": {
-                "type": "integer",
-                "description": "Number of seconds since startup",
-                "example": "90"
-              },
-              "text": {
-                "example": "1 minute and 30 seconds",
-                "description": "Description of uptime in human-readable text",
-                "type": "string"
-              }
-            }
-          },
-          "id": {
-            "type": "string"
-          }
-        }
-      },
-      "JsonApiDocument": {
-        "properties": {
-          "included": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            },
-            "description": "Related resources included in the document"
-          },
-          "data": {
-            "description": "JSON:API primary data",
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "links": {
-            "$ref": "#/components/schemas/JsonApiLinks"
-          }
-        },
-        "type": "object",
-        "required": [
-          "data"
-        ]
-      },
-      "JsonApiLinks": {
-        "type": "object",
-        "properties": {
-          "first": {
-            "example": "/1/search?term=peter&wholeword=1&limit=153&page=1&per_page=50",
-            "description": "URL for the first page of search results",
-            "type": "string"
-          },
-          "next": {
-            "type": "string",
-            "description": "URL for the next page of search results, omitted on the last page",
-            "example": "/1/search?term=peter&wholeword=1&limit=153&page=3&per_page=50"
-          },
-          "yesterday": {
-            "type": "string",
-            "description": "URL for the previous verse of the day",
-            "example": "/2/votd?when=2024-08-22T00:00:00+0000"
-          },
-          "prev": {
-            "example": "/1/search?term=peter&wholeword=1&limit=153&page=1&per_page=50",
-            "type": "string",
-            "description": "URL for the previous page of search results, omitted on the first page"
-          },
-          "last": {
-            "example": "/1/search?term=peter&wholeword=1&limit=153&page=4&per_page=50",
-            "type": "string",
-            "description": "URL for the last page of search results"
-          },
-          "tomorrow": {
-            "example": "/2/votd?when=2024-08-24T00:00:00+0000",
-            "description": "URL for the following verse of the day",
-            "type": "string"
-          },
-          "self": {
-            "type": "string",
-            "description": "URL for the current page of search results",
-            "example": "/1/search?term=peter&wholeword=1&limit=153&page=2&per_page=50"
-          }
-        }
-      },
-      "Pong": {
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "attributes": {
-            "properties": {
-              "message": {
-                "example": "Ahoy-hoy!",
-                "description": "a message whose content doesn't really matter",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "type": {
-            "enum": [
-              "pong"
-            ],
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "Version": {
-        "properties": {
-          "attributes": {
-            "type": "object",
-            "properties": {
-              "build_arch": {
-                "example": "x86_64",
-                "type": "string",
-                "description": "Architecture where this build was created"
-              },
-              "perl_version": {
-                "description": "Perl version used when this build was created",
-                "type": "string",
-                "example": "v5.40.1 (5.040001)"
-              },
-              "build_host": {
-                "example": "grable.daybologic.co.uk",
-                "description": "Hostname where this build was created",
-                "type": "string"
-              },
-              "server_host": {
-                "example": "sprat.example.org",
-                "description": "Machine name",
-                "type": "string"
-              },
-              "build_time": {
-                "example": "2026-06-18T08:06:34+0000",
-                "description": "Build timestamp captured when this build was created",
-                "type": "string"
-              },
-              "version": {
-                "type": "string",
-                "description": "Version string in opaque, non-processable format",
-                "example": "1.2.3-prerelease"
-              },
-              "changeset": {
-                "type": "string",
-                "description": "Git changeset captured when this build was created",
-                "example": "7f4c2d4d9f0a"
-              },
-              "build_user": {
-                "description": "User which created this build",
-                "type": "string",
-                "example": "palmer"
-              },
-              "admin_name": {
-                "example": "Rev. Duncan Ross Palmer",
-                "description": "Nam of the server administrator",
-                "type": "string"
-              },
-              "admin_email": {
-                "type": "string",
-                "description": "Email address to contact the server administrator",
-                "example": "example@example.org"
-              },
-              "build_os": {
-                "example": "GNU/Linux",
-                "type": "string",
-                "description": "Operating system where this build was created"
-              }
-            }
-          },
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "version"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "Info": {
-        "properties": {
-          "attributes": {
-            "type": "object",
-            "properties": {
-              "book_count": {
-                "type": "integer",
-                "description": "How many unique books available to query, across all translations, ie. could be more than 66 depending on translations loaded",
-                "example": "66"
-              },
-              "book_names_long": {
-                "items": {
-                  "example": "II Corinthians",
-                  "type": "string",
-                  "description": "The full name of the book, arbitary length"
-                },
-                "type": "array"
-              },
-              "book_names_short_raw": {
-                "items": {
-                  "description": "The short name of the book, which is used for logging, backend lookups in the database, verse attributions",
-                  "type": "string",
-                  "example": "2Cor"
-                },
-                "type": "array"
-              },
-              "translations": {
-                "type": "array",
-                "items": {
-                  "example": "asv",
-                  "type": "string",
-                  "description": "Translations immediately available such as 'asv', 'kjv', and any additional translations loaded dynamically into the server, the reserved words 'any' and 'all' are not listed but are always available."
-                }
-              },
-              "translation_count": {
-                "description": "How many translations are immediately available, includes core and plugin translations",
-                "type": "integer",
-                "example": "2"
-              },
-              "book_names_short": {
-                "type": "array",
-                "items": {
-                  "example": "2cor",
-                  "type": "string",
-                  "description": "The short name of the book, which is used in all REST-related queries"
-                }
-              }
-            }
-          },
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "info"
-            ]
-          }
-        },
-        "type": "object"
-      },
-      "Verse": {
-        "type": "object",
-        "properties": {
-          "attributes": {
-            "type": "object",
-            "properties": {
-              "emotion": {
-                "example": "hope",
-                "description": "Primary emotional sentiment of the verse",
-                "type": "string"
-              },
-              "translation": {
-                "$ref": "#/components/schemas/Translation"
-              },
-              "year": {
-                "description": "Publication year of the translation",
-                "type": "integer",
-                "example": "1611"
-              },
-              "text": {
-                "example": "Thus did Noah; according to all that God commanded him, so did he.",
-                "type": "string",
-                "description": "Verbatim and unedited text from the Holy Bible."
-              },
-              "tones": {
-                "items": {
-                  "example": "encouragement",
-                  "description": "Additional sentiment(s) detected for the verse",
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "chapter": {
-                "description": "Chapter number in which verse appears",
-                "type": "integer",
-                "example": "6"
-              },
-              "ordinal": {
-                "example": "22",
-                "description": "Verse number within chapter",
-                "type": "integer"
-              },
-              "book": {
-                "type": "string",
-                "description": "Book in which this verse appears",
-                "example": "Gen"
-              }
-            }
-          },
-          "id": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "verse"
-            ]
-          }
-        }
-      },
-      "JsonApiErrorDocument": {
-        "properties": {
-          "errors": {
-            "items": {
-              "$ref": "#/components/schemas/JsonApiError"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
+      "Translation": {
+        "example": "kjv",
+        "type": "string",
+        "description": "Translation code, or the reserved value \"all\". Additional translation codes may be installed dynamically.",
+        "default": "kjv"
       },
       "LookupDocument": {
+        "type": "object",
         "properties": {
           "links": {
             "$ref": "#/components/schemas/JsonApiLinks"
@@ -505,415 +641,327 @@
             },
             "type": "array"
           }
+        }
+      },
+      "JsonApiErrorDocument": {
+        "properties": {
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/JsonApiError"
+            },
+            "type": "array"
+          }
         },
         "type": "object"
-      },
-      "Stats": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "attributes": {
-            "type": "object",
-            "properties": {
-              "msec": {
-                "type": "integer",
-                "description": "ms for core request resolution, without overhead, for debugging core algorithm degradation and loading only",
-                "example": "189"
-              }
-            }
-          }
-        }
-      },
-      "Bible": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "attributes": {
-            "type": "object",
-            "properties": {
-              "book_names_short": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "book_count": {
-                "type": "integer"
-              },
-              "verse_count": {
-                "type": "integer"
-              },
-              "year": {
-                "type": "integer"
-              },
-              "book_names_short_raw": {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              "translation": {
-                "$ref": "#/components/schemas/Translation"
-              },
-              "book_names_long": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "bible"
-            ]
-          }
-        }
-      },
-      "Translation": {
-        "description": "Translation code, or the reserved value \"all\". Additional translation codes may be installed dynamically.",
-        "type": "string",
-        "example": "kjv",
-        "default": "kjv"
-      },
-      "Book": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "enum": [
-              "book"
-            ],
-            "type": "string"
-          },
-          "attributes": {
-            "properties": {
-              "ordinal": {
-                "example": "4",
-                "type": "integer"
-              },
-              "short_name_raw": {
-                "example": "Mat",
-                "type": "string"
-              },
-              "verse_count": {
-                "example": "1071",
-                "type": "integer"
-              },
-              "chapter_count": {
-                "type": "integer",
-                "example": "28"
-              },
-              "translation": {
-                "type": "string",
-                "example": "kjv"
-              },
-              "sample_verse_ordinal_in_chapter": {
-                "description": "The sample_verse_text verse number within a the chapter (sample_verse_chapter_ordinal).",
-                "type": "integer",
-                "example": "1"
-              },
-              "short_name": {
-                "example": "mat",
-                "type": "string"
-              },
-              "sample_verse_chapter_ordinal": {
-                "type": "integer",
-                "description": "Which chapter the sample verse (sample_verse_text) came from",
-                "example": "1"
-              },
-              "sample_verse_text": {
-                "example": "The gates of the rivers shall be opened, and the palace shall be dissolved.",
-                "type": "string"
-              },
-              "testament": {
-                "type": "string",
-                "enum": [
-                  "old",
-                  "new"
-                ]
-              },
-              "long_name": {
-                "type": "string",
-                "example": "Matthew"
-              }
-            },
-            "type": "object"
-          },
-          "id": {
-            "type": "string"
-          }
-        }
       }
     }
   },
-  "info": {
-    "description": "Query the bible, or get a verse of the day.",
-    "license": {
-      "url": "https://opensource.org/licenses/BSD-3-Clause",
-      "name": "BSD-3-Clause"
-    },
-    "version": "3.1.1",
-    "title": "Chleb Bible Search"
-  },
   "servers": [
     {
-      "url": "/",
-      "description": "This server"
+      "description": "This server",
+      "url": "/"
     },
     {
       "description": "Published API, production",
       "url": "https://chleb-api.daybologic.co.uk"
     }
   ],
-  "openapi": "3.0.0",
   "paths": {
-    "/1/lookup/{book}/{chapter}": {
+    "/2/votd": {
       "get": {
-        "parameters": [
-          {
-            "in": "path",
-            "description": "Book of the Bible. Use a long name such as `John`, a short name such as `john`, or its ordinal such as `43`.",
-            "required": "1",
-            "name": "book",
-            "examples": {
-              "shortName": {
-                "summary": "Short book name",
-                "value": "john"
-              },
-              "ordinal": {
-                "value": "43",
-                "summary": "Book ordinal"
-              },
-              "longName": {
-                "summary": "Long book name",
-                "value": "John"
-              }
-            },
-            "schema": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            }
-          },
-          {
-            "description": "Chapter within book (ordinal), for example `3` for John chapter 3",
-            "required": "1",
-            "name": "chapter",
-            "in": "path",
-            "schema": {
-              "type": "integer"
-            },
-            "example": "3"
-          },
-          {
-            "explode": "",
-            "description": "Requested/accepted bible translations",
-            "required": "",
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/Translation"
-              }
-            },
-            "name": "translations",
-            "style": "form",
-            "in": "query"
-          }
-        ],
-        "operationId": "getChapterVerses",
+        "security": [],
+        "summary": "Verse(s) of The Day",
+        "operationId": "getVotd2",
+        "description": "Retrieve a series of verses from The Bible, for the given day",
         "responses": {
+          "502": {
+            "description": "Bad gateway"
+          },
           "500": {
             "description": "Internal Server Error"
           },
-          "404": {
-            "description": "Verse not found"
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "description": "Service Unavailable"
           },
           "200": {
+            "description": "Successfully retrieved verse",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LookupDocument"
-                  }
-                }
-              },
-              "text/x-yaml": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/LookupDocument"
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Verse"
+                      },
+                      "type": "array"
+                    },
+                    "suggestions": {
+                      "type": "array",
+                      "maxItems": "5",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Up to five Bible words with the smallest Levenshtein distance from the requested term. This property is present only for JSON searches that return no results."
+                    },
+                    "included": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/Book"
+                          },
+                          {
+                            "$ref": "#/components/schemas/Chapter"
+                          },
+                          {
+                            "$ref": "#/components/schemas/Stats"
+                          }
+                        ]
+                      }
+                    }
                   },
-                  "type": "array"
+                  "type": "object"
                 }
               },
               "application/vnd.api+json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/LookupDocument"
-                  }
+                  "$ref": "#/components/schemas/JsonApiDocument"
                 }
               },
               "text/html": {
                 "schema": {
                   "type": "string"
                 }
+              },
+              "text/x-yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiDocument"
+                }
               }
-            },
-            "description": "Success"
-          },
-          "503": {
-            "description": "Service Unavailable"
-          },
-          "400": {
-            "description": "Bad request"
+            }
           },
           "504": {
             "description": "Gateway Timeout"
-          },
-          "502": {
-            "description": "Bad gateway"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimited"
           }
         },
-        "description": "Look up a specific chapter's verses",
-        "summary": "Bible chapter lookup",
-        "security": []
-      }
-    },
-    "/1/search": {
-      "get": {
         "parameters": [
           {
+            "description": "Date in ISO-8601, for viewing previous verses of the day",
+            "name": "when",
+            "schema": {
+              "default": "(current date)",
+              "type": "string",
+              "example": "2024-07-29T23:35:31+0100"
+            },
+            "in": "query",
+            "required": ""
+          },
+          {
             "required": "",
-            "description": "In text/html mode, display a form, and pre-fill values from your query",
+            "name": "date",
+            "description": "Date-picker fallback used by form mode; converted to midnight UTC when when is absent",
+            "schema": {
+              "format": "date",
+              "example": "2026-07-28",
+              "type": "string"
+            },
+            "in": "query"
+          },
+          {
+            "required": "",
             "in": "query",
             "schema": {
-              "type": "boolean"
+              "type": "boolean",
+              "default": ""
             },
+            "description": "In text/html mode, display the date picker and VoTD result cards on the same page",
             "name": "form"
           },
           {
-            "name": "term",
             "schema": {
-              "type": "string"
+              "type": "boolean",
+              "default": ""
             },
             "in": "query",
-            "description": "Criterion for search, not required if you want the form mode, which is only valid in text/html mode. Ordinary searches may include related thesaurus terms; use `wholeword` for an exact whole-word search.",
+            "name": "parental",
+            "description": "Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative",
             "required": ""
           },
           {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "default": "50",
-              "minimum": "1"
-            },
+            "style": "form",
             "required": "",
-            "description": "Maximum number of total search results to consider before pagination"
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "default": "1",
-              "minimum": "1"
-            },
-            "required": "",
-            "description": "Requested result page. Values below 1 are treated as page 1."
-          },
-          {
-            "required": "",
-            "description": "Number of search results to return on this page",
-            "name": "per_page",
-            "in": "query",
-            "schema": {
-              "minimum": "1",
-              "maximum": "2000",
-              "default": "50",
-              "type": "integer"
-            }
-          },
-          {
-            "name": "wholeword",
-            "schema": {
-              "default": "",
-              "type": "boolean"
-            },
-            "in": "query",
-            "description": "Require an exact whole-word match, with whitespace or end of verse after the requested term; disables thesaurus expansion",
-            "required": ""
-          },
-          {
             "description": "Requested/accepted bible translations",
-            "required": "",
             "name": "translations",
+            "explode": "",
             "schema": {
               "items": {
                 "$ref": "#/components/schemas/Translation"
               },
               "type": "array"
             },
-            "explode": "",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "enum": [
+                "any",
+                "old",
+                "new"
+              ],
+              "type": "string",
+              "default": "any"
+            },
             "in": "query",
-            "style": "form"
+            "name": "testament",
+            "description": "Only retrieve a verse from the given testament",
+            "required": ""
+          }
+        ]
+      }
+    },
+    "/2/random": {
+      "get": {
+        "parameters": [
+          {
+            "name": "translations",
+            "description": "Requested/accepted bible translations",
+            "in": "query",
+            "explode": "",
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/Translation"
+              },
+              "type": "array"
+            },
+            "style": "form",
+            "required": ""
+          },
+          {
+            "description": "Only retrieve a verse from the given testament",
+            "name": "testament",
+            "in": "query",
+            "schema": {
+              "default": "any",
+              "enum": [
+                "any",
+                "old",
+                "new"
+              ],
+              "type": "string"
+            },
+            "required": ""
+          },
+          {
+            "name": "parental",
+            "description": "Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": ""
+            },
+            "required": ""
           }
         ],
-        "operationId": "search",
+        "description": "Retrieve one or more verses from The Bible, at random.",
         "responses": {
-          "400": {
-            "description": "Bad request"
-          },
-          "504": {
-            "description": "Gateway Timeout"
+          "502": {
+            "description": "Bad gateway"
           },
           "500": {
             "description": "Internal Server Error"
           },
-          "502": {
-            "description": "Bad gateway"
-          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           },
+          "503": {
+            "description": "Service Unavailable"
+          },
           "200": {
-            "description": "Success",
+            "description": "Successfully retrieved verses",
             "content": {
-              "text/x-yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
-                }
-              },
               "text/html": {
                 "schema": {
                   "type": "string"
                 }
               },
-              "application/vnd.api+json": {
+              "text/x-yaml": {
                 "schema": {
                   "$ref": "#/components/schemas/JsonApiDocument"
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "object",
                   "properties": {
                     "included": {
+                      "items": {
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/Book"
+                          },
+                          {
+                            "$ref": "#/components/schemas/Chapter"
+                          },
+                          {
+                            "$ref": "#/components/schemas/Stats"
+                          }
+                        ]
+                      },
+                      "type": "array"
+                    },
+                    "data": {
                       "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Verse"
+                      }
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiDocument"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout"
+          }
+        },
+        "security": [],
+        "operationId": "getRandom2",
+        "summary": "Random Verse"
+      }
+    },
+    "/1/search": {
+      "get": {
+        "responses": {
+          "504": {
+            "description": "Gateway Timeout"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "links": {
+                      "$ref": "#/components/schemas/JsonApiLinks"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Verse"
+                      }
+                    },
+                    "included": {
                       "items": {
                         "oneOf": [
                           {
@@ -929,52 +977,10 @@
                             "$ref": "#/components/schemas/Stats"
                           }
                         ]
-                      }
-                    },
-                    "links": {
-                      "$ref": "#/components/schemas/JsonApiLinks"
-                    },
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/Verse"
                       },
                       "type": "array"
                     }
                   }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Service Unavailable"
-          }
-        },
-        "description": "Search for criteria in the whole bible. Ordinary searches may also match translation-specific thesaurus terms, so equivalent wording used by a selected translation can be found. Set `wholeword` to true to require an exact whole-word match without thesaurus expansion.",
-        "summary": "Bible search",
-        "security": []
-      }
-    },
-    "/2/random": {
-      "get": {
-        "responses": {
-          "504": {
-            "description": "Gateway Timeout"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          },
-          "502": {
-            "description": "Bad gateway"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimited"
-          },
-          "200": {
-            "description": "Successfully retrieved verses",
-            "content": {
-              "text/x-yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
                 }
               },
               "application/vnd.api+json": {
@@ -987,92 +993,181 @@
                   "type": "string"
                 }
               },
+              "text/x-yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiDocument"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "description": "Bad gateway"
+          }
+        },
+        "description": "Search for criteria in the whole bible. Ordinary searches may also match translation-specific thesaurus terms, so equivalent wording used by a selected translation can be found. Set `wholeword` to true to require an exact whole-word match without thesaurus expansion.",
+        "operationId": "search",
+        "summary": "Bible search",
+        "security": [],
+        "parameters": [
+          {
+            "required": "",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "name": "form",
+            "description": "In text/html mode, display a form, and pre-fill values from your query"
+          },
+          {
+            "description": "Criterion for search, not required if you want the form mode, which is only valid in text/html mode. Ordinary searches may include related thesaurus terms; use `wholeword` for an exact whole-word search.",
+            "name": "term",
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "required": ""
+          },
+          {
+            "required": "",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": "50",
+              "minimum": "1"
+            },
+            "name": "limit",
+            "description": "Maximum number of total search results to consider before pagination"
+          },
+          {
+            "required": "",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": "1",
+              "default": "1"
+            },
+            "description": "Requested result page. Values below 1 are treated as page 1.",
+            "name": "page"
+          },
+          {
+            "in": "query",
+            "schema": {
+              "maximum": "2000",
+              "type": "integer",
+              "default": "50",
+              "minimum": "1"
+            },
+            "name": "per_page",
+            "description": "Number of search results to return on this page",
+            "required": ""
+          },
+          {
+            "required": "",
+            "description": "Require an exact whole-word match, with whitespace or end of verse after the requested term; disables thesaurus expansion",
+            "name": "wholeword",
+            "in": "query",
+            "schema": {
+              "default": "",
+              "type": "boolean"
+            }
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Translation"
+              }
+            },
+            "in": "query",
+            "explode": "",
+            "name": "translations",
+            "description": "Requested/accepted bible translations",
+            "required": "",
+            "style": "form"
+          }
+        ]
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "responses": {
+          "404": {
+            "description": "OpenAPI document not found"
+          },
+          "200": {
+            "description": "OpenAPI 3.0 document",
+            "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "included": {
-                      "items": {
-                        "oneOf": [
-                          {
-                            "$ref": "#/components/schemas/Book"
-                          },
-                          {
-                            "$ref": "#/components/schemas/Chapter"
-                          },
-                          {
-                            "$ref": "#/components/schemas/Stats"
-                          }
-                        ]
-                      },
-                      "type": "array"
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Verse"
-                      }
-                    }
-                  },
                   "type": "object"
                 }
               }
             }
-          },
-          "503": {
-            "description": "Service Unavailable"
           }
         },
-        "parameters": [
-          {
-            "required": "",
-            "description": "Requested/accepted bible translations",
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/Translation"
-              },
-              "type": "array"
-            },
-            "name": "translations",
-            "explode": "",
-            "in": "query",
-            "style": "form"
-          },
-          {
-            "name": "testament",
-            "schema": {
-              "default": "any",
-              "enum": [
-                "any",
-                "old",
-                "new"
-              ],
-              "type": "string"
-            },
-            "in": "query",
-            "required": "",
-            "description": "Only retrieve a verse from the given testament"
-          },
-          {
-            "name": "parental",
-            "schema": {
-              "type": "boolean",
-              "default": ""
-            },
-            "in": "query",
-            "required": "",
-            "description": "Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative"
-          }
-        ],
-        "operationId": "getRandom2",
+        "summary": "Get the OpenAPI document in JSON format",
+        "operationId": "getOpenapiJson",
+        "security": []
+      }
+    },
+    "/1/ping": {
+      "get": {
+        "summary": "Ping the server to check if it is alive",
+        "operationId": "getPing",
         "security": [],
-        "summary": "Random Verse",
-        "description": "Retrieve one or more verses from The Bible, at random."
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved pong",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/x-yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiDocument"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Pong"
+                      }
+                    }
+                  }
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiDocument"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          }
+        },
+        "description": "Ping the server just to receive a very simple response, to check if it alive, with low overhead"
       }
     },
     "/openapi.yaml": {
       "get": {
-        "summary": "Get the OpenAPI document in YAML format",
-        "security": [],
         "responses": {
           "200": {
             "content": {
@@ -1088,40 +1183,102 @@
             "description": "OpenAPI document not found"
           }
         },
+        "security": [],
+        "summary": "Get the OpenAPI document in YAML format",
         "operationId": "getOpenapiYaml"
       }
     },
-    "/openapi.json": {
+    "/1/uptime": {
       "get": {
         "responses": {
           "200": {
             "content": {
+              "text/x-yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiDocument"
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiDocument"
+                }
+              },
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Uptime"
+                      }
+                    }
+                  }
                 }
               }
             },
-            "description": "OpenAPI 3.0 document"
+            "description": "Successfully retrieved server uptime"
           },
-          "404": {
-            "description": "OpenAPI document not found"
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           }
         },
-        "operationId": "getOpenapiJson",
-        "summary": "Get the OpenAPI document in JSON format",
+        "description": "The server uptime, as opposed to the service, ie. if the service is clustered, this value may not be a monotonically increasing number",
+        "operationId": "getUptime",
+        "summary": "Get server uptime",
         "security": []
       }
     },
-    "/1/ping": {
+    "/1/info": {
       "get": {
-        "operationId": "getPing",
+        "security": [],
+        "operationId": "getInfo",
+        "summary": "Get global facts",
+        "description": "Get cachable information about translations, books, chapters, and verses available",
         "responses": {
           "429": {
             "$ref": "#/components/responses/RateLimited"
           },
           "200": {
+            "description": "Successfully retrieved info",
             "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "included": {
+                      "type": "array",
+                      "items": {
+                        "oneOf": [
+                          {
+                            "$ref": "#/components/schemas/Bible"
+                          },
+                          {
+                            "$ref": "#/components/schemas/Book"
+                          },
+                          {
+                            "$ref": "#/components/schemas/Chapter"
+                          },
+                          {
+                            "$ref": "#/components/schemas/Stats"
+                          }
+                        ]
+                      }
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Info"
+                      }
+                    }
+                  }
+                }
+              },
               "application/vnd.api+json": {
                 "schema": {
                   "$ref": "#/components/schemas/JsonApiDocument"
@@ -1136,80 +1293,110 @@
                 "schema": {
                   "$ref": "#/components/schemas/JsonApiDocument"
                 }
-              },
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/Pong"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
               }
-            },
-            "description": "Successfully retrieved pong"
+            }
           }
-        },
-        "description": "Ping the server just to receive a very simple response, to check if it alive, with low overhead",
-        "summary": "Ping the server to check if it is alive",
-        "security": []
+        }
       }
     },
-    "/1/lookup": {
+    "/1/version": {
       "get": {
+        "operationId": "getVersion",
+        "summary": "Get server version",
+        "security": [],
         "responses": {
-          "400": {
-            "description": "Bad request"
-          },
-          "504": {
-            "description": "Gateway Timeout"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          },
-          "502": {
-            "description": "Bad gateway"
-          },
           "429": {
             "$ref": "#/components/responses/RateLimited"
           },
-          "307": {
-            "description": "Temporary redirect"
+          "403": {
+            "description": "Forbidden"
           },
           "200": {
-            "description": "Search form or lookup form",
+            "description": "Successfully retrieved server version",
             "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/x-yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiDocument"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/Version"
+                      },
+                      "type": "array"
+                    }
+                  }
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonApiDocument"
+                }
+              }
+            }
+          }
+        },
+        "description": "Get the version from the server.  The operation may be restricted by the server administrator"
+      }
+    },
+    "/docs": {
+      "get": {
+        "responses": {
+          "404": {
+            "description": "Documentation page not found"
+          },
+          "200": {
+            "description": "Swagger UI documentation",
+            "content": {
+              "application/yaml": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              },
               "text/html": {
                 "schema": {
                   "type": "string"
                 }
               }
             }
-          },
-          "503": {
-            "description": "Service Unavailable"
           }
         },
-        "operationId": "getVerseViaQuery",
+        "security": [],
+        "operationId": "getOpenapiDocs",
+        "summary": "Get interactive HTML API documentation"
+      }
+    },
+    "/1/lookup/{book}/{chapter}/{verse}": {
+      "get": {
         "parameters": [
           {
-            "name": "book",
+            "required": "1",
             "examples": {
-              "longName": {
-                "summary": "Long book name",
-                "value": "John"
+              "ordinal": {
+                "summary": "Book ordinal",
+                "value": "43"
               },
               "shortName": {
                 "summary": "Short book name",
                 "value": "john"
               },
-              "ordinal": {
-                "summary": "Book ordinal",
-                "value": "43"
+              "longName": {
+                "value": "John",
+                "summary": "Long book name"
               }
             },
             "schema": {
@@ -1222,84 +1409,54 @@
                 }
               ]
             },
-            "required": "",
-            "description": "Book of the Bible. Use a long name such as `John`, a short name such as `john`, or its ordinal such as `43`.",
-            "in": "query"
+            "in": "path",
+            "name": "book",
+            "description": "Book of the Bible. Use a long name such as `John`, a short name such as `john`, or its ordinal such as `43`."
           },
           {
-            "example": "3",
-            "required": "",
+            "name": "chapter",
             "description": "Chapter within book (ordinal), for example `3` for John chapter 3",
-            "in": "query",
+            "in": "path",
             "schema": {
               "type": "integer"
             },
-            "name": "chapter"
+            "example": "3",
+            "required": "1"
           },
           {
             "example": "16",
+            "required": "1",
+            "name": "verse",
             "description": "Verse within chapter (ordinal), for example `16` for John 3:16",
-            "required": "",
-            "in": "query",
+            "in": "path",
             "schema": {
               "type": "integer"
-            },
-            "name": "verse"
+            }
           },
           {
-            "description": "Requested/accepted bible translations",
+            "style": "form",
             "required": "",
+            "name": "translations",
+            "description": "Requested/accepted bible translations",
             "schema": {
               "items": {
                 "$ref": "#/components/schemas/Translation"
               },
               "type": "array"
             },
-            "name": "translations",
-            "explode": "",
             "in": "query",
-            "style": "form"
-          },
-          {
-            "name": "form",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "default": ""
-            },
-            "description": "In text/html mode, display the lookup form",
-            "required": ""
-          },
-          {
-            "description": "Redirect to the lookup URL for the selected translation",
-            "required": "",
-            "in": "query",
-            "schema": {
-              "type": "boolean",
-              "default": ""
-            },
-            "name": "navigation"
-          },
-          {
-            "name": "submit",
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "required": "",
-            "description": "Form submit action; use `lookup` to perform the compatibility lookup"
+            "explode": ""
           }
         ],
+        "summary": "Bible verse lookup",
+        "operationId": "getVerse",
         "security": [],
-        "summary": "Bible lookup via query params",
-        "description": "Look up a specific verse via query parameters - a compatibility route, for form-submission only.  Please use the /1/lookup/{book}/{chapter}/{verse} route where possible, all parameters supported there, are implicitly supported here, but if you use this route, you will encounter and need to handle a redirect (307)."
-      }
-    },
-    "/2/votd": {
-      "get": {
         "responses": {
-          "504": {
-            "description": "Gateway Timeout"
+          "404": {
+            "description": "Verse not found"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
           },
           "500": {
             "description": "Internal Server Error"
@@ -1307,241 +1464,8 @@
           "502": {
             "description": "Bad gateway"
           },
-          "429": {
-            "$ref": "#/components/responses/RateLimited"
-          },
-          "200": {
-            "description": "Successfully retrieved verse",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "suggestions": {
-                      "description": "Up to five Bible words with the smallest Levenshtein distance from the requested term. This property is present only for JSON searches that return no results.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array",
-                      "maxItems": "5"
-                    },
-                    "included": {
-                      "items": {
-                        "oneOf": [
-                          {
-                            "$ref": "#/components/schemas/Book"
-                          },
-                          {
-                            "$ref": "#/components/schemas/Chapter"
-                          },
-                          {
-                            "$ref": "#/components/schemas/Stats"
-                          }
-                        ]
-                      },
-                      "type": "array"
-                    },
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/Verse"
-                      },
-                      "type": "array"
-                    }
-                  }
-                }
-              },
-              "text/x-yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
-                }
-              },
-              "application/vnd.api+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
-                }
-              },
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Service Unavailable"
-          }
-        },
-        "parameters": [
-          {
-            "name": "when",
-            "in": "query",
-            "schema": {
-              "example": "2024-07-29T23:35:31+0100",
-              "default": "(current date)",
-              "type": "string"
-            },
-            "description": "Date in ISO-8601, for viewing previous verses of the day",
-            "required": ""
-          },
-          {
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "example": "2026-07-28"
-            },
-            "name": "date",
-            "description": "Date-picker fallback used by form mode; converted to midnight UTC when when is absent",
-            "required": ""
-          },
-          {
-            "required": "",
-            "description": "In text/html mode, display the date picker and VoTD result cards on the same page",
-            "schema": {
-              "default": "",
-              "type": "boolean"
-            },
-            "in": "query",
-            "name": "form"
-          },
-          {
-            "description": "Skip over verse if it is marked as sensitive in the server configuration file, and return the next alternative",
-            "required": "",
-            "name": "parental",
-            "in": "query",
-            "schema": {
-              "default": "",
-              "type": "boolean"
-            }
-          },
-          {
-            "explode": "",
-            "description": "Requested/accepted bible translations",
-            "required": "",
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/Translation"
-              },
-              "type": "array"
-            },
-            "name": "translations",
-            "style": "form",
-            "in": "query"
-          },
-          {
-            "description": "Only retrieve a verse from the given testament",
-            "required": "",
-            "schema": {
-              "enum": [
-                "any",
-                "old",
-                "new"
-              ],
-              "type": "string",
-              "default": "any"
-            },
-            "in": "query",
-            "name": "testament"
-          }
-        ],
-        "operationId": "getVotd2",
-        "security": [],
-        "summary": "Verse(s) of The Day",
-        "description": "Retrieve a series of verses from The Bible, for the given day"
-      }
-    },
-    "/1/version": {
-      "get": {
-        "description": "Get the version from the server.  The operation may be restricted by the server administrator",
-        "summary": "Get server version",
-        "security": [],
-        "operationId": "getVersion",
-        "responses": {
-          "403": {
-            "description": "Forbidden"
-          },
-          "200": {
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/x-yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
-                }
-              },
-              "application/vnd.api+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Version"
-                      }
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Successfully retrieved server version"
-          },
-          "429": {
-            "$ref": "#/components/responses/RateLimited"
-          }
-        }
-      }
-    },
-    "/docs": {
-      "get": {
-        "responses": {
-          "404": {
-            "description": "Documentation page not found"
-          },
-          "200": {
-            "description": "Swagger UI documentation",
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "getOpenapiDocs",
-        "security": [],
-        "summary": "Get interactive HTML API documentation"
-      }
-    },
-    "/1/lookup/{book}/{chapter}/{verse}": {
-      "get": {
-        "responses": {
-          "404": {
-            "description": "Verse not found"
-          },
-          "500": {
-            "description": "Internal Server Error"
-          },
-          "503": {
-            "description": "Service Unavailable"
+          "504": {
+            "description": "Gateway Timeout"
           },
           "200": {
             "description": "Success",
@@ -1554,19 +1478,6 @@
                   "type": "array"
                 }
               },
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "text/x-yaml": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/LookupDocument"
-                  },
-                  "type": "array"
-                }
-              },
               "application/vnd.api+json": {
                 "schema": {
                   "items": {
@@ -1574,119 +1485,72 @@
                   },
                   "type": "array"
                 }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/x-yaml": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LookupDocument"
+                  }
+                }
               }
             }
-          },
-          "502": {
-            "description": "Bad gateway"
-          },
-          "504": {
-            "description": "Gateway Timeout"
           },
           "400": {
             "description": "Bad request"
           },
-          "429": {
-            "$ref": "#/components/responses/RateLimited"
+          "503": {
+            "description": "Service Unavailable"
           }
         },
-        "operationId": "getVerse",
-        "parameters": [
-          {
-            "in": "path",
-            "required": "1",
-            "description": "Book of the Bible. Use a long name such as `John`, a short name such as `john`, or its ordinal such as `43`.",
-            "name": "book",
-            "schema": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "examples": {
-              "longName": {
-                "summary": "Long book name",
-                "value": "John"
-              },
-              "ordinal": {
-                "value": "43",
-                "summary": "Book ordinal"
-              },
-              "shortName": {
-                "value": "john",
-                "summary": "Short book name"
-              }
-            }
-          },
-          {
-            "required": "1",
-            "description": "Chapter within book (ordinal), for example `3` for John chapter 3",
-            "name": "chapter",
-            "in": "path",
-            "schema": {
-              "type": "integer"
-            },
-            "example": "3"
-          },
-          {
-            "in": "path",
-            "schema": {
-              "type": "integer"
-            },
-            "name": "verse",
-            "required": "1",
-            "description": "Verse within chapter (ordinal), for example `16` for John 3:16",
-            "example": "16"
-          },
-          {
-            "in": "query",
-            "style": "form",
-            "required": "",
-            "description": "Requested/accepted bible translations",
-            "schema": {
-              "items": {
-                "$ref": "#/components/schemas/Translation"
-              },
-              "type": "array"
-            },
-            "name": "translations",
-            "explode": ""
-          }
-        ],
-        "security": [],
-        "summary": "Bible verse lookup",
         "description": "Look up a specific verse"
       }
     },
     "/1/test/http/{statusCode}": {
       "get": {
+        "operationId": "getTestHttpError",
+        "summary": "Generate a registered HTTP error",
+        "security": [],
         "responses": {
-          "502": {
+          "511": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "429": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "428": {
             "$ref": "#/components/responses/TestHttpError"
           },
           "411": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "414": {
+          "421": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "431": {
+          "417": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "416": {
+          "425": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "506": {
             "$ref": "#/components/responses/TestHttpError"
           },
           "415": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "507": {
+          "403": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "428": {
+          "451": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "414": {
             "$ref": "#/components/responses/TestHttpError"
           },
           "424": {
@@ -1695,95 +1559,84 @@
           "410": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "402": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "421": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "511": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "425": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "407": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "426": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "451": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "409": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "423": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "413": {
+          "422": {
             "$ref": "#/components/responses/TestHttpError"
           },
           "412": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "501": {
+          "406": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "504": {
+          "503": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "400": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "506": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "408": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "505": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "417": {
+          "431": {
             "$ref": "#/components/responses/TestHttpError"
           },
           "404": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "500": {
+          "413": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "422": {
+          "423": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "401": {
-            "$ref": "#/components/responses/TestHttpError"
-          },
-          "508": {
+          "502": {
             "$ref": "#/components/responses/TestHttpError"
           },
           "405": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "406": {
+          "500": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "403": {
+          "407": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "429": {
+          "504": {
             "$ref": "#/components/responses/TestHttpError"
           },
-          "503": {
+          "402": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "426": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "505": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "416": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "400": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "507": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "408": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "501": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "409": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "508": {
+            "$ref": "#/components/responses/TestHttpError"
+          },
+          "401": {
             "$ref": "#/components/responses/TestHttpError"
           }
         },
+        "description": "Deliberately return any registered, non-obsolete HTTP client or server error to test handling, content negotiation, protocol headers, and monitoring",
         "parameters": [
           {
+            "in": "path",
             "schema": {
-              "type": "integer",
               "enum": [
                 "400",
                 "401",
@@ -1823,130 +1676,282 @@
                 "507",
                 "508",
                 "511"
+              ],
+              "type": "integer"
+            },
+            "description": "Registered HTTP error status to return",
+            "name": "statusCode",
+            "required": "1"
+          }
+        ]
+      }
+    },
+    "/1/lookup/{book}/{chapter}": {
+      "get": {
+        "operationId": "getChapterVerses",
+        "summary": "Bible chapter lookup",
+        "security": [],
+        "responses": {
+          "503": {
+            "description": "Service Unavailable"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "text/x-yaml": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LookupDocument"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LookupDocument"
+                  }
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LookupDocument"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Success"
+          },
+          "504": {
+            "description": "Gateway Timeout"
+          },
+          "502": {
+            "description": "Bad gateway"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "404": {
+            "description": "Verse not found"
+          }
+        },
+        "description": "Look up a specific chapter's verses",
+        "parameters": [
+          {
+            "required": "1",
+            "examples": {
+              "shortName": {
+                "summary": "Short book name",
+                "value": "john"
+              },
+              "ordinal": {
+                "summary": "Book ordinal",
+                "value": "43"
+              },
+              "longName": {
+                "value": "John",
+                "summary": "Long book name"
+              }
+            },
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
               ]
             },
             "in": "path",
-            "name": "statusCode",
+            "description": "Book of the Bible. Use a long name such as `John`, a short name such as `john`, or its ordinal such as `43`.",
+            "name": "book"
+          },
+          {
             "required": "1",
-            "description": "Registered HTTP error status to return"
+            "example": "3",
+            "in": "path",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Chapter within book (ordinal), for example `3` for John chapter 3",
+            "name": "chapter"
+          },
+          {
+            "description": "Requested/accepted bible translations",
+            "name": "translations",
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/Translation"
+              },
+              "type": "array"
+            },
+            "in": "query",
+            "explode": "",
+            "style": "form",
+            "required": ""
           }
-        ],
-        "operationId": "getTestHttpError",
-        "summary": "Generate a registered HTTP error",
-        "security": [],
-        "description": "Deliberately return any registered, non-obsolete HTTP client or server error to test handling, content negotiation, protocol headers, and monitoring"
+        ]
       }
     },
-    "/1/info": {
+    "/1/lookup": {
       "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "description": "Book of the Bible. Use a long name such as `John`, a short name such as `john`, or its ordinal such as `43`.",
+            "name": "book",
+            "required": "",
+            "examples": {
+              "longName": {
+                "summary": "Long book name",
+                "value": "John"
+              },
+              "ordinal": {
+                "value": "43",
+                "summary": "Book ordinal"
+              },
+              "shortName": {
+                "value": "john",
+                "summary": "Short book name"
+              }
+            }
+          },
+          {
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Chapter within book (ordinal), for example `3` for John chapter 3",
+            "name": "chapter",
+            "example": "3",
+            "required": ""
+          },
+          {
+            "example": "16",
+            "required": "",
+            "name": "verse",
+            "description": "Verse within chapter (ordinal), for example `16` for John 3:16",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "style": "form",
+            "required": "",
+            "description": "Requested/accepted bible translations",
+            "name": "translations",
+            "explode": "",
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/Translation"
+              },
+              "type": "array"
+            },
+            "in": "query"
+          },
+          {
+            "name": "form",
+            "description": "In text/html mode, display the lookup form",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": ""
+            },
+            "required": ""
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": ""
+            },
+            "in": "query",
+            "name": "navigation",
+            "description": "Redirect to the lookup URL for the selected translation",
+            "required": ""
+          },
+          {
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "name": "submit",
+            "description": "Form submit action; use `lookup` to perform the compatibility lookup",
+            "required": ""
+          }
+        ],
         "security": [],
-        "summary": "Get global facts",
-        "description": "Get cachable information about translations, books, chapters, and verses available",
+        "operationId": "getVerseViaQuery",
+        "summary": "Bible lookup via query params",
+        "description": "Look up a specific verse via query parameters - a compatibility route, for form-submission only.  Please use the /1/lookup/{book}/{chapter}/{verse} route where possible, all parameters supported there, are implicitly supported here, but if you use this route, you will encounter and need to handle a redirect (307).",
         "responses": {
-          "429": {
-            "$ref": "#/components/responses/RateLimited"
+          "504": {
+            "description": "Gateway Timeout"
+          },
+          "307": {
+            "description": "Temporary redirect"
+          },
+          "400": {
+            "description": "Bad request"
           },
           "200": {
-            "description": "Successfully retrieved info",
+            "description": "Search form or lookup form",
             "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "included": {
-                      "type": "array",
-                      "items": {
-                        "oneOf": [
-                          {
-                            "$ref": "#/components/schemas/Bible"
-                          },
-                          {
-                            "$ref": "#/components/schemas/Book"
-                          },
-                          {
-                            "$ref": "#/components/schemas/Chapter"
-                          },
-                          {
-                            "$ref": "#/components/schemas/Stats"
-                          }
-                        ]
-                      }
-                    },
-                    "data": {
-                      "items": {
-                        "$ref": "#/components/schemas/Info"
-                      },
-                      "type": "array"
-                    }
-                  }
-                }
-              },
-              "text/x-yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
-                }
-              },
               "text/html": {
                 "schema": {
                   "type": "string"
-                }
-              },
-              "application/vnd.api+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
                 }
               }
             }
-          }
-        },
-        "operationId": "getInfo"
-      }
-    },
-    "/1/uptime": {
-      "get": {
-        "summary": "Get server uptime",
-        "security": [],
-        "description": "The server uptime, as opposed to the service, ie. if the service is clustered, this value may not be a monotonically increasing number",
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Uptime"
-                      }
-                    }
-                  }
-                }
-              },
-              "text/x-yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
-                }
-              },
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              },
-              "application/vnd.api+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/JsonApiDocument"
-                }
-              }
-            },
-            "description": "Successfully retrieved server uptime"
+          },
+          "503": {
+            "description": "Service Unavailable"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "502": {
+            "description": "Bad gateway"
           }
-        },
-        "operationId": "getUptime"
+        }
       }
     }
-  }
+  },
+  "info": {
+    "license": {
+      "url": "https://opensource.org/licenses/BSD-3-Clause",
+      "name": "BSD-3-Clause"
+    },
+    "description": "Query the bible, or get a verse of the day.",
+    "version": "3.1.1",
+    "title": "Chleb Bible Search"
+  },
+  "openapi": "3.0.0"
 }

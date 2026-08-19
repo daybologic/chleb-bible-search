@@ -425,6 +425,7 @@ sub equals {
 
 	my $shortName = $otherBook; # otherBook is *NOT* an object, rename for simplicity, so we're not confused
 
+	return 1 if ($self->shortName eq lc($shortName));
 	return 1 if ($self->shortNameRaw eq $shortName);
 	return 1 if ($self->canonicalCode eq $shortName);
 
@@ -434,7 +435,9 @@ sub equals {
 		$shortName = "\u$shortName";
 	}
 
-	return ($self->shortNameRaw eq $shortName || $self->canonicalCode eq $shortName);
+	return ($self->shortName eq lc($shortName)
+	    || $self->shortNameRaw eq $shortName
+	    || $self->canonicalCode eq $shortName);
 }
 
 =back

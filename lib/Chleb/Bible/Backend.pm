@@ -55,7 +55,7 @@ use Chleb::Utils;
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
-Readonly my $SHARED_CACHE_FORMAT_VERSION => 3;
+Readonly my $SHARED_CACHE_FORMAT_VERSION => 4;
 Readonly my $VERSE_ORDINAL_CACHE_VERSION => 2;
 
 =head1 ATTRIBUTES
