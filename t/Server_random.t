@@ -131,6 +131,7 @@ sub test_translation_kjv {
 			},
 			{
 				attributes => {
+					canonical_code => re(qr/^\w+$/),
 					chapter_count => re(qr/^\d{1,3}$/),
 					long_name => ignore(),
 					ordinal => re(qr/^\d{1,2}$/),
@@ -231,6 +232,7 @@ sub test_translation_asv {
 			},
 			{
 				attributes => {
+					canonical_code => re(qr/^\w+$/),
 					chapter_count => re(qr/^\d{1,3}$/),
 					long_name => ignore(),
 					ordinal => re(qr/^\d{1,2}$/),
@@ -331,6 +333,7 @@ sub test_translation_core {
 			},
 			{
 				attributes => {
+					canonical_code => re(qr/^\w+$/),
 					chapter_count => re(qr/^\d{1,3}$/),
 					long_name => ignore(),
 					ordinal => re(qr/^\d{1,2}$/),
