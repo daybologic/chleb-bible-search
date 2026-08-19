@@ -406,7 +406,7 @@ sub __lookupBookOptions {
 			"<option value=\"%s\"%s>%s</option>\n",
 			__htmlEscape($book->shortName),
 			$isSelected ? ' selected' : '',
-			__htmlEscape($book->shortNameRaw),
+			__htmlEscape($book->longName),
 		);
 	}
 
