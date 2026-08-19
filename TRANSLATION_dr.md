@@ -40,7 +40,8 @@ texts in the spine: Greek Esdras (usually called 1 Esdras) and the Ezra
 Apocalypse (usually called 2 Esdras or 4 Ezra). They are not alternate names
 for the `Ezr` and `Neh` data above.
 
-The SQLite importer derives book order, chapter counts, and verse ordinals
-from `dr.txt`; it does not use `spine.yaml`. Therefore the identifiers and
-layout in this file are the authoritative description of the currently
-imported D.R. translation.
+The SQLite importer still derives book order, chapter counts, and verse
+ordinals from `dr.txt`; it does not consume `spine.yaml`. The spine now records
+the same source identifiers, source-specific chapter counts, and translation
+mapping so it is an authoritative catalogue even though it is not part of the
+runtime import path.
