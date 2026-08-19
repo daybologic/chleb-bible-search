@@ -8,6 +8,7 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use Encode qw(decode FB_CROAK);
 use Getopt::Long qw(:config no_ignore_case);
 use HTML::TreeBuilder;
 use HTTP::Tiny;
@@ -53,7 +54,7 @@ sub __fetch {
 	my $response = HTTP::Tiny->new(timeout => 120)->get($url);
 	die("Cannot download $url: $response->{status} $response->{reason}\n")
 		unless ($response->{success});
-	return $response->{content};
+	return decode('UTF-8', $response->{content}, FB_CROAK);
 }
 
 =head1 __bookIndexFromNumber($bookNumber)
