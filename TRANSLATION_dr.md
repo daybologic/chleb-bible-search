@@ -34,6 +34,7 @@ historical or Vulgate names used by `data/static/spine.yaml`:
 | `1Pe` / `2Pe` | 1 / 2 Peter | `1Pet` / `2Pet` |
 | `1Jo` / `2Jo` / `3Jo` | 1 / 2 / 3 John | `1John` / `2John` / `3John` |
 | `Jud` | Jude | `Jude` |
+| `Apoc` | Revelation / Apocalypse | `Rev` |
 
 The source does not contain `3Esd` or `4Esd`. These are separate appendix
 texts in the spine: Greek Esdras (usually called 1 Esdras) and the Ezra

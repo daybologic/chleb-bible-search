@@ -152,6 +152,7 @@ Readonly my %TRANSLATION_BOOK_CODE => (
 		Mic => 'Micah', Nah => 'Nahum', '1Co' => '1Cor', '2Co' => '2Cor', Phi => 'Phil',
 		'1Ti' => '1Tim', '2Ti' => '2Tim', Tit => 'Titus', Jam => 'James', '1Pe' => '1Pet',
 		'2Pe' => '2Pet', '1Jo' => '1John', '2Jo' => '2John', '3Jo' => '3John', Jud => 'Jude',
+		Apoc => 'Rev',
 	},
 );
 

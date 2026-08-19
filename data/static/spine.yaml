@@ -1573,8 +1573,8 @@ books:
         ordinal: 66
         chapters: 22
       dr:
-        short_name_raw: "Rev"
-        short_name: "rev"
+        short_name_raw: "Apoc"
+        short_name: "apoc"
         long_name: "Apocalypse"
         ordinal: 73
         chapters: 22
