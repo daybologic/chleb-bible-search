@@ -11,6 +11,6 @@ public="$root/data/static/public"
 
 mkdir -p "$public"
 cp "$source" "$public/openapi.yaml"
-"$root/bin/core/yaml2json.pl" "$source" | jq . > "$public/openapi.json"
+"$root/bin/core/yaml2json.pl" "$source" | jq -S . > "$public/openapi.json"
 
 exit 0
