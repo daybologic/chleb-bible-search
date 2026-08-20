@@ -31,6 +31,7 @@
 
 image: debian/stable
 packages:
+  - jq
   - libcache-cache-perl
   - libconfig-ini-perl
   - libconfig-ini-perl
