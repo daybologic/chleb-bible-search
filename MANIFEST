@@ -46,11 +46,18 @@ bin/git/tools/rcbranch
 bin/git/tools/release
 bin/git/tools/release-common
 bin/git/tools/changelog-ai.pl
+bin/import/dr-audit-books.pl
+bin/import/dr-audit.pl
+bin/import/dr-import.pl
 bin/import/thesaurus-ai.pl
 bin/import/thesaurus-ai-status.sh
 bin/import/thesaurus-ai-merge.pl
 bin/import/text-to-asv.sh
+bin/import/text-to-core.sh
+bin/import/text-to-dr.sh
 bin/import/text-to-kjv.sh
+bin/import/text-to-pickthall.sh
+bin/import/text-to-sqlite.pl
 bin/maint/copyright-bump.sh
 bin/maint/git-install-local-hooks.sh
 bin/maint/make-legal-notices.sh
@@ -67,6 +74,7 @@ bin/maint/synology.sh
 bitbucket-pipelines.yml
 cache/.keep
 COPYING
+NOTICE
 data.PL
 data/.gitignore
 data/.keep
@@ -163,6 +171,7 @@ data/Makefile
 data/static/asv.txt
 data/static/browsing_head.html
 data/static/browsing_left.html
+data/static/dr.txt
 data/static/emotion/asv.json
 data/static/emotion/kjv.json
 data/static/facebook.html

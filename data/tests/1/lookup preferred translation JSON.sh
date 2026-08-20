@@ -61,7 +61,7 @@ allCookieResult=$(http --check-status --body --pretty=none GET \
 	Accept:application/json \
 	Cookie:preferredTranslation=all)
 
-jq -e '.data | length == 2 and ([.[].attributes.translation] | sort == ["asv", "kjv"])' \
+jq -e '.data | length == 3 and ([.[].attributes.translation] | sort == ["asv", "dr", "kjv"])' \
 	<<< "$allCookieResult" >/dev/null
 
 exit 0

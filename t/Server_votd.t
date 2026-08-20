@@ -139,6 +139,7 @@ sub test {
 			},
 			{
 				attributes => {
+					canonical_code => 'Psa',
 					chapter_count => 150,
 					long_name => 'Psalms',
 					ordinal => 19,
@@ -370,6 +371,7 @@ sub testV2 {
 			},
 			{
 				attributes => {
+					canonical_code => 'Num',
 					chapter_count => 36,
 					long_name => 'Numbers',
 					ordinal => 4,
@@ -476,6 +478,7 @@ sub testV2_translations_asv_asv {
 			},
 			{
 				attributes => {
+					canonical_code => 'Psa',
 					chapter_count => 150,
 					long_name => 'Psalms',
 					ordinal => 19,
@@ -622,6 +625,7 @@ sub testV2_translations_kjv_asv {
 			},
 			{
 				attributes => {
+					canonical_code => 'Psa',
 					chapter_count => 150,
 					long_name => 'Psalms',
 					ordinal => 19,
@@ -873,6 +877,7 @@ sub testV2_translations_all {
 			},
 			{
 				attributes => {
+					canonical_code => 'Num',
 					chapter_count => 36,
 					long_name => 'Numbers',
 					ordinal => 4,

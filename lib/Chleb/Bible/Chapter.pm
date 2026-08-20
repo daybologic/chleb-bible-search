@@ -59,7 +59,7 @@ sub getVerseByOrdinal {
 		$ordinal = $self->verseCount + $ordinal + 1;
 	}
 
-	my $verseKey = join(':', $self->bible->translation, $self->book->shortNameRaw, $self->ordinal, $ordinal);
+	my $verseKey = join(':', $self->bible->translation, $self->book->canonicalCode, $self->ordinal, $ordinal);
 	if (my $text = $self->bible->getVerseDataByKey($verseKey)) {
 		return Chleb::Bible::Verse->new({
 			book           => $self->book,
@@ -76,7 +76,7 @@ sub getVerseByOrdinal {
 
 sub getVerses {
 	my ($self, $args) = @_;
-	my $verses = $self->bible->getChapterVerseDataByKey($self->book->shortNameRaw, $self->ordinal);
+	my $verses = $self->bible->getChapterVerseDataByKey($self->book->canonicalCode, $self->ordinal);
 	return [ map {
 		Chleb::Bible::Verse->new({
 			book           => $self->book,
@@ -138,10 +138,13 @@ sub TO_JSON {
 
 sub __makeVerseCount {
 	my ($self) = @_;
-	my $bookInfo = $self->bible->getBookInfoByShortName($self->book->shortNameRaw);
+	my $bookInfo = $self->bible->getBookInfoByShortName($self->book->canonicalCode);
 	croak('FIXME: ' . $self->book->shortNameRaw) unless ($bookInfo);
 	my $count = $bookInfo->{v}->{ $self->ordinal };
-	croak("FIXME: ${count}, " . $self->ordinal) unless ($count);
+	croak(sprintf('Missing verse count for %s:%s chapter %d (available: %s)',
+		$self->bible->translation, $self->book->canonicalCode, $self->ordinal,
+		join(',', sort keys %{ $bookInfo->{v} // {} })))
+	    unless (defined($count));
 	return $count;
 }
 

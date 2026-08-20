@@ -1,3 +1,36 @@
+#!/usr/bin/env python3
+# Chleb Bible Search
+# Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (2E0EOL),
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#
+#  2. Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution.
+#
+#  3. Neither the name of the project nor the names of its contributors
+#     may be used to endorse or promote products derived from this software
+#     without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+import os
 import argparse
 import json
 import re
@@ -14,12 +47,12 @@ MODEL = "gpt-5.4-mini"  # current mini model for high-volume workloads
 # Define the labels you want
 PRIMARY_EMOTIONS = [
     "joy", "hope", "peace", "fear", "grief", "anger",
-    "confusion", "guilt", "shame", "neutral"
+    "confusion", "guilt", "shame", "humility", "neutral"
 ]
 
 TONES = [
     "comfort", "encouragement", "lament", "rebuke", "warning",
-    "praise", "thanksgiving", "confession", "trust", "perseverance", "instruction", "challenge"
+    "praise", "thanksgiving", "confession", "trust", "perseverance", "instruction", "challenge", "humility"
 ]
 
 client = OpenAI()
@@ -79,7 +112,7 @@ You are tagging verses from {source} with emotional and communicative labels.
 
 For EACH verse, you must output an object with:
 - "id": exactly the id of the verse I give you
-- "primary_emotion": ONE item from this list (string only):
+- "primary_emotion": ONE single-word label (string only). Suggested labels:
   {PRIMARY_EMOTIONS}
 - "tones": a list of up to 3 items from this list:
   {TONES}
@@ -89,7 +122,7 @@ Rules:
 - If no strong emotion stands out, use "neutral".
 - "challenge" is a tone, never a primary emotion.
 - "tones" can be empty if nothing fits clearly.
-- Do NOT invent new labels.
+- Do not use multiple words for "primary_emotion".
 
 Return a single JSON array, and NOTHING else.
 Each element of the array corresponds to one input verse, in the same order.
@@ -156,7 +189,7 @@ You are tagging ONE verse from {source} with emotional and communicative labels.
 
 Return a single JSON object with:
 - "id": exactly the id I give you
-- "primary_emotion": ONE item from this list (string only):
+- "primary_emotion": ONE single-word label (string only). Suggested labels:
   {PRIMARY_EMOTIONS}
 - "tones": a list of up to 3 items from this list:
   {TONES}
@@ -166,7 +199,7 @@ Rules:
 - If no strong emotion stands out, use "neutral".
 - "challenge" is a tone, never a primary emotion.
 - "tones" can be empty if nothing fits clearly.
-- Do NOT invent new labels.
+- Do not use multiple words for "primary_emotion".
 
 Return ONLY the JSON object, and NOTHING else.
 Do NOT wrap it in backticks or code fences.
@@ -194,28 +227,46 @@ Here is the verse:
         print(output_text)
         raise e
 
+    obj = _discard_unknown_tones([obj])[0]
     if not _valid_tagged_list([verse], [obj]):
         raise ValueError(f"Invalid tag returned for verse {verse['id']}: {obj}")
 
     return obj
 
 
-def _valid_tagged_list(batch: List[Dict[str, Any]], tagged_list: Any) -> bool:
-    if not isinstance(tagged_list, list) or len(tagged_list) != len(batch):
-        return False
+def _discard_unknown_tones(tagged_list: Any):
+    """Remove unrecognised tones so they do not force an API retry."""
+    if not isinstance(tagged_list, list):
+        return tagged_list
 
-    for verse, tags in zip(batch, tagged_list):
+    for tags in tagged_list:
+        if isinstance(tags, dict) and isinstance(tags.get("tones"), list):
+            tags["tones"] = [tone for tone in tags["tones"] if tone in TONES][:3]
+
+    return tagged_list
+
+
+def _tagged_list_error(batch: List[Dict[str, Any]], tagged_list: Any):
+    if not isinstance(tagged_list, list) or len(tagged_list) != len(batch):
+        return f"expected {len(batch)} items, got {len(tagged_list) if isinstance(tagged_list, list) else 'invalid JSON'}"
+
+    for index, (verse, tags) in enumerate(zip(batch, tagged_list), start=1):
         if not isinstance(tags, dict) or tags.get("id") != verse.get("id"):
-            return False
-        if tags.get("primary_emotion") not in PRIMARY_EMOTIONS:
-            return False
+            return f"item {index} has an invalid id"
+        emotion = tags.get("primary_emotion")
+        if not isinstance(emotion, str) or re.fullmatch(r"\S+", emotion) is None:
+            return f"item {index} has a primary emotion that is not one word"
         tones = tags.get("tones")
         if not isinstance(tones, list) or len(tones) > 3:
-            return False
+            return f"item {index} has an invalid tones list"
         if any(tone not in TONES for tone in tones):
-            return False
+            return f"item {index} has an unsupported tone"
 
-    return True
+    return None
+
+
+def _valid_tagged_list(batch: List[Dict[str, Any]], tagged_list: Any) -> bool:
+    return _tagged_list_error(batch, tagged_list) is None
 
 
 def tag_batch(batch: List[Dict[str, Any]], translation: str, model: str) -> List[Dict[str, Any]]:
@@ -238,6 +289,7 @@ def tag_batch(batch: List[Dict[str, Any]], translation: str, model: str) -> List
         print("JSON parse error in batch; will fall back to smaller units.")
         tagged_list = None
 
+    tagged_list = _discard_unknown_tones(tagged_list)
     if _valid_tagged_list(batch, tagged_list):
         return tagged_list
 
@@ -248,9 +300,10 @@ def tag_batch(batch: List[Dict[str, Any]], translation: str, model: str) -> List
         tagged_count = "parse error"
     else:
         tagged_count = "invalid JSON shape"
+    validation_error = _tagged_list_error(batch, tagged_list)
     print(
-        f"Warning: expected {len(batch)} tags, got {tagged_count}; "
-        "falling back to smaller batches."
+        f"Warning: expected {len(batch)} tags, got {tagged_count} "
+        f"({validation_error}); falling back to smaller batches."
     )
 
     # If batch has more than 1 verse, split it into halves and recurse

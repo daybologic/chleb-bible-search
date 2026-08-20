@@ -1020,6 +1020,10 @@ components:
             short_name_raw:
               type: string
               example: "Mat"
+            canonical_code:
+              description: Canonical book code shared by equivalent books across translations.
+              type: string
+              example: "Rev"
     Chapter:
       type: object
       properties:

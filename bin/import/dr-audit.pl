@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,19 +29,30 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+use strict;
+use warnings;
+use Carp qw(croak);
+use English qw(-no_match_vars);
+use JSON::PP qw(decode_json);
 
-page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/info Accept:text/html)
-style=$(http --check-status --body --pretty=none GET chleb-api.example.org/style.css)
+my $infile = shift @ARGV // 'EntireBible-DR.json';
 
-grep -q '<link href="/style.css?v=' <<< "$page"
-grep -q '<title>Chleb Bible Search: Bible info</title>' <<< "$page"
-grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
-grep -q '<table class="info-table">' <<< "$page"
-grep -q '<th>Book</th>' <<< "$page"
-grep -q '<a href="/1/lookup/gen/1?translations=asv">Genesis</a>' <<< "$page"
-(( "$(grep -o '<a href="/1/lookup/gen/1?translations=asv">Genesis</a>' <<< "$page" | wc -l)" > 1 ))
-grep -q 'table.info-table {' <<< "$style"
-grep -q 'background-color: #e8d4f2;' <<< "$style"
-grep -q 'border: 2px solid #8a6a99;' <<< "$style"
-grep -q 'border-spacing: 2px;' <<< "$style"
+open(my $fh, '<:raw', $infile) or croak("open($infile): $OS_ERROR");
+local $INPUT_RECORD_SEPARATOR = undef;
+my $data = decode_json(<$fh>);
+close($fh) or croak("close($infile): $OS_ERROR");
+
+my $total = 0;
+
+for my $book (sort keys %{$data}) {
+	my $book_total = 0;
+
+	for my $ch (keys %{$data->{$book}}) {
+		$book_total += scalar keys %{$data->{$book}{$ch}};
+	}
+
+	$total += $book_total;
+	print "$book\t$book_total\n";
+}
+
+print "TOTAL\t$total\n";

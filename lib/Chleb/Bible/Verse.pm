@@ -168,7 +168,7 @@ sub __makeSentiment {
 
 sub __makeKey {
 	my ($self) = @_;
-	return join(':', $self->book->bible->translation, $self->book->shortNameRaw, $self->chapter->ordinal, $self->ordinal);
+	return join(':', $self->book->bible->translation, $self->book->canonicalCode, $self->chapter->ordinal, $self->ordinal);
 }
 
 __PACKAGE__->meta->make_immutable;

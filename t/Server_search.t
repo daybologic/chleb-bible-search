@@ -252,6 +252,7 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				canonical_code => 'Mat',
 				chapter_count => 28,
 				long_name => 'Matthew',
 				ordinal => 40,
@@ -286,6 +287,7 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				canonical_code => 'Mat',
 				chapter_count => 28,
 				long_name => 'Matthew',
 				ordinal => 40,
@@ -320,6 +322,7 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				canonical_code => 'Mat',
 				chapter_count => 28,
 				long_name => 'Matthew',
 				ordinal => 40,
@@ -354,6 +357,7 @@ sub test {
 			'type' => 'chapter',
 		}, {
 			attributes => {
+				canonical_code => 'Mat',
 				chapter_count => 28,
 				long_name => 'Matthew',
 				ordinal => 40,
@@ -388,6 +392,7 @@ sub test {
 			type => 'chapter',
 		}, {
 			attributes => {
+				canonical_code => 'Mat',
 				chapter_count => 28,
 				long_name => 'Matthew',
 				ordinal => 40,

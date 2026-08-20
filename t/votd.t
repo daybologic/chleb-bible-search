@@ -174,11 +174,16 @@ sub testV2BibleTranslationsShareDailyReference {
 
 	my $when = '2026-08-06T12:00:00+0100';
 	my @cases = (
-		[ [ 'asv' ], [ 'asv:2 Samuel 3:19' ] ],
-		[ [ 'kjv' ], [ 'kjv:2 Samuel 3:19' ] ],
-		[ [ 'asv', 'kjv' ], [ 'asv:2 Samuel 3:19', 'kjv:2 Samuel 3:19' ] ],
-		[ [ 'kjv', 'asv' ], [ 'kjv:2 Samuel 3:19', 'asv:2 Samuel 3:19' ] ],
-		[ [ 'all' ], [ 'asv:2 Samuel 3:19', 'kjv:2 Samuel 3:19', 'pickthall:Quran 53:36' ] ],
+		[ [ 'asv' ], [ 'asv:II Samuel 3:19' ] ],
+		[ [ 'kjv' ], [ 'kjv:II Samuel 3:19' ] ],
+		[ [ 'asv', 'kjv' ], [ 'asv:II Samuel 3:19', 'kjv:II Samuel 3:19' ] ],
+		[ [ 'kjv', 'asv' ], [ 'kjv:II Samuel 3:19', 'asv:II Samuel 3:19' ] ],
+		[ [ 'all' ], [
+			'asv:II Samuel 3:19',
+			'dr:II Kings 3:19',
+			'kjv:II Samuel 3:19',
+			'pickthall:Quran 53:36',
+		] ],
 	);
 
 	foreach my $case (@cases) {

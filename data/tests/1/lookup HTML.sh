@@ -42,6 +42,6 @@ grep -q '<input type="hidden" name="form" value="true">' <<< "$page"
 grep -q "fetch('/1/info'" <<< "$page"
 
 selected_page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/lookup form==true translations==kjv book==mat chapter==4)
-grep -q '<option value="mat" selected>Mat</option>' <<< "$selected_page"
+grep -q '<option value="mat" selected>Matthew</option>' <<< "$selected_page"
 grep -q '<option value="4" selected>4</option>' <<< "$selected_page"
 grep -q '<option value="25">25</option>' <<< "$selected_page"

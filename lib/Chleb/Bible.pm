@@ -209,6 +209,10 @@ sub findBookByShortName {
 	$args //= { };
 
 	foreach my $book (@{ $self->books }) {
+		return $book if ($book->shortName eq lc($shortName));
+	}
+
+	foreach my $book (@{ $self->books }) {
 		return $book if ($book->equals($shortName));
 	}
 
@@ -333,7 +337,7 @@ sub getVerseByOrdinal {
 			$relativeOrdinal -= $candidateVerseCount;
 		}
 
-		my $bookVerseKey = join(':', $self->translation, $book->shortNameRaw, $relativeOrdinal);
+		my $bookVerseKey = join(':', $self->translation, $book->canonicalCode, $relativeOrdinal);
 		if (my $verseKey = $self->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
 			my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $verseKey, 4);
 			if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env perl
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (M6KVM, 2E0EOL),
 # All rights reserved.
@@ -29,19 +29,49 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-set -euo pipefail
+use strict;
+use warnings;
+use Carp qw(croak);
+use English qw(-no_match_vars);
+use JSON::PP qw(decode_json);
 
-page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/info Accept:text/html)
-style=$(http --check-status --body --pretty=none GET chleb-api.example.org/style.css)
+my $infile = shift @ARGV // 'EntireBible-DR.json';
 
-grep -q '<link href="/style.css?v=' <<< "$page"
-grep -q '<title>Chleb Bible Search: Bible info</title>' <<< "$page"
-grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
-grep -q '<table class="info-table">' <<< "$page"
-grep -q '<th>Book</th>' <<< "$page"
-grep -q '<a href="/1/lookup/gen/1?translations=asv">Genesis</a>' <<< "$page"
-(( "$(grep -o '<a href="/1/lookup/gen/1?translations=asv">Genesis</a>' <<< "$page" | wc -l)" > 1 ))
-grep -q 'table.info-table {' <<< "$style"
-grep -q 'background-color: #e8d4f2;' <<< "$style"
-grep -q 'border: 2px solid #8a6a99;' <<< "$style"
-grep -q 'border-spacing: 2px;' <<< "$style"
+open(my $fh, '<:raw', $infile) or croak("open($infile): $OS_ERROR");
+local $INPUT_RECORD_SEPARATOR = undef;
+my $data = decode_json(<$fh>);
+close($fh) or croak("close($infile): $OS_ERROR");
+
+my @expected = (
+	'Genesis','Exodus','Leviticus','Numbers','Deuteronomy',
+	'Josue','Judges','Ruth','1 Kings','2 Kings','3 Kings','4 Kings',
+	'1 Paralipomenon','2 Paralipomenon','1 Esdras','2 Esdras',
+	'Tobias','Judith','Esther','Job','Psalms','Proverbs','Ecclesiastes','Canticles',
+	'Wisdom','Ecclesiasticus',
+	'Isaias','Jeremias','Lamentations','Baruch','Ezechiel','Daniel',
+	'Osee','Joel','Amos','Abdias','Jonas','Micheas','Nahum','Habacuc','Sophonias','Aggeus','Zacharias','Malachias',
+	'1 Machabees','2 Machabees',
+	'Matthew','Mark','Luke','John','Acts',
+	'Romans','1 Corinthians','2 Corinthians','Galatians','Ephesians','Philippians','Colossians',
+	'1 Thessalonians','2 Thessalonians','1 Timothy','2 Timothy','Titus','Philemon',
+	'Hebrews','James','1 Peter','2 Peter','1 John','2 John','3 John','Jude',
+	'Apocalypse',
+);
+
+my %have = map { $_ => 1 } keys %{$data};
+my @missing = grep { !$have{$_} } @expected;
+
+if (@missing) {
+	print "MISSING:\n";
+	print "$_\n" for @missing;
+} else {
+	print "All expected books present by these names.\n";
+}
+
+# Also show any unexpected keys
+my %exp = map { $_ => 1 } @expected;
+my @extra = grep { !$exp{$_} } sort keys %{$data};
+if (@extra) {
+	print "EXTRA KEYS:\n";
+	print "$_\n" for @extra;
+}

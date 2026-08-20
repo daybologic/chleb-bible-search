@@ -1,4 +1,4 @@
-#!/usr/bin/make -f
+#!/bin/sh
 # Chleb Bible Search
 # Copyright (c) 2024-2026, Rev. Duncan Ross Palmer (2E0EOL),
 # All rights reserved.
@@ -30,34 +30,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-all: \
-	asv.sqlite.gz \
-	core.sqlite.gz \
-	dr.sqlite.gz \
-	kjv.sqlite.gz
+set -eu
 
-ifneq ($(wildcard static/pickthall.txt),)
-all: pickthall.sqlite.gz
-endif
+translation=dr
+name=$translation
 
-asv.sqlite.gz: static/asv.txt static/spine.yaml ../bin/import/text-to-asv.sh ../bin/import/text-to-sqlite.pl
-	cd ../ && ./bin/import/text-to-asv.sh
-
-core.sqlite.gz: static/kjv.txt static/spine.yaml ../bin/import/text-to-core.sh ../bin/import/text-to-sqlite.pl
-	cd ../ && ./bin/import/text-to-core.sh
-
-dr.sqlite.gz: static/dr.txt static/spine.yaml ../bin/import/text-to-dr.sh ../bin/import/text-to-sqlite.pl
-	cd ../ && ./bin/import/text-to-dr.sh
-
-kjv.sqlite.gz: static/kjv.txt static/spine.yaml ../bin/import/text-to-kjv.sh ../bin/import/text-to-sqlite.pl
-	cd ../ && ./bin/import/text-to-kjv.sh
-
-ifneq ($(wildcard static/pickthall.txt),)
-pickthall.sqlite.gz: static/pickthall.txt static/spine.yaml ../bin/import/text-to-pickthall.sh ../bin/import/text-to-sqlite.pl
-	cd ../ && ./bin/import/text-to-pickthall.sh
-endif
-
-clean:
-	rm -vf *.bin *.bin.gz *.sqlite *.sqlite.gz
-
-.PHONY: clean all
+bin/import/text-to-sqlite.pl -t "$translation" -n "$name"
+gzip -f "data/${name}.sqlite"

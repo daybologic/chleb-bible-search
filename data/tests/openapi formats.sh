@@ -25,7 +25,7 @@ jsonResult=$?
 if [ "$jsonResult" -ne 0 ] \
 	|| ! grep -q '^HTTP/[^ ]* 200 ' <<< "$json" \
 	|| ! grep -qi '^Content-Type: application/json' <<< "$json" \
-	|| ! grep -q '"openapi":"3.0.0"' <<< "$json"; then
+	|| ! grep -Eq '"openapi"[[:space:]]*:[[:space:]]*"3\.0\.0"' <<< "$json"; then
 	exit 1
 fi
 

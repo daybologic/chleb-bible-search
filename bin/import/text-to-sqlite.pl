@@ -42,10 +42,10 @@ use Getopt::Long qw(:config no_ignore_case);
 use JSON;
 use POSIX qw(EXIT_FAILURE EXIT_SUCCESS);
 use Readonly;
-
-Readonly my $OT_COUNT => 39;
+use YAML::XS qw(LoadFile);
 
 Readonly my $DATA_DIR => 'data';
+Readonly my $SPINE_FILE => join('/', $DATA_DIR, 'static', 'spine.yaml');
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
@@ -53,82 +53,12 @@ Readonly my $FILE_VERSION => 17;
 Readonly my %TRANSLATION_META => (
 	kjv       => { year => 1611, language => 'en', properties => {} },
 	asv       => { year => 1901, language => 'en', properties => {} },
+	dr        => { year => 1610, language => 'en', properties => {} },
 	pickthall => { year => 1930, language => 'en', properties => { chapter_name => 'Surah', chapter_name_plural => 'Surahs' } },
 );
 
-Readonly my %BOOK_ORDINAL => (
-	Gen   => 1,
-	Exo   => 2,
-	Lev   => 3,
-	Num   => 4,
-	Deu   => 5,
-	Josh  => 6,
-	Judg  => 7,
-	Ruth  => 8,
-	'1Sam' => 9,
-	'2Sam' => 10,
-	'1Ki'  => 11,
-	'2Ki'  => 12,
-	'1Chr' => 13,
-	'2Chr' => 14,
-	Ezra  => 15,
-	Neh   => 16,
-	Est   => 17,
-	Job   => 18,
-	Psa   => 19,
-	Prov  => 20,
-	Eccl  => 21,
-	Song  => 22,
-	Isa   => 23,
-	Jer   => 24,
-	Lam   => 25,
-	Ezek  => 26,
-	Dan   => 27,
-	Hosea => 28,
-	Joel  => 29,
-	Amos  => 30,
-	Oba   => 31,
-	Jonah => 32,
-	Micah => 33,
-	Nahum => 34,
-	Hab   => 35,
-	Zep   => 36,
-	Hag   => 37,
-	Zec   => 38,
-	Mal   => 39,
-	Mat   => 40,
-	Mark  => 41,
-	Luke  => 42,
-	John  => 43,
-	Acts  => 44,
-	Rom   => 45,
-	'1Cor' => 46,
-	'2Cor' => 47,
-	Gal   => 48,
-	Eph   => 49,
-	Phil  => 50,
-	Col   => 51,
-	'1Th'  => 52,
-	'2Th'  => 53,
-	'1Tim' => 54,
-	'2Tim' => 55,
-	Titus => 56,
-	Phile => 57,
-	Heb   => 58,
-	James => 59,
-	'1Pet' => 60,
-	'2Pet' => 61,
-	'1John' => 62,
-	'2John' => 63,
-	'3John' => 64,
-	Jude  => 65,
-	Rev   => 66,
-	Quran => 1,
-);
-
-Readonly my %BOOK_TESTAMENT => (
-	Quran => 'O',
-);
+my %TRANSLATION_BOOK_CODE = ( );
+my %TRANSLATION_BOOK_META = ( );
 
 my %bookKeys = ( );
 my %chapterKeys = ( );
@@ -141,6 +71,86 @@ sub __inputFromTranslation {
 sub __emotionFromTranslation {
 	my ($translation) = @_;
 	return join('/', 'static', 'emotion', sprintf('%s.json', $translation));
+}
+
+=item C<__canonicalBookCode($translation, $bookShortName)>
+
+Return the canonical book code used by the database for a translation input
+book code.
+
+=cut
+
+sub __canonicalBookCode {
+	my ($translation, $bookShortName) = @_;
+	return ($TRANSLATION_BOOK_CODE{$translation} // {})->{$bookShortName} // $bookShortName;
+}
+
+=item C<__spineBookMetadata($bookId, $translation, $metadata, $testament)>
+
+Validate and normalize one translation's book metadata from the spine.
+
+=cut
+
+sub __spineBookMetadata {
+	my ($bookId, $translation, $metadata, $testament) = @_;
+	my $ordinal = $metadata->{ordinal};
+	croak("Spine book '$bookId' has no ordinal for '$translation'")
+	    unless (defined($ordinal) && $ordinal =~ m/\A[0-9]+\z/x);
+	croak("Spine book '$bookId' has no testament")
+	    unless (defined($testament) && $testament =~ m/\A(?:old|new)\z/x);
+	my $bookMetadata = {
+		ordinal => $ordinal,
+		testament => $testament eq 'new' ? 'N' : 'O',
+		shortName => $metadata->{short_name},
+		shortNameRaw => $metadata->{short_name_raw},
+		longName => $metadata->{long_name},
+	};
+	croak("Spine book '$bookId' has incomplete names for '$translation'")
+	    unless (defined($bookMetadata->{shortName})
+		&& defined($bookMetadata->{shortNameRaw})
+		&& defined($bookMetadata->{longName}));
+	return $bookMetadata;
+}
+
+=item C<__loadSpineBookCodes()>
+
+Load source-to-canonical book-code mappings from C<spine.yaml>.
+
+=cut
+
+sub __loadSpineBookCodes {
+	my $spine = LoadFile($SPINE_FILE);
+	croak("Spine file '$SPINE_FILE' does not contain a books array")
+	    unless (ref($spine) eq 'HASH' && ref($spine->{books}) eq 'ARRAY');
+
+	%TRANSLATION_BOOK_CODE = ( );
+	%TRANSLATION_BOOK_META = ( );
+	foreach my $book (@{ $spine->{books} }) {
+		my $bookId = $book->{book_id} // '';
+		croak("Spine book is missing book_id") if (length($bookId) == 0);
+
+		my $translations = $book->{translations};
+		croak("Spine book '$bookId' is missing translations") unless (ref($translations) eq 'HASH');
+
+		my $canonicalCode = $bookId;
+
+		foreach my $translation (keys(%$translations)) {
+			my $metadata = $translations->{$translation};
+			next if (ref($metadata) ne 'HASH' || $metadata->{absent});
+			my $sourceCode = $metadata->{short_name_raw};
+			croak("Spine book '$bookId' has no source code for '$translation'")
+			if (!defined($sourceCode) || length($sourceCode) == 0);
+			if (exists($TRANSLATION_BOOK_CODE{$translation}->{$sourceCode})
+			    && $TRANSLATION_BOOK_CODE{$translation}->{$sourceCode} ne $canonicalCode) {
+				croak("Spine maps '$translation:$sourceCode' to multiple canonical books");
+			}
+			$TRANSLATION_BOOK_CODE{$translation}->{$sourceCode} = $canonicalCode;
+			my $bookMetadata = __spineBookMetadata($bookId, $translation, $metadata, $book->{testament});
+			$TRANSLATION_BOOK_META{$translation}->{$canonicalCode} = $bookMetadata;
+		}
+	}
+
+	return;
 }
 
 sub __thesaurusFromTranslation {
@@ -181,6 +191,9 @@ SQL
 CREATE TABLE IF NOT EXISTS book (
 	id INTEGER PRIMARY KEY,
 	code CHAR(8) NOT NULL,
+	short_name CHAR(8) NOT NULL,
+	short_name_raw CHAR(8) NOT NULL,
+	long_name TEXT NOT NULL,
 	translation CHAR(8) NOT NULL,
 	testament CHAR(1) NOT NULL CHECK (testament IN ('O', 'N')),
 	ordinal INTEGER NOT NULL,
@@ -503,6 +516,8 @@ sub main2 {
 		return EXIT_FAILURE;
 	}
 
+	__loadSpineBookCodes();
+
 	my $translationFileName = __translationFileName($name);
 	my $fileHandle = __connect($translationFileName);
 
@@ -541,18 +556,21 @@ sub __writeBook {
 	my ($fileHandle, $translation, $bookShortName) = @_;
 
 my $sthBook = $fileHandle->prepare(<<'SQL');
-	INSERT INTO book (id, code, translation, testament, ordinal, chapter_count)
-	VALUES(?, ?, ?, ?, ?, ?)
+	INSERT INTO book (id, code, short_name, short_name_raw, long_name, translation, testament, ordinal, chapter_count)
+	VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
 SQL
 
 	my $bookKey = join(':', $translation, $bookShortName);
 	unless ($bookKeys{$bookKey}) {
-		my $ordinal = $BOOK_ORDINAL{$bookShortName} or croak("Missing ordinal for '$bookShortName'");
-		my $testament = $BOOK_TESTAMENT{$bookShortName} // ($ordinal > $OT_COUNT ? 'N' : 'O');
+		my $metadata = ($TRANSLATION_BOOK_META{$translation} // {})->{$bookShortName}
+		    // croak("Missing spine metadata for '$bookShortName' in translation '$translation'");
+		my $ordinal = $metadata->{ordinal};
+		my $testament = $metadata->{testament};
 		my $id = __uuid('book');
 
 		my $chapterCount = 0; # populated after load by __populateCounts()
-		$sthBook->execute($id, $bookShortName, $translation, $testament, $ordinal, $chapterCount);
+		$sthBook->execute($id, $bookShortName, $metadata->{shortName}, $metadata->{shortNameRaw},
+		    $metadata->{longName}, $translation, $testament, $ordinal, $chapterCount);
 		$bookKeys{$bookKey} = $id;
 	}
 
@@ -581,8 +599,10 @@ SQL
 	return;
 }
 
-sub __writeVerse { ## no critic (Subroutines::ProhibitManyArgs)
-	my ($fileHandle, $translation, $bookShortName, $chapterOrdinal, $verseNumber, $verseKey, $verseText) = @_;
+sub __writeVerse {
+	my ($fileHandle, $args) = @_;
+	my ($translation, $bookShortName, $chapterOrdinal, $verseNumber, $verseText) =
+	    @{$args}{qw(translation bookShortName chapterOrdinal verseNumber verseText)};
 
 my $sthVerse = $fileHandle->prepare(<<'SQL');
 	INSERT INTO verse (id, book_id, chapter_id, ordinal_relative_to_book, ordinal_relative_to_chapter, text)
@@ -611,13 +631,20 @@ sub __processVerses {
 		while (my $line = <$fh>) {
 			my @verseData = split(m{ :: }x, $line, 2);
 			my ($verseKey, $verseText) = @verseData;
-			my ($inputTranslation, $bookShortName, $chapterOrdinal, $verseNumber)
+			my ($lineTranslation, $bookShortName, $chapterOrdinal, $verseNumber)
 			    = split(m{ : }x, $verseKey, 4);
+			$bookShortName = __canonicalBookCode($lineTranslation, $bookShortName);
 			chomp($verseText);
 
-			__writeBook($fileHandle, $inputTranslation, $bookShortName);
-			__writeChapter($fileHandle, $inputTranslation, $bookShortName, $chapterOrdinal);
-			__writeVerse($fileHandle, $inputTranslation, $bookShortName, $chapterOrdinal, $verseNumber, $verseKey, $verseText);
+			__writeBook($fileHandle, $lineTranslation, $bookShortName);
+			__writeChapter($fileHandle, $lineTranslation, $bookShortName, $chapterOrdinal);
+			__writeVerse($fileHandle, {
+				translation    => $lineTranslation,
+				bookShortName  => $bookShortName,
+				chapterOrdinal => $chapterOrdinal,
+				verseNumber    => $verseNumber,
+				verseText      => $verseText,
+			});
 		}
 	}
 
@@ -631,12 +658,14 @@ sub getSentiment {
 
 	my $text;
 	if (my $fh = IO::File->new(join('/', $DATA_DIR, __emotionFromTranslation($translation)), 'r')) {
-		$text = do { local $/ = undef; <$fh> };
-		$fh = undef;
+		$text = do { local $INPUT_RECORD_SEPARATOR = undef; <$fh> };
+		$fh->close() or croak("Cannot close sentiment data for $translation: $ERRNO");
 	}
 
-	my $data = decode_json($text);
 	my $verseCount = __verseCountFromTranslation($translation);
+	return [ map { {} } (1 .. $verseCount) ] unless (defined($text));
+
+	my $data = decode_json($text);
 	croak("Sentiment data for $translation is incomplete")
 	    unless ($data && ref($data) eq 'ARRAY' && scalar(@$data) == $verseCount);
 
