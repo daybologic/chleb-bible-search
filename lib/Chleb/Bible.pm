@@ -341,7 +341,10 @@ sub getVerseByOrdinal {
 		if (my $verseKey = $self->__backend->getVerseKeyByBookVerseKey($bookVerseKey)) {
 			my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $verseKey, 4);
 			if (my $text = $self->__backend->getVerseDataByKey($verseKey)) {
-				if (my $resolvedBook = $self->getBookByShortName($bookShortName, $args)) {
+				my ($resolvedBook) = grep {
+					$_->canonicalCode eq $bookShortName
+				} @{ $self->books };
+				if ($resolvedBook) {
 					my $chapter = $resolvedBook->getChapterByOrdinal($chapterNumber, $args);
 
 					return Chleb::Bible::Verse->new({

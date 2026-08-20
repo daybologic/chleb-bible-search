@@ -103,6 +103,23 @@ sub testMultipleTranslationsRetryUnavailableVerse {
 	return EXIT_SUCCESS;
 }
 
+sub testCrossTranslationBookMatchingUsesCanonicalCode {
+	my ($self) = @_;
+	plan skip_all => 'Douay-Rheims test data is not installed'
+	    unless ($self->hasTranslation('dr'));
+	plan tests => 2;
+
+	my $dr = $self->sut->bibles('dr');
+	my $kjv = $self->sut->bibles('kjv');
+	my $anchor = $dr->findBookByShortName('1ki')->getChapterByOrdinal(28)->getVerseByOrdinal(1);
+	my $related = $self->sut->__getRelatedRandomVerse($kjv, $anchor, 1, {});
+
+	is($related->book->canonicalCode, '1Ki', 'matching uses the canonical book code');
+	is($related->chapter->ordinal, 28, 'matching preserves the chapter ordinal');
+
+	return EXIT_SUCCESS;
+}
+
 __PACKAGE__->meta->make_immutable;
 
 package main;
