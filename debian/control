@@ -76,3 +76,9 @@ Architecture: all
 Depends: chleb-bible-search-core (= ${binary:Version})
 Description: Chleb Bible Search - Pickthall translation
  This package contains the Pickthall translation data for the Chleb Bible Search service.
+
+Package: chleb-bible-search-dict-dr
+Architecture: all
+Depends: chleb-bible-search-core (= ${binary:Version})
+Description: Chleb Bible Search - Douay-Rheims translation
+ This package contains the Douay-Rheims translation data for the Chleb Bible Search service.
