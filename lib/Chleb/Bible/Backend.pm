@@ -55,8 +55,8 @@ use Chleb::Utils;
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
-Readonly my $SHARED_CACHE_FORMAT_VERSION => 5;
-Readonly my $VERSE_ORDINAL_CACHE_VERSION => 2;
+Readonly my $SHARED_CACHE_FORMAT_VERSION => 6;
+Readonly my $VERSE_ORDINAL_CACHE_VERSION => 3;
 
 =head1 ATTRIBUTES
 
@@ -578,11 +578,11 @@ sub getOrdinalByVerseKey {
 			FROM verse
 			JOIN book ON book.id = verse.book_id
 			JOIN chapter ON chapter.id = verse.chapter_id
+			WHERE book.translation = ?
 		)
 		SELECT absolute_ordinal
 		  FROM ordered_verses
-		 WHERE translation = ?
-		   AND code = ?
+		 WHERE code = ?
 		   AND chapter_ordinal = ?
 		   AND ordinal_relative_to_chapter = ?
 SQL
@@ -761,7 +761,11 @@ Return the total number of verses in the current translation.
 
 sub getVerseCount {
 	my ($self) = @_;
-	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');
+	my ($count) = $self->__selectrowArray(
+		$self->data,
+		'SELECT COUNT(*) FROM verse JOIN book ON book.id = verse.book_id WHERE book.translation = ?',
+		$self->bible->translation,
+	);
 	return $count + 0;
 }
 
@@ -876,7 +880,7 @@ sub getVerseKeyByOrdinal {
 		return $cached;
 	}
 
-	my $sth = $self->__prepareSelect($self->data, <<'SQL', $ordinal - 1);
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $ordinal - 1);
 		WITH ordered_verses AS (
 			SELECT
 				book.translation,
@@ -886,6 +890,7 @@ sub getVerseKeyByOrdinal {
 			FROM verse
 			JOIN book ON book.id = verse.book_id
 			JOIN chapter ON chapter.id = verse.chapter_id
+			WHERE book.translation = ?
 			ORDER BY book.ordinal, chapter.ordinal, verse.ordinal_relative_to_chapter
 		)
 		SELECT translation, code, chapter_ordinal, ordinal_relative_to_chapter
@@ -1736,7 +1741,11 @@ sub __verseCount {
 		$self->__bookInfoCache->{$cacheKey} = $cached + 0;
 		return $cached + 0;
 	}
-	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');
+	my ($count) = $self->__selectrowArray(
+		$self->data,
+		'SELECT COUNT(*) FROM verse JOIN book ON book.id = verse.book_id WHERE book.translation = ?',
+		$translation,
+	);
 	$count += 0;
 	$self->__bookInfoCache->{$cacheKey} = $count;
 	$self->__sharedCacheSet('versecount', $cacheKey, $count);
