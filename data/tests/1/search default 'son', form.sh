@@ -31,5 +31,11 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/search Accept:text/html term==son form==true)
 grep -q '<button type="button" id="search-home">Home</button>' <<< "$page"

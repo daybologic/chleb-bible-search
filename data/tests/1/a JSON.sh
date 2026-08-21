@@ -31,6 +31,12 @@
 
 set -uo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 statusCode=$(http --print=h --pretty=none --check-status GET chleb-api.example.org/1/a Accept:application/json 2>/dev/null | head -n 1 | awk '{print $2}')
 
 if [ $? -eq 4 ]; then

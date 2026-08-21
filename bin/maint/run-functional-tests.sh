@@ -39,7 +39,10 @@ total=0
 passed=0
 failed=0
 skipped=0
-notApplicable=0
+totalIterations=0
+passedIterations=0
+failedIterations=0
+skippedIterations=0
 
 # Ensure directory exists
 if [[ ! -d "$BASE_DIR" ]]; then
@@ -76,39 +79,76 @@ chmod +x "$httpWrapperDir/http"
 export CHLEB_REAL_HTTP="$REAL_HTTP"
 export PATH="$httpWrapperDir:$PATH"
 
+countLabel() {
+	local count="$1"
+	local singular="$2"
+	local plural="$3"
+
+	if (( count == 1 )); then
+		printf '%s %s' "$count" "$singular"
+	else
+		printf '%s %s' "$count" "$plural"
+	fi
+}
+
 # Find and execute .sh files
-while IFS= read -r -d '' script; do
+runTest() {
+	local script="$1"
+	local testName="$2"
+	local loops
+	local loop
+	local status
+	local scriptFailed=0
 	(( total++ ))
 
-	testName="${script#$BASE_DIR}"
-	if [ -x "$script" ]; then
-		# Run the script in a subshell, so "exit" doesn’t kill the runner
+	if [[ ${TEST_QUICK+x} && ${TEST_QUICK:-} != 0 ]]; then
+		loops=1
+	else
+		loops=$("$script" --get-loops 2>/dev/null)
+		status=$?
+		if [[ $status -ne 0 || ! "$loops" =~ ^[1-9][0-9]*$ ]]; then
+			(( failed++ ))
+			failures+=("$testName (invalid --get-loops result)")
+			echo "❌ FAILED: $testName (invalid --get-loops result)"
+			return
+		fi
+	fi
+	(( totalIterations += loops ))
+
+	for ((loop = 1; loop <= loops; loop++)); do
 		(
-			"$script" >/dev/null 2>&1
-		) < /dev/null # <-- critical fix: prevent script from reading find's output
+			"$script"
+		) >/dev/null 2>&1 < /dev/null
 		status=$?
 
-		if [[ $status -eq 0 ]]; then
-			(( passed++ ))
-
-			echo "✅ PASSED: $testName"
+		if [[ $status -ne 0 ]]; then
+			(( failedIterations++ ))
+			scriptFailed=1
+			failures+=("$testName (loop $loop/$loops, exit $status)")
+			echo "❌ FAILED (loop $loop/$loops, exit $status): $testName"
 		else
-			(( failed++ ))
-
-			echo "❌ FAILED (exit $status): $testName"
-			failures+=("$testName (exit $status)")
+			(( passedIterations++ ))
 		fi
+	done
+
+	if [[ $scriptFailed -eq 0 ]]; then
+		(( passed++ ))
+		echo "✅ PASSED: $testName ($(countLabel "$loops" loop loops))"
 	else
+		(( failed++ ))
+	fi
+}
 
-		if [[ "$testName" == "/1/template.sh" ]]; then
-			(( notApplicable++ ))
-
-			echo "☑️     N/A: $testName"
-		else
-			(( skipped++ ))
-
-			echo "⚠️ SKIPPED: $testName"
-		fi
+while IFS= read -r -d '' script; do
+	testName="${script#$BASE_DIR}"
+	if [ -x "$script" ]; then
+		runTest "$script" "$testName"
+	elif [[ "${script##*/}" == "template.sh" ]]; then
+		continue
+	else
+		(( total++ ))
+		(( skipped++ ))
+		echo "⚠️ SKIPPED: $testName"
 	fi
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
 
@@ -125,11 +165,16 @@ fi
 # Final summary
 echo "================================"
 echo "Test Summary:"
-echo "  Total  : $total"
-echo "✅ Passed : $passed"
-echo "☑️    N/A : $notApplicable"
-echo "⚠️Skipped: $skipped"
-echo "❌ Failed : $failed"
+echo "  Total  : $total ($(countLabel "$totalIterations" iteration iterations))"
+if (( passed > 0 )); then
+	echo "✅ Passed : $passed ($(countLabel "$passedIterations" iteration iterations))"
+fi
+if (( skipped > 0 )); then
+	echo "⚠️Skipped : $skipped ($(countLabel "$skippedIterations" iteration iterations))"
+fi
+if (( failed > 0 )); then
+	echo "❌ Failed : $failed ($(countLabel "$failedIterations" iteration iterations))"
+fi
 echo
 
 if (( failed > 0 )); then

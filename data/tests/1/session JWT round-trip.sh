@@ -31,6 +31,12 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 readonly URL='chleb-api.example.org/1/ping'
 readonly USER_AGENT='chleb-jwt-functional-test'
 

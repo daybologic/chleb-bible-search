@@ -31,6 +31,12 @@
 
 set -uo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 # Fetch headers once
 headers=$(http --print=h --pretty=none --check-status GET chleb-api.example.org/1/lookup Accept:text/html book==judg chapter==12 verse==6 2>/dev/null)
 exitCode=$?

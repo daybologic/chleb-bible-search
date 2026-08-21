@@ -31,6 +31,12 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/info Accept:text/html)
 style=$(http --check-status --body --pretty=none GET chleb-api.example.org/style.css)
 

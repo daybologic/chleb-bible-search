@@ -31,6 +31,12 @@
 
 set -uo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 response=$(http --print=hb --pretty=none --check-status GET chleb-api.example.org/1/test/http/404 Accept:text/html 2>/dev/null)
 httpResult=$?
 statusCode=$(head -n 1 <<< "$response" | awk '{print $2}')

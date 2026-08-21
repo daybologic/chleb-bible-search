@@ -31,4 +31,10 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 http --check-status GET chleb-api.example.org/1/uptime Accept:application/json

@@ -31,6 +31,12 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 page=$(http --check-status --body --pretty=none GET chleb-api.example.org/ Accept:text/html)
 
 grep -q '<link href="/style.css?v=' <<< "$page"

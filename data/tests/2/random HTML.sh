@@ -31,6 +31,12 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 10
+	exit 0
+fi
+
+
 page=$(http --check-status --body --pretty=none GET chleb-api.example.org/2/random Accept:text/html translations==asv,kjv)
 
 ! grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"

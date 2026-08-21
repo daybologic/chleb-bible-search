@@ -4,6 +4,12 @@
 
 set -uo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 headers=$(http --print=h --pretty=none --check-status GET \
 	chleb-api.example.org/1/lookup \
 	Accept:text/html book==prov chapter==16 verse==18 submit==lookup 2>/dev/null)
