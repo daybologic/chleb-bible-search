@@ -33,6 +33,8 @@ set -u  # strict on undefined vars, but no `-e`
 
 BASE_DIR="data/tests"
 SERVER_HOST='chleb-api.example.org'
+selectedTest="${1:-}"
+selectedFound=0
 
 failures=()
 total=0
@@ -141,6 +143,10 @@ runTest() {
 
 while IFS= read -r -d '' script; do
 	testName="${script#$BASE_DIR}"
+	if [[ -n "$selectedTest" && "$testName" != "/$selectedTest" && "$testName" != "$selectedTest" ]]; then
+		continue
+	fi
+	selectedFound=1
 	if [ -x "$script" ]; then
 		runTest "$script" "$testName"
 	elif [[ "${script##*/}" == "template.sh" ]]; then
@@ -151,6 +157,11 @@ while IFS= read -r -d '' script; do
 		echo "⚠️ SKIPPED: $testName"
 	fi
 done < <(find "$BASE_DIR" -type f -name "*.sh" -print0)
+
+if [[ -n "$selectedTest" && $selectedFound -eq 0 ]]; then
+	echo "❌ Test not found: $selectedTest" >&2
+	exit 1
+fi
 
 echo "================================"
 if (( failed > 0 )); then

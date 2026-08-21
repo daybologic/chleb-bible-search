@@ -116,8 +116,23 @@ deb :: pure_all
 cover :: pure_all
 	TEST_QUICK=1 HARNESS_PERL_SWITCHES=-MDevel::Cover make test && cover
 
+ifneq ($(filter http-test,$(MAKECMDGOALS)),)
+HTTP_TEST_ARGS := $(filter-out http-test,$(MAKECMDGOALS))
+else
+HTTP_TEST_ARGS :=
+endif
+
 http-test :: pure_all
+ifneq ($(strip $(HTTP_TEST_ARGS)),)
+	@bin/maint/run-functional-tests.sh "$(HTTP_TEST_ARGS)"
+else
 	@bin/maint/run-functional-tests.sh
+endif
+
+ifneq ($(strip $(HTTP_TEST_ARGS)),)
+.DEFAULT:
+	@:
+endif
 
 clean :: 
 	rm -rf cover_db
