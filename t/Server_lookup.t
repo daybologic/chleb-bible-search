@@ -318,6 +318,18 @@ sub test_translation_all {
 	return EXIT_SUCCESS;
 }
 
+sub testTranslationSpecificBookInfo {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $dr = $self->sut->__library->bibles('dr');
+	my $esther = $dr->getBookByShortName('Est');
+	is($esther->chapterCount, 16, 'DR Esther has sixteen chapters');
+	is($esther->getChapterByOrdinal(11)->verseCount, 12, 'DR Esther chapter eleven has its verse count');
+
+	return EXIT_SUCCESS;
+}
+
 sub testWarmupPrimesSentimentCache {
 	my ($self) = @_;
 	plan tests => 9;
@@ -330,7 +342,7 @@ sub testWarmupPrimesSentimentCache {
 	$self->sut->__warmBackendCaches();
 
 	my $before = scalar(keys(%{ $self->sut->__library->bibles('kjv')->__backend->__sentimentCache }));
-	my $bookInfoBefore = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
+	my $bookInfoBefore = scalar(grep { /\QSELECT book.id, book.code, book.short_name, book.short_name_raw, book.long_name, book.testament, book.chapter_count FROM book WHERE book.translation = ? AND book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountBefore = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
 	$self->sut->__lookup({
@@ -340,7 +352,7 @@ sub testWarmupPrimesSentimentCache {
 		verse => 1,
 	});
 	my $after = scalar(keys(%{ $self->sut->__library->bibles('kjv')->__backend->__sentimentCache }));
-	my $bookInfoAfter = scalar(grep { /\QSELECT book.id, book.code, book.testament, book.chapter_count FROM book WHERE book.code = ?\E/ } @{ $logger->__messages });
+	my $bookInfoAfter = scalar(grep { /\QSELECT book.id, book.code, book.short_name, book.short_name_raw, book.long_name, book.testament, book.chapter_count FROM book WHERE book.translation = ? AND book.code = ?\E/ } @{ $logger->__messages });
 	my $verseCountAfter = scalar(grep { /\QSELECT chapter.ordinal, COUNT(verse.id) AS verse_count FROM chapter LEFT JOIN verse ON verse.chapter_id = chapter.id WHERE chapter.book_id = ? GROUP BY chapter.id ORDER BY chapter.ordinal\E/ } @{ $logger->__messages });
 	my $translationWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation kjv in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 	my $asvWarmupFinished = scalar(grep { /\QBackend cache warmup finished for translation asv in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
