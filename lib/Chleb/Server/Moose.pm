@@ -2271,6 +2271,7 @@ sub __infoToHtml {
 	my $text = "<table class=\"info-table\">\r\n";
 
 	$text .= "<tr>\r\n";
+	$text .= $printCell->("Translation", 0, 1);
 	$text .= $printCell->("Book", 0, 1);
 	$text .= $printCell->("Ordinal", 0, 1);
 	$text .= $printCell->("Chapters", 0, 1);
@@ -2309,6 +2310,7 @@ sub __infoToHtml {
 		};
 
 		$text .= "<tr>\r\n";
+		$text .= $printCell->($attributes->{translation});
 		$text .= $printCell->($linkToBook->(
 			$attributes->{long_name},
 			$attributes->{short_name},

@@ -21,7 +21,7 @@ use Test::More 0.96;
 
 sub testBookLinks {
 	my ($self) = @_;
-	plan tests => 7;
+	plan tests => 9;
 
 	my $html = Chleb::Server::Moose::__infoToHtml({
 		included => [
@@ -56,6 +56,11 @@ sub testBookLinks {
 		],
 	});
 
+	my ($bookTable) = $html =~ m{(<table class="info-table">.*?</table>)}s;
+	like($html, qr{<th>Translation</th>\s*<th>Book</th>\s*<th>Ordinal</th>\s*<th>Chapters</th>}x,
+		'book table starts with the translation column');
+	like($bookTable, qr{<td>kjv</td>}x,
+		'book table displays the dynamic translation');
 	like($html, qr{href="/1/lookup/gen/1\?translations=kjv">Genesis</a>}x, 'Book column links to the first chapter');
 	like($html, qr{<th>Translation</th>}x, 'chapter table labels the translation column');
 	like($html, qr{<td>kjv</td>}x, 'chapter table displays the translation');
