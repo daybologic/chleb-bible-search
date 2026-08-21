@@ -5,6 +5,12 @@
 
 set -uo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 request() {
 	local path="$1"
 	local accept="$2"

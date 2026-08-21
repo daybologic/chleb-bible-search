@@ -31,6 +31,12 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 page=$(http --check-status --body --pretty=none GET chleb-api.example.org/1/lookup form==true)
 
 grep -q '<form class="search-form lookup-form" method="GET" action="/1/lookup">' <<< "$page"

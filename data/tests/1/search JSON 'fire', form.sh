@@ -31,5 +31,11 @@
 
 set -uo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 http --check-status GET chleb-api.example.org/1/search Accept:application/json term==fire wholeword==true form==true >/dev/null 2>&1
 [[ $? -eq 4 ]]

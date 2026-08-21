@@ -4,6 +4,12 @@
 
 set -euo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 result=$(http --check-status --body --pretty=none GET \
 	chleb-api.example.org/1/lookup/prov/16 \
 	Accept:application/json)

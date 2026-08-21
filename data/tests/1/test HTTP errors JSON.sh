@@ -31,6 +31,12 @@
 
 set -uo pipefail
 
+if [[ "${1:-}" == "--get-loops" ]]; then
+	printf "%s\n" 1
+	exit 0
+fi
+
+
 codes=(
 	{400..417} {421..426} 428 429 431 451
 	{500..508} 511
