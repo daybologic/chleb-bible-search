@@ -125,6 +125,27 @@ sub testPride_allTranslations {
 			isa('Chleb::Bible::Verse'),
 			methods(
 				book    => methods(
+					bible        => methods(translation => 'dr'),
+					longName     => 'Proverbs',
+					ordinal      => 22,
+					shortName    => 'pro',
+					shortNameRaw => 'Pro',
+					testament    => all(
+						isa('Chleb::Type::Testament'),
+						methods(value => 'old'),
+					),
+				),
+				chapter => methods(
+					ordinal => 16,
+				),
+				ordinal => 18,
+				text    => 'Pride goeth before destruction: and the spirit is lifted up before a fall.',
+			),
+		),
+		all(
+			isa('Chleb::Bible::Verse'),
+			methods(
+				book    => methods(
 					bible        => methods(translation => 'kjv'),
 					longName     => 'Proverbs',
 					ordinal      => 20,

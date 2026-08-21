@@ -667,7 +667,7 @@ sub testV2_translations_all {
 
 	my $when = '2021-10-30T21:36:26+0000';
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => [ $self->coreTranslations() ] });
+	my $json = $self->sut->__votd({ accept => $mediaType, version => 2, when => $when, translations => ['asv', 'kjv'] });
 	cmp_deeply($json, {
 		data => [
 			{
@@ -1053,7 +1053,7 @@ sub testHtmlSortsTranslations {
 		accept => $mediaType,
 		version => 2,
 		when => $when,
-		translations => [ $self->coreTranslations() ],
+		translations => ['asv', 'kjv'],
 	});
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 

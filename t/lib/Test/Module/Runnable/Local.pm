@@ -61,9 +61,7 @@ sub setUp {
 sub __ensureGeneratedData {
 	my ($self) = @_;
 	my @generatedFiles = qw(
-		data/asv.sqlite.gz
 		data/core.sqlite.gz
-		data/kjv.sqlite.gz
 	);
 
 	my $missingFiles = grep { !-f } @generatedFiles;
@@ -102,7 +100,7 @@ translations must be requested explicitly by tests which cover them.
 =cut
 
 sub coreTranslations {
-	return qw(asv kjv);
+	return qw(asv dr kjv);
 }
 
 =head1 hasTranslation($translation)

@@ -528,7 +528,7 @@ sub main2 {
 	__writeMaster($fileHandle);
 
 	if ($translation eq 'core') {
-		my @translations = ('asv', 'kjv'); # TODO can we make this list dynamic somehow?  all might need to be an even bigger superset, or we might need to tag inputs from dirs
+		my @translations = ('asv', 'kjv', 'dr');
 		__writeTranslations($fileHandle, \@translations);
 		__writeProperties($fileHandle, \@translations);
 		foreach my $translation2 (@translations) {

@@ -34,10 +34,10 @@ cp "$dr_sentiment_tmp/dr.json" data/static/emotion/dr.json
 ```
 
 The validation must report success with 35,744 sentiment entries. Rebuild the
-DR SQLite database after replacing the JSON file:
+core SQLite database after replacing the JSON file:
 
 ```bash
-bin/import/text-to-dr.sh
+bin/import/text-to-core.sh
 ```
 
 The tagging step makes thousands of API requests and may incur substantial
