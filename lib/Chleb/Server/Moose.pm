@@ -114,8 +114,9 @@ sub title {
 	my ($self) = @_;
 
 	$self->dic->logger->info(sprintf(
-		'Started Chleb Bible Search %s (%s) on %s, built by %s@%s (%s/%s) with Perl %s at %s',
+		'Started Chleb Bible Search %s (%s, changeset %s) on %s, built by %s@%s (%s/%s) with Perl %s at %s',
 		$Chleb::VERSION,
+		$Chleb::Generated::Info::BUILD_BRANCH,
 		$Chleb::Generated::Info::BUILD_CHANGESET,
 		hostname(),
 		$Chleb::Generated::Info::BUILD_USER,
@@ -789,6 +790,7 @@ sub __version { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		build_os => $Chleb::Generated::Info::BUILD_OS,
 		build_time => $Chleb::Generated::Info::BUILD_TIME,
 		build_user => $Chleb::Generated::Info::BUILD_USER,
+		branch => $Chleb::Generated::Info::BUILD_BRANCH,
 		changeset => $Chleb::Generated::Info::BUILD_CHANGESET,
 		perl_version => $Chleb::Generated::Info::BUILD_PERL_VERSION,
 		server_host => $self->dic->config->get('server', 'domain', 'localhost'),
@@ -829,6 +831,11 @@ sub __versionToHtml {
 	$html .= "<tr>\r\n";
 	$html .= "<th>Git changeset</th>\r\n";
 	$html .= sprintf("<td>%s</td>\r\n", $attributes->{changeset});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Git branch</th>\r\n";
+	my $branchClass = ($attributes->{branch} eq 'master') ? '' : ' class="build-branch-warning"';
+	$html .= sprintf("<td><span%s>%s</span></td>\r\n", $branchClass, $attributes->{branch});
 	$html .= "</tr>\r\n";
 	$html .= "<tr>\r\n";
 	$html .= "<th>Build time</th>\r\n";

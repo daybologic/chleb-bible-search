@@ -58,7 +58,13 @@ sub byLine {
 	$line =~ s/__BUILD_OS__/$Chleb::Generated::Info::BUILD_OS/;
 	$line =~ s/__BUILD_ARCH__/$Chleb::Generated::Info::BUILD_ARCH/;
 	$line =~ s/__BUILD_PERL_VERSION__/$Chleb::Generated::Info::BUILD_PERL_VERSION/;
+	$line =~ s/__BUILD_CSS_HASH__/$Chleb::Generated::Info::BUILD_CSS_HASH/;
 	$line =~ s/__BUILD_TIME__/$Chleb::Generated::Info::BUILD_TIME/;
+	$line =~ s/__BUILD_BRANCH__/$Chleb::Generated::Info::BUILD_BRANCH/;
+	my $buildBranchHtml = $Chleb::Generated::Info::BUILD_BRANCH;
+	$buildBranchHtml = '<span class="build-branch-warning">' . $buildBranchHtml . '</span>'
+		unless ($buildBranchHtml eq 'master');
+	$line =~ s/__BUILD_BRANCH_HTML__/$buildBranchHtml/;
 
 	if ($self->params) {
 		foreach my $k (keys(%{ $self->params })) {

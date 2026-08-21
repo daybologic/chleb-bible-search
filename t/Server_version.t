@@ -79,6 +79,7 @@ sub testDefaults {
 				build_os => $Chleb::Generated::Info::BUILD_OS,
 				build_time => $Chleb::Generated::Info::BUILD_TIME,
 				build_user => $Chleb::Generated::Info::BUILD_USER,
+				branch => $Chleb::Generated::Info::BUILD_BRANCH,
 				changeset => $Chleb::Generated::Info::BUILD_CHANGESET,
 				perl_version => $Chleb::Generated::Info::BUILD_PERL_VERSION,
 				server_host => 'localhost',
@@ -106,6 +107,14 @@ sub testHtml {
 	like($html, qr{<td>3\.1\.1</td>}, '__version HTML has version value');
 	like($html, qr{<th>Git changeset</th>}, '__version HTML has changeset header');
 	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_CHANGESET\E</td>}, '__version HTML has changeset value');
+	like($html, qr{<th>Git branch</th>}, '__version HTML has branch header');
+	if ($Chleb::Generated::Info::BUILD_BRANCH eq 'master') {
+		like($html, qr{<td><span>\Q$Chleb::Generated::Info::BUILD_BRANCH\E</span></td>},
+			'__version HTML has an unstyled master branch value');
+	} else {
+		like($html, qr{<td><span class="build-branch-warning">\Q$Chleb::Generated::Info::BUILD_BRANCH\E</span></td>},
+			'__version HTML marks a non-master branch in red');
+	}
 	like($html, qr{<th>Build time</th>}, '__version HTML has build time header');
 	like($html, qr{<td>\Q$Chleb::Generated::Info::BUILD_TIME\E</td>}, '__version HTML has build time value');
 	like($html, qr{<th>Build host</th>}, '__version HTML has build host header');
@@ -124,6 +133,21 @@ sub testHtml {
 	like($html, qr{<td>example\@example\.org</td>}, '__version HTML has admin email value');
 	like($html, qr{<th>Server host</th>}, '__version HTML has server host header');
 	like($html, qr{<td>localhost</td>}, '__version HTML has server host value');
+
+	return EXIT_SUCCESS;
+}
+
+sub testStartupLogIncludesBranch {
+	my ($self) = @_;
+
+	plan tests => 1;
+	$self->sut->title();
+
+	like(
+		join('\n', @{ $self->sut->dic->logger->__messages }),
+		qr{Started[ ]Chleb[ ]Bible[ ]Search[ ].*\Q$Chleb::Generated::Info::BUILD_BRANCH\E.*changeset[ ]\Q$Chleb::Generated::Info::BUILD_CHANGESET\E},
+		'startup log includes branch and changeset',
+	);
 
 	return EXIT_SUCCESS;
 }

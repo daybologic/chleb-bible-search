@@ -66,6 +66,7 @@ buildOS=$(uname -o)
 buildArch=$(uname -m)
 buildTime=$(date '+%Y-%m-%dT%H:%M:%S%z')
 buildPerlVersion=$(perl -e 'print "$^V ($])"')
+buildCssHash=$(sha256sum data/static/public/style.css | awk '{print $1}')
 version=$(dpkg_parsechangelog_version debian/changelog) || exit 1
 
 buildChangeset=''
@@ -73,6 +74,11 @@ if [ -f '.git-changeset' ]; then
 	buildChangeset=$(cat .git-changeset)
 else
 	echo "WARN: .git-changeset not found" >&2
+fi
+
+buildBranch=$(git branch --show-current 2>/dev/null || true)
+if [[ -z "$buildBranch" ]]; then
+	buildBranch='detached'
 fi
 
 echo '# this file is auto-generated, do not check in' > "$outFile"
@@ -91,7 +97,9 @@ echo "Readonly our \$BUILD_OS => '$buildOS';" >> "$outFile"
 echo "Readonly our \$BUILD_ARCH => '$buildArch';" >> "$outFile"
 echo "Readonly our \$BUILD_TIME => '$buildTime';" >> "$outFile"
 echo "Readonly our \$BUILD_PERL_VERSION => '$buildPerlVersion';" >> "$outFile"
+echo "Readonly our \$BUILD_CSS_HASH => '$buildCssHash';" >> "$outFile"
 echo "Readonly our \$BUILD_CHANGESET => '$buildChangeset';" >> "$outFile"
+echo "Readonly our \$BUILD_BRANCH => '$buildBranch';" >> "$outFile"
 echo '1;' >> "$outFile"
 
 exit 0

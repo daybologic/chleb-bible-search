@@ -594,6 +594,11 @@
                 "example": "Rev. Duncan Ross Palmer",
                 "type": "string"
               },
+              "branch": {
+                "description": "Git branch captured when this build was created",
+                "example": "master",
+                "type": "string"
+              },
               "build_arch": {
                 "description": "Architecture where this build was created",
                 "example": "x86_64",
