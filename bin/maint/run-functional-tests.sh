@@ -71,7 +71,7 @@ trap 'rm -rf "$httpWrapperDir"' EXIT
 
 cat > "$httpWrapperDir/http" <<'EOS'
 #!/usr/bin/env bash
-sleep "${CHLEB_HTTP_TEST_DELAY:-1}"
+sleep "${CHLEB_HTTP_TEST_DELAY:-1.25}"
 exec "$CHLEB_REAL_HTTP" "$@"
 EOS
 chmod +x "$httpWrapperDir/http"
