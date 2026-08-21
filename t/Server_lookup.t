@@ -443,6 +443,27 @@ sub testHtmlPreservesReversedTranslationInput {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlOffersAllTranslationsNavigation {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'neh',
+		chapter => 2,
+		verse => 1,
+		translations => ['asv'],
+	});
+
+	like($html, qr{<a[ ]class="vn-link[ ]vn-verse"[ ]href="/1/lookup/neh/2/1\?translations=all">all[ ]translations</a>}x,
+		'lookup navigation links to all translations');
+	like($html, qr{random</a>.*?all[ ]translations</a>.*?permalink</a>}xs,
+		'all translations appears between random and permalink in primary navigation');
+
+	return EXIT_SUCCESS;
+}
+
 sub testHtmlBookSelectorUsesCurrentTranslation {
 	my ($self) = @_;
 	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');

@@ -1556,6 +1556,34 @@ sub __verseNavigationLink {
 	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
 }
 
+=item C<__allTranslationsNavigationLink($json)>
+
+Build the lookup link which keeps the current verse path while replacing the
+selected translation query with C<translations=all>.
+
+=cut
+
+sub __allTranslationsNavigationLink {
+	my ($json) = @_;
+
+	my $link = $json->{links}->{self} || '';
+	return '' if (length($link) == 0);
+
+	my ($path, $query) = split(m{\?}x, $link, 2);
+	if (defined($query) && length($query) > 0) {
+		if ($query =~ s{\A translations=[^&]* }{translations=all}x
+			|| $query =~ s{ & translations=[^&]* }{&translations=all}x) {
+			$link = $path . '?' . $query;
+		} else {
+			$link = $path . '?' . $query . '&translations=all';
+		}
+	} else {
+		$link = $path . '?translations=all';
+	}
+
+	return '<a class="vn-link vn-verse" href="' . $link . '">all translations</a>';
+}
+
 =item C<__verseNavigationQuery($json)>
 
 Return the query string from the JSON response's self link for use by
@@ -1775,6 +1803,7 @@ sub __verseToHtml {
 		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
 		NEXT_CHAPTER_URL => $nextChapterLink,
 		NEXT_BOOK_URL => $nextBookLink,
+		ALL_TRANSLATIONS_URL => __allTranslationsNavigationLink($json->[0]),
 		PERMALINK_URL => __verseNavigationLink($json->[0], 'self', 'permalink'),
 		SETTINGS_URL => $settingsLink,
 		FIRST_VERSE_URL => __verseNavigationLink($json->[0], 'first', 'first verse'),
