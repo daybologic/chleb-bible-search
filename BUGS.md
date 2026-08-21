@@ -9,7 +9,7 @@ No sentiment entry for verse at ordinal 55174
 ```
 
 This does not necessarily mean that the sentiment data is absent. The packaged
-`core.sqlite.gz` contains ASV, KJV, and DR, giving it 97,948 verses in total,
+`free.sqlite.gz` contains ASV, KJV, and DR, giving it 97,948 verses in total,
 while each translation has its own translation-local sentiment entries. The backend currently
 calculates an absolute ordinal with a window function over all verses in the
 bundle. It then uses that ordinal to index the sentiment array for one

@@ -66,11 +66,11 @@ sub test {
 	plan tests => 2;
 
 	my $info = $self->sut->info();
-	my @coreTranslations = $self->coreTranslations();
-	my %coreTranslation = map { $_ => 1 } @coreTranslations;
-	my @coreBibles = grep { $coreTranslation{ $_->translation } } @{ $info->bibles() };
-	my $coreInfo = Chleb::Info->new({ bibles => \@coreBibles });
-	cmp_deeply($coreInfo, all(
+	my @freeTranslations = $self->freeTranslations();
+	my %freeTranslation = map { $_ => 1 } @freeTranslations;
+	my @freeBibles = grep { $freeTranslation{ $_->translation } } @{ $info->bibles() };
+	my $freeInfo = Chleb::Info->new({ bibles => \@freeBibles });
+	cmp_deeply($freeInfo, all(
 		isa('Chleb::Info'),
 		methods(
 			bibles => [ map {
@@ -78,10 +78,10 @@ sub test {
 					isa('Chleb::Bible'),
 					methods(translation => $_),
 				)
-			} @coreTranslations ],
+			} @freeTranslations ],
 		),
 	), 'info inspection') or diag(explain($info->toString()));
-	is($coreInfo->toString(), sprintf('info about %d translations', scalar(@coreTranslations)), 'info description uses translation terminology');
+	is($freeInfo->toString(), sprintf('info about %d translations', scalar(@freeTranslations)), 'info description uses translation terminology');
 
 	return EXIT_SUCCESS;
 }

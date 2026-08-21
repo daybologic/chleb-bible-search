@@ -527,7 +527,7 @@ sub main2 {
 	__createTables($fileHandle);
 	__writeMaster($fileHandle);
 
-	if ($translation eq 'core') {
+	if ($translation eq 'free') {
 		my @translations = ('asv', 'kjv', 'dr');
 		__writeTranslations($fileHandle, \@translations);
 		__writeProperties($fileHandle, \@translations);

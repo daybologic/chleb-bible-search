@@ -266,12 +266,12 @@ sub test_translation_asv {
 	return EXIT_SUCCESS;
 }
 
-sub test_translation_core {
+sub test_translation_free {
 	my ($self) = @_;
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => [ $self->freeTranslations() ], version => 2 });
 	cmp_deeply($json, {
 		data => array_each(
 			{
@@ -400,7 +400,7 @@ sub test_html_translation_order {
 	plan tests => 2;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
-	my $html = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
+	my $html = $self->sut->__random({ accept => $mediaType, translations => [ $self->freeTranslations() ], version => 2 });
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
 	is_deeply(\@translations, [ 'asv (1901)', 'dr (1610)', 'kjv (1611)' ], 'random HTML sorts translations lexically');

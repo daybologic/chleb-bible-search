@@ -98,7 +98,7 @@ sub testPride_allTranslations {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ $self->coreTranslations() ] });
+	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ $self->freeTranslations() ] });
 	cmp_deeply(\@verse, [
 		all(
 			isa('Chleb::Bible::Verse'),

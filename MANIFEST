@@ -52,7 +52,7 @@ bin/import/dr-import.pl
 bin/import/thesaurus-ai.pl
 bin/import/thesaurus-ai-status.sh
 bin/import/thesaurus-ai-merge.pl
-bin/import/text-to-core.sh
+bin/import/text-to-free.sh
 bin/import/text-to-pickthall.sh
 bin/import/text-to-sqlite.pl
 bin/maint/copyright-bump.sh

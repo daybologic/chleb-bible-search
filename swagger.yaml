@@ -1082,7 +1082,7 @@ components:
                 example: 2Cor
             translation_count:
               type: integer
-              description: How many translations are immediately available, includes core and plugin translations
+              description: How many translations are immediately available, includes free and plugin translations
               example: 2
             translations:
               type: array

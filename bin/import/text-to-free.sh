@@ -32,7 +32,7 @@
 
 set -eu
 
-translation=core
+translation=free
 name=$translation
 
 bin/import/text-to-sqlite.pl -t $translation -n $name

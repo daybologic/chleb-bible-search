@@ -1385,7 +1385,7 @@ sub __makeSharedCachePath { ## no critic (Subroutines::ProhibitUnusedPrivateSubr
 
 Pick the compressed SQLite source file to use for the current translation.
 The preferred order is a single-translation SQLite file first, then a
-multi-translation bundle such as C<core.sqlite.gz>, and finally the
+multi-translation bundle such as C<free.sqlite.gz>, and finally the
 translation-specific filename as a fallback.
 
 =cut
@@ -1627,18 +1627,18 @@ sub __sourceCompressedPathsForTranslation {
 	my $translation = $self->bible->translation;
 	my @sourceFiles = $self->__sourceFilesInPath($self->dataDir);
 	my @singleTranslationFiles;
-	my @coreFiles;
+	my @multiTranslationFiles;
 	my @matchingFiles;
 	foreach my $sourceFile (@sourceFiles) {
 		my $meta = $self->__sourceMetadata->{$sourceFile} //= $self->__inspectSourceFile($sourceFile);
 		next unless (exists($meta->{translations}->{$translation}));
 		push(@matchingFiles, $sourceFile);
 		push(@singleTranslationFiles, $sourceFile) if (scalar(keys(%{ $meta->{translations} })) == 1);
-		push(@coreFiles, $sourceFile) if ($meta->{translation_count} > 1);
+		push(@multiTranslationFiles, $sourceFile) if ($meta->{translation_count} > 1);
 	}
 
 	return @singleTranslationFiles if (scalar(@singleTranslationFiles) > 0);
-	return @coreFiles if (scalar(@coreFiles) > 0);
+	return @multiTranslationFiles if (scalar(@multiTranslationFiles) > 0);
 	return @matchingFiles;
 }
 

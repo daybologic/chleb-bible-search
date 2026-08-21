@@ -61,7 +61,7 @@ sub setUp {
 sub __ensureGeneratedData {
 	my ($self) = @_;
 	my @generatedFiles = qw(
-		data/core.sqlite.gz
+		data/free.sqlite.gz
 	);
 
 	my $missingFiles = grep { !-f } @generatedFiles;
@@ -92,14 +92,14 @@ sub __mockLogger {
 	return;
 }
 
-=head1 coreTranslations()
+=head1 freeTranslations()
 
-Return the translations which are part of the core test data set. Optional
+Return the translations which are part of the free test data set. Optional
 translations must be requested explicitly by tests which cover them.
 
 =cut
 
-sub coreTranslations {
+sub freeTranslations {
 	return qw(asv dr kjv);
 }
 

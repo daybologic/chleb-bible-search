@@ -66,7 +66,7 @@ sub setUp {
 	$self->{root} = $root;
 	mkdir($root . '/data') or croak("mkdir $root/data failed: $!");
 	mkdir($root . '/cache') or croak("mkdir $root/cache failed: $!");
-	$self->__makeSourceFile($root . '/data', 'core.sqlite.gz', ['asv', 'kjv']);
+	$self->__makeSourceFile($root . '/data', 'free.sqlite.gz', ['asv', 'kjv']);
 	$self->__makeSourceFile($root . '/data', 'kjv.sqlite.gz', ['kjv']);
 	chdir($root) or croak("chdir $root failed: $!");
 
@@ -98,12 +98,12 @@ sub testPreferSingleTranslationFile {
 	return EXIT_SUCCESS;
 }
 
-sub testFallbackToCoreWhenNoSingleFile {
+sub testFallbackToFreeWhenNoSingleFile {
 	my ($self) = @_;
 
 	my $sut = Chleb::Bible->new({ translation => 'asv' })->__backend;
-	is($sut->__makeSourceCompressedPath(), $sut->dataDir . '/core.sqlite.gz',
-		'falls back to the multi-translation core file');
+	is($sut->__makeSourceCompressedPath(), $sut->dataDir . '/free.sqlite.gz',
+		'falls back to the multi-translation free file');
 
 	return EXIT_SUCCESS;
 }
