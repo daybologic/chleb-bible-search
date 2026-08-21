@@ -74,7 +74,7 @@ architecture=$(dpkg --print-architecture)
 sudo dpkg -i \
 	chleb-bible-search_3.1.1_all.deb \
 	"chleb-bible-search-core_3.1.1_${architecture}.deb" \
-	chleb-bible-search-dict_3.1.1_all.deb
+	chleb-bible-search-dict-free_3.1.1_all.deb
 
 sudo apt -yf install
 sudo systemctl enable chleb-bible-search.service

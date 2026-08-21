@@ -330,8 +330,8 @@ debian/chleb-bible-search-core.install
 debian/chleb-bible-search-core.postinst
 debian/chleb-bible-search-core.postrm
 debian/chleb-bible-search-core.prerm
-debian/chleb-bible-search-dict.dirs
-debian/chleb-bible-search-dict.install
+debian/chleb-bible-search-dict-free.dirs
+debian/chleb-bible-search-dict-free.install
 debian/chleb-bible-search.dirs
 debian/chleb-bible-search.install
 debian/chleb-bible-search.NEWS
