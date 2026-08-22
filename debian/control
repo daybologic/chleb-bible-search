@@ -68,18 +68,19 @@ Package: chleb-bible-search-dict-free
 Architecture: all
 Depends: chleb-bible-search-core (= ${binary:Version})
 Replaces: chleb-bible-search-dict
-Description: Chleb Bible Search - Free Dictionaries
- This package contains the dictionary data used by the Chleb Bible Search service.
- It includes linguistic data for interpreting search queries.
+Description: Chleb Bible Search - Public domain translations
+ This package contains the public domain translations used by the Chleb Bible Search
+ service.
+ .
+ American Standard Version (1901)
+ Douay-Rheims (1610)
+ King James Version (1611)
 
 Package: chleb-bible-search-dict-pickthall
 Architecture: all
 Depends: chleb-bible-search-core (= ${binary:Version})
 Description: Chleb Bible Search - Pickthall translation
- This package contains the Pickthall translation data for the Chleb Bible Search service.
-
-Package: chleb-bible-search-dict-dr
-Architecture: all
-Depends: chleb-bible-search-core (= ${binary:Version})
-Description: Chleb Bible Search - Douay-Rheims translation
- This package contains the Douay-Rheims translation data for the Chleb Bible Search service.
+ This package contains the Pickthall translation of the Quran used by the
+ Chleb Bible Search service.
+ .
+ Pickthall (1930)
