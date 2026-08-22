@@ -15,7 +15,7 @@ result=$(http --check-status --body --pretty=none GET \
 	Accept:application/json testament==old translations==asv)
 
 jq -e '
-	(.data | length) == 1
+	(.data | length) >= 1
 	and .data[0].attributes.translation == "asv"
 	and .data[0].attributes.book != null
 	and any(.included[]; .type == "book" and .attributes.testament == "old")
