@@ -519,6 +519,25 @@ sub testSearchSuggestions {
 	return EXIT_SUCCESS;
 }
 
+sub testHomosexualSearchUsesSemanticAliases {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my $json = $self->sut->__search({
+		accept => $mediaType,
+		term => 'homosexual',
+		translations => ['kjv'],
+	});
+
+	ok(scalar(@{ $json->{data} }) > 0, 'homosexual search returns related KJV verses');
+	ok((grep { $_->{id} eq 'kjv/1cor/6/9' } @{ $json->{data} }),
+		'homosexual search includes the KJV 1 Corinthians passage');
+	ok(!exists($json->{suggestions}), 'successful semantic search has no suggestions property');
+
+	return EXIT_SUCCESS;
+}
+
 sub testInvalidPageValues {
 	my ($self) = @_;
 	plan tests => 3;

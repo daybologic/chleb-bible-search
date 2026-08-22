@@ -1,6 +1,28 @@
 {
   "translation": "kjv",
   "terms": {
+    "homosexual": [
+      {
+        "confidence": 0.8,
+        "term": "effeminate",
+        "relation": "synonym"
+      },
+      {
+        "confidence": 0.8,
+        "term": "sodomite",
+        "relation": "synonym"
+      },
+      {
+        "confidence": 0.8,
+        "term": "sodomites",
+        "relation": "synonym"
+      },
+      {
+        "confidence": 0.8,
+        "term": "abusers",
+        "relation": "synonym"
+      }
+    ],
     "driven": [
       {
         "confidence": 0.8,

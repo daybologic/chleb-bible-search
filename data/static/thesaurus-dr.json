@@ -1,0 +1,13 @@
+{
+  "translation": "dr",
+  "terms": {
+    "homosexual": [
+      {
+        "confidence": 0.8,
+        "term": "effeminate",
+        "relation": "synonym"
+      }
+    ]
+  },
+  "version": 1
+}
