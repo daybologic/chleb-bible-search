@@ -608,7 +608,8 @@ button:hover {
 .verse-nav a,
 .verse-nav button,
 .verse-nav select,
-.verse-nav-more summary {
+.verse-nav-more summary,
+.verse-nav .vn-disabled {
 	display: inline-block;
 	padding: 0.35rem 0.65rem;
 	border-radius: 999px;
@@ -618,6 +619,14 @@ button:hover {
 	color: #2a3a5a;
 	cursor: pointer;
 	transition: 0.15s background, 0.15s border-color;
+}
+
+.verse-nav .vn-disabled {
+	color: #777;
+	background: #eeeeee;
+	border-color: #d0d0d0;
+	cursor: not-allowed;
+	opacity: 0.7;
 }
 
 .verse-nav a:hover,
@@ -687,7 +696,8 @@ button:hover {
 	.verse-nav a,
 	.verse-nav button,
 	.verse-nav select,
-	.verse-nav-more summary {
+	.verse-nav-more summary,
+	.verse-nav .vn-disabled {
 		box-sizing: border-box;
 		text-align: center;
 		width: 100%;

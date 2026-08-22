@@ -1017,8 +1017,10 @@ sub testHtmlNavigationDateLinksOnlyForVotd {
 		verse => 8,
 	});
 
-	unlike($html, qr{>yesterday</a>}, 'lookup HTML omits the yesterday VoTD link');
-	unlike($html, qr{>tomorrow</a>}, 'lookup HTML omits the tomorrow VoTD link');
+	like($html, qr{<span class="vn-link vn-verse vn-disabled" aria-disabled="true">yesterday</span>},
+		'lookup HTML visibly disables the unavailable yesterday VoTD link');
+	like($html, qr{<span class="vn-link vn-verse vn-disabled" aria-disabled="true">tomorrow</span>},
+		'lookup HTML visibly disables the unavailable tomorrow VoTD link');
 
 	return EXIT_SUCCESS;
 }

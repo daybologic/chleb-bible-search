@@ -1551,7 +1551,7 @@ sub __verseNavigationLink {
 	my ($json, $type, $label) = @_;
 
 	my $link = $json->{data}->[0]->{links}->{$type};
-	return '' unless ($link);
+	return __disabledNavigationLink('vn-verse', $label) unless ($link);
 
 	my $selfLink = $json->{links}->{self} || '';
 	if ($selfLink =~ m{ (\?.*)\z }x) {
@@ -1561,6 +1561,80 @@ sub __verseNavigationLink {
 	}
 
 	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
+}
+
+=item C<__disabledNavigationLink($class, $label)>
+
+Build a visibly disabled navigation control for an unavailable destination.
+
+C<$class> identifies the navigation group and C<$label> is the visible
+control text.  The returned element deliberately has no link destination.
+
+=cut
+
+sub __disabledNavigationLink {
+	my ($class, $label) = @_;
+
+	return '<span class="vn-link ' . $class . ' vn-disabled" aria-disabled="true">' . $label . '</span>';
+}
+
+=item C<__navigationBoundaryLinks($json, $verse, $bookLinkFormat)>
+
+Build the navigation controls whose destinations may be the current verse or
+chapter.  Controls at a boundary remain visible but are rendered disabled.
+
+=cut
+
+sub __navigationBoundaryLinks {
+	my ($json, $verse, $bookLinkFormat) = @_;
+
+	my $firstChapterLink = sprintf($bookLinkFormat, 'first chapter');
+	$firstChapterLink = __disabledNavigationLink('vn-book', 'first chapter') if ($verse->chapter->ordinal == 1);
+
+	my $firstVerseLink = __verseNavigationLink($json, 'first', 'first verse');
+	$firstVerseLink = __disabledNavigationLink('vn-verse', 'first verse') if ($verse->ordinal == 1);
+
+	my $lastVerseLink = __verseNavigationLink($json, 'last', 'last verse');
+	$lastVerseLink = __disabledNavigationLink('vn-verse', 'last verse')
+		if ($verse->ordinal == $verse->chapter->verseCount);
+
+	return {
+		first_chapter => $firstChapterLink,
+		first_verse => $firstVerseLink,
+		last_verse => $lastVerseLink,
+	};
+}
+
+=item C<__bookChapterNavigationLinks($verse, $navigationQuery)>
+
+Build the previous and next book/chapter controls, keeping unavailable
+destinations visible as disabled controls.
+
+=cut
+
+sub __bookChapterNavigationLinks {
+	my ($verse, $navigationQuery) = @_;
+
+	my %links = (
+		next_book => __disabledNavigationLink('vn-book', 'next book'),
+		next_chapter => __disabledNavigationLink('vn-chapter', 'next chapter'),
+		prev_book => __disabledNavigationLink('vn-book', 'prev book'),
+		prev_chapter => __disabledNavigationLink('vn-chapter', 'prev chapter'),
+	);
+	if (my $prevBook = $verse->book->getPrev()) {
+		$links{prev_book} = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1' . $navigationQuery . '">prev book</a>';
+	}
+	if (my $prevChapter = $verse->chapter->getPrev()) {
+		$links{prev_chapter} = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . $navigationQuery . '">prev chapter</a>';
+	}
+	if (my $nextBook = $verse->book->getNext()) {
+		$links{next_book} = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1' . $navigationQuery . '">next book</a>';
+	}
+	if (my $nextChapter = $verse->chapter->getNext()) {
+		$links{next_chapter} = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . $navigationQuery . '">next chapter</a>';
+	}
+
+	return \%links;
 }
 
 =item C<__allTranslationsNavigationLink($json)>
@@ -1574,7 +1648,7 @@ sub __allTranslationsNavigationLink {
 	my ($json) = @_;
 
 	my $link = $json->{links}->{self} || '';
-	return '' if (length($link) == 0);
+	return __disabledNavigationLink('vn-verse', 'all translations') if (length($link) == 0);
 
 	my ($path, $query) = split(m{\?}x, $link, 2);
 	if (defined($query) && length($query) > 0) {
@@ -1620,7 +1694,7 @@ sub __votdNavigationLink {
 	my ($json, $type, $label) = @_;
 
 	my $link = $json->{links}->{$type};
-	return '' unless ($link);
+	return __disabledNavigationLink('vn-verse', $label) unless ($link);
 
 	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
 }
@@ -1635,7 +1709,10 @@ only for VoTD rendering.
 sub __votdNavigationLinks {
 	my ($json, $function) = @_;
 
-	return [ '', '' ] unless ($function == $FUNCTION_VOTD);
+	return [
+		__disabledNavigationLink('vn-verse', 'yesterday'),
+		__disabledNavigationLink('vn-verse', 'tomorrow'),
+	] unless ($function == $FUNCTION_VOTD);
 
 	return [
 		__votdNavigationLink($json, 'yesterday', 'yesterday'),
@@ -1730,27 +1807,9 @@ sub __verseToHtml {
 	my $navigationQuery = __verseNavigationQuery($json->[0]);
 	my ($yesterdayLink, $tomorrowLink) = @{__votdNavigationLinks($json->[0], $function)};
 
-	my $prevBookLink = '';
-	if (my $prevBook = $firstVerseObject->book->getPrev()) {
-		$prevBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $prevBook->getPath() . '/1' . $navigationQuery . '">prev book</a>';
-	}
+	my $bookChapterLinks = __bookChapterNavigationLinks($firstVerseObject, $navigationQuery);
 
-	my $prevChapterLink = '';
-	if (my $prevChapter = $firstVerseObject->chapter->getPrev()) {
-		$prevChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $prevChapter->getPath() . $navigationQuery . '">prev chapter</a>';
-	}
-
-	my $nextBookLink = '';
-	if (my $nextBook = $firstVerseObject->book->getNext()) {
-		$nextBookLink = '<a class="vn-link vn-book" href="/1/lookup/' . $nextBook->getPath() . '/1' . $navigationQuery . '">next book</a>';
-	}
-
-	my $nextChapterLink = '';
-	if (my $nextChapter = $firstVerseObject->chapter->getNext()) {
-		$nextChapterLink = '<a class="vn-link vn-chapter" href="/1/lookup/' . $nextChapter->getPath() . $navigationQuery . '">next chapter</a>';
-	}
-
-	my $lastChapterLink = '';
+	my $lastChapterLink = __disabledNavigationLink('vn-chapter', 'last chapter');
 	my $chapterCount = $firstVerseObject->book->chapterCount;
 	my @chapters = ( );
 	for (my $chapterOrdinal = 1; $chapterOrdinal <= $firstVerseObject->book->chapterCount; $chapterOrdinal++) {
@@ -1768,6 +1827,7 @@ sub __verseToHtml {
 	}
 
 	my $bookLinkFormat = '<a class="vn-link vn-book" href="/1/lookup/' . $firstVerseObject->book->getPath() . '/1' . $navigationQuery . '">%s</a>';
+	my $boundaryLinks = __navigationBoundaryLinks($json->[0], $firstVerseObject, $bookLinkFormat);
 
 	my $browsingLeft;
 	{
@@ -1798,28 +1858,32 @@ sub __verseToHtml {
 		$thisChapter_KLUDGE =~ s@/1$@@x; # TODO: This is a kludge, the JSON should provide it somehow.
 	}
 	$self->dic->logger->trace("Link kludge in effect (post): ${thisChapter_KLUDGE}");
+	my $thisChapterLink = '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>';
+	if ($firstVerseObject->ordinal == 1) {
+		$thisChapterLink = __disabledNavigationLink('vn-chapter', 'this chapter');
+	}
 	my $settingsLink = '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-label="Settings">'
 		. '<span class="vn-settings-icon" aria-hidden="true">⚙</span>'
 		. '<span class="vn-settings-text"> settings</span></a>';
 
 	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
-		PREV_BOOK_URL => $prevBookLink,
-		PREV_CHAPTER_URL => $prevChapterLink,
+		PREV_BOOK_URL => $bookChapterLinks->{prev_book},
+		PREV_CHAPTER_URL => $bookChapterLinks->{prev_chapter},
 		HOME_URL => __linkToHome(),
-		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
-		NEXT_CHAPTER_URL => $nextChapterLink,
-		NEXT_BOOK_URL => $nextBookLink,
+		CHAPTER_URL => $thisChapterLink,
+		NEXT_CHAPTER_URL => $bookChapterLinks->{next_chapter},
+		NEXT_BOOK_URL => $bookChapterLinks->{next_book},
 		ALL_TRANSLATIONS_URL => __allTranslationsNavigationLink($json->[0]),
 		PERMALINK_URL => __verseNavigationLink($json->[0], 'self', 'permalink'),
 		SETTINGS_URL => $settingsLink,
-		FIRST_VERSE_URL => __verseNavigationLink($json->[0], 'first', 'first verse'),
-		FIRST_CHAPTER_URL => sprintf($bookLinkFormat, 'first chapter'),
+		FIRST_VERSE_URL => $boundaryLinks->{first_verse},
+		FIRST_CHAPTER_URL => $boundaryLinks->{first_chapter},
 		LAST_CHAPTER_URL => $lastChapterLink,
 		YESTERDAY_URL => $yesterdayLink,
 		PREV_VERSE_URL => __verseNavigationLink($json->[0], 'prev', 'prev verse'),
 		NEXT_VERSE_URL => __verseNavigationLink($json->[0], 'next', 'next verse'),
 		TOMORROW_URL => $tomorrowLink,
-		LAST_VERSE_URL => __verseNavigationLink($json->[0], 'last', 'last verse'),
+		LAST_VERSE_URL => $boundaryLinks->{last_verse},
 		RANDOM_URL => $random,
 		BOOKS => $self->__makeBooks($firstVerseObject->book),
 	});

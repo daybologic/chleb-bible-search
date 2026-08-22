@@ -476,6 +476,73 @@ sub testHtmlOffersAllTranslationsNavigation {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlDisablesCurrentChapterAtFirstVerse {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'gen',
+		chapter => 2,
+		verse => 1,
+		translations => ['kjv'],
+	});
+
+	like($html, qr{<span class="vn-link vn-chapter vn-disabled" aria-disabled="true">this chapter</span>},
+		'any chapter first verse HTML visibly disables the current chapter link');
+	unlike($html, qr{<a class="vn-link vn-chapter" href="/1/lookup/gen/2">this chapter</a>},
+		'any chapter first verse HTML does not link to the current chapter');
+	like($html, qr{<span class="vn-link vn-verse vn-disabled" aria-disabled="true">first verse</span>},
+		'any chapter first verse HTML visibly disables the first verse control');
+	unlike($html, qr{<a class="vn-link vn-verse" href="/1/lookup/gen/2/1">first verse</a>},
+		'any chapter first verse HTML does not link to the current first verse');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlDisablesFirstChapterOnChapterOne {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'gen',
+		chapter => 1,
+		verse => 2,
+		translations => ['kjv'],
+	});
+
+	like($html, qr{<span class="vn-link vn-book vn-disabled" aria-disabled="true">first chapter</span>},
+		'chapter one HTML visibly disables the first chapter control');
+	unlike($html, qr{<a class="vn-link vn-book" href="/1/lookup/gen/1">first chapter</a>},
+		'chapter one HTML does not link to the first chapter');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlDisablesLastVerseAtChapterEnd {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'gen',
+		chapter => 1,
+		verse => 31,
+		translations => ['kjv'],
+	});
+
+	like($html, qr{<span class="vn-link vn-verse vn-disabled" aria-disabled="true">last verse</span>},
+		'last verse HTML visibly disables the last verse control');
+	unlike($html, qr{<a class="vn-link vn-verse" href="/1/lookup/gen/1/31">last verse</a>},
+		'last verse HTML does not link to the current last verse');
+
+	return EXIT_SUCCESS;
+}
+
 sub testHtmlBookSelectorUsesCurrentTranslation {
 	my ($self) = @_;
 	plan skip_all => 'Pickthall test data is not installed' unless $self->hasTranslation('pickthall');
