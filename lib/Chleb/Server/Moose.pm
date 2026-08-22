@@ -1806,7 +1806,6 @@ sub __verseToHtml {
 		PREV_BOOK_URL => $prevBookLink,
 		PREV_CHAPTER_URL => $prevChapterLink,
 		HOME_URL => __linkToHome(),
-		BOOK_URL => sprintf($bookLinkFormat, 'book index'),
 		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
 		NEXT_CHAPTER_URL => $nextChapterLink,
 		NEXT_BOOK_URL => $nextBookLink,
