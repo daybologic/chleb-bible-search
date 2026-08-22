@@ -554,6 +554,7 @@ sub getOrdinalByVerseKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $key, 4);
 	return 0 unless (defined($verseNumber));
+	return 0 unless ($translation eq $self->bible->translation);
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseOrdinalCache->{$cacheKey} if (exists($self->__verseOrdinalCache->{$cacheKey}));
 	if (my $mapped = $self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterNumber}->{$verseNumber}) {
