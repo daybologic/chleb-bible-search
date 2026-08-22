@@ -457,7 +457,7 @@ sub testHtmlPreservesReversedTranslationInput {
 
 sub testHtmlOffersAllTranslationsNavigation {
 	my ($self) = @_;
-	plan tests => 2;
+	plan tests => 3;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
 	my $html = $self->sut->__lookup({
@@ -472,6 +472,75 @@ sub testHtmlOffersAllTranslationsNavigation {
 		'lookup navigation links to all translations');
 	like($html, qr{random</a>.*?all[ ]translations</a>.*?permalink</a>}xs,
 		'all translations appears between random and permalink in primary navigation');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?translations=asv">votd</a>},
+		'lookup navigation links to standalone VoTD with selected translations');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlDisablesCurrentChapterAtFirstVerse {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'gen',
+		chapter => 2,
+		verse => 1,
+		translations => ['kjv'],
+	});
+
+	like($html, qr{<span class="vn-link vn-chapter vn-disabled" aria-disabled="true">this chapter</span>},
+		'any chapter first verse HTML visibly disables the current chapter link');
+	unlike($html, qr{<a class="vn-link vn-chapter" href="/1/lookup/gen/2">this chapter</a>},
+		'any chapter first verse HTML does not link to the current chapter');
+	like($html, qr{<span class="vn-link vn-verse vn-disabled" aria-disabled="true">first verse</span>},
+		'any chapter first verse HTML visibly disables the first verse control');
+	unlike($html, qr{<a class="vn-link vn-verse" href="/1/lookup/gen/2/1">first verse</a>},
+		'any chapter first verse HTML does not link to the current first verse');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlDisablesFirstChapterOnChapterOne {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'gen',
+		chapter => 1,
+		verse => 2,
+		translations => ['kjv'],
+	});
+
+	like($html, qr{<span class="vn-link vn-book vn-disabled" aria-disabled="true">first chapter</span>},
+		'chapter one HTML visibly disables the first chapter control');
+	unlike($html, qr{<a class="vn-link vn-book" href="/1/lookup/gen/1">first chapter</a>},
+		'chapter one HTML does not link to the first chapter');
+
+	return EXIT_SUCCESS;
+}
+
+sub testHtmlDisablesLastVerseAtChapterEnd {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'gen',
+		chapter => 1,
+		verse => 31,
+		translations => ['kjv'],
+	});
+
+	like($html, qr{<span class="vn-link vn-verse vn-disabled" aria-disabled="true">last verse</span>},
+		'last verse HTML visibly disables the last verse control');
+	unlike($html, qr{<a class="vn-link vn-verse" href="/1/lookup/gen/1/31">last verse</a>},
+		'last verse HTML does not link to the current last verse');
 
 	return EXIT_SUCCESS;
 }
@@ -496,7 +565,7 @@ sub testHtmlBookSelectorUsesCurrentTranslation {
 	like($html, qr{<div class="translation">pickthall \(1930\)</div>}s,
 		'HTML displays Pickthall year in lowercase');
 	unlike($html, qr{<button>→</button>}, 'HTML does not include the old arrow button');
-	like($html, qr{<button type="submit">Select</button>}, 'HTML includes a manual selector submit button');
+	like($html, qr{<button type="submit">select</button>}, 'HTML includes a manual selector submit button');
 	like($html, qr{book\.addEventListener\('change'.*?if \(!isKindleBrowser\).*?book\.form\.submit\(\);}s,
 		'HTML submits immediately when a book is selected');
 	like($html, qr{var isKindleBrowser = /Kindle\|Silk/i.*?translation\.addEventListener\('change'.*?if \(booksLoaded && !isKindleBrowser\) \{ submitFirstBook\(\); \}.*?if \(translationChangePending && !isKindleBrowser\) \{ submitFirstBook\(\); \}}s,
