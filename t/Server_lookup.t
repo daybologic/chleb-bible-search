@@ -457,7 +457,7 @@ sub testHtmlPreservesReversedTranslationInput {
 
 sub testHtmlOffersAllTranslationsNavigation {
 	my ($self) = @_;
-	plan tests => 2;
+	plan tests => 3;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
 	my $html = $self->sut->__lookup({
@@ -472,6 +472,8 @@ sub testHtmlOffersAllTranslationsNavigation {
 		'lookup navigation links to all translations');
 	like($html, qr{random</a>.*?all[ ]translations</a>.*?permalink</a>}xs,
 		'all translations appears between random and permalink in primary navigation');
+	like($html, qr{<a class="vn-link vn-verse" href="/2/votd\?translations=asv">votd</a>},
+		'lookup navigation links to standalone VoTD with selected translations');
 
 	return EXIT_SUCCESS;
 }

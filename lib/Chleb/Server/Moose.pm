@@ -1665,6 +1665,25 @@ sub __allTranslationsNavigationLink {
 	return '<a class="vn-link vn-verse" href="' . $link . '">all translations</a>';
 }
 
+=item C<__votdNavigationLinkForVerse($json)>
+
+Build the standalone VoTD link for the navigation bar.  The selected
+translations are preserved, but form-only query parameters are excluded so
+the link activates the yesterday and tomorrow controls.
+
+=cut
+
+sub __votdNavigationLinkForVerse {
+	my ($json) = @_;
+
+	my $query = __verseNavigationQuery($json);
+	my ($translations) = $query =~ m{(?:\?|&)translations=([^&]+)}x;
+	my $link = '/2/votd';
+	$link .= '?translations=' . $translations if (defined($translations) && length($translations) > 0);
+
+	return '<a class="vn-link vn-verse" href="' . $link . '">votd</a>';
+}
+
 =item C<__verseNavigationQuery($json)>
 
 Return the query string from the JSON response's self link for use by
@@ -1874,6 +1893,7 @@ sub __verseToHtml {
 		NEXT_CHAPTER_URL => $bookChapterLinks->{next_chapter},
 		NEXT_BOOK_URL => $bookChapterLinks->{next_book},
 		ALL_TRANSLATIONS_URL => __allTranslationsNavigationLink($json->[0]),
+		VOTD_URL => __votdNavigationLinkForVerse($json->[0]),
 		PERMALINK_URL => __verseNavigationLink($json->[0], 'self', 'permalink'),
 		SETTINGS_URL => $settingsLink,
 		FIRST_VERSE_URL => $boundaryLinks->{first_verse},
