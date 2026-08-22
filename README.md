@@ -62,6 +62,13 @@ and therefore retain the `_all.deb` suffix.  Users may also build the core packa
 other [architectures supported by Debian](https://www.debian.org/ports/) where the required
 dependencies are available.
 
+The Debian packages supplied are:
+
+  * `chleb-bible-search`: meta-package for the service and free Bible translations
+  * `chleb-bible-search-core`: architecture-dependent service code
+  * `chleb-bible-search-dict-free`: ASV (1901), Douay-Rheims (1610), and KJV (1611)
+  * `chleb-bible-search-dict-pickthall`: optional Pickthall English Quran translation (1930)
+
 ## Self-hosted installation
 
 You are welcome to use our hosted version of the service, at [chleb-api.daybologic.co.uk](https://chleb-api.daybologic.co.uk/).
@@ -80,6 +87,9 @@ sudo apt -yf install
 sudo systemctl enable chleb-bible-search.service
 sudo invoke-rc.d chleb-bible-search start
 ```
+
+To add the optional Pickthall translation, also install
+`chleb-bible-search-dict-pickthall_3.1.1_all.deb` before starting the service.
 
 ### Web front-end (proxy).
 
