@@ -1,3 +1,12 @@
+v3.2.0
+======
+We have split the package into:
+
+  * chleb-bible-search: meta-package
+  * chleb-bible-search-core: The code
+  * chleb-bible-search-dict-free: Public Domain Bible translations (asv dr, kjv)
+  * chleb-bible-search-dict-pickthall: An optional Quoran English translation
+
 v2.1.2
 ======
 We have split the package from 'chleb-bible-search' into three packages:
