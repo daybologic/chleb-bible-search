@@ -496,7 +496,7 @@ sub testHtmlBookSelectorUsesCurrentTranslation {
 	like($html, qr{<div class="translation">pickthall \(1930\)</div>}s,
 		'HTML displays Pickthall year in lowercase');
 	unlike($html, qr{<button>→</button>}, 'HTML does not include the old arrow button');
-	like($html, qr{<button type="submit">Select</button>}, 'HTML includes a manual selector submit button');
+	like($html, qr{<button type="submit">select</button>}, 'HTML includes a manual selector submit button');
 	like($html, qr{book\.addEventListener\('change'.*?if \(!isKindleBrowser\).*?book\.form\.submit\(\);}s,
 		'HTML submits immediately when a book is selected');
 	like($html, qr{var isKindleBrowser = /Kindle\|Silk/i.*?translation\.addEventListener\('change'.*?if \(booksLoaded && !isKindleBrowser\) \{ submitFirstBook\(\); \}.*?if \(translationChangePending && !isKindleBrowser\) \{ submitFirstBook\(\); \}}s,

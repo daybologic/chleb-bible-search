@@ -592,8 +592,13 @@ button:hover {
 	flex: 0 1 auto;
 }
 
+.verse-nav-break {
+	flex-basis: 100%;
+	height: 0;
+}
+
 .verse-nav-verse {
-	flex: 0 1 auto;
+	flex: 0 1 100%;
 }
 
 .verse-nav-secondary {
@@ -673,6 +678,10 @@ button:hover {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 0.5rem;
+	}
+
+	.verse-nav-break {
+		display: none;
 	}
 
 	.verse-nav a,

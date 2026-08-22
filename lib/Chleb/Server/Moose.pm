@@ -1800,7 +1800,7 @@ sub __verseToHtml {
 	$self->dic->logger->trace("Link kludge in effect (post): ${thisChapter_KLUDGE}");
 	my $settingsLink = '<a class="vn-link vn-settings" href="/settings" title="Settings" aria-label="Settings">'
 		. '<span class="vn-settings-icon" aria-hidden="true">⚙</span>'
-		. '<span class="vn-settings-text"> Settings</span></a>';
+		. '<span class="vn-settings-text"> settings</span></a>';
 
 	my $browsingHead = Chleb::Server::Dancer2::fetchStaticPage('browsing_head', {
 		PREV_BOOK_URL => $prevBookLink,
@@ -2004,7 +2004,7 @@ sub __makeBooks {
 		. "</select>\n"
 		. "                <input type=\"hidden\" name=\"chapter\" value=\"1\">\n"
 		. "                <input type=\"hidden\" name=\"navigation\" value=\"1\">\n"
-		. "                <button type=\"submit\">Select</button>\n"
+		. "                <button type=\"submit\">select</button>\n"
 		. "        </form>\n"
 		. "        <script>\n"
 		. "                (function () {\n"
