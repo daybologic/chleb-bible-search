@@ -31,26 +31,16 @@
 # SUCH DAMAGE.
 
 all: \
-	asv.sqlite.gz \
-	core.sqlite.gz \
-	dr.sqlite.gz \
-	kjv.sqlite.gz
+	free.sqlite.gz
 
 ifneq ($(wildcard static/pickthall.txt),)
 all: pickthall.sqlite.gz
 endif
 
-asv.sqlite.gz: static/asv.txt static/spine.yaml ../bin/import/text-to-asv.sh ../bin/import/text-to-sqlite.pl
-	cd ../ && ./bin/import/text-to-asv.sh
-
-core.sqlite.gz: static/kjv.txt static/spine.yaml ../bin/import/text-to-core.sh ../bin/import/text-to-sqlite.pl
-	cd ../ && ./bin/import/text-to-core.sh
-
-dr.sqlite.gz: static/dr.txt static/spine.yaml ../bin/import/text-to-dr.sh ../bin/import/text-to-sqlite.pl
-	cd ../ && ./bin/import/text-to-dr.sh
-
-kjv.sqlite.gz: static/kjv.txt static/spine.yaml ../bin/import/text-to-kjv.sh ../bin/import/text-to-sqlite.pl
-	cd ../ && ./bin/import/text-to-kjv.sh
+free.sqlite.gz: static/asv.txt static/dr.txt static/kjv.txt static/spine.yaml \
+	static/emotion/asv.json static/emotion/dr.json static/emotion/kjv.json \
+	../bin/import/text-to-free.sh ../bin/import/text-to-sqlite.pl
+	cd ../ && ./bin/import/text-to-free.sh
 
 ifneq ($(wildcard static/pickthall.txt),)
 pickthall.sqlite.gz: static/pickthall.txt static/spine.yaml ../bin/import/text-to-pickthall.sh ../bin/import/text-to-sqlite.pl

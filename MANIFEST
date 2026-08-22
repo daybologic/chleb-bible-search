@@ -52,10 +52,7 @@ bin/import/dr-import.pl
 bin/import/thesaurus-ai.pl
 bin/import/thesaurus-ai-status.sh
 bin/import/thesaurus-ai-merge.pl
-bin/import/text-to-asv.sh
-bin/import/text-to-core.sh
-bin/import/text-to-dr.sh
-bin/import/text-to-kjv.sh
+bin/import/text-to-free.sh
 bin/import/text-to-pickthall.sh
 bin/import/text-to-sqlite.pl
 bin/maint/copyright-bump.sh
@@ -333,8 +330,8 @@ debian/chleb-bible-search-core.install
 debian/chleb-bible-search-core.postinst
 debian/chleb-bible-search-core.postrm
 debian/chleb-bible-search-core.prerm
-debian/chleb-bible-search-dict.dirs
-debian/chleb-bible-search-dict.install
+debian/chleb-bible-search-dict-free.dirs
+debian/chleb-bible-search-dict-free.install
 debian/chleb-bible-search.dirs
 debian/chleb-bible-search.install
 debian/chleb-bible-search.NEWS

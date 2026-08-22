@@ -266,12 +266,12 @@ sub test_translation_asv {
 	return EXIT_SUCCESS;
 }
 
-sub test_translation_core {
+sub test_translation_free {
 	my ($self) = @_;
 	plan tests => 1;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
-	my $json = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
+	my $json = $self->sut->__random({ accept => $mediaType, translations => [ $self->freeTranslations() ], version => 2 });
 	cmp_deeply($json, {
 		data => array_each(
 			{
@@ -283,16 +283,16 @@ sub test_translation_core {
 					text => ignore(),
 					tones => array_each(re(qr/^\w+$/)),
 					year => re(qr/^\d{4}$/),
-					translation => re(qr/^\w{3}$/),
+					translation => re(qr/^\w{2,8}$/),
 				},
-				id => re(qr@^\w{3}/\w+/\d{1,3}/\d{1,3}$@),
+				id => re(qr@^\w{2,8}/\w+/\d{1,3}/\d{1,3}$@),
 				type => 'verse',
 				links => {
-					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
-					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
-					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
-					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
-					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv)(?:,kjv)?$@),
+					first => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv|dr)(?:,(?:asv|kjv|dr)){0,2}$@),
+					prev  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv|dr)(?:,(?:asv|kjv|dr)){0,2}$@),
+					self  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv|dr)(?:,(?:asv|kjv|dr)){0,2}$@),
+					next  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv|dr)(?:,(?:asv|kjv|dr)){0,2}$@),
+					last  => re(qr@^/1/lookup/\w+/\d{1,3}/\d{1,3}\?translations=(?:asv|kjv|dr)(?:,(?:asv|kjv|dr)){0,2}$@),
 				},
 				relationships => {
 					book => {
@@ -317,10 +317,10 @@ sub test_translation_core {
 				attributes => {
 					book => ignore(),
 					ordinal => re(qr/^\d{1,3}$/),
-					translation => re(qr/^(asv|kjv)$/),
+					translation => re(qr/^(asv|kjv|dr)$/),
 					verse_count => re(qr/^\d{1,3}$/),
 				},
-				id => re(qr@^\w{3}/\w+/\d{1,3}$@),
+				id => re(qr@^\w{2,8}/\w+/\d{1,3}$@),
 				type => 'chapter',
 				relationships => {
 					book => {
@@ -343,7 +343,7 @@ sub test_translation_core {
 					short_name => re(qr/^\w+$/),
 					short_name_raw => re(qr/^\w+$/),
 					testament => re(qr/^\w{3}$/),
-					translation => re(qr/^\w{3}$/),
+					translation => re(qr/^\w{2,8}$/),
 					verse_count => re(qr/^\d{1,4}$/),
 				},
 				id => ignore(),
@@ -360,7 +360,7 @@ sub test_translation_core {
 			},
 		],
 		links => {
-			self => '/2/random?translations=asv,kjv',
+		self => '/2/random?translations=asv,dr,kjv',
 		},
 	}, "single random verse JSON") or diag(explain($json));
 
@@ -400,10 +400,10 @@ sub test_html_translation_order {
 	plan tests => 2;
 
 	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
-	my $html = $self->sut->__random({ accept => $mediaType, translations => [ $self->coreTranslations() ], version => 2 });
+	my $html = $self->sut->__random({ accept => $mediaType, translations => [ $self->freeTranslations() ], version => 2 });
 	my @translations = $html =~ m{<div class="translation">([^<]+)</div>}g;
 
-	is_deeply(\@translations, [ 'asv (1901)', 'kjv (1611)' ], 'random HTML sorts translations lexically');
+	is_deeply(\@translations, [ 'asv (1901)', 'dr (1610)', 'kjv (1611)' ], 'random HTML sorts translations lexically');
 
 	$html = $self->sut->__random({ accept => $mediaType, translations => ['kjv', 'asv'], version => 2 });
 	@translations = $html =~ m{<div class="translation">([^<]+)</div>}g;

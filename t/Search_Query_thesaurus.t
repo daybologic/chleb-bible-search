@@ -31,8 +31,8 @@ sub setUp {
 
 	my ($handle, $database) = tempfile(SUFFIX => '.sqlite', UNLINK => 1);
 	close($handle) or die("Cannot close temporary database: $!\n");
-	gunzip('data/asv.sqlite.gz' => $database)
-		or die("Cannot decompress ASV database: $GunzipError\n");
+	gunzip('data/free.sqlite.gz' => $database)
+		or die("Cannot decompress free database: $GunzipError\n");
 
 	my $dbh = DBI->connect("dbi:SQLite:dbname=$database", q{}, q{}, {
 		RaiseError => 1,

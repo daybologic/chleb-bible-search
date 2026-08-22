@@ -98,7 +98,7 @@ sub testPride_allTranslations {
 	my ($self) = @_;
 	plan tests => 1;
 
-	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ $self->coreTranslations() ] });
+	my @verse = $self->sut->fetch('Prov', 16, 18, { translations => [ $self->freeTranslations() ] });
 	cmp_deeply(\@verse, [
 		all(
 			isa('Chleb::Bible::Verse'),
@@ -119,6 +119,27 @@ sub testPride_allTranslations {
 				),
 				ordinal => 18,
 				text    => 'Pride [goeth] before destruction, And a haughty spirit before a fall.',
+			),
+		),
+		all(
+			isa('Chleb::Bible::Verse'),
+			methods(
+				book    => methods(
+					bible        => methods(translation => 'dr'),
+					longName     => 'Proverbs',
+					ordinal      => 22,
+					shortName    => 'pro',
+					shortNameRaw => 'Pro',
+					testament    => all(
+						isa('Chleb::Type::Testament'),
+						methods(value => 'old'),
+					),
+				),
+				chapter => methods(
+					ordinal => 16,
+				),
+				ordinal => 18,
+				text    => 'Pride goeth before destruction: and the spirit is lifted up before a fall.',
 			),
 		),
 		all(

@@ -502,7 +502,9 @@ incompatible canon use their own deterministic ordinal and context boundary.
 sub __votdVerseForTranslation {
 	my ($self, $bible, $anchorVerse, $seed, $args) = @_;
 
-	my ($book) = grep { $_->equals($anchorVerse->book->shortName) } @{ $bible->books };
+	my ($book) = grep {
+		$_->canonicalCode eq $anchorVerse->book->canonicalCode
+	} @{ $bible->books };
 	if ($book) {
 		my $chapter = $book->getChapterByOrdinal($anchorVerse->chapter->ordinal, { nonFatal => 1 });
 		return unless ($chapter);
@@ -531,7 +533,9 @@ with a different canon fall back to their own verse ordinal.
 sub __getRelatedRandomVerse {
 	my ($self, $bible, $anchorVerse, $verseOrdinal, $args) = @_;
 
-	my $book = $bible->findBookByShortName($anchorVerse->book->shortName);
+	my ($book) = grep {
+		$_->canonicalCode eq $anchorVerse->book->canonicalCode
+	} @{ $bible->books };
 	if ($book) {
 		my $chapter = $book->getChapterByOrdinal($anchorVerse->chapter->ordinal, { nonFatal => 1 });
 		return if (!$chapter);

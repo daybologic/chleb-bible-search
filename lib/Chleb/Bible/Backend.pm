@@ -55,8 +55,8 @@ use Chleb::Utils;
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_FILE => 'shared.bin';
-Readonly my $SHARED_CACHE_FORMAT_VERSION => 4;
-Readonly my $VERSE_ORDINAL_CACHE_VERSION => 2;
+Readonly my $SHARED_CACHE_FORMAT_VERSION => 6;
+Readonly my $VERSE_ORDINAL_CACHE_VERSION => 3;
 
 =head1 ATTRIBUTES
 
@@ -391,11 +391,12 @@ sub getBookInfoByShortName {
 		$self->__bookInfoDataCache->{$cacheKey} = $cached;
 		return $cached;
 	}
-	my $sth = $self->__prepareSelect($self->data, <<'SQL', $shortNameRaw);
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $shortNameRaw);
 		SELECT book.id, book.code, book.short_name, book.short_name_raw,
 		       book.long_name, book.testament, book.chapter_count
 		  FROM book
-		 WHERE book.code = ?
+		 WHERE book.translation = ?
+		   AND book.code = ?
 SQL
 	my $row = $sth->fetchrow_hashref();
 	return unless ($row);
@@ -553,6 +554,7 @@ sub getOrdinalByVerseKey {
 	my ($self, $key) = @_;
 	my ($translation, $bookShortName, $chapterNumber, $verseNumber) = split(m{ : }x, $key, 4);
 	return 0 unless (defined($verseNumber));
+	return 0 unless ($translation eq $self->bible->translation);
 	my $cacheKey = join(':', $translation, $bookShortName, $chapterNumber, $verseNumber);
 	return $self->__verseOrdinalCache->{$cacheKey} if (exists($self->__verseOrdinalCache->{$cacheKey}));
 	if (my $mapped = $self->__verseKeyOrdinalCache->{$translation}->{$bookShortName}->{$chapterNumber}->{$verseNumber}) {
@@ -577,11 +579,11 @@ sub getOrdinalByVerseKey {
 			FROM verse
 			JOIN book ON book.id = verse.book_id
 			JOIN chapter ON chapter.id = verse.chapter_id
+			WHERE book.translation = ?
 		)
 		SELECT absolute_ordinal
 		  FROM ordered_verses
-		 WHERE translation = ?
-		   AND code = ?
+		 WHERE code = ?
 		   AND chapter_ordinal = ?
 		   AND ordinal_relative_to_chapter = ?
 SQL
@@ -760,7 +762,11 @@ Return the total number of verses in the current translation.
 
 sub getVerseCount {
 	my ($self) = @_;
-	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');
+	my ($count) = $self->__selectrowArray(
+		$self->data,
+		'SELECT COUNT(*) FROM verse JOIN book ON book.id = verse.book_id WHERE book.translation = ?',
+		$self->bible->translation,
+	);
 	return $count + 0;
 }
 
@@ -875,7 +881,7 @@ sub getVerseKeyByOrdinal {
 		return $cached;
 	}
 
-	my $sth = $self->__prepareSelect($self->data, <<'SQL', $ordinal - 1);
+	my $sth = $self->__prepareSelect($self->data, <<'SQL', $translation, $ordinal - 1);
 		WITH ordered_verses AS (
 			SELECT
 				book.translation,
@@ -885,6 +891,7 @@ sub getVerseKeyByOrdinal {
 			FROM verse
 			JOIN book ON book.id = verse.book_id
 			JOIN chapter ON chapter.id = verse.chapter_id
+			WHERE book.translation = ?
 			ORDER BY book.ordinal, chapter.ordinal, verse.ordinal_relative_to_chapter
 		)
 		SELECT translation, code, chapter_ordinal, ordinal_relative_to_chapter
@@ -1385,7 +1392,7 @@ sub __makeSharedCachePath { ## no critic (Subroutines::ProhibitUnusedPrivateSubr
 
 Pick the compressed SQLite source file to use for the current translation.
 The preferred order is a single-translation SQLite file first, then a
-multi-translation bundle such as C<core.sqlite.gz>, and finally the
+multi-translation bundle such as C<free.sqlite.gz>, and finally the
 translation-specific filename as a fallback.
 
 =cut
@@ -1627,18 +1634,18 @@ sub __sourceCompressedPathsForTranslation {
 	my $translation = $self->bible->translation;
 	my @sourceFiles = $self->__sourceFilesInPath($self->dataDir);
 	my @singleTranslationFiles;
-	my @coreFiles;
+	my @multiTranslationFiles;
 	my @matchingFiles;
 	foreach my $sourceFile (@sourceFiles) {
 		my $meta = $self->__sourceMetadata->{$sourceFile} //= $self->__inspectSourceFile($sourceFile);
 		next unless (exists($meta->{translations}->{$translation}));
 		push(@matchingFiles, $sourceFile);
 		push(@singleTranslationFiles, $sourceFile) if (scalar(keys(%{ $meta->{translations} })) == 1);
-		push(@coreFiles, $sourceFile) if ($meta->{translation_count} > 1);
+		push(@multiTranslationFiles, $sourceFile) if ($meta->{translation_count} > 1);
 	}
 
 	return @singleTranslationFiles if (scalar(@singleTranslationFiles) > 0);
-	return @coreFiles if (scalar(@coreFiles) > 0);
+	return @multiTranslationFiles if (scalar(@multiTranslationFiles) > 0);
 	return @matchingFiles;
 }
 
@@ -1735,7 +1742,11 @@ sub __verseCount {
 		$self->__bookInfoCache->{$cacheKey} = $cached + 0;
 		return $cached + 0;
 	}
-	my ($count) = $self->__selectrowArray($self->data, 'SELECT COUNT(*) FROM verse');
+	my ($count) = $self->__selectrowArray(
+		$self->data,
+		'SELECT COUNT(*) FROM verse JOIN book ON book.id = verse.book_id WHERE book.translation = ?',
+		$translation,
+	);
 	$count += 0;
 	$self->__bookInfoCache->{$cacheKey} = $count;
 	$self->__sharedCacheSet('versecount', $cacheKey, $count);

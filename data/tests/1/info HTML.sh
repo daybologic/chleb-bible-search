@@ -45,6 +45,7 @@ grep -q '<title>Chleb Bible Search: Bible info</title>' <<< "$page"
 grep -q '<img class="bible-image" src="/images/bible.png" alt="Bible" width="273" height="214" />' <<< "$page"
 grep -q '<table class="info-table">' <<< "$page"
 grep -q '<th>Book</th>' <<< "$page"
+grep -q '<th>Translation</th>' <<< "$page"
 grep -q '<a href="/1/lookup/gen/1?translations=asv">Genesis</a>' <<< "$page"
 (( "$(grep -o '<a href="/1/lookup/gen/1?translations=asv">Genesis</a>' <<< "$page" | wc -l)" > 1 ))
 grep -q 'table.info-table {' <<< "$style"

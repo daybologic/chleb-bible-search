@@ -1082,7 +1082,7 @@ components:
                 example: 2Cor
             translation_count:
               type: integer
-              description: How many translations are immediately available, includes core and plugin translations
+              description: How many translations are immediately available, includes free and plugin translations
               example: 2
             translations:
               type: array
@@ -1109,6 +1109,10 @@ components:
               type: string
               description: Git changeset captured when this build was created
               example: 7f4c2d4d9f0a
+            branch:
+              type: string
+              description: Git branch captured when this build was created
+              example: master
             build_time:
               type: string
               description: Build timestamp captured when this build was created

@@ -9,22 +9,22 @@ No sentiment entry for verse at ordinal 55174
 ```
 
 This does not necessarily mean that the sentiment data is absent. The packaged
-`core.sqlite.gz` contains both ASV and KJV, giving it 62,204 verses in total,
-while each translation has only 31,102 sentiment entries. The backend currently
+`free.sqlite.gz` contains ASV, KJV, and DR, giving it 97,948 verses in total,
+while each translation has its own translation-local sentiment entries. The backend currently
 calculates an absolute ordinal with a window function over all verses in the
 bundle. It then uses that ordinal to index the sentiment array for one
 translation.
 
-Consequently, an ordinal can refer to the combined ASV/KJV dataset while the
-sentiment array is translation-local. For example, `Acts 19:1` has ordinal
-27,587 in a standalone KJV database but ordinal 55,174 in the combined bundle.
-Looking up sentiment entry 55,174 in the KJV sentiment array falls outside its
-31,102 entries, so the backend logs a warning and returns its neutral fallback.
+Consequently, an ordinal can refer to the combined dataset while the sentiment
+array is translation-local. For example, `Acts 19:1` has ordinal 27,587 in a
+standalone KJV database but a different absolute ordinal in the combined bundle.
+Looking up that combined ordinal in the KJV sentiment array can fall outside its
+translation-local entries, so the backend logs a warning and returns its neutral
+fallback.
 
 The burst of warnings for `/1/lookup/acts/19` is explained by that endpoint
 returning the whole chapter and attempting to render sentiment for each verse.
-Pickthall does not show this particular problem because its 6,236 verses and
-6,236 sentiment entries are stored in a separate SQLite file.
+Pickthall remains separate because it is an optional translation package.
 
 The ordinal calculation must be made translation-local when reading a
 multi-translation SQLite file. Filtering the translation before applying

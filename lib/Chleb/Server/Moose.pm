@@ -114,8 +114,9 @@ sub title {
 	my ($self) = @_;
 
 	$self->dic->logger->info(sprintf(
-		'Started Chleb Bible Search %s (%s) on %s, built by %s@%s (%s/%s) with Perl %s at %s',
+		'Started Chleb Bible Search %s (%s, changeset %s) on %s, built by %s@%s (%s/%s) with Perl %s at %s',
 		$Chleb::VERSION,
+		$Chleb::Generated::Info::BUILD_BRANCH,
 		$Chleb::Generated::Info::BUILD_CHANGESET,
 		hostname(),
 		$Chleb::Generated::Info::BUILD_USER,
@@ -789,6 +790,7 @@ sub __version { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		build_os => $Chleb::Generated::Info::BUILD_OS,
 		build_time => $Chleb::Generated::Info::BUILD_TIME,
 		build_user => $Chleb::Generated::Info::BUILD_USER,
+		branch => $Chleb::Generated::Info::BUILD_BRANCH,
 		changeset => $Chleb::Generated::Info::BUILD_CHANGESET,
 		perl_version => $Chleb::Generated::Info::BUILD_PERL_VERSION,
 		server_host => $self->dic->config->get('server', 'domain', 'localhost'),
@@ -829,6 +831,11 @@ sub __versionToHtml {
 	$html .= "<tr>\r\n";
 	$html .= "<th>Git changeset</th>\r\n";
 	$html .= sprintf("<td>%s</td>\r\n", $attributes->{changeset});
+	$html .= "</tr>\r\n";
+	$html .= "<tr>\r\n";
+	$html .= "<th>Git branch</th>\r\n";
+	my $branchClass = ($attributes->{branch} eq 'master') ? '' : ' class="build-branch-warning"';
+	$html .= sprintf("<td><span%s>%s</span></td>\r\n", $branchClass, $attributes->{branch});
 	$html .= "</tr>\r\n";
 	$html .= "<tr>\r\n";
 	$html .= "<th>Build time</th>\r\n";
@@ -1556,6 +1563,34 @@ sub __verseNavigationLink {
 	return '<a class="vn-link vn-verse" href="' . $link . '">' . $label . '</a>';
 }
 
+=item C<__allTranslationsNavigationLink($json)>
+
+Build the lookup link which keeps the current verse path while replacing the
+selected translation query with C<translations=all>.
+
+=cut
+
+sub __allTranslationsNavigationLink {
+	my ($json) = @_;
+
+	my $link = $json->{links}->{self} || '';
+	return '' if (length($link) == 0);
+
+	my ($path, $query) = split(m{\?}x, $link, 2);
+	if (defined($query) && length($query) > 0) {
+		if ($query =~ s{\A translations=[^&]* }{translations=all}x
+			|| $query =~ s{ & translations=[^&]* }{&translations=all}x) {
+			$link = $path . '?' . $query;
+		} else {
+			$link = $path . '?' . $query . '&translations=all';
+		}
+	} else {
+		$link = $path . '?translations=all';
+	}
+
+	return '<a class="vn-link vn-verse" href="' . $link . '">all translations</a>';
+}
+
 =item C<__verseNavigationQuery($json)>
 
 Return the query string from the JSON response's self link for use by
@@ -1775,6 +1810,7 @@ sub __verseToHtml {
 		CHAPTER_URL => '<a class="vn-link vn-chapter" href="' . $thisChapter_KLUDGE . '">this chapter</a>',
 		NEXT_CHAPTER_URL => $nextChapterLink,
 		NEXT_BOOK_URL => $nextBookLink,
+		ALL_TRANSLATIONS_URL => __allTranslationsNavigationLink($json->[0]),
 		PERMALINK_URL => __verseNavigationLink($json->[0], 'self', 'permalink'),
 		SETTINGS_URL => $settingsLink,
 		FIRST_VERSE_URL => __verseNavigationLink($json->[0], 'first', 'first verse'),
@@ -2271,6 +2307,7 @@ sub __infoToHtml {
 	my $text = "<table class=\"info-table\">\r\n";
 
 	$text .= "<tr>\r\n";
+	$text .= $printCell->("Translation", 0, 1);
 	$text .= $printCell->("Book", 0, 1);
 	$text .= $printCell->("Ordinal", 0, 1);
 	$text .= $printCell->("Chapters", 0, 1);
@@ -2309,6 +2346,7 @@ sub __infoToHtml {
 		};
 
 		$text .= "<tr>\r\n";
+		$text .= $printCell->($attributes->{translation});
 		$text .= $printCell->($linkToBook->(
 			$attributes->{long_name},
 			$attributes->{short_name},

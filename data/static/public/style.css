@@ -356,6 +356,10 @@ table.info-table th {
 	border-radius: 5px;
 }
 
+.build-branch-warning {
+	color: #ff0000;
+}
+
 .copyrightbox {
 	font-size: 0.8em;
 	text-align: center;

@@ -246,7 +246,7 @@
                 "type": "array"
               },
               "translation_count": {
-                "description": "How many translations are immediately available, includes core and plugin translations",
+                "description": "How many translations are immediately available, includes free and plugin translations",
                 "example": "2",
                 "type": "integer"
               },
@@ -592,6 +592,11 @@
               "admin_name": {
                 "description": "Nam of the server administrator",
                 "example": "Rev. Duncan Ross Palmer",
+                "type": "string"
+              },
+              "branch": {
+                "description": "Git branch captured when this build was created",
+                "example": "master",
                 "type": "string"
               },
               "build_arch": {

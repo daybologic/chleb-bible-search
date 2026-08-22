@@ -97,17 +97,13 @@ sub testSuccess {
 		),
 	], 'correct bibles returned (polluted)');
 
-	@list = $self->sut->__getBible({ translations => [ $self->coreTranslations() ] });
-	cmp_deeply(\@list, [
+	@list = $self->sut->__getBible({ translations => [ $self->freeTranslations() ] });
+	cmp_deeply(\@list, [ map {
 		all(
 			isa('Chleb::Bible'),
-			methods(translation => 'asv'),
-		),
-		all(
-			isa('Chleb::Bible'),
-			methods(translation => 'kjv'),
-		),
-	], 'core bibles returned');
+			methods(translation => $_),
+		)
+	} $self->freeTranslations() ], 'free bibles returned');
 
 	return EXIT_SUCCESS;
 }
