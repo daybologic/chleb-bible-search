@@ -109,6 +109,14 @@ The shared verse-exclusion rules used by verse-of-the-day and related lookups.
 
 has exclusions => (is => 'rw', lazy => 1, builder => '_makeExclusions');
 
+=item C<cache>
+
+TODO
+
+=cut
+
+has cache => (is => 'rw', lazy => 1, builder => '_makeCache');
+
 =item C<tokenRepo>
 
 The session token repository facade.  It delegates to the configured token
@@ -218,6 +226,17 @@ The default lazy-initializer for L</exclusions>.
 sub _makeExclusions { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return Chleb::Bible::Exclusions->new({ dic => $self });
+}
+
+=item C<_makeCache()>
+
+TODO
+
+=cut
+
+sub _makeCache {
+	my ($self) = @_;
+	return Chleb::DI::Cache->new({ dic => $self });
 }
 
 =item C<_makeTokenRepo()>
