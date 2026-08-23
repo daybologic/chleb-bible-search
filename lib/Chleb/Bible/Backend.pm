@@ -214,6 +214,14 @@ Process-local cache of the normalized words present in the current translation.
 
 has __bibleWordsCache => (is => 'ro', isa => 'ArrayRef', lazy => 1, builder => '__makeBibleWords');
 
+=item C<__dictionaryWordsCache>
+
+Process-local cache of the normalized words available in the global dictionary.
+
+=cut
+
+has __dictionaryWordsCache => (is => 'ro', isa => 'ArrayRef', lazy => 1, builder => '__makeDictionaryWords');
+
 =item C<__sentimentCache>
 
 Process-local cache of sentiment structures keyed by full verse key,
@@ -682,6 +690,17 @@ Return the normalized distinct words present in the current translation.
 sub getBibleWords {
 	my ($self) = @_;
 	return $self->__bibleWordsCache;
+}
+
+=item C<getDictionaryWords()>
+
+Return the normalized words available in the standalone global dictionary.
+
+=cut
+
+sub getDictionaryWords {
+	my ($self) = @_;
+	return $self->__dictionaryWordsCache;
 }
 
 =item C<getSentimentByOrdinal($ordinal)>
@@ -1407,6 +1426,24 @@ SQL
 		}
 	}
 	return [sort keys(%words)];
+}
+
+=item C<__makeDictionaryWords()>
+
+Load and normalize all words from the standalone global dictionary.
+
+=cut
+
+sub __makeDictionaryWords { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	return [] unless defined($self->dictionaryData);
+	my $sth = $self->dictionaryData->prepare('SELECT word FROM thesaurus_word ORDER BY word');
+	$sth->execute();
+	my @words;
+	while (my ($word) = $sth->fetchrow_array()) {
+		push(@words, $word);
+	}
+	return \@words;
 }
 
 =item C<__makeDataDir()>
