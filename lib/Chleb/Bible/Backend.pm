@@ -116,6 +116,33 @@ lazily by L</__makeDataDir()> and may be changed by callers.
 
 has dataDir => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDataDir);
 
+=item C<dictionaryPath>
+
+The standalone global thesaurus SQLite path.  It is selected lazily from the
+source or installed data directory and may be overridden by callers and tests.
+
+=cut
+
+has dictionaryPath => (is => 'rw', isa => 'Str', lazy => 1, default => \&__makeDictionaryPath);
+
+=item C<dictionaryCachePath>
+
+The writable decompressed global dictionary path.  It is refreshed lazily from
+C<dictionaryPath> when the source is compressed.
+
+=cut
+
+has dictionaryCachePath => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeDictionaryCachePath');
+
+=item C<dictionaryData>
+
+The lazily opened SQLite handle for the standalone global thesaurus dictionary.
+It is undefined when the optional dictionary file is unavailable.
+
+=cut
+
+has dictionaryData => (is => 'ro', isa => 'Maybe[Object]', lazy => 1, builder => '__makeDictionaryData');
+
 =back
 
 =cut
@@ -169,10 +196,11 @@ hash ref.
 
 has __propertyCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 
+
 =item C<__thesaurusCache>
 
-Process-local cache of translation-specific thesaurus terms keyed by source
-word, initialized lazily to an empty hash ref.
+Process-local cache of global thesaurus terms keyed by source word, initialized
+lazily to an empty hash ref.
 
 =cut
 
@@ -185,15 +213,6 @@ Process-local cache of the normalized words present in the current translation.
 =cut
 
 has __bibleWordsCache => (is => 'ro', isa => 'ArrayRef', lazy => 1, builder => '__makeBibleWords');
-
-=item C<__thesaurusAvailable>
-
-Boolean indicating whether the current SQLite source contains the thesaurus
-tables, initialized lazily from the database schema.
-
-=cut
-
-has __thesaurusAvailable => (is => 'ro', isa => 'Bool', lazy => 1, builder => '__makeThesaurusAvailable');
 
 =item C<__sentimentCache>
 
@@ -622,9 +641,9 @@ SQL
 
 =item C<getThesaurusTerms($word)>
 
-Return the normalized related words for C<$word> in the current translation.
-An empty array reference is returned when no thesaurus table or source word is
-available.
+Return confidence-ordered related words for C<$word> from the global
+dictionary.  An empty array reference is returned when the dictionary or
+source word is unavailable.
 
 =cut
 
@@ -634,19 +653,18 @@ sub getThesaurusTerms {
 	return [] if length($word) == 0;
 	return $self->__thesaurusCache->{$word}
 		if (exists($self->__thesaurusCache->{$word}));
-	return $self->__thesaurusCache->{$word} = [] unless $self->__thesaurusAvailable;
+	return $self->__thesaurusCache->{$word} = [] unless defined($self->dictionaryData);
 
-	my $sth = $self->__prepareSelect($self->data, <<'SQL', $word, $word, $word);
-		SELECT CASE
-				 WHEN source.word = ? THEN related.word
-				 ELSE source.word
-			   END AS term
-		  FROM thesaurus_relation AS relation
-		  JOIN thesaurus_word AS source ON source.id = relation.source_word_id
-		  JOIN thesaurus_word AS related ON related.id = relation.related_word_id
-		 WHERE source.word = ? OR related.word = ?
-		 ORDER BY term
+	my $sth = $self->dictionaryData->prepare(<<'SQL');
+		SELECT target.word, MAX(lookup.confidence) AS confidence
+		  FROM thesaurus_lookup AS lookup
+		  JOIN thesaurus_word AS source ON source.id = lookup.source_word_id
+		  JOIN thesaurus_word AS target ON target.id = lookup.target_word_id
+		 WHERE source.word = ?
+		 GROUP BY target.id, target.word
+		 ORDER BY confidence DESC, target.word
 SQL
+	$sth->execute($word);
 	my @terms;
 	while (my ($term) = $sth->fetchrow_array()) {
 		push(@terms, $term);
@@ -1289,24 +1307,85 @@ sub __makeData {
 	);
 }
 
-=item C<__makeThesaurusAvailable()>
+=item C<__makeDictionaryData()>
 
-Inspect the SQLite schema once and report whether the thesaurus relation table
-is available for the current translation.
+Open the standalone global thesaurus SQLite database when it exists.  The
+dictionary is optional during development and older installations, so a
+missing file produces an undefined handle rather than preventing Bible data
+from loading.
 
 =cut
 
-sub __makeThesaurusAvailable { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+sub __makeDictionaryData { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
-	my ($available) = $self->data->selectrow_array(<<'SQL');
-		SELECT EXISTS(
-			SELECT 1
-			  FROM sqlite_master
-			 WHERE type = 'table'
-			   AND name = 'thesaurus_relation'
-		)
-SQL
-	return $available ? 1 : 0;
+	return unless -f $self->dictionaryPath;
+	return DBI->connect(
+		"dbi:SQLite:dbname=" . $self->dictionaryCachePath,
+		q{},
+		q{},
+		{
+			RaiseError     => 1,
+			AutoCommit     => 1,
+			sqlite_unicode => 1,
+		}
+	);
+}
+
+=item C<__makeDictionaryPath()>
+
+Return the first available standalone global thesaurus SQLite path.
+
+=cut
+
+sub __makeDictionaryPath {
+	my ($self) = @_;
+	Readonly my @PATHS => (
+		join('/', $self->dataDir, 'dict.sqlite.gz'),
+		join('/', $self->dataDir, 'dict.sqlite'),
+		'data/dict.sqlite.gz',
+		'data/dict.sqlite',
+		'/usr/share/chleb-bible-search/dict.sqlite.gz',
+		'/usr/share/chleb-bible-search/dict.sqlite',
+	);
+	for my $path (@PATHS) {
+		return $path if -f $path;
+	}
+	return $PATHS[0];
+}
+
+=item C<__makeDictionaryCachePath()>
+
+Return an uncompressed dictionary path, expanding the compressed source into
+the backend cache directory with an atomic rename when necessary.
+
+=cut
+
+sub __makeDictionaryCachePath { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my $sourcePath = $self->dictionaryPath;
+	return $sourcePath unless $sourcePath =~ m{\.gz\z}x;
+
+	my $cachePath = join('/', $self->cacheDir, 'dict.sqlite');
+	my $sourceMTime = (stat($sourcePath))[9] // 0;
+	my $cacheMTime = (stat($cachePath))[9] // 0;
+	return $cachePath if -f $cachePath && $cacheMTime >= $sourceMTime;
+
+	my ($tempHandle, $tempPath) = tempfile(
+		DIR    => $self->cacheDir,
+		SUFFIX => '.sqlite',
+		UNLINK => 0,
+	);
+	close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
+	if (!gunzip($sourcePath => $tempPath)) {
+		unlink($tempPath);
+		croak("gunzip \"$sourcePath\" failed: $GunzipError");
+	}
+	rename($tempPath, $cachePath) or do {
+		my $renameError = $ERRNO;
+		unlink($tempPath);
+		croak("rename($tempPath -> $cachePath) failed: $renameError");
+	};
+	return $cachePath;
 }
 
 =item C<__makeBibleWords()>
@@ -1658,7 +1737,7 @@ lexicographically.
 
 sub __sourceFilesInPath {
 	my ($self, $path) = @_;
-	my @files = sort glob(join('/', $path, '*.sqlite.gz'));
+	my @files = sort grep { $_ !~ m{/dict\.sqlite\.gz\z}x } glob(join('/', $path, '*.sqlite.gz'));
 	return @files;
 }
 

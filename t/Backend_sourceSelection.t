@@ -68,6 +68,7 @@ sub setUp {
 	mkdir($root . '/cache') or croak("mkdir $root/cache failed: $!");
 	$self->__makeSourceFile($root . '/data', 'free.sqlite.gz', ['asv', 'kjv']);
 	$self->__makeSourceFile($root . '/data', 'kjv.sqlite.gz', ['kjv']);
+	$self->__makeSourceFile($root . '/data', 'dict.sqlite.gz', []);
 	chdir($root) or croak("chdir $root failed: $!");
 
 	$self->sut(Chleb::Bible::Backend->new({
@@ -94,6 +95,19 @@ sub testPreferSingleTranslationFile {
 
 	is($self->sut->__makeSourceCompressedPath(), $self->sut->dataDir . '/kjv.sqlite.gz',
 		'prefers the single-translation kjv file');
+
+	return EXIT_SUCCESS;
+}
+
+sub testDictionaryFileIsNotBibleSource {
+	my ($self) = @_;
+	plan tests => 1;
+
+	is_deeply(
+		[ $self->sut->__sourceFilesInPath($self->sut->dataDir) ],
+		[ $self->sut->dataDir . '/free.sqlite.gz', $self->sut->dataDir . '/kjv.sqlite.gz' ],
+		'excludes the standalone dictionary from Bible source selection',
+	);
 
 	return EXIT_SUCCESS;
 }

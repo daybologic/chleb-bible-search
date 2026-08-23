@@ -38,7 +38,7 @@ sub setUp {
 		RaiseError => 1,
 		sqlite_unicode => 1,
 	});
-	$dbh->do('DROP TABLE IF EXISTS thesaurus_relation');
+	$dbh->do('DROP TABLE IF EXISTS thesaurus_lookup');
 	$dbh->do('DROP TABLE IF EXISTS thesaurus_word');
 	$dbh->do(<<'SQL');
 CREATE TABLE thesaurus_word (
@@ -47,20 +47,24 @@ CREATE TABLE thesaurus_word (
 )
 SQL
 	$dbh->do(<<'SQL');
-CREATE TABLE thesaurus_relation (
+CREATE TABLE thesaurus_lookup (
 	source_word_id INTEGER NOT NULL,
-	related_word_id INTEGER NOT NULL,
+	target_word_id INTEGER NOT NULL,
 	relation TEXT NOT NULL,
 	confidence REAL NOT NULL,
-	PRIMARY KEY (source_word_id, related_word_id)
+	PRIMARY KEY (source_word_id, target_word_id, relation)
 )
 SQL
-	$dbh->do('INSERT INTO thesaurus_word (id, word) VALUES (?, ?), (?, ?)', undef, 1, 'dropping', 2, 'dripping');
-	$dbh->do('INSERT INTO thesaurus_relation VALUES (1, 2, ?, ?)', undef, 'synonym', 0.9);
+	$dbh->do('INSERT INTO thesaurus_word (id, word) VALUES (?, ?), (?, ?), (?, ?), (?, ?), (?, ?)', undef,
+		1, 'dropping', 2, 'dripping', 3, 'ordering', 4, 'alpha', 5, 'zeta');
+	$dbh->do('INSERT INTO thesaurus_lookup VALUES (1, 2, ?, ?), (2, 1, ?, ?)', undef,
+		'synonym', 0.9, 'synonym', 0.9);
+	$dbh->do('INSERT INTO thesaurus_lookup VALUES (3, 4, ?, ?), (4, 3, ?, ?), (3, 5, ?, ?), (5, 3, ?, ?)', undef,
+		'synonym', 0.4, 'synonym', 0.4, 'synonym', 0.9, 'synonym', 0.9);
 	$dbh->disconnect();
 
 	$self->{bible} = Chleb::Bible->new({ translation => 'asv' });
-	$self->sut(Chleb::Bible::Backend->new({ bible => $self->{bible}, cachePath => $database }));
+	$self->sut(Chleb::Bible::Backend->new({ bible => $self->{bible}, cachePath => $database, dictionaryPath => $database }));
 
 	return EXIT_SUCCESS;
 }
@@ -83,6 +87,19 @@ sub testBackendReverseLookup {
 	return EXIT_SUCCESS;
 }
 
+sub testBackendOrdersByConfidence {
+	my ($self) = @_;
+	plan tests => 1;
+
+	is_deeply(
+		$self->sut->getThesaurusTerms('ordering'),
+		[ 'zeta', 'alpha' ],
+		'backend orders thesaurus terms by confidence',
+	);
+
+	return EXIT_SUCCESS;
+}
+
 sub testQueryExpansion {
 	my ($self) = @_;
 	plan tests => 1;
@@ -90,7 +107,7 @@ sub testQueryExpansion {
 
 	$self->__mockGetThesaurusTerms();
 
-	is_deeply($bible->newSearchQuery('dropping')->expandedWords(), [ [ 'dropping', 'dripping' ] ], 'query expansion includes the translation-specific thesaurus term');
+	is_deeply($bible->newSearchQuery('dropping')->expandedWords(), [ [ 'dropping', 'dripping' ] ], 'query expansion includes the global thesaurus term');
 
 	return EXIT_SUCCESS;
 }

@@ -153,11 +153,6 @@ sub __loadSpineBookCodes {
 	return;
 }
 
-sub __thesaurusFromTranslation {
-	my ($translation) = @_;
-	return join('/', 'static', sprintf('thesaurus-%s.json', $translation));
-}
-
 sub __createTables {
 	my ($dbh) = @_;
 
@@ -241,25 +236,6 @@ CREATE TABLE IF NOT EXISTS sentiment (
 )
 SQL
 
-	$dbh->do(<<'SQL');
-CREATE TABLE IF NOT EXISTS thesaurus_word (
-	id INTEGER PRIMARY KEY,
-	word TEXT NOT NULL UNIQUE
-)
-SQL
-
-	$dbh->do(<<'SQL');
-CREATE TABLE IF NOT EXISTS thesaurus_relation (
-	source_word_id INTEGER NOT NULL,
-	related_word_id INTEGER NOT NULL,
-	relation TEXT NOT NULL,
-	confidence REAL NOT NULL,
-	PRIMARY KEY (source_word_id, related_word_id),
-	FOREIGN KEY (source_word_id) REFERENCES thesaurus_word(id),
-	FOREIGN KEY (related_word_id) REFERENCES thesaurus_word(id)
-)
-SQL
-
 	return;
 }
 
@@ -272,8 +248,6 @@ sub __createIndexes {
 	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_verse_book ON verse(book_id, ordinal_relative_to_book)');
 	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_book_trans ON book(translation, ordinal)');
 	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_sentiment_kind_value ON sentiment(kind, sentiment)');
-	$fileHandle->do('CREATE INDEX IF NOT EXISTS idx_thesaurus_relation_source ON thesaurus_relation(source_word_id)');
-
 	$fileHandle->commit();
 
 	return;
@@ -401,47 +375,6 @@ SQL
 	return;
 }
 
-=item C<__writeThesaurus($fileHandle, $translation)>
-
-Import the normalized translation thesaurus into the SQLite word dictionary
-and relation tables when a generated thesaurus file is available.
-
-=cut
-
-sub __writeThesaurus {
-	my ($fileHandle, $translation) = @_;
-	my $path = join('/', $DATA_DIR, __thesaurusFromTranslation($translation));
-	return unless -f $path;
-
-	open(my $input, '<:encoding(UTF-8)', $path)
-	    or croak(sprintf("Failed to open '%s' -- %s", $path, $ERRNO));
-	local $/ = undef;
-	my $document = decode_json(<$input>);
-	close($input) or croak(sprintf("Failed to close '%s' -- %s", $path, $ERRNO));
-
-	my $insertWord = $fileHandle->prepare('INSERT OR IGNORE INTO thesaurus_word (word) VALUES(?)');
-	my $selectWord = $fileHandle->prepare('SELECT id FROM thesaurus_word WHERE word = ?');
-	my $insertRelation = $fileHandle->prepare(<<'SQL');
-	INSERT OR REPLACE INTO thesaurus_relation
-		(source_word_id, related_word_id, relation, confidence)
-	VALUES(?, ?, ?, ?)
-SQL
-
-	for my $sourceWord (keys %{ $document->{terms} // {} }) {
-		$insertWord->execute($sourceWord);
-		$selectWord->execute($sourceWord);
-		my ($sourceId) = $selectWord->fetchrow_array();
-		for my $term (@{ $document->{terms}{$sourceWord} // [] }) {
-			$insertWord->execute($term->{term});
-			$selectWord->execute($term->{term});
-			my ($relatedId) = $selectWord->fetchrow_array();
-			$insertRelation->execute($sourceId, $relatedId, $term->{relation}, $term->{confidence});
-		}
-	}
-	$fileHandle->commit();
-	return;
-}
-
 =item C<__verseCountFromTranslation($translation)>
 
 Return the number of verse records in the translation's input file.
@@ -534,14 +467,12 @@ sub main2 {
 		foreach my $translation2 (@translations) {
 			__processVerses($fileHandle, $translation2);
 			__writeSentiment($fileHandle, $translation2);
-			__writeThesaurus($fileHandle, $translation2);
 		}
 	} else {
 		__writeTranslations($fileHandle, [$translation]);
 		__writeProperties($fileHandle, [$translation]);
-		__processVerses($fileHandle, $translation);
-		__writeSentiment($fileHandle, $translation);
-		__writeThesaurus($fileHandle, $translation);
+	__processVerses($fileHandle, $translation);
+	__writeSentiment($fileHandle, $translation);
 	}
 
 	__populateCounts($fileHandle);

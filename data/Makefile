@@ -31,7 +31,8 @@
 # SUCH DAMAGE.
 
 all: \
-	free.sqlite.gz
+	free.sqlite.gz \
+	dict.sqlite.gz
 
 ifneq ($(wildcard static/pickthall.txt),)
 all: pickthall.sqlite.gz
@@ -41,6 +42,9 @@ free.sqlite.gz: static/asv.txt static/dr.txt static/kjv.txt static/spine.yaml \
 	static/emotion/asv.json static/emotion/dr.json static/emotion/kjv.json \
 	../bin/import/text-to-free.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-free.sh
+
+dict.sqlite.gz: static/thesaurus.json ../bin/import/thesaurus-global-to-sqlite.pl
+	cd ../ && ./bin/import/thesaurus-global-to-sqlite.pl && gzip -f data/dict.sqlite
 
 ifneq ($(wildcard static/pickthall.txt),)
 pickthall.sqlite.gz: static/pickthall.txt static/spine.yaml ../bin/import/text-to-pickthall.sh ../bin/import/text-to-sqlite.pl
