@@ -112,6 +112,22 @@ sub testQueryExpansion {
 	return EXIT_SUCCESS;
 }
 
+sub testQueryExpansionLimitsTerms {
+	my ($self) = @_;
+	plan tests => 1;
+	my $bible = $self->{bible};
+
+	$self->__mockGetThesaurusTerms();
+
+	is_deeply(
+		$bible->newSearchQuery('many')->expandedWords(),
+		[ [ 'many', qw(one two three four five) ] ],
+		'query expansion limits thesaurus alternatives',
+	);
+
+	return EXIT_SUCCESS;
+}
+
 sub testExpandedSearch {
 	my ($self) = @_;
 	plan tests => 1;
@@ -135,6 +151,7 @@ sub __mockGetThesaurusTerms {
 	my ($self) = @_;
 	$self->mock('Chleb::Bible', 'getThesaurusTerms', sub {
 		my (undef, $word) = @_;
+		return [ qw(one two three four five six) ] if (lc($word) eq 'many');
 		return [ 'dripping' ] if (lc($word) eq 'dropping');
 		return [ 'dropping' ] if (lc($word) eq 'dripping');
 		return [];
