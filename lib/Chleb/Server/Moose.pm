@@ -1136,9 +1136,10 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 =item C<__searchSuggestions($term, $queries)>
 
 Return up to five nearby dictionary words for a search that produced no
-results. Candidates are ranked by their smallest Levenshtein distance from any
-word in the requested term. Longer terms allow a larger distance so that
-reasonable corrections are not excluded while short terms remain conservative.
+results. Candidates must occur in at least one requested translation and are
+ranked by their smallest Levenshtein distance from any word in the requested
+term. Longer terms allow a larger distance so that reasonable corrections are
+not excluded while short terms remain conservative.
 
 =cut
 
@@ -1149,10 +1150,15 @@ sub __searchSuggestions {
 	my $maxDistance = length($term) >= 8
 		? $SEARCH_SUGGESTION_MAX_DISTANCE_LONG
 		: $SEARCH_SUGGESTION_MAX_DISTANCE_SHORT;
+	my %availableWords;
+	for my $query (@{ $queries }) {
+		$availableWords{$_} = 1 for @{ $query->bible->getBibleWords() };
+	}
 	my %distances;
 	for my $query (@{ $queries }) {
 		for my $candidate (@{ $query->bible->getDictionaryWords() }) {
 			next if ($requested{$candidate});
+			next unless ($availableWords{$candidate});
 			my $lowestDistance;
 			for my $word (keys(%requested)) {
 				next if abs(length($word) - length($candidate)) > $maxDistance;
