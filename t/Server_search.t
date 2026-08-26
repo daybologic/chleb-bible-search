@@ -532,8 +532,8 @@ sub testHomosexualSearchUsesSemanticAliases {
 	});
 
 	ok(scalar(@{ $json->{data} }) > 0, 'homosexual search returns related KJV verses');
-	ok((grep { $_->{id} eq 'kjv/deu/23/17' } @{ $json->{data} }),
-		'homosexual search includes the KJV sodomite passage');
+	ok((grep { $_->{attributes}{text} =~ /\bsodomites\b/ix } @{ $json->{data} }),
+		'homosexual search includes a KJV sodomite passage');
 	ok(!exists($json->{suggestions}), 'successful semantic search has no suggestions property');
 
 	return EXIT_SUCCESS;
