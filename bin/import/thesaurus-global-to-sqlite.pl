@@ -12,6 +12,7 @@ use English qw(-no_match_vars);
 use File::Basename qw(dirname);
 use File::Temp qw(tempfile);
 use Getopt::Long qw(:config no_ignore_case);
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use JSON::PP qw(decode_json);
 use POSIX qw(EXIT_SUCCESS);
 
@@ -31,7 +32,8 @@ lookup table provides efficient forward and reverse searches.
 
 =item C<--input FILE>
 
-Global thesaurus JSON input. Defaults to C<data/static/thesaurus.json>.
+Global thesaurus JSON or gzip-compressed JSON input. Defaults to
+C<data/static/thesaurus.json>.
 
 =item C<--output FILE>
 
@@ -102,10 +104,16 @@ words and relation records.
 
 sub readDocument {
 	my ($path) = @_;
-	open(my $input, '<:encoding(UTF-8)', $path) or die("Cannot read $path: $ERRNO\n");
-	local $INPUT_RECORD_SEPARATOR = undef;
-	my $parsedDocument = decode_json(<$input>);
-	close($input) or die("Cannot close $path: $ERRNO\n");
+	my $contents;
+	if ($path =~ /\.gz\z/x) {
+		gunzip($path => \$contents) or die("Cannot decompress $path: $GunzipError\n");
+	} else {
+		open(my $input, '<:encoding(UTF-8)', $path) or die("Cannot read $path: $ERRNO\n");
+		local $INPUT_RECORD_SEPARATOR = undef;
+		$contents = <$input>;
+		close($input) or die("Cannot close $path: $ERRNO\n");
+	}
+	my $parsedDocument = decode_json($contents);
 
 	croak("Global thesaurus JSON must contain a relations array\n")
 		unless ref($parsedDocument) eq 'HASH' && ref($parsedDocument->{relations}) eq 'ARRAY';

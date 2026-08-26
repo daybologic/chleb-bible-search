@@ -34,6 +34,10 @@ all: \
 	free.sqlite.gz \
 	dict.sqlite.gz
 
+THESAURUS_URL := https://chleb-api.daybologic.co.uk/downloads/thesaurus-20260826.json.gz
+THESAURUS_ARCHIVE := ../cache/thesaurus-20260826.json.gz
+THESAURUS_CHECKSUM := static/thesaurus-20260826.sha256
+
 ifneq ($(wildcard static/pickthall.txt),)
 all: pickthall.sqlite.gz
 endif
@@ -43,8 +47,9 @@ free.sqlite.gz: static/asv.txt static/dr.txt static/kjv.txt static/spine.yaml \
 	../bin/import/text-to-free.sh ../bin/import/text-to-sqlite.pl
 	cd ../ && ./bin/import/text-to-free.sh
 
-dict.sqlite.gz: static/thesaurus.json ../bin/import/thesaurus-global-to-sqlite.pl
-	cd ../ && ./bin/import/thesaurus-global-to-sqlite.pl && gzip -f data/dict.sqlite
+dict.sqlite.gz: $(THESAURUS_CHECKSUM) ../bin/import/download-thesaurus.sh ../bin/import/thesaurus-global-to-sqlite.pl
+	cd ../ && ./bin/import/download-thesaurus.sh cache/thesaurus-20260826.json.gz data/$(THESAURUS_CHECKSUM) $(THESAURUS_URL)
+	cd ../ && ./bin/import/thesaurus-global-to-sqlite.pl --input cache/thesaurus-20260826.json.gz && gzip -f data/dict.sqlite
 
 ifneq ($(wildcard static/pickthall.txt),)
 pickthall.sqlite.gz: static/pickthall.txt static/spine.yaml ../bin/import/text-to-pickthall.sh ../bin/import/text-to-sqlite.pl
