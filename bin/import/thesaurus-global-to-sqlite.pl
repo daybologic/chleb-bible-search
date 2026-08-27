@@ -37,7 +37,7 @@ C<data/static/thesaurus.json>.
 
 =item C<--output FILE>
 
-SQLite output path. Defaults to C<data/dict.sqlite>.
+SQLite output path. Defaults to C<data/thesaurus.sqlite>.
 
 =item C<--help>
 
@@ -49,7 +49,7 @@ Display usage information.
 
 my %options = (
 	input  => 'data/static/thesaurus.json',
-	output => 'data/dict.sqlite',
+	output => 'data/thesaurus.sqlite',
 );
 
 GetOptions(

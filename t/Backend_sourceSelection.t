@@ -68,7 +68,7 @@ sub setUp {
 	mkdir($root . '/cache') or croak("mkdir $root/cache failed: $!");
 	$self->__makeSourceFile($root . '/data', 'free.sqlite.gz', ['asv', 'kjv']);
 	$self->__makeSourceFile($root . '/data', 'kjv.sqlite.gz', ['kjv']);
-	$self->__makeSourceFile($root . '/data', 'dict.sqlite.gz', []);
+	$self->__makeSourceFile($root . '/data', 'thesaurus.sqlite.gz', []);
 	chdir($root) or croak("chdir $root failed: $!");
 
 	$self->sut(Chleb::Bible::Backend->new({

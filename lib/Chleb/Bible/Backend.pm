@@ -1359,12 +1359,12 @@ Return the first available standalone global thesaurus SQLite path.
 sub __makeDictionaryPath {
 	my ($self) = @_;
 	Readonly my @PATHS => (
-		join('/', $self->dataDir, 'dict.sqlite.gz'),
-		join('/', $self->dataDir, 'dict.sqlite'),
-		'data/dict.sqlite.gz',
-		'data/dict.sqlite',
-		'/usr/share/chleb-bible-search/dict.sqlite.gz',
-		'/usr/share/chleb-bible-search/dict.sqlite',
+		join('/', $self->dataDir, 'thesaurus.sqlite.gz'),
+		join('/', $self->dataDir, 'thesaurus.sqlite'),
+		'data/thesaurus.sqlite.gz',
+		'data/thesaurus.sqlite',
+		'/usr/share/chleb-bible-search/thesaurus.sqlite.gz',
+		'/usr/share/chleb-bible-search/thesaurus.sqlite',
 	);
 	for my $path (@PATHS) {
 		return $path if -f $path;
@@ -1384,7 +1384,7 @@ sub __makeDictionaryCachePath { ## no critic (Subroutines::ProhibitUnusedPrivate
 	my $sourcePath = $self->dictionaryPath;
 	return $sourcePath unless $sourcePath =~ m{\.gz\z}x;
 
-	my $cachePath = join('/', $self->cacheDir, 'dict.sqlite');
+	my $cachePath = join('/', $self->cacheDir, 'thesaurus.sqlite');
 	my $sourceMTime = (stat($sourcePath))[9] // 0;
 	my $cacheMTime = (stat($cachePath))[9] // 0;
 	return $cachePath if -f $cachePath && $cacheMTime >= $sourceMTime;
@@ -1774,7 +1774,7 @@ lexicographically.
 
 sub __sourceFilesInPath {
 	my ($self, $path) = @_;
-	my @files = sort grep { $_ !~ m{/dict\.sqlite\.gz\z}x } glob(join('/', $path, '*.sqlite.gz'));
+	my @files = sort grep { $_ !~ m{/thesaurus\.sqlite\.gz\z}x } glob(join('/', $path, '*.sqlite.gz'));
 	return @files;
 }
 

@@ -6,5 +6,5 @@ debian/etc/*.yaml /etc/chleb-bible-search/
 data/static/*.html /usr/share/chleb-bible-search/
 data/static/http/*.html /usr/share/chleb-bible-search/http/
 data/static/public/* /usr/share/chleb-bible-search/public/
-data/dict.sqlite.gz /usr/share/chleb-bible-search/
+data/thesaurus.sqlite.gz /usr/share/chleb-bible-search/
 debian/etc/cron.monthly/chleb-bible-search /etc/cron.monthly/
