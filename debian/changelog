@@ -1,3 +1,49 @@
+chleb-bible-search (3.2.0) stable; urgency=medium
+
+  * ✨ Rename dictionary to "thesaurus" and replace per-translation
+    thesauri with a single global standalone thesaurus.sqlite artifact
+    (packaged as chleb-bible-search-thesaurus; translations are in the
+    chleb-bible-search-dict-free package)
+  * 📦 Make the thesaurus a mandatory separate package and update Debian
+    packaging, manifests, and installation docs accordingly
+  * 🛠️ During builds, fetch and verify the dated gzip-compressed
+    thesaurus artifact by SHA-256 and allow the importer to read gzip JSON
+    directly
+  * 🔍 Restrict suggestion results to searchable words and use the global
+    dictionary for no-result suggestions (with conservative Levenshtein
+    behavior for short terms)
+  * ↔️ Limit thesaurus expansion per search word to the five highest-
+    confidence alternatives while retaining the original term
+  * 🧪 Add and stabilize regression tests for semantic alias expansion
+    and thesaurus-driven searches (including a KJV homosexual → sodomite
+    regression)
+  * 🧭 Improve navigation and UI: standalone votd navigation control,
+    refined verse/chapter navigation layout, preserve translation in
+    links, show translation column in info tables, and add "all
+    translations" lookup link
+  * 🧾 Consolidate mandatory translations into a single "free" SQLite
+    bundle (ASV, KJV, Douay‑Rheims) and rename core artifacts to
+    free.sqlite.gz; preserve Pickthall as an optional package and add a
+    separate DR package
+  * 🔐 Scope verse ordinal mappings, book metadata, and related caches to
+    the active translation when using the consolidated free database and
+    bump shared-cache formats to avoid cross-translation contamination
+  * 🔁 Resolve canonical book code collisions for cross-translation
+    random/VoTD matching and absolute ordinal resolution; preserve
+    canonical vs translation display names via new SQLite mappings
+  * 📚 Add and normalize Douay‑Rheims (D.R.) source: Gutenberg importer,
+    UTF‑8 normalization, restored missing verses, generated
+    sentiment/emotion data, and include it in the free translation bundle
+  * 🧾 Expand and normalize OpenAPI and static data: stable openapi.json
+    generation, include canonical book codes and long names, and refresh
+    generated OpenAPI and static assets
+  * 🧰 Improve functional test tooling: selection of individual
+    functional tests, looped "random" tests, more tolerant expectations,
+    and stability improvements (timing and navigation)
+  * 🎨 Invalidate CSS caches by recording stylesheet SHA
+
+ -- Rev. Duncan Ross Palmer <2e0eol@gmail.com>  Sat, 29 Aug 2026 10:41:11 +0100
+
 chleb-bible-search (3.1.1) stable; urgency=high
 
     ⚡ avoid full-table scans for random verses
