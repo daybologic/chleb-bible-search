@@ -29,6 +29,13 @@ server {
 #		proxy_pass http://127.0.0.1:5000;
 #	}
 
+#	location = /downloads/thesaurus-20260826.json.gz {
+#		alias /var/www/html/downloads/thesaurus-20260826.json.gz;
+#		default_type application/gzip;
+#		add_header Content-Disposition 'attachment; filename="thesaurus-20260826.json.gz"';
+#		add_header Cache-Control 'public, immutable, max-age=31536000';
+#	}
+
     listen 443 ssl; # managed by Certbot
     ssl_certificate /etc/letsencrypt/live/chleb-api.example.org/fullchain.pem; # managed by Certbot
     ssl_certificate_key /etc/letsencrypt/live/chleb-api.example.org/privkey.pem; # managed by Certbot
