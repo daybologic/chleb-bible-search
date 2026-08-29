@@ -1,6 +1,28 @@
 {
   "version": 1,
   "terms": {
+    "homosexual": [
+      {
+        "confidence": 0.8,
+        "term": "effeminate",
+        "relation": "synonym"
+      },
+      {
+        "confidence": 0.8,
+        "term": "sodomite",
+        "relation": "synonym"
+      },
+      {
+        "confidence": 0.8,
+        "term": "sodomites",
+        "relation": "synonym"
+      },
+      {
+        "confidence": 0.8,
+        "term": "abusers",
+        "relation": "synonym"
+      }
+    ],
     "bitten": [
       {
         "relation": "inflection",

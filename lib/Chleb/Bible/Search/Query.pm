@@ -46,6 +46,7 @@ use Readonly;
 use Time::HiRes ();
 
 Readonly our $SEARCH_RESULTS_LIMIT => 50;
+Readonly our $THESAURUS_TERM_LIMIT => 5;
 
 subtype 'MooseTrimmedStr', as 'Str';
 coerce 'MooseTrimmedStr', from 'Chleb::Utils::SecureString', via {
@@ -81,8 +82,9 @@ sub setWholeword {
 
 =item C<expandedWords()>
 
-Return the normalized search words grouped with their translation-specific
-thesaurus alternatives.  The original word is always first in each group.
+Return the normalized search words grouped with their global thesaurus
+alternatives.  The original word is always first in each group, followed by
+at most the five highest-confidence alternatives.
 
 =cut
 
@@ -96,7 +98,10 @@ sub expandedWords {
 		next if $seenGroups{$normalized}++;
 		my %seen = ($normalized => 1);
 		my @expanded = ($normalized);
-		for my $term (@{ $self->bible->getThesaurusTerms($normalized) }) {
+		my @thesaurusTerms = @{ $self->bible->getThesaurusTerms($normalized) };
+		splice(@thesaurusTerms, $THESAURUS_TERM_LIMIT)
+			if scalar(@thesaurusTerms) > $THESAURUS_TERM_LIMIT;
+		for my $term (@thesaurusTerms) {
 			next if $seen{$term}++;
 			push(@expanded, $term);
 		}

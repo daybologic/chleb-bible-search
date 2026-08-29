@@ -67,6 +67,7 @@ The Debian packages supplied are:
   * `chleb-bible-search`: meta-package for the service and free Bible translations
   * `chleb-bible-search-core`: architecture-dependent service code
   * `chleb-bible-search-dict-free`: ASV (1901), Douay-Rheims (1610), and KJV (1611)
+  * `chleb-bible-search-thesaurus`: mandatory global thesaurus data
   * `chleb-bible-search-dict-pickthall`: optional Pickthall English Quran translation (1930)
 
 ## Self-hosted installation
@@ -81,7 +82,8 @@ architecture=$(dpkg --print-architecture)
 sudo dpkg -i \
 	chleb-bible-search_3.1.1_all.deb \
 	"chleb-bible-search-core_3.1.1_${architecture}.deb" \
-	chleb-bible-search-dict-free_3.1.1_all.deb
+	chleb-bible-search-dict-free_3.1.1_all.deb \
+	chleb-bible-search-thesaurus_3.1.1_all.deb
 
 sudo apt -yf install
 sudo systemctl enable chleb-bible-search.service

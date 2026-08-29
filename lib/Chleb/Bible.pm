@@ -588,7 +588,7 @@ sub getProperty {
 
 =item C<getThesaurusTerms($word)>
 
-Return translation-specific thesaurus alternatives for C<$word>.
+Return global thesaurus alternatives for C<$word>.
 
 =cut
 
@@ -606,6 +606,17 @@ Return the normalized distinct words present in this translation.
 sub getBibleWords {
 	my ($self) = @_;
 	return $self->__backend->getBibleWords();
+}
+
+=item C<getDictionaryWords()>
+
+Return the normalized words available in the global thesaurus dictionary.
+
+=cut
+
+sub getDictionaryWords {
+	my ($self) = @_;
+	return $self->__backend->getDictionaryWords();
 }
 
 =item C<year()>

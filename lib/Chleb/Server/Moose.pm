@@ -76,7 +76,8 @@ Readonly our $SEARCH_RESULTS_LIMIT => $Chleb::Bible::Search::Query::SEARCH_RESUL
 Readonly our $CONTENT_TYPE_DEFAULT => $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
 Readonly our $SEARCH_RESULTS_MAX_PAGE_SIZE => 2_000;
 Readonly my $SEARCH_SUGGESTIONS_MAX => 5;
-Readonly my $SEARCH_SUGGESTION_MAX_DISTANCE => 3;
+Readonly my $SEARCH_SUGGESTION_MAX_DISTANCE_SHORT => 3;
+Readonly my $SEARCH_SUGGESTION_MAX_DISTANCE_LONG => 5;
 
 Readonly my $FUNCTION_RANDOM => 1;
 Readonly my $FUNCTION_VOTD => 2;
@@ -1134,10 +1135,11 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 =item C<__searchSuggestions($term, $queries)>
 
-Return up to five nearby Bible words for a search that produced no results.
-Candidates are ranked by their smallest Levenshtein distance from any word in
-the requested term and are limited to a small distance so that unrelated words
-are not presented as likely corrections.
+Return up to five nearby dictionary words for a search that produced no
+results. Candidates must occur in at least one requested translation and are
+ranked by their smallest Levenshtein distance from any word in the requested
+term. Longer terms allow a larger distance so that reasonable corrections are
+not excluded while short terms remain conservative.
 
 =cut
 
@@ -1145,17 +1147,26 @@ sub __searchSuggestions {
 	my ($term, $queries) = @_;
 	my @requestedWords = @{ Chleb::Utils::extractWords($term) };
 	my %requested = map { lc($_) => 1 } @requestedWords;
+	my $maxDistance = length($term) >= 8
+		? $SEARCH_SUGGESTION_MAX_DISTANCE_LONG
+		: $SEARCH_SUGGESTION_MAX_DISTANCE_SHORT;
+	my %availableWords;
+	for my $query (@{ $queries }) {
+		$availableWords{$_} = 1 for @{ $query->bible->getBibleWords() };
+	}
 	my %distances;
 	for my $query (@{ $queries }) {
-		for my $candidate (@{ $query->bible->getBibleWords() }) {
+		for my $candidate (@{ $query->bible->getDictionaryWords() }) {
 			next if ($requested{$candidate});
+			next unless ($availableWords{$candidate});
 			my $lowestDistance;
 			for my $word (keys(%requested)) {
+				next if abs(length($word) - length($candidate)) > $maxDistance;
 				my $candidateDistance = distance($word, $candidate);
 				$lowestDistance = $candidateDistance
 					if (!defined($lowestDistance) || $candidateDistance < $lowestDistance);
 			}
-			next if (!defined($lowestDistance) || $lowestDistance > $SEARCH_SUGGESTION_MAX_DISTANCE);
+			next if (!defined($lowestDistance) || $lowestDistance > $maxDistance);
 			$distances{$candidate} = $lowestDistance
 				if (!exists($distances{$candidate}) || $lowestDistance < $distances{$candidate});
 		}
