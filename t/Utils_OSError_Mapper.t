@@ -76,7 +76,7 @@ sub testKnownMappings {
 
 	# TODO
 	# nb. don't list everything here!  Maybe I shall but it might be long-winded,
-	# at least we could see what happens on GitHub/SourceHut/BitBucket.
+	# at least we could see what happens on GitHub/BitBucket.
 
 	is($self->sut->map(int(ENOENT)), HTTP_NOT_FOUND, 'ENOENT -> 404 Not Found');
 	is($self->sut->map(int(EHOSTDOWN)), HTTP_BAD_GATEWAY, 'EHOSTDOWN -> 502 Bad Gateway');
