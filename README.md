@@ -240,8 +240,10 @@ If there is a security problem, please consider reporting to me directly:
 
 All of the standards we use are documented elsewhere on the world-wide web:
 
+  * [Claude code](https://code.claude.com/docs/en/overview)
+  * [Codex](https://openai.com/codex/)
   * [Git](https://git-scm.com/)
-  * [GitFlow](https://nvie.com/posts/a-successful-git-branching-model/)
+  * [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow)
   * [Gitmoji](https://gitmoji.dev/)
   * [JSON:API](https://jsonapi.org/format/)
   * [Perl 5](https://dev.perl.org/perl5/)
