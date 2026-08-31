@@ -46,7 +46,7 @@ use File::Temp qw(tempfile);
 use Readonly;
 use DBI;
 use Storable qw(nstore_fd retrieve);
-use Digest::SHA qw(sha256_hex);
+use Crypt::xxHash qw(xxhash64_hex);
 use File::Path qw(make_path);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
@@ -1585,7 +1585,7 @@ sub __sharedCacheGet {
 
 =item C<__sharedCacheKey($key)>
 
-Return the SHA-256 key used for a single shared-cache entry.  The full lookup
+Return the xxHash64 key used for a single shared-cache entry.  The full lookup
 key is hashed and the kind and translation are separate path components, so
 different cache categories and translations cannot share a filename.
 
@@ -1593,7 +1593,7 @@ different cache categories and translations cannot share a filename.
 
 sub __sharedCacheKey {
 	my ($self, $key) = @_;
-	return sha256_hex($self->bible->translation . "\0" . ($key // ''));
+	return xxhash64_hex($self->bible->translation . "\0" . ($key // ''), 0);
 }
 
 =item C<__sharedCacheEntryPath($kind, $key)>

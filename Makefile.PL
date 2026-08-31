@@ -89,6 +89,7 @@ WriteMakefile(
 
 	PREREQ_PM => {
 		'Cache::Memcached' => 0,
+		'Crypt::xxHash' => 0,
 		'DBI'              => 0,
 		'DBD::SQLite'      => 0,
 		'Moose'            => 0,

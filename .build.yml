@@ -34,6 +34,7 @@ packages:
   - jq
   - libcache-cache-perl
   - libconfig-ini-perl
+  - libcrypt-xxhash-perl
   - libconfig-ini-perl
   - libdancer2-perl
   - libdatetime-format-strptime-perl
