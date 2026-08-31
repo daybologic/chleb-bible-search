@@ -8,6 +8,7 @@
 .perlcriticrc
 bin/bugs/4e03075-wholeword-boolean-swagger/run.sh
 bin/core/app.psgi
+bin/core/cache-inspect.pl
 bin/core/run.sh
 bin/core/session-clean.sh
 bin/core/session-dump.pl
