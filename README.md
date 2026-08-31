@@ -44,17 +44,14 @@ Hosting for Chleb Bible Search source code is provided at the following sites:
 
   * [BitBucket](https://bitbucket.org/2E0EOL/chleb-bible-search/commits/branch/master)
   * [GitHub](https://github.com/daybologic/chleb-bible-search)
-  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search)
 
 The latest release is version 3.2.0, which is available for download at the following sites:
 
   * [GitHub](https://github.com/daybologic/chleb-bible-search/archive/refs/tags/v3.2.0.tar.gz)
-  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/archive/v3.2.0.tar.gz)
 
 The latest release is available as a Debian package from the following locations:
 
   * [GitHub](https://github.com/daybologic/chleb-bible-search/releases/v3.2.0)
-  * [SourceHut](https://git.sr.ht/~m6kvm/chleb-bible-search/refs/v3.2.0)
 
 The service core is architecture-dependent.  We currently publish Debian packages for
 `amd64` and `arm64`; the meta-package and dictionary packages are architecture-independent
@@ -79,11 +76,14 @@ then run:
 
 ```bash
 architecture=$(dpkg --print-architecture)
+core_version=3.2.0
+free_version=20260829.1
+thesaurus_version=20260829.1
 sudo dpkg -i \
-	chleb-bible-search_3.2.0_all.deb \
-	"chleb-bible-search-core_3.2.0_${architecture}.deb" \
-	chleb-bible-search-dict-free_3.2.0_all.deb \
-	chleb-bible-search-thesaurus_3.2.0_all.deb
+	"chleb-bible-search_${core_version}_all.deb" \
+	"chleb-bible-search-core_${core_version}_${architecture}.deb" \
+	"chleb-bible-search-dict-free_${free_version}_all.deb" \
+	"chleb-bible-search-thesaurus_${thesaurus_version}_all.deb"
 
 sudo apt -yf install
 sudo systemctl enable chleb-bible-search.service
@@ -91,7 +91,11 @@ sudo invoke-rc.d chleb-bible-search start
 ```
 
 To add the optional Pickthall translation, also install
-`chleb-bible-search-dict-pickthall_3.2.0_all.deb` before starting the service.
+`chleb-bible-search-dict-pickthall_<data-version>_all.deb` before starting the service.
+
+The code packages use semantic release versions. The translation and thesaurus
+packages use independent `YYYYMMDD.N` data-release versions and are only
+updated when their source data or SQLite schema changes.
 
 ### Web front-end (proxy).
 
@@ -240,8 +244,10 @@ If there is a security problem, please consider reporting to me directly:
 
 All of the standards we use are documented elsewhere on the world-wide web:
 
+  * [Claude code](https://code.claude.com/docs/en/overview)
+  * [Codex](https://openai.com/codex/)
   * [Git](https://git-scm.com/)
-  * [GitFlow](https://nvie.com/posts/a-successful-git-branching-model/)
+  * [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow)
   * [Gitmoji](https://gitmoji.dev/)
   * [JSON:API](https://jsonapi.org/format/)
   * [Perl 5](https://dev.perl.org/perl5/)
@@ -259,7 +265,7 @@ We have two levels of testing and you can pick at least one, whichever is more a
 
 For anything involving code which is not directly-related to an endpoint, write a test-suite under
 the t/ directory.  This is a standard directory for Perl-authored projects, and uses [Test::Module::Runnable](https://github.com/daybologic/libtest-module-runnable-perl)
-Please see the [documentation](https://git.sr.ht/~m6kvm/libtest-module-runnable-perl/tree/master/item/README.md) for writing tests.  Please look at [existing tests](https://git.sr.ht/~m6kvm/libtest-module-runnable-perl/tree/master/item/t) for a guide.
+Please see the [documentation](https://github.com/daybologic/chleb-bible-search/blob/master/README.md) for writing tests.  Please look at [existing tests](https://github.com/daybologic/chleb-bible-search/tree/master/t) for a guide.
 
 You can run the test suite any time by typing:
 ```
@@ -269,11 +275,11 @@ make && make test
 
 You will need to install all build-dependencies first.
 
-For anything involving endpoints code, especially code within [Moose.pm](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/master/item/lib/Chleb/Server/Moose.pm) or [Dancer2.pm](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/master/item/lib/Chleb/Server/Dancer2.pm), please write one or more tests under [data/tests](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/tests/httpie-1/item/data/tests).
+For anything involving endpoints code, especially code within [Moose.pm](https://github.com/daybologic/chleb-bible-search/blob/master/lib/Chleb/Server/Moose.pm) or [Dancer2.pm](https://github.com/daybologic/chleb-bible-search/blob/master/lib/Chleb/Server/Dancer2.pm), please write one or more tests under [data/tests](https://github.com/daybologic/chleb-bible-search/tree/master/data/tests).
 
-These files are a all bash shell files.  Start with [data/tests/1/template.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v3.2.0/item/data/tests/1/template.sh) and copy this. The digit at the start represents the endpoint version.
+These files are a all bash shell files.  Start with [data/tests/1/template.sh](https://github.com/daybologic/chleb-bible-search/blob/master/data/tests/1/template.sh) and copy this. The digit at the start represents the endpoint version.
 
-You can test this by running [bin/maint/run-functional-tests.sh](https://git.sr.ht/~m6kvm/chleb-bible-search/tree/v3.2.0/item/bin/maint/run-functional-tests.sh) and specify the 1/name or run all the tests by specifying no parameters.
+You can test this by running [bin/maint/run-functional-tests.sh](https://github.com/daybologic/chleb-bible-search/blob/master/bin/maint/run-functional-tests.sh) and specify the 1/name or run all the tests by specifying no parameters.
 
 You will need to edit your /etc/hosts file to ensure that the name [chleb-api.example.org](http://chleb-api.example.org) points to your running code, and set up Nginx.  Remember this does *not* use https (TLS)!
 

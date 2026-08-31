@@ -40,8 +40,8 @@ Homepage: https://bitbucket.org/2E0EOL/chleb-bible-search
 
 Package: chleb-bible-search
 Architecture: all
-Depends: chleb-bible-search-core (= ${binary:Version}), chleb-bible-search-dict-free (= ${binary:Version}),
- chleb-bible-search-thesaurus (= ${binary:Version})
+Depends: chleb-bible-search-core (= ${core:Version}), chleb-bible-search-dict-free (>= ${free:Version}),
+ chleb-bible-search-thesaurus (>= ${thesaurus:Version})
 Description: Chleb Bible Search - Bible Query Service (meta-package)
  This is a meta package that installs both the core bible search service, which provides the main
  functionality for searching within the Bible text, the public-domain translations, and the thesaurus data
@@ -70,7 +70,7 @@ Description: Chleb Bible Search - Bible Query Service
 
 Package: chleb-bible-search-dict-free
 Architecture: all
-Depends: chleb-bible-search-core (= ${binary:Version})
+Depends: chleb-bible-search-core (>= ${core:Version})
 Replaces: chleb-bible-search-dict
 Description: Chleb Bible Search - Public domain translations
  This package contains the public domain translations used by the Chleb Bible Search
@@ -89,7 +89,7 @@ Description: Chleb Bible Search - global thesaurus
 
 Package: chleb-bible-search-dict-pickthall
 Architecture: all
-Depends: chleb-bible-search-core (= ${binary:Version})
+Depends: chleb-bible-search-core (>= ${core:Version})
 Description: Chleb Bible Search - Pickthall translation
  This package contains the Pickthall translation of the Quran used by the
  Chleb Bible Search service.

@@ -34,6 +34,18 @@ export TEST_QUICK=1
 
 export DH_VERBOSE=1
 
+include debian/data-versions
+
+CORE_VERSION := $(shell dpkg-parsechangelog -S Version)
+
+# Keep the code release version independent from generated data package
+# versions. These substvars are passed to each binary package below.
+DATA_PACKAGE_VERSION_ARGS = \
+	-Vcore:Version=$(CORE_VERSION) \
+	-Vfree:Version=$(DATA_VERSION_FREE) \
+	-Vthesaurus:Version=$(DATA_VERSION_THESAURUS) \
+	-Vpickthall:Version=$(DATA_VERSION_PICKTHALL)
+
 %:
 	dh $@
 
@@ -46,8 +58,15 @@ override_dh_install:
 	cp -Rp /usr/lib/${DEB_TARGET_MULTIARCH}/perl5/*/. debian/chleb-bible-search-core/usr/share/chleb-bible-search/perl5
 	dh_install
 
+override_dh_gencontrol:
+	dh_gencontrol -pchleb-bible-search-core -- -v$(CORE_VERSION) $(DATA_PACKAGE_VERSION_ARGS)
+	dh_gencontrol -pchleb-bible-search-dict-free -- -v$(DATA_VERSION_FREE) $(DATA_PACKAGE_VERSION_ARGS)
+	dh_gencontrol -pchleb-bible-search-dict-pickthall -- -v$(DATA_VERSION_PICKTHALL) $(DATA_PACKAGE_VERSION_ARGS)
+	dh_gencontrol -pchleb-bible-search-thesaurus -- -v$(DATA_VERSION_THESAURUS) $(DATA_PACKAGE_VERSION_ARGS)
+	dh_gencontrol -pchleb-bible-search -- -v$(CORE_VERSION) $(DATA_PACKAGE_VERSION_ARGS)
+
 override_dh_auto_clean:
 	rm -f log/*.log 2>/dev/null || true
 	dh_auto_clean
 
-.PHONY: override_dh_auto_install override_dh_auto_clean override_dh_install
+.PHONY: override_dh_auto_install override_dh_auto_clean override_dh_install override_dh_gencontrol
