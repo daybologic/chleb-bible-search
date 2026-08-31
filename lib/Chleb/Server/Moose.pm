@@ -151,13 +151,9 @@ sub warmup {
 	my ($self) = @_;
 
 	# Warm in the current (master) process, BEFORE the PSGI server forks its
-	# workers, so that every worker inherits fully-populated in-process caches
-	# via copy-on-write.  This previously ran in short-lived forked children
-	# whose caches died with them, leaving the actual request-serving workers
-	# cold: the first whole-chapter request in each worker then paid one
-	# cache-miss round-trip per verse.  __warmBackendCaches() also primes the
-	# Storable-backed shared cache as a side-effect, so warm data survives
-	# restarts and late-spawned workers.
+	# workers, so that every worker inherits the populated in-process sentiment
+	# caches via copy-on-write.  Persistent shared-cache writes are intentionally
+	# discarded here so startup is not held up creating thousands of cache files.
 	my @bibles = $self->__library->getBibles({ translations => ['all'] });
 	$self->dic->logger->info(sprintf('Backend cache warmup starting for %d translation(s) in master process', scalar(@bibles)));
 	my $evalOk1; $evalOk1 = eval {
@@ -260,11 +256,56 @@ sub __warmBackendVerse {
 	return;
 }
 
+=item C<__warmBackendCaches()>
+
+Prime only the expensive sentiment cache in memory before worker processes are
+forked.  Deferred shared-cache writes are discarded so startup does not wait
+for persistent cache-file creation; normal request-time writes remain enabled.
+
+=cut
+
 sub __warmBackendCaches {
+	my ($self, $warmBible) = @_;
+	my $startTiming = Time::HiRes::time();
+	my @bibles = defined($warmBible) ? ($warmBible) : $self->__library->getBibles({ translations => ['all'] });
+	$self->dic->logger->info(sprintf('Backend cache warmup started for %d translation(s)', scalar(@bibles)));
+
+	foreach my $bible (@bibles) {
+		my $backend = $bible->__backend;
+		$backend->deferSharedCacheWrites(1);
+		my $translationStartTiming = Time::HiRes::time();
+		$self->dic->logger->debug(sprintf('Backend cache warmup translation %s starting', $bible->translation));
+		my $sentimentStartTiming = Time::HiRes::time();
+		my $sentimentCount = $backend->primeSentimentCache();
+		$self->dic->logger->debug(sprintf(
+			'Backend cache warmup sentiment finished for translation %s in %d msec (%d entry/entries)',
+			$bible->translation,
+			int(1000 * (Time::HiRes::time() - $sentimentStartTiming)),
+			$sentimentCount,
+		));
+		$backend->discardSharedCacheWrites();
+		$backend->deferSharedCacheWrites(0);
+		$self->dic->logger->info(sprintf(
+			'Backend cache warmup finished for translation %s in %d msec',
+			$bible->translation,
+			int(1000 * (Time::HiRes::time() - $translationStartTiming)),
+		));
+	}
+
+	$self->dic->logger->info(sprintf(
+		'All backend cache warmup finished in %d msec',
+		int(1000 * (Time::HiRes::time() - $startTiming)),
+	));
+	return;
+}
+
+sub __warmBackendCachesLegacy { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $warmBible) = @_;
 	my $startTiming = Time::HiRes::time();
 	my @bibles = defined($warmBible) ? ($warmBible) : shuffle($self->__library->getBibles({ translations => ['all'] }));
 	my $totalVerses = 0;
+	my $totalChapters = 0;
+	my $metadataStartTiming = Time::HiRes::time();
 
 	foreach my $bible (@bibles) {
 		foreach my $book (@{ $bible->books() }) {
@@ -279,9 +320,16 @@ sub __warmBackendCaches {
 					next;
 				}
 				$totalVerses += $chapter->verseCount;
+				$totalChapters++;
 			}
 		}
 	}
+	$self->dic->logger->debug(sprintf(
+		'Backend cache warmup metadata finished in %d msec (%d chapter(s), %d verse(s))',
+		int(1000 * (Time::HiRes::time() - $metadataStartTiming)),
+		$totalChapters,
+		$totalVerses,
+	));
 
 	$self->dic->logger->info(sprintf('Backend cache warmup started for %d translation(s)', scalar(@bibles)));
 	$self->dic->logger->debug(sprintf('Backend cache warmup will process %d verse(s)', $totalVerses));
@@ -296,17 +344,35 @@ sub __warmBackendCaches {
 			'Backend cache warmup translation %s priming sentiment cache',
 			$bible->translation,
 		));
-		$bible->__backend->primeSentimentCache();
+		my $sentimentStartTiming = Time::HiRes::time();
+		my $sentimentCount = $bible->__backend->primeSentimentCache();
+		$self->dic->logger->debug(sprintf(
+			'Backend cache warmup sentiment finished for translation %s in %d msec (%d entry/entries)',
+			$bible->translation,
+			int(1000 * (Time::HiRes::time() - $sentimentStartTiming)),
+			$sentimentCount,
+		));
+		my $bookTextMsec = 0;
+		my $bookTextCount = 0;
+		my $chapterTextStartTiming;
+		my $chapterTextMsec = 0;
+		my $translationVerses = 0;
+		my $verseTraversalStartTiming = Time::HiRes::time();
 		my @books = shuffle(@{ $bible->books() });
 		foreach my $book (@books) {
+			my $bookStartTiming = Time::HiRes::time();
 			my $bookVerses = $bible->__backend->getBookVerseDataByKey($book->canonicalCode);
+			$bookTextMsec += 1000 * (Time::HiRes::time() - $bookStartTiming);
+			$bookTextCount++;
 			my %chapterVerses;
 			foreach my $row (@{ $bookVerses // [ ] }) {
 				push(@{ $chapterVerses{ $row->{chapter_ordinal} } }, $row);
 			}
 			my @chapterOrdinals = shuffle(1 .. $book->chapterCount);
 			foreach my $chapterOrdinal (@chapterOrdinals) {
+				$chapterTextStartTiming = Time::HiRes::time();
 				$bible->__backend->getChapterVerseDataByKey($book->canonicalCode, $chapterOrdinal);
+				$chapterTextMsec += 1000 * (Time::HiRes::time() - $chapterTextStartTiming);
 				my @verses = shuffle(@{ $chapterVerses{$chapterOrdinal} // [ ] });
 				my $verseCount = scalar(@verses);
 				my $verseIndex = 0;
@@ -323,11 +389,35 @@ sub __warmBackendCaches {
 						totalVerses     => $totalVerses,
 						lastPercent     => \$lastPercent,
 					});
+					$translationVerses++;
 				}
 			}
 		}
+		$self->dic->logger->debug(sprintf(
+			'Backend cache warmup book text finished for translation %s in %d msec (%d book(s))',
+			$bible->translation,
+			int($bookTextMsec),
+			$bookTextCount,
+		));
+		$self->dic->logger->debug(sprintf(
+			'Backend cache warmup chapter text finished for translation %s in %d msec',
+			$bible->translation,
+			int($chapterTextMsec),
+		));
+		$self->dic->logger->debug(sprintf(
+			'Backend cache warmup verse traversal finished for translation %s in %d msec (%d verse(s))',
+			$bible->translation,
+			int(1000 * (Time::HiRes::time() - $verseTraversalStartTiming)),
+			$translationVerses,
+		));
 		$backend->deferSharedCacheWrites(0);
+		my $sharedFlushStartTiming = Time::HiRes::time();
 		$backend->flushSharedCache();
+		$self->dic->logger->debug(sprintf(
+			'Backend cache warmup shared-cache flush finished for translation %s in %d msec',
+			$bible->translation,
+			int(1000 * (Time::HiRes::time() - $sharedFlushStartTiming)),
+		));
 		my $translationMsec = int(1000 * (Time::HiRes::time() - $translationStartTiming));
 		$self->dic->logger->info(sprintf(
 			'Backend cache warmup finished for translation %s in %d msec',

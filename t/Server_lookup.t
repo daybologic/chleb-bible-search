@@ -332,7 +332,7 @@ sub testTranslationSpecificBookInfo {
 
 sub testWarmupPrimesSentimentCache {
 	my ($self) = @_;
-	plan tests => 9;
+	plan tests => 11;
 
 	my $dic = Chleb::DI::Container->instance();
 	my $previousLogger = $dic->logger;
@@ -359,6 +359,8 @@ sub testWarmupPrimesSentimentCache {
 	my $allWarmupFinished = scalar(grep { /\QAll backend cache warmup finished in\E \d+ \Qmsec\E/ } @{ $logger->__messages });
 	my $translationWarmupProgress = scalar(grep { /\QBackend cache warmup \E\d+\Q% complete (translation \E(?:kjv|asv)\Q)\E\z/ } @{ $logger->__messages });
 	my $verseWarmupProgress = scalar(grep { /\QBackend cache warmup \E\d+\Q% complete (translation \E(?:kjv|asv)\Q, book \E/ } @{ $logger->__messages });
+	my $sentimentTiming = scalar(grep { /sentiment finished for translation kjv in \d+ msec/ } @{ $logger->__messages });
+	my $sharedFlushTiming = scalar(grep { /shared-cache flush finished for translation kjv in \d+ msec/ } @{ $logger->__messages });
 
 	ok($before > 0, 'warmup loads sentiment data');
 	is($after, $before, 'lookup does not reload sentiment after warmup');
@@ -367,8 +369,10 @@ sub testWarmupPrimesSentimentCache {
 	ok($translationWarmupFinished > 0, 'warmup logs per-translation msec');
 	ok($asvWarmupFinished > 0, 'warmup logs ASV');
 	ok($allWarmupFinished > 0, 'warmup logs overall msec');
-	ok($translationWarmupProgress > 0, 'warmup progress identifies the translation');
+	is($translationWarmupProgress, 0, 'warmup does not traverse every verse');
 	is($verseWarmupProgress, 0, 'warmup progress does not identify the verse');
+	ok($sentimentTiming > 0, 'warmup logs sentiment timing');
+	is($sharedFlushTiming, 0, 'warmup does not flush the shared cache');
 
 	$dic->logger($previousLogger);
 

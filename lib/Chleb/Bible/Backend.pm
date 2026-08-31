@@ -366,6 +366,21 @@ sub deferSharedCacheWrites {
 	return;
 }
 
+=item C<discardSharedCacheWrites()>
+
+Discard deferred shared-cache writes while retaining the populated process-local
+caches.  This is used during startup warmup so forked workers inherit hot data
+without making startup wait for persistent cache writes.
+
+=cut
+
+sub discardSharedCacheWrites {
+	my ($self) = @_;
+	%{ $self->__sharedCachePending } = ();
+	$self->__sharedCacheDirty(0);
+	return;
+}
+
 =item C<flushSharedCache()>
 
 Flush pending shared-cache changes to their individual entry files.
