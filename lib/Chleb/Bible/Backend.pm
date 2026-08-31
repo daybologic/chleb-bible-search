@@ -57,6 +57,7 @@ Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_DIR => 'shared';
 Readonly my $SHARED_CACHE_FORMAT_VERSION => 8;
 Readonly my $VERSE_ORDINAL_CACHE_VERSION => 3;
+Readonly my $SQLITE_TEMP_MAX_AGE => 3600;
 
 =head1 ATTRIBUTES
 
@@ -1150,7 +1151,7 @@ sub __inspectSourceFile {
 	my ($self, $sourceFile) = @_;
 	my ($tempHandle, $tempPath) = tempfile(
 		DIR    => $self->__makeTempDir(),
-		SUFFIX => '.sqlite',
+		SUFFIX => '.sqlite.tmp',
 		UNLINK => 1,
 	);
 	close($tempHandle);
@@ -1216,10 +1217,35 @@ sub __makeCacheDir {
 
 	Readonly my @PATHS => ('cache', '/var/cache/chleb-bible-search');
 	foreach my $path (@PATHS) {
-		return $path if (-d $path);
+		if (-d $path) {
+			$self->__cleanupSqliteTempFiles($path);
+			return $path;
+		}
 	}
 
 	croak('No cache dir available');
+}
+
+=item C<__cleanupSqliteTempFiles($path)>
+
+Remove decompression staging files older than the temporary-file grace period.
+New staging files use the dedicated C<.sqlite.tmp> suffix.  Legacy random
+ten-character C<.sqlite> staging names are also recognized, while named SQLite
+cache databases cannot be removed by this cleanup.
+
+=cut
+
+sub __cleanupSqliteTempFiles {
+	my ($self, $path) = @_;
+	my $oldestAllowed = time() - $SQLITE_TEMP_MAX_AGE;
+	foreach my $tempPath (glob(join('/', $path, '*.sqlite.tmp')), glob(join('/', $path, '*.sqlite'))) {
+		next unless (-f $tempPath);
+	next unless ($tempPath =~ m{/(?:[A-Za-z0-9_]{10}\.sqlite|[^/]+\.sqlite\.tmp)\z}x);
+		my $mtime = (stat($tempPath))[9] // 0;
+		next if ($mtime > $oldestAllowed);
+		unlink($tempPath) or $self->dic->logger->warn("Cannot remove stale SQLite temporary file $tempPath: $ERRNO");
+	}
+	return;
 }
 
 =item C<__makeTempDir()>
@@ -1282,7 +1308,7 @@ sub __makeCachePath {
 	if ($needsRefresh) {
 		my ($tempHandle, $tempPath) = tempfile(
 			DIR    => $self->cacheDir,
-			SUFFIX => '.sqlite',
+			SUFFIX => '.sqlite.tmp',
 			UNLINK => 0,
 		);
 		close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
@@ -1399,7 +1425,7 @@ sub __makeDictionaryCachePath { ## no critic (Subroutines::ProhibitUnusedPrivate
 
 	my ($tempHandle, $tempPath) = tempfile(
 		DIR    => $self->cacheDir,
-		SUFFIX => '.sqlite',
+		SUFFIX => '.sqlite.tmp',
 		UNLINK => 0,
 	);
 	close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
