@@ -76,11 +76,14 @@ then run:
 
 ```bash
 architecture=$(dpkg --print-architecture)
+core_version=3.2.0
+free_version=20260829.1
+thesaurus_version=20260829.1
 sudo dpkg -i \
-	chleb-bible-search_3.2.0_all.deb \
-	"chleb-bible-search-core_3.2.0_${architecture}.deb" \
-	chleb-bible-search-dict-free_3.2.0_all.deb \
-	chleb-bible-search-thesaurus_3.2.0_all.deb
+	"chleb-bible-search_${core_version}_all.deb" \
+	"chleb-bible-search-core_${core_version}_${architecture}.deb" \
+	"chleb-bible-search-dict-free_${free_version}_all.deb" \
+	"chleb-bible-search-thesaurus_${thesaurus_version}_all.deb"
 
 sudo apt -yf install
 sudo systemctl enable chleb-bible-search.service
@@ -88,7 +91,11 @@ sudo invoke-rc.d chleb-bible-search start
 ```
 
 To add the optional Pickthall translation, also install
-`chleb-bible-search-dict-pickthall_3.2.0_all.deb` before starting the service.
+`chleb-bible-search-dict-pickthall_<data-version>_all.deb` before starting the service.
+
+The code packages use semantic release versions. The translation and thesaurus
+packages use independent `YYYYMMDD.N` data-release versions and are only
+updated when their source data or SQLite schema changes.
 
 ### Web front-end (proxy).
 

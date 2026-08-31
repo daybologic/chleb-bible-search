@@ -1,0 +1,8 @@
+# Independent versions for generated data packages.
+#
+# Use YYYYMMDD.N, where N starts at one and is incremented for a second data
+# release on the same day. Change a value only when that package's source data
+# or SQLite schema changes.
+DATA_VERSION_FREE := 20260829.1
+DATA_VERSION_THESAURUS := 20260829.1
+DATA_VERSION_PICKTHALL := 20260829.1
