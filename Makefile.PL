@@ -136,7 +136,8 @@ endif
 
 clean :: 
 	rm -rf cover_db
-	rm -f cache/*.bin
+	find cache -mindepth 1 ! -name .keep ! -type d -delete
+	find cache -mindepth 1 -depth -type d -empty -delete
 	rm -f cache/*.sqlite cache/*.sqlite-journal cache/*.sqlite-wal cache/*.sqlite-shm
 	cd data/ && make clean
 	cd info/ && make clean

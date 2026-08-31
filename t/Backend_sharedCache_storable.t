@@ -52,6 +52,7 @@ use Cwd qw(chdir getcwd);
 use DBI;
 use English qw(-no_match_vars);
 use File::Temp qw(tempdir);
+use File::Path qw(make_path);
 use IO::Compress::Gzip qw(gzip $GzipError);
 use POSIX qw(EXIT_SUCCESS);
 use Test::More 0.96;
@@ -91,7 +92,7 @@ sub testPersistsAcrossBackendInstances {
 	plan tests => 3;
 
 	ok($self->sut->__sharedCacheSet('unit', 'alpha', { answer => 42 }), 'shared cache set succeeds');
-	ok(-f $self->__sharedCachePath(), 'shared cache file exists');
+	ok(-f $self->sut->__sharedCacheEntryPath('unit', 'alpha'), 'individual shared cache entry exists');
 
 	my $secondBackend = $self->__makeBackend('kjv');
 	is_deeply($secondBackend->__sharedCacheGet('unit', 'alpha'), { answer => 42 },
@@ -108,6 +109,21 @@ sub testDeferredWritesFlushWhenRequested {
 	ok($self->sut->__sharedCacheSet('unit', 'deferred', 'later'), 'deferred shared cache set succeeds');
 	ok(!-f $self->__sharedCachePath(), 'deferred write does not create shared cache file immediately');
 	ok($self->sut->flushSharedCache(), 'explicit flush writes deferred shared cache entries');
+
+	return EXIT_SUCCESS;
+}
+
+sub testEntryNamesAreScopedAndCollisionResistant {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $first = $self->sut->__sharedCacheEntryPath('text', 'Gen:1:1');
+	my $second = $self->sut->__sharedCacheEntryPath('sentiment', 'Gen:1:1');
+	my $third = $self->sut->__sharedCacheEntryPath('text', 'Gen:1:2');
+	isnt($first, $second, 'cache kinds have different entry paths');
+	isnt($first, $third, 'cache keys have different entry paths');
+	like($first, qr{/shared/[0-9a-f]{64}/[0-9a-f]{64}\.bin\z},
+		'cache entry path contains only hashed names');
 
 	return EXIT_SUCCESS;
 }
@@ -173,12 +189,15 @@ sub testCorruptSharedCacheIsIgnored {
 	my ($self) = @_;
 	plan tests => 2;
 
-	open(my $fh, '>', $self->__sharedCachePath()) or croak("open shared cache failed: $ERRNO");
+	my $path = $self->sut->__sharedCacheEntryPath('unit', 'broken');
+	my ($directory) = ($path =~ m{\A(.+)/[^/]+\z}x);
+	make_path($directory) unless (-d $directory);
+	open(my $fh, '>', $path) or croak("open shared cache failed: $ERRNO");
 	print {$fh} "not a storable file\n";
 	close($fh) or croak("close shared cache failed: $ERRNO");
 
 	my $backend = $self->__makeBackend('kjv');
-	is($backend->__sharedCacheGet('unit', 'missing'), undef, 'corrupt shared cache is ignored');
+	is($backend->__sharedCacheGet('unit', 'broken'), undef, 'corrupt shared cache entry is ignored');
 	ok($backend->__sharedCacheSet('unit', 'replacement', 'ok'), 'corrupt shared cache can be replaced');
 
 	return EXIT_SUCCESS;
@@ -213,7 +232,7 @@ sub __sourcePath {
 
 sub __sharedCachePath {
 	my ($self) = @_;
-	return $self->root . '/cache/shared.bin';
+	return $self->root . '/cache/shared';
 }
 
 sub __makeSourceFile {
