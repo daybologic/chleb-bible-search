@@ -55,7 +55,7 @@ use Chleb::Utils;
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_DIR => 'shared';
-Readonly my $SHARED_CACHE_FORMAT_VERSION => 7;
+Readonly my $SHARED_CACHE_FORMAT_VERSION => 8;
 Readonly my $VERSE_ORDINAL_CACHE_VERSION => 3;
 
 =head1 ATTRIBUTES
@@ -1590,7 +1590,7 @@ sub __sharedCacheGet {
 	return unless (-f $path);
 	my $entry;
 	my $evalOk; $evalOk = eval { $entry = retrieve($path); 1; } or $evalOk = 0;
-	if (!$evalOk || !$self->__validSharedCacheEntry($entry)) {
+	if (!$evalOk || !$self->__validSharedCacheEntry($entry, $kind, $key)) {
 		$self->dic->logger->warn("Cannot load backend shared cache entry from $path: $EVAL_ERROR") if (!$evalOk);
 		return;
 	}
@@ -1711,17 +1711,21 @@ sub __traceSelectQuery {
 	return;
 }
 
-=item C<__validSharedCacheEntry($entry)>
+=item C<__validSharedCacheEntry($entry, $kind, $key)>
 
-Return true when one on-disk entry has the expected format and source metadata.
+Return true when one on-disk entry has the expected format, identity, and
+source metadata.
 
 =cut
 
 sub __validSharedCacheEntry {
-	my ($self, $entry) = @_;
+	my ($self, $entry, $kind, $key) = @_;
 	return 0 unless (ref($entry) eq 'HASH');
 	return 0 unless (($entry->{format_version} // -1) == $SHARED_CACHE_FORMAT_VERSION);
 	return 0 unless (($entry->{file_version} // -1) == $FILE_VERSION);
+	return 0 unless (($entry->{translation} // '') eq $self->bible->translation);
+	return 0 unless (($entry->{kind} // '') eq ($kind // ''));
+	return 0 unless (($entry->{key} // '') eq ($key // ''));
 	return 0 unless (ref($entry->{source}) eq 'HASH');
 	my $source = $self->__sharedCacheSourceMeta();
 	foreach my $key (qw(source_mtime source_size)) {
@@ -1814,6 +1818,9 @@ sub __writeSharedCacheEntry {
 		nstore_fd({
 			format_version => $SHARED_CACHE_FORMAT_VERSION,
 			file_version => $FILE_VERSION,
+			translation => $self->bible->translation,
+			kind => $kind,
+			key => $key,
 			source => $self->__sharedCacheSourceMeta(),
 			value => $value,
 		}, $tempHandle);

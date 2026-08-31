@@ -55,6 +55,7 @@ use File::Temp qw(tempdir);
 use File::Path qw(make_path);
 use IO::Compress::Gzip qw(gzip $GzipError);
 use POSIX qw(EXIT_SUCCESS);
+use Storable qw(retrieve);
 use Test::More 0.96;
 
 has root => (is => 'rw', isa => 'Str');
@@ -124,6 +125,19 @@ sub testEntryNamesAreScopedAndCollisionResistant {
 	isnt($first, $third, 'cache keys have different entry paths');
 	like($first, qr{/shared/[0-9a-f]{16}/[0-9a-f]{16}\.bin\z},
 		'cache entry path contains only hashed names');
+
+	return EXIT_SUCCESS;
+}
+
+sub testEntryContainsDebugIdentity {
+	my ($self) = @_;
+	plan tests => 3;
+
+	$self->sut->__sharedCacheSet('unit', 'alpha', { answer => 42 });
+	my $entry = retrieve($self->sut->__sharedCacheEntryPath('unit', 'alpha'));
+	is($entry->{translation}, 'kjv', 'entry stores translation');
+	is($entry->{kind}, 'unit', 'entry stores cache kind');
+	is($entry->{key}, 'alpha', 'entry stores cache key');
 
 	return EXIT_SUCCESS;
 }
