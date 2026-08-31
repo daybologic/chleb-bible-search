@@ -123,8 +123,8 @@ sub testEntryNamesAreScopedAndCollisionResistant {
 	my $third = $self->sut->__sharedCacheEntryPath('text', 'Gen:1:2');
 	isnt($first, $second, 'cache kinds have different entry paths');
 	isnt($first, $third, 'cache keys have different entry paths');
-	like($first, qr{/shared/[0-9a-f]{16}/[0-9a-f]{16}\.bin\z},
-		'cache entry path contains only hashed names');
+	like($first, qr{/shared/text/[0-9a-f]{2}/[0-9a-f]{16}\.bin\z},
+		'cache entry path uses the plain kind and tiered hash names');
 
 	return EXIT_SUCCESS;
 }

@@ -56,6 +56,7 @@ Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
 Readonly my $SHARED_CACHE_DIR => 'shared';
 Readonly my $SHARED_CACHE_FORMAT_VERSION => 8;
+Readonly my $SHARED_CACHE_KEY_PREFIX_LENGTH => 2;
 Readonly my $VERSE_ORDINAL_CACHE_VERSION => 3;
 Readonly my $SQLITE_TEMP_MAX_AGE => 3600;
 
@@ -1639,14 +1640,17 @@ sub __sharedCacheKey {
 
 =item C<__sharedCacheEntryPath($kind, $key)>
 
-Return the unique path for one shared-cache entry.
+Return the unique, tiered path for one shared-cache entry.  The first two
+characters of the entry hash form an intermediate directory so no leaf
+directory needs to contain every entry for a cache kind.
 
 =cut
 
 sub __sharedCacheEntryPath {
 	my ($self, $kind, $key) = @_;
-	return join('/', $self->__sharedCachePath, $self->__sharedCacheKey($kind),
-		$self->__sharedCacheKey($key) . '.bin');
+	my $keyPath = $self->__sharedCacheKey($key);
+	return join('/', $self->__sharedCachePath, $kind,
+		substr($keyPath, 0, $SHARED_CACHE_KEY_PREFIX_LENGTH), $keyPath . '.bin');
 }
 
 =item C<__sharedCacheSet($kind, $key, $value)>
