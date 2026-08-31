@@ -10,6 +10,7 @@ use Carp qw(croak);
 use Data::Dumper;
 use File::Find qw(find);
 use Storable qw(retrieve);
+use YAML::XS qw(LoadFile);
 
 my $EXPECTED_FORMAT_VERSION = 8;
 my $EXPECTED_FILE_VERSION = 17;
@@ -79,6 +80,98 @@ sub inspectOne {
 	return;
 }
 
+sub formatBytes {
+	my ($bytes) = @_;
+	if ($bytes > $MEBIBYTE_THRESHOLD) {
+		return sprintf('%s MiB', formatNumber(sprintf('%.2f', $bytes / $MEBIBYTE)));
+	} elsif ($bytes > $KIBIBYTE_THRESHOLD) {
+		return sprintf('%s KiB', formatNumber(sprintf('%.2f', $bytes / $KIBIBYTE)));
+	}
+	return formatNumber($bytes) . ' bytes';
+}
+
+sub memcachedConfig {
+	foreach my $path ('etc/main.yaml', '/etc/chleb-bible-search/main.yaml') {
+		next unless (-f $path);
+		my $config = eval { LoadFile($path) };
+		next unless (ref($config) eq 'HASH');
+		my $rateLimit = $config->{rate_limit};
+		my $backend = ref($rateLimit) eq 'HASH' ? $rateLimit->{backend_memcached} : undef;
+		next unless (ref($backend) eq 'HASH');
+		my $servers = $backend->{servers} // [ '127.0.0.1:11211' ];
+		$servers = [ $servers ] unless (ref($servers) eq 'ARRAY');
+		return ($servers, $backend->{prefix} // 'chleb:dampen');
+	}
+	return ([ '127.0.0.1:11211' ], 'chleb:dampen');
+}
+
+sub inspectMemcached {
+	my ($servers, $prefix) = memcachedConfig();
+	my $client = eval {
+		require Cache::Memcached;
+		Cache::Memcached->import();
+		Cache::Memcached->new({
+			servers => $servers,
+			compress_threshold => 10_000,
+		});
+	};
+	if (!$client) {
+		print "Memcached: unavailable\n";
+		return;
+	}
+
+	my $stats = eval { $client->stats('items') };
+	if (ref($stats) ne 'HASH') {
+		print "Memcached: unavailable\n";
+		return;
+	}
+
+	my (%keys, $bytes, $serverCount, $cachedumpSupported);
+	$bytes = 0;
+	$serverCount = 0;
+	$cachedumpSupported = 1;
+	foreach my $server (@$servers) {
+		my $hostStats = $stats->{hosts}->{$server};
+		next unless (ref($hostStats) eq 'HASH');
+		$serverCount++;
+		my $items = $hostStats->{items} // '';
+		$items =~ s{\r}{}gx;
+		my @slabs = $items =~ m{^STAT[ ]items:(\d+):number[ ]\d+$}mgx;
+		next if (scalar(@slabs) == 0);
+		my $socket = $client->sock_to_host($server);
+		foreach my $slab (@slabs) {
+			my @lines = eval { $client->run_command($socket, "stats cachedump $slab 1000000\r\n") };
+			if (scalar(@lines) == 0 || grep { /^ERROR\r?\n?\z/x } @lines) {
+				$cachedumpSupported = 0;
+				next;
+			}
+			foreach my $line (@lines) {
+				my ($key, $size) = $line =~ m{^ITEM[ ]([^ ]+)[ ]\[(\d+)[ ]b;}x;
+				next unless (defined($key) && defined($size));
+				next unless ($key eq $prefix || index($key, $prefix . ':') == 0);
+				next if (exists($keys{$key}));
+				$keys{$key} = 1;
+				$bytes += $size;
+			}
+		}
+	}
+
+	print "Memcached prefix: $prefix\n";
+	if (!$cachedumpSupported) {
+		print "Memcached entries: unavailable (cachedump unsupported)\n";
+		return;
+	}
+	if ($serverCount == 0) {
+		print "Memcached: unavailable\n";
+		return;
+	}
+	print "Memcached servers: " . formatNumber($serverCount) . "\n";
+	print "Memcached entries: " . formatNumber(scalar(keys(%keys))) . "\n";
+	print "Memcached size: " . formatBytes($bytes) . "\n";
+	print "Memcached expired entries: not observable (Memcached omits expired items)\n";
+	return;
+}
+
 sub cacheRoot {
 	foreach my $path ('cache/shared', '/var/cache/chleb-bible-search/shared') {
 		return $path if (-d $path);
@@ -132,6 +225,7 @@ sub inspectAll {
 			print "  $group: " . formatNumber($groups{$group}) . "\n";
 		}
 	}
+	inspectMemcached();
 	return;
 }
 
