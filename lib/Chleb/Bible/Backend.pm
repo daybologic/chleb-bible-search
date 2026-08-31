@@ -1803,7 +1803,6 @@ sub __writeSharedCacheEntry {
 			value => $value,
 		}, $tempHandle);
 		$tempHandle->flush() if ($tempHandle->can('flush'));
-		$tempHandle->sync() or croak("sync failed: $ERRNO");
 		close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
 		rename($tempPath, $path) or croak("rename($tempPath -> $path) failed: $ERRNO");
 		1;
