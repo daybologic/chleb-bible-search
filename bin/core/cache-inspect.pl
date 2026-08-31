@@ -13,10 +13,21 @@ use Storable qw(retrieve);
 
 my $EXPECTED_FORMAT_VERSION = 8;
 my $EXPECTED_FILE_VERSION = 17;
+my $KIBIBYTE = 1024;
+my $MEBIBYTE = 1024 * 1024;
+my $KIBIBYTE_THRESHOLD = 512;
+my $MEBIBYTE_THRESHOLD = 512 * 1024;
 
 sub usage {
 	print STDERR "Usage: $0 [cache-entry.bin]\n";
 	exit 2;
+}
+
+sub formatNumber {
+	my ($value) = @_;
+	my ($whole, $fraction) = split(/[.]/x, "$value", 2);
+	$whole =~ s{(?<=\d)(?=(\d{3})+(?!\d))}{,}gx;
+	return defined($fraction) ? "$whole.$fraction" : $whole;
 }
 
 sub readEntry {
@@ -104,15 +115,21 @@ sub inspectAll {
 	}
 
 	print "Cache directory: $root\n";
-	print "Entry files: " . scalar(@paths) . "\n";
-	print "Total bytes: $bytes\n";
-	print "Valid entries: $counts{valid}\n";
-	print "Expired/incompatible entries: $counts{expired}\n";
-	print "Corrupt/unreadable entries: $counts{corrupt}\n";
+	print "Entry files: " . formatNumber(scalar(@paths)) . "\n";
+	if ($bytes > $MEBIBYTE_THRESHOLD) {
+		printf("Total size: %s MiB\n", formatNumber(sprintf('%.2f', $bytes / $MEBIBYTE)));
+	} elsif ($bytes > $KIBIBYTE_THRESHOLD) {
+		printf("Total size: %s KiB\n", formatNumber(sprintf('%.2f', $bytes / $KIBIBYTE)));
+	} else {
+		print "Total bytes: " . formatNumber($bytes) . "\n";
+	}
+	print "Valid entries: " . formatNumber($counts{valid}) . "\n";
+	print "Expired/incompatible entries: " . formatNumber($counts{expired}) . "\n";
+	print "Corrupt/unreadable entries: " . formatNumber($counts{corrupt}) . "\n";
 	if (scalar(keys(%groups)) > 0) {
 		print "Valid entries by translation/kind:\n";
 		foreach my $group (sort keys(%groups)) {
-			print "  $group: $groups{$group}\n";
+			print "  $group: " . formatNumber($groups{$group}) . "\n";
 		}
 	}
 	return;
