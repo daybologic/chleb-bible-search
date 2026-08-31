@@ -37,7 +37,6 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use English qw(-no_match_vars);
-use Fcntl qw(:flock);
 use IO::File;
 use IO::Handle ();
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
@@ -47,16 +46,19 @@ use File::Temp qw(tempfile);
 use Readonly;
 use DBI;
 use Storable qw(nstore_fd retrieve);
-use Digest::SHA qw(sha1_hex);
+use Crypt::xxHash qw(xxhash64_hex);
+use File::Path qw(make_path);
 use Chleb::Bible::Book;
 use Chleb::Type::Testament;
 use Chleb::Utils;
 
 Readonly my $FILE_SIG     => '178d4220-2531-11f1-8c59-ab2e7e0be878';
 Readonly my $FILE_VERSION => 17;
-Readonly my $SHARED_CACHE_FILE => 'shared.bin';
-Readonly my $SHARED_CACHE_FORMAT_VERSION => 6;
+Readonly my $SHARED_CACHE_DIR => 'shared';
+Readonly my $SHARED_CACHE_FORMAT_VERSION => 8;
+Readonly my $SHARED_CACHE_KEY_PREFIX_LENGTH => 2;
 Readonly my $VERSE_ORDINAL_CACHE_VERSION => 3;
+Readonly my $SQLITE_TEMP_MAX_AGE => 3600;
 
 =head1 ATTRIBUTES
 
@@ -233,12 +235,12 @@ has __sentimentCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub
 
 =item C<__sharedCache>
 
-The process-local representation of the on-disk shared cache.  It is built
-lazily by the Moose builder L</__makeSharedCache()>.
+The process-local representation of entries read from the on-disk shared
+cache.  It is built lazily as an empty hash and populated per lookup.
 
 =cut
 
-has __sharedCache => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeSharedCache');
+has __sharedCache => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
 
 =item C<__sharedCacheDirty>
 
@@ -249,10 +251,19 @@ not yet been flushed to disk.  It defaults to false.
 
 has __sharedCacheDirty => (is => 'rw', isa => 'Bool', default => 0);
 
+=item C<__sharedCachePending>
+
+Process-local shared-cache entries waiting to be written because deferred
+writes are enabled.
+
+=cut
+
+has __sharedCachePending => (is => 'ro', isa => 'HashRef', lazy => 1, default => sub { {} });
+
 =item C<__sharedCachePath>
 
-The path to the on-disk shared cache file.  It is built lazily by the Moose
-builder L</__makeSharedCachePath()>.
+The directory containing the independently serialized shared-cache entries.
+It is built lazily by the Moose builder L</__makeSharedCachePath()>.
 
 =cut
 
@@ -347,7 +358,7 @@ sub BUILD {
 
 Enable or disable deferred writes for the Storable-backed shared cache.  This is
 used by warmup and search loops so they can add many entries in memory and then
-write C<shared.bin> once at the end.
+write the small entry files once at the end.
 
 =cut
 
@@ -357,11 +368,24 @@ sub deferSharedCacheWrites {
 	return;
 }
 
+=item C<discardSharedCacheWrites()>
+
+Discard deferred shared-cache writes while retaining the populated process-local
+caches.  This is used during startup warmup so forked workers inherit hot data
+without making startup wait for persistent cache writes.
+
+=cut
+
+sub discardSharedCacheWrites {
+	my ($self) = @_;
+	%{ $self->__sharedCachePending } = ();
+	$self->__sharedCacheDirty(0);
+	return;
+}
+
 =item C<flushSharedCache()>
 
-Flush pending shared-cache changes to C<shared.bin>.  The write path takes an
-exclusive lock, merges this backend's current translation cache with the latest
-file contents, and replaces the file atomically.
+Flush pending shared-cache changes to their individual entry files.
 
 =cut
 
@@ -369,13 +393,15 @@ sub flushSharedCache {
 	my ($self) = @_;
 	return 1 unless ($self->__sharedCacheDirty);
 
-	my $ok = $self->__withSharedCacheLock(LOCK_EX, sub {
-		my $diskCache = $self->__readSharedCacheFile();
-		$self->__mergeSharedCacheTranslation($diskCache);
-		return $self->__writeSharedCacheFile($diskCache);
-	});
+	my $ok = 1;
+	foreach my $entryKey (keys(%{ $self->__sharedCachePending })) {
+		my ($kind, $key) = split(m{\0}x, $entryKey, 2);
+		$ok = 0 unless ($self->__writeSharedCacheEntry($kind, $key,
+			$self->__sharedCachePending->{$entryKey}));
+	}
 
 	if ($ok) {
+		%{ $self->__sharedCachePending } = ();
 		$self->__sharedCacheDirty(0);
 	}
 
@@ -1091,22 +1117,6 @@ SQL
 	return \%verseCounts;
 }
 
-=item C<__emptySharedCache()>
-
-Return a new empty top-level shared-cache structure tagged with the current
-cache format and backend file version.
-
-=cut
-
-sub __emptySharedCache {
-	my ($self) = @_;
-	return {
-		format_version => $SHARED_CACHE_FORMAT_VERSION,
-		file_version => $FILE_VERSION,
-		translations => {},
-	};
-}
-
 =item C<__fsck()>
 
 Validate the backend file signature and version, logging failures and returning
@@ -1142,7 +1152,7 @@ sub __inspectSourceFile {
 	my ($self, $sourceFile) = @_;
 	my ($tempHandle, $tempPath) = tempfile(
 		DIR    => $self->__makeTempDir(),
-		SUFFIX => '.sqlite',
+		SUFFIX => '.sqlite.tmp',
 		UNLINK => 1,
 	);
 	close($tempHandle);
@@ -1208,10 +1218,35 @@ sub __makeCacheDir {
 
 	Readonly my @PATHS => ('cache', '/var/cache/chleb-bible-search');
 	foreach my $path (@PATHS) {
-		return $path if (-d $path);
+		if (-d $path) {
+			$self->__cleanupSqliteTempFiles($path);
+			return $path;
+		}
 	}
 
 	croak('No cache dir available');
+}
+
+=item C<__cleanupSqliteTempFiles($path)>
+
+Remove decompression staging files older than the temporary-file grace period.
+New staging files use the dedicated C<.sqlite.tmp> suffix.  Legacy random
+ten-character C<.sqlite> staging names are also recognized, while named SQLite
+cache databases cannot be removed by this cleanup.
+
+=cut
+
+sub __cleanupSqliteTempFiles {
+	my ($self, $path) = @_;
+	my $oldestAllowed = time() - $SQLITE_TEMP_MAX_AGE;
+	foreach my $tempPath (glob(join('/', $path, '*.sqlite.tmp')), glob(join('/', $path, '*.sqlite'))) {
+		next unless (-f $tempPath);
+	next unless ($tempPath =~ m{/(?:[A-Za-z0-9_]{10}\.sqlite|[^/]+\.sqlite\.tmp)\z}x);
+		my $mtime = (stat($tempPath))[9] // 0;
+		next if ($mtime > $oldestAllowed);
+		unlink($tempPath) or $self->dic->logger->warn("Cannot remove stale SQLite temporary file $tempPath: $ERRNO");
+	}
+	return;
 }
 
 =item C<__makeTempDir()>
@@ -1274,7 +1309,7 @@ sub __makeCachePath {
 	if ($needsRefresh) {
 		my ($tempHandle, $tempPath) = tempfile(
 			DIR    => $self->cacheDir,
-			SUFFIX => '.sqlite',
+			SUFFIX => '.sqlite.tmp',
 			UNLINK => 0,
 		);
 		close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
@@ -1391,7 +1426,7 @@ sub __makeDictionaryCachePath { ## no critic (Subroutines::ProhibitUnusedPrivate
 
 	my ($tempHandle, $tempPath) = tempfile(
 		DIR    => $self->cacheDir,
-		SUFFIX => '.sqlite',
+		SUFFIX => '.sqlite.tmp',
 		UNLINK => 0,
 	);
 	close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
@@ -1472,27 +1507,9 @@ sub __makeDataDir {
 	return $PATHS[0];
 }
 
-=item C<__makeSharedCache()>
-
-Build the in-memory representation of C<shared.bin>.  The file is read under a
-shared lock and falls back to an empty cache structure if the file does not
-exist, cannot be read, or is stale for this code's cache format.
-
-This is invoked by Moose as the lazy builder for the C<__sharedCache> attribute.
-
-=cut
-
-sub __makeSharedCache { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
-	my ($self) = @_;
-	return $self->__withSharedCacheLock(LOCK_SH, sub {
-		return $self->__readSharedCacheFile();
-	}) // $self->__emptySharedCache();
-}
-
-
 =item C<__makeSharedCachePath()>
 
-Return the path to the backend shared cache file in the selected cache
+Return the directory for backend shared-cache entries in the selected cache
 directory.
 
 Invoked by Moose as the lazy builder for the __sharedCachePath attribute.
@@ -1501,7 +1518,7 @@ Invoked by Moose as the lazy builder for the __sharedCachePath attribute.
 
 sub __makeSharedCachePath { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
-	return join('/', $self->cacheDir, $SHARED_CACHE_FILE);
+	return join('/', $self->cacheDir, $SHARED_CACHE_DIR);
 }
 
 =item C<__makeSourceCompressedPath()>
@@ -1518,22 +1535,6 @@ sub __makeSourceCompressedPath {
 	my @candidates = $self->__sourceCompressedPathsForTranslation($self->bible->translation);
 	return $candidates[0] if (scalar(@candidates) > 0);
 	return join('/', $self->dataDir, $self->__bibleFileName(compressed => 1));
-}
-
-=item C<__mergeSharedCacheTranslation($cache)>
-
-Merge this backend object's current translation cache into a full shared-cache
-hash read from disk.  Other translation entries already present in C<$cache> are
-preserved.
-
-=cut
-
-sub __mergeSharedCacheTranslation {
-	my ($self, $cache) = @_;
-	my $translation = $self->bible->translation;
-	$cache->{translations} //= {};
-	$cache->{translations}->{$translation} = $self->__sharedCacheTranslation;
-	return;
 }
 
 =item C<__prepareSelect($dbh, $sql, @bind)>
@@ -1586,31 +1587,6 @@ sub __primeChapterOrdinals {
 	return;
 }
 
-=item C<__readSharedCacheFile()>
-
-Read and validate C<shared.bin>.  Corrupt, incompatible, or missing cache files
-are treated as empty caches so backend operation can continue.
-
-=cut
-
-sub __readSharedCacheFile {
-	my ($self) = @_;
-	my $path = $self->__sharedCachePath;
-	return $self->__emptySharedCache() unless (-f $path);
-
-	my $cache;
-	my $evalOk2; $evalOk2 = eval {
-		$cache = retrieve($path);
-		1;
-	} or $evalOk2 = 0;
-	if (my $evalError = $EVAL_ERROR) {
-		$self->dic->logger->warn("Cannot load backend shared cache from $path: $evalError");
-		return $self->__emptySharedCache();
-	}
-
-	return $self->__validSharedCache($cache) ? $cache : $self->__emptySharedCache();
-}
-
 =item C<__selectrowArray($dbh, $sql, @bind)>
 
 Execute a parameterized SQL query expected to return one row and return its
@@ -1627,46 +1603,69 @@ sub __selectrowArray {
 =item C<__sharedCacheGet($kind, $key)>
 
 Return a value from the Storable-backed shared cache for this translation, or
-C<undef> if no entry exists.  C<$kind> groups related cache entries, while
-C<$key> is hashed before being used as the stored entry key.
+C<undef> if no entry exists.  Each entry is read independently, so a lookup
+never deserializes the complete cache.
 
 =cut
 
 sub __sharedCacheGet {
 	my ($self, $kind, $key) = @_;
-	my $entries = $self->__sharedCacheTranslation->{entries};
-	return unless (ref($entries->{$kind}) eq 'HASH');
 	my $sharedKey = $self->__sharedCacheKey($key);
-	return $entries->{$kind}->{$sharedKey} if (exists($entries->{$kind}->{$sharedKey}));
-	return;
+	return $self->__sharedCache->{$kind}->{$sharedKey}
+		if (exists($self->__sharedCache->{$kind}->{$sharedKey}));
+	my $path = $self->__sharedCacheEntryPath($kind, $key);
+	return unless (-f $path);
+	my $entry;
+	my $evalOk; $evalOk = eval { $entry = retrieve($path); 1; } or $evalOk = 0;
+	if (!$evalOk || !$self->__validSharedCacheEntry($entry, $kind, $key)) {
+		$self->dic->logger->warn("Cannot load backend shared cache entry from $path: $EVAL_ERROR") if (!$evalOk);
+		return;
+	}
+	$self->__sharedCache->{$kind}->{$sharedKey} = $entry->{value};
+	return $entry->{value};
 }
 
 =item C<__sharedCacheKey($key)>
 
-Return the SHA-1 key used for a single shared-cache entry.  Hashing keeps stored
-entry names short and avoids leaking raw lookup strings into the cache file's
-internal structure.
+Return the xxHash64 key used for a single shared-cache entry.  The full lookup
+key is hashed and the kind and translation are separate path components, so
+different cache categories and translations cannot share a filename.
 
 =cut
 
 sub __sharedCacheKey {
 	my ($self, $key) = @_;
-	return sha1_hex($key // '');
+	return xxhash64_hex($self->bible->translation . "\0" . ($key // ''), 0);
+}
+
+=item C<__sharedCacheEntryPath($kind, $key)>
+
+Return the unique, tiered path for one shared-cache entry.  The first two
+characters of the entry hash form an intermediate directory so no leaf
+directory needs to contain every entry for a cache kind.
+
+=cut
+
+sub __sharedCacheEntryPath {
+	my ($self, $kind, $key) = @_;
+	my $keyPath = $self->__sharedCacheKey($key);
+	return join('/', $self->__sharedCachePath, $kind,
+		substr($keyPath, 0, $SHARED_CACHE_KEY_PREFIX_LENGTH), $keyPath . '.bin');
 }
 
 =item C<__sharedCacheSet($kind, $key, $value)>
 
 Store a value in the shared cache for this translation.  By default this also
-flushes C<shared.bin> immediately; callers doing many writes can defer those
-flushes with L</deferSharedCacheWrites($defer)>.
+flushes the individual entry immediately; callers doing many writes can defer
+those flushes with L</deferSharedCacheWrites($defer)>.
 
 =cut
 
 sub __sharedCacheSet {
 	my ($self, $kind, $key, $value) = @_;
-	my $entries = $self->__sharedCacheTranslation->{entries};
-	$entries->{$kind} //= {};
-	$entries->{$kind}->{ $self->__sharedCacheKey($key) } = $value;
+	my $sharedKey = $self->__sharedCacheKey($key);
+	$self->__sharedCache->{$kind}->{$sharedKey} = $value;
+	$self->__sharedCachePending->{join("\0", $kind, $key)} = $value;
 	$self->__sharedCacheDirty(1);
 	$self->flushSharedCache() unless ($self->__sharedCacheWriteDeferred);
 
@@ -1687,54 +1686,6 @@ sub __sharedCacheSourceMeta {
 		source_mtime => $stat[9] // 0,
 		source_size  => $stat[7] // 0,
 	};
-}
-
-=item C<__sharedCacheTranslation()>
-
-Return the per-translation shared-cache structure for the current bible.  If the
-translation entry is missing or stale relative to the compressed SQLite source,
-it is replaced with a fresh empty entry.
-
-=cut
-
-sub __sharedCacheTranslation {
-	my ($self) = @_;
-	my $translation = $self->bible->translation;
-	my $cache = $self->__sharedCache;
-	$cache->{translations} //= {};
-	my $translationCache = $cache->{translations}->{$translation};
-
-	if (!$self->__sharedCacheTranslationIsFresh($translationCache)) {
-		$translationCache = {
-			source => $self->__sharedCacheSourceMeta(),
-			entries => {},
-		};
-		$cache->{translations}->{$translation} = $translationCache;
-	}
-
-	$translationCache->{entries} //= {};
-	return $translationCache;
-}
-
-=item C<__sharedCacheTranslationIsFresh($translationCache)>
-
-Return true when a translation entry has the expected structure and was built
-from the same compressed SQLite source file that this backend is using.
-
-=cut
-
-sub __sharedCacheTranslationIsFresh {
-	my ($self, $translationCache) = @_;
-	return 0 unless (ref($translationCache) eq 'HASH');
-	return 0 unless (ref($translationCache->{entries}) eq 'HASH');
-	return 0 unless (ref($translationCache->{source}) eq 'HASH');
-
-	my $source = $self->__sharedCacheSourceMeta();
-	foreach my $key (qw(source_mtime source_size)) {
-		return 0 unless (($translationCache->{source}->{$key} // -1) == ($source->{$key} // -2));
-	}
-
-	return 1;
 }
 
 =item C<__sourceCompressedPathsForTranslation($translation)>
@@ -1790,19 +1741,26 @@ sub __traceSelectQuery {
 	return;
 }
 
-=item C<__validSharedCache($cache)>
+=item C<__validSharedCacheEntry($entry, $kind, $key)>
 
-Return true when C<$cache> is a top-level shared-cache hash for the current
-cache format and backend file version.
+Return true when one on-disk entry has the expected format, identity, and
+source metadata.
 
 =cut
 
-sub __validSharedCache {
-	my ($self, $cache) = @_;
-	return 0 unless (ref($cache) eq 'HASH');
-	return 0 unless (($cache->{format_version} // -1) == $SHARED_CACHE_FORMAT_VERSION);
-	return 0 unless (($cache->{file_version} // -1) == $FILE_VERSION);
-	return 0 unless (ref($cache->{translations}) eq 'HASH');
+sub __validSharedCacheEntry {
+	my ($self, $entry, $kind, $key) = @_;
+	return 0 unless (ref($entry) eq 'HASH');
+	return 0 unless (($entry->{format_version} // -1) == $SHARED_CACHE_FORMAT_VERSION);
+	return 0 unless (($entry->{file_version} // -1) == $FILE_VERSION);
+	return 0 unless (($entry->{translation} // '') eq $self->bible->translation);
+	return 0 unless (($entry->{kind} // '') eq ($kind // ''));
+	return 0 unless (($entry->{key} // '') eq ($key // ''));
+	return 0 unless (ref($entry->{source}) eq 'HASH');
+	my $source = $self->__sharedCacheSourceMeta();
+	foreach my $key (qw(source_mtime source_size)) {
+		return 0 unless (($entry->{source}->{$key} // -1) == ($source->{$key} // -2));
+	}
 	return 1;
 }
 
@@ -1869,57 +1827,41 @@ sub __verseCount {
 	return $count;
 }
 
-=item C<__withSharedCacheLock($mode, $callback)>
+=item C<__writeSharedCacheEntry($kind, $key, $value)>
 
-Run C<$callback> while holding the shared-cache lock file with the supplied
-C<flock()> mode.  Returns the callback result, or C<undef> if the lock file
-cannot be opened or locked.
-
-=cut
-
-sub __withSharedCacheLock {
-	my ($self, $mode, $callback) = @_;
-	my $lockPath = $self->__sharedCachePath . '.lock';
-	open(my $lockHandle, '>>', $lockPath) or do {
-		$self->dic->logger->warn("Cannot open backend shared cache lock $lockPath: $ERRNO");
-		return;
-	};
-	flock($lockHandle, $mode) or do {
-		$self->dic->logger->warn("Cannot lock backend shared cache $lockPath: $ERRNO");
-		close($lockHandle);
-		return;
-	};
-
-	my $result = $callback->();
-	close($lockHandle);
-	return $result;
-}
-
-=item C<__writeSharedCacheFile($cache)>
-
-Write the supplied shared-cache hash to C<shared.bin> using a temporary file in
-the cache directory, flushing it, and atomically renaming it into place.
+Write one shared-cache entry using a temporary file and an atomic rename.  The
+entry envelope carries the source identity so stale entries can be ignored
+without scanning or rewriting the other entries.
 
 =cut
 
-sub __writeSharedCacheFile {
-	my ($self, $cache) = @_;
-	my $path = $self->__sharedCachePath;
-	my ($tempHandle, $tempPath) = tempfile(DIR => $self->cacheDir, UNLINK => 0);
+sub __writeSharedCacheEntry {
+	my ($self, $kind, $key, $value) = @_;
+	my $path = $self->__sharedCacheEntryPath($kind, $key);
+	my ($directory) = ($path =~ m{\A(.+)/[^/]+\z}x);
+	make_path($directory) unless (-d $directory);
+	my ($tempHandle, $tempPath) = tempfile(DIR => $directory, UNLINK => 0);
 	my $ok = 1;
 
 	my $evalOk3; $evalOk3 = eval {
 		binmode($tempHandle, ':raw');
-		nstore_fd($cache, $tempHandle);
+		nstore_fd({
+			format_version => $SHARED_CACHE_FORMAT_VERSION,
+			file_version => $FILE_VERSION,
+			translation => $self->bible->translation,
+			kind => $kind,
+			key => $key,
+			source => $self->__sharedCacheSourceMeta(),
+			value => $value,
+		}, $tempHandle);
 		$tempHandle->flush() if ($tempHandle->can('flush'));
-		$tempHandle->sync() or croak("sync failed: $ERRNO");
 		close($tempHandle) or croak("close($tempPath) failed: $ERRNO");
 		rename($tempPath, $path) or croak("rename($tempPath -> $path) failed: $ERRNO");
 		1;
 	} or $evalOk3 = 0;
 	if (my $evalError = $EVAL_ERROR) {
 		$ok = 0;
-		$self->dic->logger->warn("Cannot store backend shared cache to $path: $evalError");
+		$self->dic->logger->warn("Cannot store backend shared cache entry to $path: $evalError");
 		close($tempHandle) if ($tempHandle);
 		unlink($tempPath) if (defined($tempPath) && -f $tempPath);
 	}

@@ -5,11 +5,13 @@ Maintainer: Rev. Duncan Ross Palmer <2e0eol@gmail.com>
 Build-Depends: debhelper (>= 13),
  jq,
  libdbd-sqlite3-perl,
+ libcrypt-xxhash-perl,
  libplack-perl,
 Build-Depends-Indep:
  libdatetime-perl,
  libdatetime-format-strptime-perl,
  libcache-memcached-perl,
+ libcrypt-xxhash-perl,
  libdbd-sqlite3-perl,
  libdbi-perl,
  libdevel-cover-perl,
