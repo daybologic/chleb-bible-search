@@ -13,6 +13,12 @@ repos:
         language: system
         pass_filenames: true
         types: [text]
+      - id: shell-syntax-check
+        name: shell syntax check
+        entry: bin/maint/check-shell-syntax.sh
+        language: system
+        pass_filenames: true
+        files: (?i)(^bin/|\.(sh|bash)$)
       - id: run-perlcritic
         name: perlcritic
         entry: bin/git/hooks/run-perlcritic.sh
