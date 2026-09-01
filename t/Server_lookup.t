@@ -461,6 +461,42 @@ sub testHtmlVerseRangeRendersAsContinuation {
 	return EXIT_SUCCESS;
 }
 
+sub testVerseRangeUnitScenarios {
+	my ($self) = @_;
+	plan tests => 6;
+
+	my $htmlMediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $jsonMediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my %common = (
+		book => 'gen',
+		chapter => 38,
+		translations => ['kjv'],
+	);
+
+	my $html = $self->sut->__lookup({ %common, accept => $htmlMediaType, verse => '9-10' });
+	like($html, qr{versenum.*?/1/lookup/gen/38/10\?translations=kjv">10 </a>}s,
+		'unit HTML range includes the second verse');
+
+	my $json = $self->sut->__lookup({ %common, accept => $jsonMediaType, verse => '9-10' });
+	is_deeply(
+		[ map { $_->{attributes}->{ordinal} } @{ $json->[0]->{data} } ],
+		[9, 10],
+		'unit JSON range includes both verse ordinals',
+	);
+
+	foreach my $mediaType ($htmlMediaType, $jsonMediaType) {
+		my $error;
+		eval {
+			$self->sut->__lookup({ %common, accept => $mediaType, verse => '10-9' });
+			1;
+		} or $error = $EVAL_ERROR;
+		isa_ok($error, 'Chleb::Exception', 'reversed range raises a Chleb exception');
+		is($error->statusCode, 400, 'reversed range raises HTTP 400 Bad Request');
+	}
+
+	return EXIT_SUCCESS;
+}
+
 sub testHtmlPreservesReversedTranslationInput {
 	my ($self) = @_;
 	plan tests => 1;
