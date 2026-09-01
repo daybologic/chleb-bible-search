@@ -544,7 +544,8 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 		return \@json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
+		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP,
+			{ forceContinuation => (($params->{verse} // '') =~ m{\A\d+-\d+\z}x ? 1 : 0) });
 	}
 
 	croak(Chleb::Exception->raise(
@@ -1892,9 +1893,10 @@ book, chapter, and verse navigation.
 =cut
 
 sub __verseToHtml {
-	my ($self, $verse, $json, $function) = @_;
+	my ($self, $verse, $json, $function, $options) = @_;
+	$options ||= { };
 
-	my $verseHtmlData = __verseHtmlData($verse, $json);
+	my $verseHtmlData = __verseHtmlData($verse, $json, $options);
 	my $reference = $verseHtmlData->{reference};
 	my $title = 'FIXME';
 	if ($function == $FUNCTION_RANDOM) {
@@ -2088,7 +2090,7 @@ sub __verseHtmlData {
 
 		$section->{html} .= $attributes->{text};
 
-		$section->{last_continues} = $thisVerse->continues ? 1 : 0;
+		$section->{last_continues} = ($options->{forceContinuation} || $thisVerse->continues) ? 1 : 0;
 		foreach my $tone (@{ $attributes->{tones} }) {
 			push(@{ $section->{tones} }, $tone);
 		}

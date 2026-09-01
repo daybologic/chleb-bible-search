@@ -98,6 +98,12 @@ sub fetch {
 	my ($self, $book, $chapterOrdinal, $verseOrdinal, $args) = @_;
 	my $startTiming = Time::HiRes::time();
 	$self->__fixTranslationsParam($args);
+	my ($verseRangeStart, $verseRangeEnd);
+	if (defined($verseOrdinal) && $verseOrdinal =~ m{\A(\d+)-(\d+)\z}x) {
+		($verseRangeStart, $verseRangeEnd) = ($1, $2);
+		croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "Invalid verse range '$verseOrdinal'"))
+			if ($verseRangeStart > $verseRangeEnd);
+	}
 
 	my (@bible) = $self->__getBible($args);
 
@@ -112,7 +118,11 @@ sub fetch {
 		next unless ($resolvedOk && $resolvedBook);
 		if ($resolvedBook) {
 			my $chapter = $resolvedBook->getChapterByOrdinal($chapterOrdinal);
-			if ($verseOrdinal) { # want a specific verse?
+			if (defined($verseRangeStart)) { # want a range of verses?
+				foreach my $rangeOrdinal ($verseRangeStart .. $verseRangeEnd) {
+					push(@verse, $chapter->getVerseByOrdinal($rangeOrdinal));
+				}
+			} elsif ($verseOrdinal) { # want a specific verse?
 				push(@verse, $chapter->getVerseByOrdinal($verseOrdinal));
 			} else { # want all of the verses
 				push(@verse, @{ $chapter->getVerses() });
