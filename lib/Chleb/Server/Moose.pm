@@ -545,7 +545,7 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		return \@json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP,
-			{ forceContinuation => (($params->{verse} // '') =~ m{\A\d+-\d+\z}x ? 1 : 0) });
+			{ forceContinuation => (($params->{verse} // '') =~ $Chleb::Utils::VERSE_RANGE_PATTERN ? 1 : 0) });
 	}
 
 	croak(Chleb::Exception->raise(

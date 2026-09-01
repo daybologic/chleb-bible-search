@@ -58,6 +58,15 @@ Pattern matching configuration keys whose values must not be exposed.
 
 Readonly my $REDACT_CONFIG_KEY_PATTERN => qr{ secret }ix;
 
+=item C<$VERSE_RANGE_PATTERN>
+
+Pattern matching an ascending or descending pair of positive verse ordinals,
+such as C<9-10>.
+
+=cut
+
+Readonly our $VERSE_RANGE_PATTERN => qr{\A(\d+)-(\d+)\z}x;
+
 =back
 
 =head1 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.

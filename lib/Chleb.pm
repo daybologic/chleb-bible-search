@@ -99,7 +99,7 @@ sub fetch {
 	my $startTiming = Time::HiRes::time();
 	$self->__fixTranslationsParam($args);
 	my ($verseRangeStart, $verseRangeEnd);
-	if (defined($verseOrdinal) && $verseOrdinal =~ m{\A(\d+)-(\d+)\z}x) {
+	if (defined($verseOrdinal) && $verseOrdinal =~ $Chleb::Utils::VERSE_RANGE_PATTERN) {
 		($verseRangeStart, $verseRangeEnd) = ($1, $2);
 		croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "Invalid verse range '$verseOrdinal'"))
 			if ($verseRangeStart > $verseRangeEnd);
