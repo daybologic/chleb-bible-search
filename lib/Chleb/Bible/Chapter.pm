@@ -88,6 +88,35 @@ sub getVerses {
 	} @{ $verses // [ ] } ];
 }
 
+=head1 METHODS
+
+=over
+
+=item C<getFirstVerse([$args])>
+
+Return the first verse present in this chapter, preserving gaps in a
+translation's versification.
+
+=item C<getLastVerse([$args])>
+
+Return the last verse present in this chapter, preserving gaps in a
+translation's versification.
+
+=back
+
+=cut
+
+sub getFirstVerse {
+	my ($self, $args) = @_;
+	return $self->getVerses($args)->[0];
+}
+
+sub getLastVerse {
+	my ($self, $args) = @_;
+	my $verses = $self->getVerses($args);
+	return $verses->[-1];
+}
+
 sub getNext {
 	my ($self) = @_;
 

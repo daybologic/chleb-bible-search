@@ -518,11 +518,8 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my %pickVerseByType = (
 		next  => sub { return $verse[0]->getNext() },
 		prev  => sub { return $verse[0]->getPrev() },
-		first => sub { return $verse[0]->chapter->getVerseByOrdinal(1) },
-		last  => sub {
-			my $chapterVerseCount = $verse[0]->chapter->verseCount;
-			return $verse[0]->chapter->getVerseByOrdinal($chapterVerseCount);
-		},
+		first => sub { return $verse[0]->chapter->getFirstVerse($params) },
+		last  => sub { return $verse[0]->chapter->getLastVerse($params) },
 	);
 
 	foreach my $type (qw(next prev first last)) {
@@ -1591,9 +1588,9 @@ sub __verseToJsonApi {
 	my $chapterLinkCache = $cache->{chapter_links}->{$chapterLinkCacheKey};
 	if (!$chapterLinkCache) {
 		$chapterLinkCache = {
-			first => '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal(1)->getPath())
+			first => '/' . join('/', 1, 'lookup', $verse->chapter->getFirstVerse($params)->getPath())
 			    . Chleb::Utils::queryParamsHelper($params),
-			last => '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal($verse->chapter->verseCount)->getPath())
+			last => '/' . join('/', 1, 'lookup', $verse->chapter->getLastVerse($params)->getPath())
 			    . Chleb::Utils::queryParamsHelper($params),
 		};
 		$cache->{chapter_links}->{$chapterLinkCacheKey} = $chapterLinkCache;

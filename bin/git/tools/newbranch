@@ -36,7 +36,7 @@ set -u
 # Ignominious exit if we're not the Git repo
 git -C . rev-parse 2>/dev/null
 
-branchTypes=(bugfix docs feature hotfix maint platform private refactor tests rel ui)
+branchTypes=(bugfix docs feature hotfix maint platform private refactor tests rel ui misc)
 
 function listBranchTypes() {
 	i=1
