@@ -436,6 +436,67 @@ sub testHtmlListsTranslationsSeparately {
 	return EXIT_SUCCESS;
 }
 
+sub testHtmlVerseRangeRendersAsContinuation {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my @verses = $self->sut->__library->fetch('Genesis', 38, '9-10', { translations => ['kjv'] });
+	is(scalar(@verses), 2, 'verse range fetches both requested verses');
+	ok(!$verses[0]->continues && !$verses[1]->continues,
+		'verse range does not alter Verse continuation state');
+
+	my $mediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $html = $self->sut->__lookup({
+		accept => $mediaType,
+		book => 'gen',
+		chapter => 38,
+		verse => '9-10',
+		translations => ['kjv'],
+	});
+	like($html, qr{versenum.*?/1/lookup/gen/38/10\?translations=kjv">10 </a>}s,
+		'HTML includes the second verse number in the same card');
+	unlike($html, qr{</blockquote>\s*<br /><br />\s*<sup class="versenum"}x,
+		'HTML renders the selected range as a continuation');
+
+	return EXIT_SUCCESS;
+}
+
+sub testVerseRangeUnitScenarios {
+	my ($self) = @_;
+	plan tests => 6;
+
+	my $htmlMediaType = Chleb::Server::MediaType->parseAcceptHeader('text/html');
+	my $jsonMediaType = Chleb::Server::MediaType->parseAcceptHeader('application/json');
+	my %common = (
+		book => 'gen',
+		chapter => 38,
+		translations => ['kjv'],
+	);
+
+	my $html = $self->sut->__lookup({ %common, accept => $htmlMediaType, verse => '9-10' });
+	like($html, qr{versenum.*?/1/lookup/gen/38/10\?translations=kjv">10 </a>}s,
+		'unit HTML range includes the second verse');
+
+	my $json = $self->sut->__lookup({ %common, accept => $jsonMediaType, verse => '9-10' });
+	is_deeply(
+		[ map { $_->{attributes}->{ordinal} } @{ $json->[0]->{data} } ],
+		[9, 10],
+		'unit JSON range includes both verse ordinals',
+	);
+
+	foreach my $mediaType ($htmlMediaType, $jsonMediaType) {
+		my $error;
+		eval {
+			$self->sut->__lookup({ %common, accept => $mediaType, verse => '10-9' });
+			1;
+		} or $error = $EVAL_ERROR;
+		isa_ok($error, 'Chleb::Exception', 'reversed range raises a Chleb exception');
+		is($error->statusCode, 400, 'reversed range raises HTTP 400 Bad Request');
+	}
+
+	return EXIT_SUCCESS;
+}
+
 sub testHtmlPreservesReversedTranslationInput {
 	my ($self) = @_;
 	plan tests => 1;

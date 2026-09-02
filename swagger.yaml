@@ -805,10 +805,19 @@ paths:
         - in: path
           name: verse
           schema:
-            type: integer
+            type: string
+            pattern: '^-?\d+$|^\d+-\d+$'
           required: true
-          description: Verse within chapter (ordinal), for example `16` for John 3:16
-          example: 16
+          description: >-
+            Verse within chapter (ordinal), for example `16` for John 3:16, or
+            an ascending range such as `9-10` for John 3:9-10.
+          examples:
+            single:
+              summary: Single verse
+              value: '16'
+            range:
+              summary: Ascending verse range
+              value: '9-10'
         - in: query
           name: translations
           schema:

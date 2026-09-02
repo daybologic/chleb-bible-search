@@ -119,6 +119,29 @@ sub testLookupOrdinalValidation {
 	return EXIT_SUCCESS;
 }
 
+sub testLookupVerseRangeValidation {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $error;
+	eval {
+		Chleb::Server::Dancer2::__validateLookupOrdinals(38, '9-10');
+		1;
+	} or $error = $EVAL_ERROR;
+	is($error, undef, 'ascending verse range is accepted');
+
+	$error = undef;
+	eval {
+		Chleb::Server::Dancer2::__validateLookupOrdinals(38, '10-9');
+		1;
+	} or $error = $EVAL_ERROR;
+
+	isa_ok($error, 'Chleb::Exception', 'reversed verse range is rejected');
+	is($error->statusCode, HTTP_BAD_REQUEST, 'reversed verse range returns HTTP 400 Bad Request');
+
+	return EXIT_SUCCESS;
+}
+
 package main;
 use strict;
 use warnings;
