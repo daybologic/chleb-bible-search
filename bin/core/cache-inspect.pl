@@ -14,6 +14,7 @@ use YAML::XS qw(LoadFile);
 
 my $EXPECTED_FORMAT_VERSION = 8;
 my $EXPECTED_FILE_VERSION = 17;
+my $EXPECTED_GENERIC_FORMAT_VERSION = 1;
 my $KIBIBYTE = 1024;
 my $MEBIBYTE = 1024 * 1024;
 my $KIBIBYTE_THRESHOLD = 512;
@@ -61,6 +62,13 @@ sub sourceIsCurrent {
 sub entryStatus {
 	my ($entry) = @_;
 	return 'corrupt' unless (ref($entry) eq 'HASH');
+	if (($entry->{format_version} // -1) == $EXPECTED_GENERIC_FORMAT_VERSION) {
+		return 'valid' if (defined($entry->{version})
+			&& defined($entry->{kind})
+			&& defined($entry->{key})
+			&& exists($entry->{value}));
+		return 'expired';
+	}
 	return 'expired' unless (($entry->{format_version} // -1) == $EXPECTED_FORMAT_VERSION
 		&& ($entry->{file_version} // -1) == $EXPECTED_FILE_VERSION
 		&& defined($entry->{translation})
@@ -202,7 +210,9 @@ sub inspectAll {
 		my $status = entryStatus($entry);
 		$counts{$status}++;
 		if ($status eq 'valid') {
-			my $group = join('/', $entry->{translation}, $entry->{kind});
+			my $group = ($entry->{format_version} == $EXPECTED_GENERIC_FORMAT_VERSION)
+				? 'shared/' . $entry->{kind}
+				: join('/', $entry->{translation}, $entry->{kind});
 			$groups{$group}++;
 		}
 	}
