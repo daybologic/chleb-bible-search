@@ -611,11 +611,8 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my %pickVerseByType = (
 		next  => sub { return $verse[0]->getNext() },
 		prev  => sub { return $verse[0]->getPrev() },
-		first => sub { return $verse[0]->chapter->getVerseByOrdinal(1) },
-		last  => sub {
-			my $chapterVerseCount = $verse[0]->chapter->verseCount;
-			return $verse[0]->chapter->getVerseByOrdinal($chapterVerseCount);
-		},
+		first => sub { return $verse[0]->chapter->getFirstVerse($params) },
+		last  => sub { return $verse[0]->chapter->getLastVerse($params) },
 	);
 
 	foreach my $type (qw(next prev first last)) {
@@ -640,7 +637,8 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 		return \@json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		my $html = $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP);
+		my $html = $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP,
+			{ forceContinuation => (($params->{verse} // '') =~ $Chleb::Utils::VERSE_RANGE_PATTERN ? 1 : 0) });
 		$self->__htmlCacheSet('lookup', $params, $html);
 		return $html;
 	}
@@ -1707,9 +1705,9 @@ sub __verseToJsonApi {
 	my $chapterLinkCache = $cache->{chapter_links}->{$chapterLinkCacheKey};
 	if (!$chapterLinkCache) {
 		$chapterLinkCache = {
-			first => '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal(1)->getPath())
+			first => '/' . join('/', 1, 'lookup', $verse->chapter->getFirstVerse($params)->getPath())
 			    . Chleb::Utils::queryParamsHelper($params),
-			last => '/' . join('/', 1, 'lookup', $verse->chapter->getVerseByOrdinal($verse->chapter->verseCount)->getPath())
+			last => '/' . join('/', 1, 'lookup', $verse->chapter->getLastVerse($params)->getPath())
 			    . Chleb::Utils::queryParamsHelper($params),
 		};
 		$cache->{chapter_links}->{$chapterLinkCacheKey} = $chapterLinkCache;
@@ -2011,9 +2009,10 @@ book, chapter, and verse navigation.
 =cut
 
 sub __verseToHtml {
-	my ($self, $verse, $json, $function) = @_;
+	my ($self, $verse, $json, $function, $options) = @_;
+	$options ||= { };
 
-	my $verseHtmlData = __verseHtmlData($verse, $json);
+	my $verseHtmlData = __verseHtmlData($verse, $json, $options);
 	my $reference = $verseHtmlData->{reference};
 	my $title = 'FIXME';
 	if ($function == $FUNCTION_RANDOM) {
@@ -2207,7 +2206,7 @@ sub __verseHtmlData {
 
 		$section->{html} .= $attributes->{text};
 
-		$section->{last_continues} = $thisVerse->continues ? 1 : 0;
+		$section->{last_continues} = ($options->{forceContinuation} || $thisVerse->continues) ? 1 : 0;
 		foreach my $tone (@{ $attributes->{tones} }) {
 			push(@{ $section->{tones} }, $tone);
 		}

@@ -1040,13 +1040,23 @@
             }
           },
           {
-            "description": "Verse within chapter (ordinal), for example `16` for John 3:16",
-            "example": "16",
+            "description": "Verse within chapter (ordinal), for example `16` for John 3:16, or an ascending range such as `9-10` for John 3:9-10.",
+            "examples": {
+              "range": {
+                "summary": "Ascending verse range",
+                "value": "9-10"
+              },
+              "single": {
+                "summary": "Single verse",
+                "value": "16"
+              }
+            },
             "in": "path",
             "name": "verse",
             "required": "1",
             "schema": {
-              "type": "integer"
+              "pattern": "^-?\\d+$|^\\d+-\\d+$",
+              "type": "string"
             }
           },
           {

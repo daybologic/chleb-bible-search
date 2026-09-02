@@ -265,9 +265,8 @@ sub search {
 	CHAPTER: for (my $chapterOrdinal = 1; $chapterOrdinal <= $self->chapterCount; $chapterOrdinal++) {
 		my $chapter = $self->getChapterByOrdinal($chapterOrdinal);
 
-		for (my $verseOrdinal = 1; $verseOrdinal <= $chapter->verseCount; $verseOrdinal++) {
-			my $verseKey = $self->__makeVerseKey($chapterOrdinal, $verseOrdinal);
-			my $text = $self->bible->getVerseDataByKey($verseKey);
+		for my $candidate (@{ $chapter->getVerses($args) }) {
+			my $text = $candidate->text;
 
 			my $doPush;
 			if ($query->wholeword) {
@@ -284,13 +283,7 @@ sub search {
 			}
 
 			if ($doPush) {
-				push(@verses, Chleb::Bible::Verse->new({
-					book           => $self,
-					chapter        => $chapter,
-					ordinal        => $verseOrdinal,
-					text           => $text,
-					__queryContext => $args || {},
-				}));
+				push(@verses, $candidate);
 
 				last CHAPTER if (scalar(@verses) >= $query->limit);
 			}
@@ -445,19 +438,6 @@ sub equals {
 =head1 PRIVATE METHODS
 
 =over
-
-=item C<__makeVerseKey($chapterOrdinal, $verseOrdinal)>
-
-Helper which makes a key suitable for fetching verses from the backend.
-TODO: Does this belong here?  I wonder.
-Perhaps this would be better within the Backend, or as a Utils?
-
-=cut
-
-sub __makeVerseKey {
-	my ($self, $chapterOrdinal, $verseOrdinal) = @_;
-	return join(':', $self->bible->translation, $self->canonicalCode, $chapterOrdinal, $verseOrdinal);
-}
 
 =item C<__makeId()>
 

@@ -716,6 +716,9 @@ sub __validateLookupOrdinals {
 	foreach my $ordinal ([ 'chapter', $chapter ], [ 'verse', $verse ]) {
 		next unless (defined($ordinal->[1]));
 		next if ($ordinal->[1] =~ m{\A-?\d+\z}x);
+		if ($ordinal->[0] eq 'verse' && $ordinal->[1] =~ $Chleb::Utils::VERSE_RANGE_PATTERN) {
+			next if ($1 <= $2);
+		}
 		croak(Chleb::Exception->raise(
 			HTTP_BAD_REQUEST,
 			sprintf("Invalid %s ordinal '%s'", $ordinal->[0], $ordinal->[1]),
