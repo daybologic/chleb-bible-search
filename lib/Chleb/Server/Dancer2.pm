@@ -49,6 +49,7 @@ Pass this object to Plack to launch the server!
 
 use Chleb::Bible::Search::Query;
 use Chleb;
+use Chleb::Exception;
 use Chleb::Server::Moose;
 use Chleb::TemplateProcessor;
 use Chleb::Utils::OSError::Mapper;
@@ -56,6 +57,7 @@ use Chleb::Utils::SecureString;
 use Cwd qw(abs_path);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants :is);
+use JSON ();
 use POSIX qw(EXIT_SUCCESS);
 use Readonly;
 use Scalar::Util qw(blessed);
@@ -1656,6 +1658,41 @@ get '/1/info' => sub {
 	return;
 }
 
+=item C<__registerAccountRoutes()>
+
+Register account lifecycle routes.
+
+=cut
+
+sub __registerAccountRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	post '/1/accounts/signup' => sub {
+		$server->logRequest();
+		my $dancerRequest = request();
+		my $accept;
+		my $result;
+		my $evalOk; $evalOk = eval {
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+			my $payload;
+			my $jsonEvalOk; $jsonEvalOk = eval {
+				$payload = JSON::decode_json($dancerRequest->body() // '');
+				1;
+			} or $jsonEvalOk = 0;
+			croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Request body is not valid JSON'))
+				unless ($jsonEvalOk);
+			$result = $server->__accountSignup($payload);
+			1;
+		} or $evalOk = 0;
+
+		if (my $exception = $EVAL_ERROR) {
+			return handleException($exception);
+		}
+
+		status HTTP_CREATED;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $result);
+	};
+	return;
+}
+
 =back
 
 =cut
@@ -1665,6 +1702,7 @@ __registerVerseRoutes();
 __registerLookupRoutes();
 __registerSearchRoutes();
 __registerStatusRoutes();
+__registerAccountRoutes();
 __registerNotFoundRoute();
 __registerErrorHooks();
 

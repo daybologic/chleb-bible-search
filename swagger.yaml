@@ -181,6 +181,35 @@ paths:
           $ref: '#/components/responses/TestHttpError'
         '511':
           $ref: '#/components/responses/TestHttpError'
+  /1/accounts/signup:
+    post:
+      summary: Create a pending account
+      operationId: postAccountSignup
+      description: Create a new account and return its allocated numeric account ID.
+      security: [] # No security
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountSignupDocument'
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/AccountSignupDocument'
+      responses:
+        '201':
+          description: Account created in pending status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDocument'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AccountDocument'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal Server Error
   /1/info:
     get:
       summary: Get global facts
@@ -933,6 +962,69 @@ components:
               - $ref: '#/components/schemas/Stats'
         links:
           $ref: '#/components/schemas/JsonApiLinks'
+    AccountSignupDocument:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - type
+            - attributes
+          properties:
+            type:
+              type: string
+              enum: [account]
+            attributes:
+              $ref: '#/components/schemas/AccountAttributes'
+    AccountDocument:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Account'
+    Account:
+      type: object
+      required:
+        - id
+        - type
+        - attributes
+      properties:
+        id:
+          type: string
+          pattern: '^[1-9][0-9]*$'
+          example: '123'
+        type:
+          type: string
+          enum: [account]
+        attributes:
+          allOf:
+            - $ref: '#/components/schemas/AccountAttributes'
+          properties:
+            status:
+              type: string
+              enum: [pending]
+          required:
+            - status
+    AccountAttributes:
+      type: object
+      required:
+        - username
+        - email
+        - name
+      properties:
+        username:
+          type: string
+          example: john.smith
+        email:
+          type: string
+          format: email
+          example: john.smith@example.com
+        name:
+          type: string
+          example: John Smith
     Bible:
       type: object
       properties:

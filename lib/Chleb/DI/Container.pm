@@ -48,6 +48,7 @@ via this "DIC" so that they may be reliably replaced during the test suites.
 
 use Log::Log4perl;
 use Chleb::Bible::Exclusions;
+use Chleb::Account::Repository;
 use Chleb::DI::Config;
 use Chleb::DI::Time;
 use Chleb::Token::Repository;
@@ -117,6 +118,14 @@ backend implementations.
 =cut
 
 has tokenRepo => (is => 'rw', lazy => 1, builder => '_makeTokenRepo');
+
+=item C<accountRepo>
+
+The account repository facade used by account endpoints.
+
+=cut
+
+has accountRepo => (is => 'rw', lazy => 1, builder => '_makeAccountRepo');
 
 =item C<time>
 
@@ -230,6 +239,12 @@ The default lazy-initializer for L</tokenRepo>.
 sub _makeTokenRepo { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	return Chleb::Token::Repository->new({ dic => $self });
+}
+
+# Invoked by Moose as the lazy builder for the accountRepo attribute.
+sub _makeAccountRepo { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	return Chleb::Account::Repository->new({ dic => $self });
 }
 
 =item C<_makeTime()>

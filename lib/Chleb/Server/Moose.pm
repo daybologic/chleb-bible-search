@@ -2636,6 +2636,53 @@ has __loggedUsingSessionToken => (is => 'rw', isa => 'Bool', default => 0);
 
 =over
 
+=item C<__accountSignup($payload)>
+
+Validate a JSON:API account signup document, create the account, and return
+the JSON:API account resource document.
+
+=back
+
+=cut
+
+sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self, $payload) = @_;
+
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account signup payload must be a JSON object'))
+		unless (ref($payload) eq 'HASH');
+	my $data = $payload->{data};
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account signup payload must contain data'))
+		unless (ref($data) eq 'HASH' && ($data->{type} // '') eq 'account');
+	my $attributes = $data->{attributes};
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account signup data must contain account attributes'))
+		unless (ref($attributes) eq 'HASH');
+
+	my %accountAttributes;
+	foreach my $name (qw(username email name)) {
+		my $value = $attributes->{$name};
+		if (!defined($value) || ref($value) ne '' || length($value) <= 0) {
+			croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "Account attribute '$name' is required"));
+		}
+		$accountAttributes{$name} = $value;
+	}
+
+	my $account = $self->dic->accountRepo->create(\%accountAttributes);
+	return {
+		data => {
+			type => 'account',
+			id => q{} . $account->{id},
+			attributes => {
+				username => $account->{username},
+				email => $account->{email},
+				name => $account->{name},
+				status => $account->{status},
+			},
+		},
+	};
+}
+
+=over
+
 =item C<__damper>
 
 Instance of L<Chleb::Server::Dampen> that handles all rate-limiting logic.

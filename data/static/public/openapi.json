@@ -55,6 +55,105 @@
       }
     },
     "schemas": {
+      "Account": {
+        "properties": {
+          "attributes": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AccountAttributes"
+              }
+            ],
+            "properties": {
+              "status": {
+                "enum": [
+                  "pending"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "id": {
+            "example": "123",
+            "pattern": "^[1-9][0-9]*$",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "account"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "attributes"
+        ],
+        "type": "object"
+      },
+      "AccountAttributes": {
+        "properties": {
+          "email": {
+            "example": "john.smith@example.com",
+            "format": "email",
+            "type": "string"
+          },
+          "name": {
+            "example": "John Smith",
+            "type": "string"
+          },
+          "username": {
+            "example": "john.smith",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "email",
+          "name"
+        ],
+        "type": "object"
+      },
+      "AccountDocument": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Account"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "AccountSignupDocument": {
+        "properties": {
+          "data": {
+            "properties": {
+              "attributes": {
+                "$ref": "#/components/schemas/AccountAttributes"
+              },
+              "type": {
+                "enum": [
+                  "account"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "type",
+              "attributes"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
       "Bible": {
         "properties": {
           "attributes": {
@@ -672,6 +771,52 @@
   },
   "openapi": "3.0.0",
   "paths": {
+    "/1/accounts/signup": {
+      "post": {
+        "description": "Create a new account and return its allocated numeric account ID.",
+        "operationId": "postAccountSignup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountSignupDocument"
+              }
+            },
+            "application/vnd.api+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountSignupDocument"
+              }
+            }
+          },
+          "required": "1"
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDocument"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDocument"
+                }
+              }
+            },
+            "description": "Account created in pending status"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [],
+        "summary": "Create a pending account"
+      }
+    },
     "/1/info": {
       "get": {
         "description": "Get cachable information about translations, books, chapters, and verses available",
