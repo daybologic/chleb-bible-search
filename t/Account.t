@@ -69,6 +69,22 @@ sub create {
 	};
 }
 
+package FakeNoopAccountRepository;
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+use strict;
+use warnings;
+use Carp qw(croak);
+
+sub new {
+	my ($class) = @_;
+	return bless({}, $class);
+}
+
+sub create {
+	croak('noop signup called the account repository');
+}
+
 package AccountTests;
 ## no critic (Modules::RequireFilenameMatchesPackage)
 ## no critic (Modules::ProhibitMultiplePackages)
@@ -85,6 +101,7 @@ use Chleb::Account::Repository;
 use Chleb::Account::Repository::Memcached;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Moose;
+use JSON ();
 use Test::More 0.96;
 
 sub setUp {
@@ -220,6 +237,31 @@ sub testSignupRejectsMissingAttribute {
 	} or $evalOk = 0;
 
 	is($evalOk, 0, 'signup rejects missing account attribute');
+
+	return 0;
+}
+
+sub testSignupNoopValidatesWithoutWriting {
+	my ($self) = @_;
+	plan tests => 4;
+
+	$self->sut->dic->accountRepo(FakeNoopAccountRepository->new());
+	my $result = $self->sut->__accountSignup({
+		meta => { noop => JSON::true },
+		data => {
+			type => 'account',
+			attributes => {
+				username => 'john.smith',
+				email => 'john.smith@example.com',
+				name => 'John Smith',
+			},
+		},
+	});
+
+	is($result->{meta}->{noop}, JSON::true, 'noop response identifies validation-only mode');
+	is($result->{data}, undef, 'noop response has no primary resource');
+	is($result->{meta}->{validated}->{email}, 'john.smith@example.com', 'noop response includes validated email');
+	is($result->{meta}->{validated}->{status}, 'pending', 'noop response includes pending status');
 
 	return 0;
 }

@@ -147,10 +147,66 @@
               "attributes"
             ],
             "type": "object"
+          },
+          "meta": {
+            "properties": {
+              "noop": {
+                "description": "Validate the signup without allocating an ID or writing to the backend.",
+                "example": "1",
+                "type": "boolean"
+              }
+            },
+            "type": "object"
           }
         },
         "required": [
           "data"
+        ],
+        "type": "object"
+      },
+      "AccountValidationDocument": {
+        "properties": {
+          "data": {
+            "nullable": "1",
+            "type": "object"
+          },
+          "meta": {
+            "properties": {
+              "noop": {
+                "enum": [
+                  "1"
+                ],
+                "type": "boolean"
+              },
+              "validated": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AccountAttributes"
+                  }
+                ],
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "pending"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            },
+            "required": [
+              "noop",
+              "validated"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "data",
+          "meta"
         ],
         "type": "object"
       },
@@ -791,6 +847,21 @@
           "required": "1"
         },
         "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountValidationDocument"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountValidationDocument"
+                }
+              }
+            },
+            "description": "Account signup payload validated without persistence"
+          },
           "201": {
             "content": {
               "application/json": {

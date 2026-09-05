@@ -1687,7 +1687,7 @@ sub __registerAccountRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSu
 			return handleException($exception);
 		}
 
-		status HTTP_CREATED;
+		status(($result->{meta} && $result->{meta}->{noop}) ? HTTP_OK : HTTP_CREATED);
 		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $result);
 	};
 	return;

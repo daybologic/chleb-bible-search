@@ -197,6 +197,15 @@ paths:
             schema:
               $ref: '#/components/schemas/AccountSignupDocument'
       responses:
+        '200':
+          description: Account signup payload validated without persistence
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountValidationDocument'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AccountValidationDocument'
         '201':
           description: Account created in pending status
           content:
@@ -978,6 +987,40 @@ components:
               enum: [account]
             attributes:
               $ref: '#/components/schemas/AccountAttributes'
+        meta:
+          type: object
+          properties:
+            noop:
+              type: boolean
+              description: Validate the signup without allocating an ID or writing to the backend.
+              example: true
+    AccountValidationDocument:
+      type: object
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          type: object
+          nullable: true
+        meta:
+          type: object
+          required:
+            - noop
+            - validated
+          properties:
+            noop:
+              type: boolean
+              enum: [true]
+            validated:
+              allOf:
+                - $ref: '#/components/schemas/AccountAttributes'
+              properties:
+                status:
+                  type: string
+                  enum: [pending]
+              required:
+                - status
     AccountDocument:
       type: object
       required:

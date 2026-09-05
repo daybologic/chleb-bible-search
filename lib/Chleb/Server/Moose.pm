@@ -2656,6 +2656,13 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 	my $attributes = $data->{attributes};
 	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account signup data must contain account attributes'))
 		unless (ref($attributes) eq 'HASH');
+	my $meta = $payload->{meta} // {};
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account signup meta must be a JSON object'))
+		unless (ref($meta) eq 'HASH');
+	my $noop = $meta->{noop};
+	if (defined($noop) && (!JSON::is_bool($noop) || !$noop)) {
+		croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account signup meta.noop must be true or omitted'));
+	}
 
 	my %accountAttributes;
 	foreach my $name (qw(username email name)) {
@@ -2664,6 +2671,19 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 			croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "Account attribute '$name' is required"));
 		}
 		$accountAttributes{$name} = $value;
+	}
+
+	if ($noop) {
+		return {
+			data => undef,
+			meta => {
+				noop => JSON::true,
+				validated => {
+					%accountAttributes,
+					status => 'pending',
+				},
+			},
+		};
 	}
 
 	my $account = $self->dic->accountRepo->create(\%accountAttributes);
