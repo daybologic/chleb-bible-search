@@ -11,6 +11,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
+use Digest::SHA qw(sha1_hex);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
 use JSON qw(decode_json encode_json);
@@ -25,6 +26,8 @@ has __clientObject => (is => 'rw', lazy => 1, builder => '__makeClient');
 
 sub create {
 	my ($self, $attributes) = @_;
+	my $existing = $self->loadByEmail($attributes->{email});
+	return $existing if ($existing);
 
 	my $added = $self->__call(add => $NEXT_ID_KEY, 0, $PERMANENT_TTL);
 	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to allocate an account ID'))
@@ -35,16 +38,51 @@ sub create {
 		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to allocate an account ID'));
 	}
 
+	my $emailKey = $self->__indexKey('email', $attributes->{email});
+	my $emailAdded = $self->__call(add => $emailKey, int($id), $PERMANENT_TTL);
+	if (!defined($emailAdded)) {
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to reserve the account email address'));
+	}
+	if (!$emailAdded) {
+		$existing = $self->loadByEmail($attributes->{email});
+		return $existing if ($existing);
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'The account email reservation is incomplete'));
+	}
+
+	my $usernameKey = $self->__indexKey('username', $attributes->{username});
+	my $usernameAdded = $self->__call(add => $usernameKey, int($id), $PERMANENT_TTL);
+	if (!defined($usernameAdded)) {
+		$self->__call(delete => $emailKey);
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to reserve the account username'));
+	}
+	if (!$usernameAdded) {
+		$self->__call(delete => $emailKey);
+		croak(Chleb::Exception->raise(HTTP_CONFLICT, 'The account username is already in use'));
+	}
+
 	my $account = {
 		id => int($id),
 		%{ $attributes },
 		status => 'pending',
 	};
 	my $stored = $self->__call(set => $self->__key($id), encode_json($account), $PERMANENT_TTL);
-	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to store the new account'))
-		unless ($stored);
+	unless ($stored) {
+		$self->__call(delete => $emailKey);
+		$self->__call(delete => $usernameKey);
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to store the new account'));
+	}
 
 	return $account;
+}
+
+sub loadByEmail {
+	my ($self, $email) = @_;
+	return $self->__loadIndex('email', $email);
+}
+
+sub loadByUsername {
+	my ($self, $username) = @_;
+	return $self->__loadIndex('username', $username);
 }
 
 sub load {
@@ -104,6 +142,18 @@ sub __makeClient { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 sub __key {
 	my ($self, $id) = @_;
 	return "$PREFIX:account:$id";
+}
+
+sub __indexKey {
+	my ($self, $type, $value) = @_;
+	return "$PREFIX:$type:" . sha1_hex($value // '');
+}
+
+sub __loadIndex {
+	my ($self, $type, $value) = @_;
+	my $id = $self->__call(get => $self->__indexKey($type, $value));
+	return unless (defined($id));
+	return $self->load($id);
 }
 
 __PACKAGE__->meta->make_immutable;

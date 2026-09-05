@@ -42,6 +42,13 @@ sub get {
 	return $self->{data}->{$key};
 }
 
+sub delete { ## no critic (Subroutines::ProhibitBuiltinHomonyms)
+	my ($self, $key) = @_;
+	delete($self->{data}->{$key});
+	delete($self->{ttl}->{$key});
+	return 1;
+}
+
 package FakeAccountRepository;
 ## no critic (Modules::RequireFilenameMatchesPackage)
 ## no critic (Modules::ProhibitMultiplePackages)
@@ -111,6 +118,43 @@ sub testMemcachedCreatesPermanentSequentialAccounts {
 	is($loaded->{email}, 'john.smith@example.com', 'stored email can be loaded');
 	is($loaded->{name}, 'John Smith', 'stored name can be loaded');
 	is($Chleb::Account::Repository::Memcached::PREFIX, 'chleb-accounts', 'account prefix is fixed');
+
+	return 0;
+}
+
+sub testEmailSignupIsIdempotent {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $store = Chleb::Account::Repository::Memcached->new({
+		client => FakeAccountMemcached->new(),
+		dic => $self->sut->dic,
+	});
+	my $first = $store->create({ username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
+	my $repeat = $store->create({ username => 'different', email => 'john.smith@example.com', name => 'Different Name' });
+
+	is($repeat->{id}, $first->{id}, 'same email returns the existing account ID');
+	is($repeat->{name}, 'John Smith', 'same email retains the existing account data');
+
+	return 0;
+}
+
+sub testUsernameConflictRaises409 {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $store = Chleb::Account::Repository::Memcached->new({
+		client => FakeAccountMemcached->new(),
+		dic => $self->sut->dic,
+	});
+	$store->create({ username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
+	my $evalOk; $evalOk = eval {
+		$store->create({ username => 'john.smith', email => 'other@example.com', name => 'Other Name' });
+		1;
+	} or $evalOk = 0;
+
+	is($evalOk, 0, 'duplicate username is rejected');
+	is($@->statusCode(), 409, 'duplicate username raises conflict');
 
 	return 0;
 }
