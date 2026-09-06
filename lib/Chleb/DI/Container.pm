@@ -244,7 +244,8 @@ sub _makeTokenRepo { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines
 # Invoked by Moose as the lazy builder for the accountRepo attribute.
 sub _makeAccountRepo { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
-	return Chleb::Account::Repository->new({ dic => $self });
+	my $backend = $self->config->get('accounts', 'backend', $Chleb::Account::Repository::BACKEND);
+	return Chleb::Account::Repository->new({ dic => $self, backend => $backend });
 }
 
 =item C<_makeTime()>

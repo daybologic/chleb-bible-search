@@ -62,6 +62,7 @@ bin/maint/make-legal-notices.sh
 bin/maint/md2html.pl
 bin/maint/normalize-json.sh
 bin/maint/openapi-publish.sh
+bin/maint/create-account-tables.sh
 bin/maint/openai/tone-discern-simplify.sh
 bin/maint/openai/tone-discern.py
 bin/maint/pkg-info.sh
@@ -72,6 +73,8 @@ bin/maint/synology.sh
 bitbucket-pipelines.yml
 cache/.keep
 COPYING
+debian/etc/accounts.yaml
+etc/accounts.yaml
 NOTICE
 data.PL
 data/.gitignore
@@ -371,6 +374,9 @@ info/.gitignore
 info/Makefile
 lib/Chleb.pm
 lib/Chleb/Args/Base.pm
+lib/Chleb/Account/Repository.pm
+lib/Chleb/Account/Repository/Dynamo.pm
+lib/Chleb/Account/Repository/Memcached.pm
 lib/Chleb/Bible.pm
 lib/Chleb/Bible/Backend.pm
 lib/Chleb/Bible/Base.pm
@@ -431,6 +437,7 @@ t/Backend_getOrdinalByVerseKey.t
 t/Backend_getSentimentByOrdinal.t
 t/Backend_sharedCache_storable.t
 t/Backend_sourceSelection.t
+t/Account.t
 t/Base.t
 t/Bible_getBookByLongName.t
 t/Bible_getBookByShortName.t

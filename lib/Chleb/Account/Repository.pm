@@ -10,10 +10,12 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Account::Repository::Memcached;
+use Chleb::Account::Repository::Dynamo;
 use Readonly;
 
 Readonly our $BACKEND => 'Memcached';
 
+has backend => (is => 'ro', isa => 'Str', default => $BACKEND);
 has __backend => (is => 'ro', lazy => 1, builder => '__makeBackend');
 
 sub create {
@@ -23,7 +25,13 @@ sub create {
 
 sub __makeBackend { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
-	return Chleb::Account::Repository::Memcached->new({ dic => $self->dic });
+	my %backends = (
+		Dynamo => 'Chleb::Account::Repository::Dynamo',
+		Memcached => 'Chleb::Account::Repository::Memcached',
+	);
+	croak("Unknown account repository backend '" . $self->backend . "'")
+		unless (exists($backends{ $self->backend }));
+	return $backends{ $self->backend }->new({ dic => $self->dic });
 }
 
 __PACKAGE__->meta->make_immutable;

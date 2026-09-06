@@ -44,8 +44,8 @@ Chleb::DI::Config - runtime configuration reader
 
 Loads the YAML configuration files from a configuration directory and exposes
 section/key lookups through C<get>.  The directory must contain C<main.yaml>;
-optional sibling files such as C<contact.yaml>, C<features.yaml>, and
-C<tokens.yaml> are merged over it when present.
+optional sibling files such as C<accounts.yaml>, C<contact.yaml>,
+C<features.yaml>, and C<tokens.yaml> are merged over it when present.
 
 =cut
 
@@ -56,6 +56,7 @@ use Readonly;
 use YAML::XS 'LoadFile';
 
 Readonly my @SPLIT_CONFIG_FILE_NAMES => qw(
+	accounts.yaml
 	main.yaml
 	contact.yaml
 	features.yaml

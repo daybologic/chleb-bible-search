@@ -98,6 +98,7 @@ use lib 'externals/libtest-module-runnable-perl/lib';
 extends 'Test::Module::Runnable';
 
 use Chleb::Account::Repository;
+use Chleb::Account::Repository::Dynamo;
 use Chleb::Account::Repository::Memcached;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Moose;
@@ -183,6 +184,17 @@ sub testRepositoryUsesMemcachedBackend {
 	my $repo = Chleb::Account::Repository->new({ dic => $self->sut->dic });
 	## no critic (Subroutines::ProhibitPrivateSubs)
 	isa_ok($repo->__backend(), 'Chleb::Account::Repository::Memcached', 'repository backend');
+
+	return 0;
+}
+
+sub testRepositoryCanSelectDynamoBackend {
+	my ($self) = @_;
+	plan tests => 1;
+
+	my $repo = Chleb::Account::Repository->new({ dic => $self->sut->dic, backend => 'Dynamo' });
+	## no critic (Subroutines::ProtectPrivateSubs)
+	isa_ok($repo->__backend(), 'Chleb::Account::Repository::Dynamo', 'DynamoDB repository backend');
 
 	return 0;
 }
