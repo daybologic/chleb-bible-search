@@ -146,6 +146,7 @@ sub __key {
 
 sub __indexKey {
 	my ($self, $type, $value) = @_;
+	$value = lc($value // '') if ($type eq 'username');
 	return "$PREFIX:$type:" . sha1_hex($value // '');
 }
 

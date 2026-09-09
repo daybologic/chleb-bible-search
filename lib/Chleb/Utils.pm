@@ -67,6 +67,23 @@ such as C<9-10>.
 
 Readonly our $VERSE_RANGE_PATTERN => qr{\A(\d+)-(\d+)\z}x;
 
+=item C<$ACCOUNT_USERNAME_PATTERN>
+
+Pattern matching the permitted account username format.  Separators may occur
+only singly between alphanumeric characters.
+
+=cut
+
+Readonly our $ACCOUNT_USERNAME_PATTERN => qr{\A[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*\z}x;
+
+=item C<$ACCOUNT_USERNAME_MAX_LENGTH>
+
+The maximum permitted account username length.
+
+=cut
+
+Readonly our $ACCOUNT_USERNAME_MAX_LENGTH => 30;
+
 =item C<%ACCOUNT_TITLES>
 
 The permitted account titles.

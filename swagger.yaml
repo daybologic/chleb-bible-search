@@ -1136,6 +1136,8 @@ components:
             - Wing Commander
         username:
           type: string
+          maxLength: !!int 30
+          pattern: '^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$'
           example: john.smith
         email:
           type: string

@@ -2673,6 +2673,12 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 		if ($name eq 'title' && !exists($Chleb::Utils::ACCOUNT_TITLES{$value})) {
 			croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "Invalid account title '$value'"));
 		}
+		if ($name eq 'username' && $value !~ $Chleb::Utils::ACCOUNT_USERNAME_PATTERN) {
+			croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account username may contain only letters, numbers, dots, hyphens, and underscores, with separators singly between letters or numbers'));
+		}
+		if ($name eq 'username' && length($value) > $Chleb::Utils::ACCOUNT_USERNAME_MAX_LENGTH) {
+			croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account username must be no more than 30 characters long'));
+		}
 		$accountAttributes{$name} = $value;
 	}
 

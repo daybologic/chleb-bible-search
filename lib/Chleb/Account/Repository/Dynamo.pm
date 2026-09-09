@@ -155,6 +155,7 @@ sub __accountFromItem {
 
 sub __indexItem {
 	my ($self, $type, $value, $id) = @_;
+	$value = lc($value // '') if ($type eq 'username');
 	return {
 		pk => { S => "$type#" . sha1_hex($value // '') },
 		sk => { S => 'unique' },
@@ -164,6 +165,7 @@ sub __indexItem {
 
 sub __indexKey {
 	my ($self, $type, $value) = @_;
+	$value = lc($value // '') if ($type eq 'username');
 	return {
 		pk => { S => "$type#" . sha1_hex($value // '') },
 		sk => { S => 'unique' },

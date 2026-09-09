@@ -37,6 +37,13 @@ if ! title_list=$(jq -er \
 	exit 1
 fi
 
+if ! username_max_length=$(jq -er \
+	'.components.schemas.AccountAttributes.properties.username.maxLength | tonumber | select(. > 0 and floor == .)' \
+	<<< "$docs"); then
+	printf 'The server documentation does not contain a valid username length limit.\n' >&2
+	exit 1
+fi
+
 mapfile -t titles <<< "$title_list"
 menu=()
 for title_option in "${titles[@]}"; do
@@ -50,7 +57,7 @@ if ! account_details=$(dialog --stdout --clear \
 	--and-widget \
 	--title 'Account details' \
 	--form 'Enter the account details:' 0 0 0 \
-	'Username:' 1 1 '' 1 20 40 0 \
+	'Username:' 1 1 '' 1 20 "$username_max_length" "$username_max_length" \
 	'Email address:' 2 1 '' 2 20 40 0 \
 	'Name:' 3 1 '' 3 20 40 0); then
 	printf 'Account creation cancelled.\n' >&2

@@ -178,6 +178,27 @@ sub testUsernameConflictRaises409 {
 	return 0;
 }
 
+sub testUsernameUniquenessIgnoresCaseButPreservesOriginal {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $store = Chleb::Account::Repository::Memcached->new({
+		client => FakeAccountMemcached->new(),
+		dic => $self->sut->dic,
+	});
+	my $first = $store->create({ title => 'Mr', username => '2e0eol', email => 'lower@example.com', name => 'Lower Case' });
+	my $evalOk; $evalOk = eval {
+		$store->create({ title => 'Mr', username => '2E0EOL', email => 'upper@example.com', name => 'Upper Case' });
+		1;
+	} or $evalOk = 0;
+
+	is($first->{username}, '2e0eol', 'original username casing is preserved');
+	is($evalOk, 0, 'username uniqueness ignores case');
+	is($@->statusCode(), 409, 'case-insensitive username conflict raises conflict');
+
+	return 0;
+}
+
 sub testRepositoryUsesMemcachedBackend {
 	my ($self) = @_;
 	plan tests => 1;
@@ -278,6 +299,57 @@ sub testSignupRejectsInvalidTitle {
 	} or $evalOk = 0;
 
 	is($evalOk, 0, 'signup rejects an invalid account title');
+
+	return 0;
+}
+
+sub testSignupRejectsAdjacentUsernameSeparators {
+	my ($self) = @_;
+	plan tests => 4;
+
+	foreach my $username (qw(john..smith john_-smith .john john-)) {
+		$self->sut->dic->accountRepo(FakeAccountRepository->new());
+		my $evalOk; $evalOk = eval {
+			$self->sut->__accountSignup({
+				data => {
+					type => 'account',
+					attributes => {
+						title => 'Mr',
+						username => $username,
+						email => 'john.smith@example.com',
+						name => 'John Smith',
+					},
+				},
+			});
+			1;
+		} or $evalOk = 0;
+		is($evalOk, 0, "signup rejects username '$username'");
+	}
+
+	return 0;
+}
+
+sub testSignupRejectsUsernameOverMaximumLength {
+	my ($self) = @_;
+	plan tests => 1;
+
+	$self->sut->dic->accountRepo(FakeAccountRepository->new());
+	my $evalOk; $evalOk = eval {
+		$self->sut->__accountSignup({
+			data => {
+				type => 'account',
+				attributes => {
+					title => 'Mr',
+					username => 'a' x 31,
+					email => 'john.smith@example.com',
+					name => 'John Smith',
+				},
+			},
+		});
+		1;
+	} or $evalOk = 0;
+
+	is($evalOk, 0, 'signup rejects usernames over 30 characters');
 
 	return 0;
 }

@@ -184,6 +184,8 @@
           },
           "username": {
             "example": "john.smith",
+            "maxLength": "30",
+            "pattern": "^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$",
             "type": "string"
           }
         },
