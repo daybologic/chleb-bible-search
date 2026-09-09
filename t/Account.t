@@ -114,15 +114,15 @@ sub setUp {
 
 sub testMemcachedCreatesPermanentSequentialAccounts {
 	my ($self) = @_;
-	plan tests => 10;
+	plan tests => 11;
 
 	my $client = FakeAccountMemcached->new();
 	my $store = Chleb::Account::Repository::Memcached->new({
 		client => $client,
 		dic => $self->sut->dic,
 	});
-	my $first = $store->create({ username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
-	my $secondAccount = $store->create({ username => 'jane.smith', email => 'jane.smith@example.com', name => 'Jane Smith' });
+	my $first = $store->create({ title => 'Mr', username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
+	my $secondAccount = $store->create({ title => 'Mrs', username => 'jane.smith', email => 'jane.smith@example.com', name => 'Jane Smith' });
 
 	is($first->{id}, 1, 'first account ID is 1');
 	is($secondAccount->{id}, 2, 'second account ID is 2');
@@ -135,6 +135,7 @@ sub testMemcachedCreatesPermanentSequentialAccounts {
 	is($loaded->{username}, 'john.smith', 'stored account can be loaded');
 	is($loaded->{email}, 'john.smith@example.com', 'stored email can be loaded');
 	is($loaded->{name}, 'John Smith', 'stored name can be loaded');
+	is($loaded->{title}, 'Mr', 'stored title can be loaded');
 	is($Chleb::Account::Repository::Memcached::PREFIX, 'chleb-accounts', 'account prefix is fixed');
 
 	return 0;
@@ -148,8 +149,8 @@ sub testEmailSignupIsIdempotent {
 		client => FakeAccountMemcached->new(),
 		dic => $self->sut->dic,
 	});
-	my $first = $store->create({ username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
-	my $repeat = $store->create({ username => 'different', email => 'john.smith@example.com', name => 'Different Name' });
+	my $first = $store->create({ title => 'Mr', username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
+	my $repeat = $store->create({ title => 'Dr', username => 'different', email => 'john.smith@example.com', name => 'Different Name' });
 
 	is($repeat->{id}, $first->{id}, 'same email returns the existing account ID');
 	is($repeat->{name}, 'John Smith', 'same email retains the existing account data');
@@ -165,9 +166,9 @@ sub testUsernameConflictRaises409 {
 		client => FakeAccountMemcached->new(),
 		dic => $self->sut->dic,
 	});
-	$store->create({ username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
+	$store->create({ title => 'Mr', username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
 	my $evalOk; $evalOk = eval {
-		$store->create({ username => 'john.smith', email => 'other@example.com', name => 'Other Name' });
+		$store->create({ title => 'Mrs', username => 'john.smith', email => 'other@example.com', name => 'Other Name' });
 		1;
 	} or $evalOk = 0;
 
@@ -209,6 +210,7 @@ sub testSignupReturnsJsonApiAccount {
 		data => {
 			type => 'account',
 			attributes => {
+				title => 'Mr',
 				username => 'john.smith',
 				email => 'john.smith@example.com',
 				name => 'John Smith',
@@ -221,6 +223,7 @@ sub testSignupReturnsJsonApiAccount {
 			type => 'account',
 			id => '123',
 			attributes => {
+				title => 'Mr',
 			username => 'john.smith',
 			email => 'john.smith@example.com',
 			name => 'John Smith',
@@ -253,9 +256,35 @@ sub testSignupRejectsMissingAttribute {
 	return 0;
 }
 
+sub testSignupRejectsInvalidTitle {
+	my ($self) = @_;
+	plan tests => 1;
+
+	$self->sut->dic->accountRepo(FakeAccountRepository->new());
+	## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my $evalOk; $evalOk = eval {
+		$self->sut->__accountSignup({
+			data => {
+				type => 'account',
+				attributes => {
+					title => 'Reverend',
+					username => 'john.smith',
+					email => 'john.smith@example.com',
+					name => 'John Smith',
+				},
+			},
+		});
+		1;
+	} or $evalOk = 0;
+
+	is($evalOk, 0, 'signup rejects an invalid account title');
+
+	return 0;
+}
+
 sub testSignupNoopValidatesWithoutWriting {
 	my ($self) = @_;
-	plan tests => 4;
+	plan tests => 5;
 
 	$self->sut->dic->accountRepo(FakeNoopAccountRepository->new());
 	my $result = $self->sut->__accountSignup({
@@ -263,6 +292,7 @@ sub testSignupNoopValidatesWithoutWriting {
 		data => {
 			type => 'account',
 			attributes => {
+				title => 'Mr',
 				username => 'john.smith',
 				email => 'john.smith@example.com',
 				name => 'John Smith',
@@ -273,6 +303,7 @@ sub testSignupNoopValidatesWithoutWriting {
 	is($result->{meta}->{noop}, JSON::true, 'noop response identifies validation-only mode');
 	is($result->{data}, undef, 'noop response has no primary resource');
 	is($result->{meta}->{validated}->{email}, 'john.smith@example.com', 'noop response includes validated email');
+	is($result->{meta}->{validated}->{title}, 'Mr', 'noop response includes validated title');
 	is($result->{meta}->{validated}->{status}, 'pending', 'noop response includes pending status');
 
 	return 0;

@@ -60,6 +60,8 @@ Depends: ${shlibs:Depends},
 Recommends:
  memcached,
  libredis-fast-perl | libredis-perl,
+Suggests:
+ dialog,
 Replaces: libreligion-bible-verses-perl
 Description: Chleb Bible Search - Bible Query Service
  For further information see:

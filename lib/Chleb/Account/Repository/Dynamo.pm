@@ -133,6 +133,7 @@ sub __accountItem {
 		pk => { S => 'account#' . $account->{id} },
 		sk => { S => $ACCOUNT_SORT_KEY },
 		id => { N => q{} . $account->{id} },
+		title => { S => $account->{title} },
 		username => { S => $account->{username} },
 		email => { S => $account->{email} },
 		name => { S => $account->{name} },
@@ -144,6 +145,7 @@ sub __accountFromItem {
 	my ($self, $item) = @_;
 	return {
 		id => int($item->{id}->{N}),
+		title => $item->{title}->{S},
 		username => $item->{username}->{S},
 		email => $item->{email}->{S},
 		name => $item->{name}->{S},

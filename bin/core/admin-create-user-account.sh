@@ -18,20 +18,54 @@ if ! command -v jq >/dev/null 2>&1; then
 	exit 1
 fi
 
+if ! command -v dialog >/dev/null 2>&1; then
+	printf 'dialog is required to select an account title.\n' >&2
+	exit 1
+fi
+
+if ! docs=$(curl --connect-timeout 2 --fail --silent --show-error \
+	--header 'Accept: application/json' \
+	"$CHLEB_URL/docs"); then
+	printf 'Unable to load account titles from %s/docs.\n' "$CHLEB_URL" >&2
+	exit 1
+fi
+
+if ! title_list=$(jq -er \
+	'.components.schemas.AccountAttributes.properties.title.enum[] | select(type == "string" and length > 0)' \
+	<<< "$docs"); then
+	printf 'The server documentation does not contain the account title list.\n' >&2
+	exit 1
+fi
+
+mapfile -t titles <<< "$title_list"
+menu=()
+for title_option in "${titles[@]}"; do
+	menu+=("$title_option" '')
+done
+
+if ! title=$(dialog --stdout --clear \
+	--backtitle 'Chleb Bible Search' \
+	--title 'Account title' \
+	--menu 'Choose an account title:' 0 0 12 "${menu[@]}"); then
+	printf 'Account creation cancelled.\n' >&2
+	exit 1
+fi
+
 read -r -p 'Username: ' username
 read -r -p 'Email address: ' email
 read -r -p 'Name: ' name
 
-if [[ -z "$username" || -z "$email" || -z "$name" ]]; then
-	printf 'Username, email address, and name are all required.\n' >&2
+if [[ -z "$title" || -z "$username" || -z "$email" || -z "$name" ]]; then
+	printf 'Title, username, email address, and name are all required.\n' >&2
 	exit 1
 fi
 
-payload=$(jq -cn \
+	payload=$(jq -cn \
+	--arg title "$title" \
 	--arg username "$username" \
 	--arg email "$email" \
 	--arg name "$name" \
-	'{data:{type:"account",attributes:{username:$username,email:$email,name:$name}}}')
+	'{data:{type:"account",attributes:{title:$title,username:$username,email:$email,name:$name}}}')
 
 response=$(curl --connect-timeout 2 --silent --show-error \
 	--data-binary "$payload" \

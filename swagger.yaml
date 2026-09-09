@@ -1054,10 +1054,85 @@ components:
     AccountAttributes:
       type: object
       required:
+        - title
         - username
         - email
         - name
       properties:
+        title:
+          type: string
+          enum:
+            - Rev
+            - Dr
+            - Mr
+            - Mrs
+            - Ms
+            - Mx
+            - Lord
+            - Sir
+            - Master
+            - Miss
+            - Other
+            - Dame
+            - Prof
+            - Duchess
+            - Earl
+            - Prince
+            - Princess
+            - Viscount
+            - Countess
+            - Count
+            - Baron
+            - Baroness
+            - Lady
+            - Duke
+            - General
+            - Major
+            - Admiral
+            - Commodore
+            - Commander
+            - Captain
+            - Lieutenant
+            - Field Marshal
+            - Lt. General
+            - Lt. Commander
+            - Major-General
+            - Brigadier
+            - Colonel
+            - Lt. Colonel
+            - Sergeant
+            - Lance Corporal
+            - Private
+            - Vice-Admiral
+            - Rear-Admiral
+            - Air Chief Marshal
+            - Air Marshal
+            - Air Vice-Marshal
+            - Air Commodore
+            - Group Captain
+            - Wing Commander
+            - Pastor
+            - Squadron Leader
+            - Flight Lieutenant
+            - Flying Officer
+            - Pilot Officer
+            - Airman
+            - Airwoman
+            - HM
+            - HRH
+            - Marquess
+            - Marchioness
+            - Viscountess
+            - Warrant Officer
+            - Corporal
+            - Ensign
+            - Midshipman
+            - Father
+            - Rabbi
+            - Imam
+            - Sheikh
+            - Hon
+            - Rt Hon
         username:
           type: string
           example: john.smith

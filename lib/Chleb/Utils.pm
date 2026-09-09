@@ -67,6 +67,28 @@ such as C<9-10>.
 
 Readonly our $VERSE_RANGE_PATTERN => qr{\A(\d+)-(\d+)\z}x;
 
+=item C<%ACCOUNT_TITLES>
+
+The permitted account titles.
+
+=cut
+
+Readonly our %ACCOUNT_TITLES => map { $_ => 1 } (
+	'Rev', 'Dr', 'Mr', 'Mrs', 'Ms', 'Mx', 'Lord', 'Sir', 'Master', 'Miss',
+	'Other', 'Dame', 'Prof', 'Duchess', 'Earl', 'Prince', 'Princess',
+	'Viscount', 'Countess', 'Count', 'Baron', 'Baroness', 'Lady', 'Duke',
+	'General', 'Major', 'Admiral', 'Commodore', 'Commander', 'Captain',
+	'Lieutenant', 'Field Marshal', 'Lt. General', 'Lt. Commander',
+	'Major-General', 'Brigadier', 'Colonel', 'Lt. Colonel', 'Sergeant',
+	'Lance Corporal', 'Private', 'Vice-Admiral', 'Rear-Admiral',
+	'Air Chief Marshal', 'Air Marshal', 'Air Vice-Marshal', 'Air Commodore',
+	'Group Captain', 'Wing Commander', 'Pastor', 'Squadron Leader',
+	'Flight Lieutenant', 'Flying Officer', 'Pilot Officer', 'Airman',
+	'Airwoman', 'HM', 'HRH', 'Marquess', 'Marchioness', 'Viscountess',
+	'Warrant Officer', 'Corporal', 'Ensign', 'Midshipman', 'Father', 'Rabbi',
+	'Imam', 'Sheikh', 'Hon', 'Rt Hon',
+);
+
 =back
 
 =head1 flags for the L</boolean($key, $value, [$defaultValue], [$flags])> function.

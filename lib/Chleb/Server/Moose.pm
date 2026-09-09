@@ -2665,10 +2665,13 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 	}
 
 	my %accountAttributes;
-	foreach my $name (qw(username email name)) {
+	foreach my $name (qw(title username email name)) {
 		my $value = $attributes->{$name};
 		if (!defined($value) || ref($value) ne '' || length($value) <= 0) {
 			croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "Account attribute '$name' is required"));
+		}
+		if ($name eq 'title' && !exists($Chleb::Utils::ACCOUNT_TITLES{$value})) {
+			croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, "Invalid account title '$value'"));
 		}
 		$accountAttributes{$name} = $value;
 	}
@@ -2692,6 +2695,7 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 			type => 'account',
 			id => q{} . $account->{id},
 			attributes => {
+				title => $account->{title},
 				username => $account->{username},
 				email => $account->{email},
 				name => $account->{name},
