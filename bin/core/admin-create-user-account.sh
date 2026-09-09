@@ -43,24 +43,32 @@ for title_option in "${titles[@]}"; do
 	menu+=("$title_option" '')
 done
 
-if ! title=$(dialog --stdout --clear \
+if ! account_details=$(dialog --stdout --clear \
 	--backtitle 'Chleb Bible Search' \
 	--title 'Account title' \
-	--menu 'Choose an account title:' 0 0 12 "${menu[@]}"); then
+	--menu 'Choose an account title:' 0 0 12 "${menu[@]}" \
+	--and-widget \
+	--title 'Account details' \
+	--form 'Enter the account details:' 0 0 0 \
+	'Username:' 1 1 '' 1 20 40 0 \
+	'Email address:' 2 1 '' 2 20 40 0 \
+	'Name:' 3 1 '' 3 20 40 0); then
 	printf 'Account creation cancelled.\n' >&2
 	exit 1
 fi
 
-read -r -p 'Username: ' username
-read -r -p 'Email address: ' email
-read -r -p 'Name: ' name
+mapfile -t account_fields <<< "$account_details"
+title="${account_fields[0]:-}"
+username="${account_fields[1]:-}"
+email="${account_fields[2]:-}"
+name="${account_fields[3]:-}"
 
 if [[ -z "$title" || -z "$username" || -z "$email" || -z "$name" ]]; then
 	printf 'Title, username, email address, and name are all required.\n' >&2
 	exit 1
 fi
 
-	payload=$(jq -cn \
+payload=$(jq -cn \
 	--arg title "$title" \
 	--arg username "$username" \
 	--arg email "$email" \
