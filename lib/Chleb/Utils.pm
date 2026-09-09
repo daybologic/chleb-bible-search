@@ -74,19 +74,19 @@ The permitted account titles.
 =cut
 
 Readonly our %ACCOUNT_TITLES => map { $_ => 1 } (
-	'Rev', 'Dr', 'Mr', 'Mrs', 'Ms', 'Mx', 'Lord', 'Sir', 'Master', 'Miss',
-	'Other', 'Dame', 'Prof', 'Duchess', 'Earl', 'Prince', 'Princess',
-	'Viscount', 'Countess', 'Count', 'Baron', 'Baroness', 'Lady', 'Duke',
-	'General', 'Major', 'Admiral', 'Commodore', 'Commander', 'Captain',
-	'Lieutenant', 'Field Marshal', 'Lt. General', 'Lt. Commander',
-	'Major-General', 'Brigadier', 'Colonel', 'Lt. Colonel', 'Sergeant',
-	'Lance Corporal', 'Private', 'Vice-Admiral', 'Rear-Admiral',
-	'Air Chief Marshal', 'Air Marshal', 'Air Vice-Marshal', 'Air Commodore',
-	'Group Captain', 'Wing Commander', 'Pastor', 'Squadron Leader',
-	'Flight Lieutenant', 'Flying Officer', 'Pilot Officer', 'Airman',
-	'Airwoman', 'HM', 'HRH', 'Marquess', 'Marchioness', 'Viscountess',
-	'Warrant Officer', 'Corporal', 'Ensign', 'Midshipman', 'Father', 'Rabbi',
-	'Imam', 'Sheikh', 'Sister', 'Hon', 'Rt Hon',
+	'Admiral', 'Air Chief Marshal', 'Air Commodore', 'Air Marshal',
+	'Air Vice-Marshal', 'Airman', 'Airwoman', 'Baron', 'Baroness',
+	'Brigadier', 'Captain', 'Colonel', 'Commander', 'Commodore', 'Corporal',
+	'Count', 'Countess', 'Dame', 'Dr', 'Duchess', 'Duke', 'Earl', 'Ensign',
+	'Father', 'Field Marshal', 'Flight Lieutenant', 'Flying Officer',
+	'General', 'Group Captain', 'HM', 'HRH', 'Hon', 'Imam', 'Lady',
+	'Lance Corporal', 'Lieutenant', 'Lord', 'Lt. Colonel', 'Lt. Commander',
+	'Lt. General', 'Major', 'Major-General', 'Marchioness', 'Marquess',
+	'Master', 'Midshipman', 'Miss', 'Mr', 'Mrs', 'Ms', 'Mx', 'Other', 'Pastor',
+	'Pilot Officer', 'Prince', 'Princess', 'Private', 'Prof', 'Rabbi',
+	'Rear-Admiral', 'Rev', 'Rt Hon', 'Sergeant', 'Sheikh', 'Sir', 'Sister',
+	'Squadron Leader', 'Vice-Admiral', 'Viscount', 'Viscountess',
+	'Warrant Officer', 'Wing Commander',
 );
 
 =back
