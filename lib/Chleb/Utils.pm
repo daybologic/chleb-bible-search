@@ -86,7 +86,7 @@ Readonly our %ACCOUNT_TITLES => map { $_ => 1 } (
 	'Flight Lieutenant', 'Flying Officer', 'Pilot Officer', 'Airman',
 	'Airwoman', 'HM', 'HRH', 'Marquess', 'Marchioness', 'Viscountess',
 	'Warrant Officer', 'Corporal', 'Ensign', 'Midshipman', 'Father', 'Rabbi',
-	'Imam', 'Sheikh', 'Hon', 'Rt Hon',
+	'Imam', 'Sheikh', 'Sister', 'Hon', 'Rt Hon',
 );
 
 =back
