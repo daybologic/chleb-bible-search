@@ -57,6 +57,7 @@ if ! account_details=$(dialog --stdout --clear \
 	exit 1
 fi
 
+account_details="${account_details//$'\t'/$'\n'}"
 mapfile -t account_fields <<< "$account_details"
 title="${account_fields[0]:-}"
 username="${account_fields[1]:-}"
