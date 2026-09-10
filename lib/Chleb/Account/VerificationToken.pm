@@ -29,6 +29,18 @@ persistable metadata.
 
 =over
 
+=item C<formatUtc($epoch)>
+
+Format an epoch timestamp as a UTC account timestamp.
+
+=cut
+
+sub formatUtc {
+	my ($epoch) = @_;
+	my ($secondValue, $minute, $hour, $day, $month, $year) = gmtime(int($epoch));
+	return sprintf('%04d-%02d-%02dT%02d:%02d:%02d+0000', $year + 1900, $month + 1, $day, $hour, $minute, $secondValue);
+}
+
 =item C<generate($dic, $accountId)>
 
 Generate a 256-bit hexadecimal token and its persistable metadata.

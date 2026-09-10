@@ -34,6 +34,7 @@ sub create {
 	my $id = $self->__allocateId();
 	my $account = {
 		id => int($id),
+		created_at => Chleb::Account::VerificationToken::formatUtc($self->dic->time->get()),
 		%{ $attributes },
 		status => 'pending',
 	};
@@ -159,6 +160,7 @@ sub __accountItem {
 		pk => { S => 'account#' . $account->{id} },
 		sk => { S => $ACCOUNT_SORT_KEY },
 		id => { N => q{} . $account->{id} },
+		created_at => { S => $account->{created_at} },
 		title => { S => $account->{title} },
 		username => { S => $account->{username} },
 		email => { S => $account->{email} },
@@ -171,6 +173,7 @@ sub __accountFromItem {
 	my ($self, $item) = @_;
 	return {
 		id => int($item->{id}->{N}),
+		created_at => $item->{created_at}->{S},
 		title => $item->{title}->{S},
 		username => $item->{username}->{S},
 		email => $item->{email}->{S},

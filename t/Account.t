@@ -65,6 +65,7 @@ sub create {
 	return {
 		%{ $attributes },
 		id => 123,
+		created_at => '1970-01-01T00:00:00+0000',
 		status => 'pending',
 	};
 }
@@ -116,19 +117,21 @@ sub setUp {
 
 sub testMemcachedCreatesPermanentSequentialAccounts {
 	my ($self) = @_;
-	plan tests => 11;
+	plan tests => 13;
 
 	my $client = FakeAccountMemcached->new();
 	my $store = Chleb::Account::Repository::Memcached->new({
 		client => $client,
 		dic => $self->sut->dic,
 	});
+	$self->sut->dic->time->setMockedTime(0);
 	my $first = $store->create({ title => 'Mr', username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
 	my $secondAccount = $store->create({ title => 'Mrs', username => 'jane.smith', email => 'jane.smith@example.com', name => 'Jane Smith' });
 
 	is($first->{id}, 1, 'first account ID is 1');
 	is($secondAccount->{id}, 2, 'second account ID is 2');
 	is($first->{status}, 'pending', 'new account status is pending');
+	is($first->{created_at}, '1970-01-01T00:00:00+0000', 'new account creation time is stored in UTC');
 	is($client->{ttl}->{ 'chleb-accounts:next-id' }, 0, 'account ID counter has permanent TTL');
 	is($client->{ttl}->{ 'chleb-accounts:account:1' }, 0, 'first account has permanent TTL');
 	is($client->{ttl}->{ 'chleb-accounts:account:2' }, 0, 'second account has permanent TTL');
@@ -138,6 +141,7 @@ sub testMemcachedCreatesPermanentSequentialAccounts {
 	is($loaded->{email}, 'john.smith@example.com', 'stored email can be loaded');
 	is($loaded->{name}, 'John Smith', 'stored name can be loaded');
 	is($loaded->{title}, 'Mr', 'stored title can be loaded');
+	is($loaded->{created_at}, '1970-01-01T00:00:00+0000', 'stored account creation time can be loaded');
 	is($Chleb::Account::Repository::Memcached::PREFIX, 'chleb-accounts', 'account prefix is fixed');
 
 	return 0;
@@ -170,13 +174,13 @@ sub testVerificationTokenIsRandomHashedAndExpires {
 		dic => $self->sut->dic,
 	});
 	my $first = $store->createVerificationToken(123);
-	my $second = $store->createVerificationToken(123);
+	my $secondToken = $store->createVerificationToken(123);
 
 	is($first->{account_id}, 123, 'verification token belongs to the account');
-	like($first->{value}, qr/\A[0-9a-f]{64}\z/, 'verification token is a 64-character hexadecimal value');
-	like($first->{token_hash}, qr/\A[0-9a-f]{64}\z/, 'stored token hash is a 64-character hexadecimal value');
+	like($first->{value}, qr{\A[0-9a-f]{64}\z}x, 'verification token is a 64-character hexadecimal value');
+	like($first->{token_hash}, qr{\A[0-9a-f]{64}\z}x, 'stored token hash is a 64-character hexadecimal value');
 	is($first->{token_hash}, sha256_hex($first->{value}), 'stored token hash is derived from the raw token');
-	isnt($first->{value}, $second->{value}, 'verification tokens are random');
+	isnt($first->{value}, $secondToken->{value}, 'verification tokens are random');
 	is($first->{expires_at} - $first->{created_at}, 24 * 60 * 60, 'verification token expires after 24 hours');
 	is($client->{ttl}->{ 'chleb-accounts:verification-token:' . $first->{token_hash} }, 24 * 60 * 60, 'verification token has a 24-hour cache lifetime');
 	is(JSON::decode_json($client->{data}->{ 'chleb-accounts:verification-token:' . $first->{token_hash} })->{account_id}, 123, 'stored verification token record contains the account ID');
@@ -270,6 +274,7 @@ sub testSignupReturnsJsonApiAccount {
 			type => 'account',
 			id => '123',
 			attributes => {
+				created_at => '1970-01-01T00:00:00+0000',
 				title => 'Mr',
 			username => 'john.smith',
 			email => 'john.smith@example.com',

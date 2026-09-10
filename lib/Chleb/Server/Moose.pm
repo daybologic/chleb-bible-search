@@ -2705,6 +2705,7 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 			type => 'account',
 			id => q{} . $account->{id},
 			attributes => {
+				created_at => $account->{created_at},
 				title => $account->{title},
 				username => $account->{username},
 				email => $account->{email},

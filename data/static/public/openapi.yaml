@@ -1046,10 +1046,14 @@ components:
           allOf:
             - $ref: '#/components/schemas/AccountAttributes'
           properties:
+            created_at:
+              type: string
+              pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+]0000$'
             status:
               type: string
               enum: [pending]
           required:
+            - created_at
             - status
     AccountAttributes:
       type: object

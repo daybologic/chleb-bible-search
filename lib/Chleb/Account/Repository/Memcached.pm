@@ -64,6 +64,7 @@ sub create {
 
 	my $account = {
 		id => int($id),
+		created_at => Chleb::Account::VerificationToken::formatUtc($self->dic->time->get()),
 		%{ $attributes },
 		status => 'pending',
 	};
