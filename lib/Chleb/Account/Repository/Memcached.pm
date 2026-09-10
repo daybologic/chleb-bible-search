@@ -11,6 +11,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
+use Chleb::Account::Role;
 use Chleb::Account::VerificationToken;
 use Digest::SHA qw(sha1_hex);
 use English qw(-no_match_vars);
@@ -65,6 +66,7 @@ sub create {
 	my $account = {
 		id => int($id),
 		created_at => Chleb::Account::VerificationToken::formatUtc($self->dic->time->get()),
+		role => $Chleb::Account::Role::USER,
 		%{ $attributes },
 		status => 'pending',
 	};

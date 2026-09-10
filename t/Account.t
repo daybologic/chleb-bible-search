@@ -66,6 +66,7 @@ sub create {
 		%{ $attributes },
 		id => 123,
 		created_at => '1970-01-01T00:00:00+0000',
+		role => $Chleb::Account::Role::USER,
 		status => 'pending',
 	};
 }
@@ -101,6 +102,7 @@ extends 'Test::Module::Runnable';
 use Chleb::Account::Repository;
 use Chleb::Account::Repository::Dynamo;
 use Chleb::Account::Repository::Memcached;
+use Chleb::Account::Role;
 use Chleb::Account::VerificationToken;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Moose;
@@ -117,7 +119,7 @@ sub setUp {
 
 sub testMemcachedCreatesPermanentSequentialAccounts {
 	my ($self) = @_;
-	plan tests => 13;
+	plan tests => 15;
 
 	my $client = FakeAccountMemcached->new();
 	my $store = Chleb::Account::Repository::Memcached->new({
@@ -132,6 +134,7 @@ sub testMemcachedCreatesPermanentSequentialAccounts {
 	is($secondAccount->{id}, 2, 'second account ID is 2');
 	is($first->{status}, 'pending', 'new account status is pending');
 	is($first->{created_at}, '1970-01-01T00:00:00+0000', 'new account creation time is stored in UTC');
+	is($first->{role}, $Chleb::Account::Role::USER, 'new account is stored with the user role');
 	is($client->{ttl}->{ 'chleb-accounts:next-id' }, 0, 'account ID counter has permanent TTL');
 	is($client->{ttl}->{ 'chleb-accounts:account:1' }, 0, 'first account has permanent TTL');
 	is($client->{ttl}->{ 'chleb-accounts:account:2' }, 0, 'second account has permanent TTL');
@@ -142,6 +145,7 @@ sub testMemcachedCreatesPermanentSequentialAccounts {
 	is($loaded->{name}, 'John Smith', 'stored name can be loaded');
 	is($loaded->{title}, 'Mr', 'stored title can be loaded');
 	is($loaded->{created_at}, '1970-01-01T00:00:00+0000', 'stored account creation time can be loaded');
+	is($loaded->{role}, $Chleb::Account::Role::USER, 'stored account role can be loaded');
 	is($Chleb::Account::Repository::Memcached::PREFIX, 'chleb-accounts', 'account prefix is fixed');
 
 	return 0;
@@ -275,6 +279,7 @@ sub testSignupReturnsJsonApiAccount {
 			id => '123',
 			attributes => {
 				created_at => '1970-01-01T00:00:00+0000',
+				role => 'user',
 				title => 'Mr',
 			username => 'john.smith',
 			email => 'john.smith@example.com',
@@ -387,7 +392,7 @@ sub testSignupRejectsUsernameOverMaximumLength {
 
 sub testSignupNoopValidatesWithoutWriting {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 6;
 
 	$self->sut->dic->accountRepo(FakeNoopAccountRepository->new());
 	my $result = $self->sut->__accountSignup({
@@ -407,6 +412,7 @@ sub testSignupNoopValidatesWithoutWriting {
 	is($result->{data}, undef, 'noop response has no primary resource');
 	is($result->{meta}->{validated}->{email}, 'john.smith@example.com', 'noop response includes validated email');
 	is($result->{meta}->{validated}->{title}, 'Mr', 'noop response includes validated title');
+	is($result->{meta}->{validated}->{role}, 'user', 'noop response includes default user role');
 	is($result->{meta}->{validated}->{status}, 'pending', 'noop response includes pending status');
 
 	return 0;

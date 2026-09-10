@@ -1016,10 +1016,14 @@ components:
               allOf:
                 - $ref: '#/components/schemas/AccountAttributes'
               properties:
+                role:
+                  type: string
+                  enum: [user, moderator, admin]
                 status:
                   type: string
                   enum: [pending]
               required:
+                - role
                 - status
     AccountDocument:
       type: object
@@ -1046,6 +1050,9 @@ components:
           allOf:
             - $ref: '#/components/schemas/AccountAttributes'
           properties:
+            role:
+              type: string
+              enum: [user, moderator, admin]
             created_at:
               type: string
               pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+]0000$'
@@ -1054,6 +1061,7 @@ components:
               enum: [pending]
           required:
             - created_at
+            - role
             - status
     AccountAttributes:
       type: object

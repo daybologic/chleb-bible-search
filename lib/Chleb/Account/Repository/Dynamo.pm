@@ -11,6 +11,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
+use Chleb::Account::Role;
 use Chleb::Account::VerificationToken;
 use Digest::SHA qw(sha1_hex);
 use English qw(-no_match_vars);
@@ -35,6 +36,7 @@ sub create {
 	my $account = {
 		id => int($id),
 		created_at => Chleb::Account::VerificationToken::formatUtc($self->dic->time->get()),
+		role => $Chleb::Account::Role::USER,
 		%{ $attributes },
 		status => 'pending',
 	};
@@ -161,6 +163,7 @@ sub __accountItem {
 		sk => { S => $ACCOUNT_SORT_KEY },
 		id => { N => q{} . $account->{id} },
 		created_at => { S => $account->{created_at} },
+		role => { N => q{} . $account->{role} },
 		title => { S => $account->{title} },
 		username => { S => $account->{username} },
 		email => { S => $account->{email} },
@@ -174,6 +177,7 @@ sub __accountFromItem {
 	return {
 		id => int($item->{id}->{N}),
 		created_at => $item->{created_at}->{S},
+		role => int($item->{role}->{N}),
 		title => $item->{title}->{S},
 		username => $item->{username}->{S},
 		email => $item->{email}->{S},

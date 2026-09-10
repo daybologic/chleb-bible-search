@@ -51,6 +51,7 @@ Moose portion of HTTP server facility used by L<Chleb::Server::Dancer2>
 
 use Chleb;
 use Chleb::Bible::Search::Query;
+use Chleb::Account::Role;
 use Chleb::DI::Container;
 use Chleb::Exception;
 use Chleb::Generated::Info;
@@ -2689,6 +2690,7 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 				noop => JSON::true,
 				validated => {
 					%accountAttributes,
+					role => Chleb::Account::Role::name($Chleb::Account::Role::USER),
 					status => 'pending',
 				},
 			},
@@ -2706,6 +2708,7 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 			id => q{} . $account->{id},
 			attributes => {
 				created_at => $account->{created_at},
+				role => Chleb::Account::Role::name($account->{role}),
 				title => $account->{title},
 				username => $account->{username},
 				email => $account->{email},
