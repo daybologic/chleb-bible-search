@@ -11,6 +11,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
+use Chleb::Account::VerificationToken;
 use Digest::SHA qw(sha1_hex);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
@@ -72,7 +73,32 @@ sub create {
 		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB account transaction failed: $EVAL_ERROR"));
 	}
 
+	$account->{_created} = 1;
 	return $account;
+}
+
+sub createVerificationToken {
+	my ($self, $accountId) = @_;
+	my $token = Chleb::Account::VerificationToken::generate($self->dic, $accountId);
+	my $item = {
+		pk => { S => 'verification-token#' . $token->{token_hash} },
+		sk => { S => 'token' },
+		account_id => { N => q{} . $token->{account_id} },
+		token_hash => { S => $token->{token_hash} },
+		created_at => { N => q{} . $token->{created_at} },
+		expires_at => { N => q{} . $token->{expires_at} },
+	};
+	my $evalOk; $evalOk = eval {
+		$self->__client->PutItem(
+			TableName => $self->table,
+			Item => $item,
+			ConditionExpression => 'attribute_not_exists(pk)',
+		);
+		1;
+	} or $evalOk = 0;
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB verification token storage failed: $EVAL_ERROR"))
+		unless ($evalOk);
+	return $token;
 }
 
 sub load {

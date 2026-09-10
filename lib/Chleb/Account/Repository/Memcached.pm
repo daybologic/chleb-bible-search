@@ -11,6 +11,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
+use Chleb::Account::VerificationToken;
 use Digest::SHA qw(sha1_hex);
 use English qw(-no_match_vars);
 use HTTP::Status qw(:constants);
@@ -18,6 +19,7 @@ use JSON qw(decode_json encode_json);
 use Readonly;
 
 Readonly our $PREFIX => 'chleb-accounts';
+Readonly our $VERIFICATION_TOKEN_PREFIX => "$PREFIX:verification-token";
 Readonly my $PERMANENT_TTL => 0;
 Readonly my $NEXT_ID_KEY => "$PREFIX:next-id";
 
@@ -72,7 +74,23 @@ sub create {
 		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to store the new account'));
 	}
 
+	$account->{_created} = 1;
 	return $account;
+}
+
+sub createVerificationToken {
+	my ($self, $accountId) = @_;
+	my $token = Chleb::Account::VerificationToken::generate($self->dic, $accountId);
+	my $tokenRecord = {
+		account_id => $token->{account_id},
+		token_hash => $token->{token_hash},
+		created_at => $token->{created_at},
+		expires_at => $token->{expires_at},
+	};
+	my $stored = $self->__call(set => $self->__verificationTokenKey($token->{token_hash}), encode_json($tokenRecord), $Chleb::Account::VerificationToken::LIFETIME);
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to store the account verification token'))
+		unless ($stored);
+	return $token;
 }
 
 sub loadByEmail {
@@ -142,6 +160,11 @@ sub __makeClient { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 sub __key {
 	my ($self, $id) = @_;
 	return "$PREFIX:account:$id";
+}
+
+sub __verificationTokenKey {
+	my ($self, $tokenHash) = @_;
+	return "$VERIFICATION_TOKEN_PREFIX:$tokenHash";
 }
 
 sub __indexKey {

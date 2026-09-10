@@ -2645,7 +2645,7 @@ the JSON:API account resource document.
 
 =cut
 
-sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines, Subroutines::ProhibitExcessComplexity)
 	my ($self, $payload) = @_;
 
 	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account signup payload must be a JSON object'))
@@ -2696,6 +2696,10 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 	}
 
 	my $account = $self->dic->accountRepo->create(\%accountAttributes);
+	if ($account->{_created}) {
+		my $verificationToken = $self->dic->accountRepo->createVerificationToken($account->{id});
+		# TODO: Publish an account-verification email job containing the account ID and raw token to SQS.
+	}
 	return {
 		data => {
 			type => 'account',

@@ -11,6 +11,7 @@ extends 'Chleb::Bible::Base';
 
 use Chleb::Account::Repository::Memcached;
 use Chleb::Account::Repository::Dynamo;
+use Chleb::Account::VerificationToken;
 use Readonly;
 
 Readonly our $BACKEND => 'Memcached';
@@ -21,6 +22,11 @@ has __backend => (is => 'ro', lazy => 1, builder => '__makeBackend');
 sub create {
 	my ($self, $attributes) = @_;
 	return $self->__backend->create($attributes);
+}
+
+sub createVerificationToken {
+	my ($self, $accountId) = @_;
+	return $self->__backend->createVerificationToken($accountId);
 }
 
 sub __makeBackend { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)

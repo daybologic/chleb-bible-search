@@ -100,8 +100,10 @@ extends 'Test::Module::Runnable';
 use Chleb::Account::Repository;
 use Chleb::Account::Repository::Dynamo;
 use Chleb::Account::Repository::Memcached;
+use Chleb::Account::VerificationToken;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Moose;
+use Digest::SHA qw(sha256_hex);
 use JSON ();
 use Test::More 0.96;
 
@@ -154,6 +156,30 @@ sub testEmailSignupIsIdempotent {
 
 	is($repeat->{id}, $first->{id}, 'same email returns the existing account ID');
 	is($repeat->{name}, 'John Smith', 'same email retains the existing account data');
+
+	return 0;
+}
+
+sub testVerificationTokenIsRandomHashedAndExpires {
+	my ($self) = @_;
+	plan tests => 8;
+
+	my $client = FakeAccountMemcached->new();
+	my $store = Chleb::Account::Repository::Memcached->new({
+		client => $client,
+		dic => $self->sut->dic,
+	});
+	my $first = $store->createVerificationToken(123);
+	my $second = $store->createVerificationToken(123);
+
+	is($first->{account_id}, 123, 'verification token belongs to the account');
+	like($first->{value}, qr/\A[0-9a-f]{64}\z/, 'verification token is a 64-character hexadecimal value');
+	like($first->{token_hash}, qr/\A[0-9a-f]{64}\z/, 'stored token hash is a 64-character hexadecimal value');
+	is($first->{token_hash}, sha256_hex($first->{value}), 'stored token hash is derived from the raw token');
+	isnt($first->{value}, $second->{value}, 'verification tokens are random');
+	is($first->{expires_at} - $first->{created_at}, 24 * 60 * 60, 'verification token expires after 24 hours');
+	is($client->{ttl}->{ 'chleb-accounts:verification-token:' . $first->{token_hash} }, 24 * 60 * 60, 'verification token has a 24-hour cache lifetime');
+	is(JSON::decode_json($client->{data}->{ 'chleb-accounts:verification-token:' . $first->{token_hash} })->{account_id}, 123, 'stored verification token record contains the account ID');
 
 	return 0;
 }

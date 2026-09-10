@@ -376,6 +376,7 @@ info/Makefile
 lib/Chleb.pm
 lib/Chleb/Args/Base.pm
 lib/Chleb/Account/Repository.pm
+lib/Chleb/Account/VerificationToken.pm
 lib/Chleb/Account/Repository/Dynamo.pm
 lib/Chleb/Account/Repository/Memcached.pm
 lib/Chleb/Bible.pm
