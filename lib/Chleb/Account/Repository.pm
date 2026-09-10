@@ -29,6 +29,16 @@ sub createVerificationToken {
 	return $self->__backend->createVerificationToken($accountId);
 }
 
+sub loadVerificationToken {
+	my ($self, $tokenId) = @_;
+	return $self->__backend->loadVerificationToken($tokenId);
+}
+
+sub consumeVerificationToken {
+	my ($self, $tokenId, $accountId) = @_;
+	return $self->__backend->consumeVerificationToken($tokenId, $accountId);
+}
+
 sub __makeBackend { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my %backends = (

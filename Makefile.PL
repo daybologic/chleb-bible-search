@@ -93,6 +93,7 @@ WriteMakefile(
 		'DBI'              => 0,
 		'DBD::SQLite'      => 0,
 		'Moose'            => 0,
+		'Paws'             => 0,
 		'Test::MockModule' => 0,
 		'Test::More'       => 0,
 		'UUID::Tiny'       => 0,

@@ -28,6 +28,9 @@
 
 accounts:
   backend: Memcached
+  aws:
+    region: eu-west-2
   dynamodb:
     table: chleb-accounts
-    region: eu-west-2
+  sqs:
+    verification_queue_url: https://sqs.eu-west-2.amazonaws.com/979393143841/chleb-account-verification-email

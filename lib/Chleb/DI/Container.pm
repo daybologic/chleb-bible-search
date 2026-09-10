@@ -49,6 +49,7 @@ via this "DIC" so that they may be reliably replaced during the test suites.
 use Log::Log4perl;
 use Chleb::Bible::Exclusions;
 use Chleb::Account::Repository;
+use Chleb::Account::VerificationQueue;
 use Chleb::DI::Config;
 use Chleb::DI::Time;
 use Chleb::Token::Repository;
@@ -126,6 +127,14 @@ The account repository facade used by account endpoints.
 =cut
 
 has accountRepo => (is => 'rw', lazy => 1, builder => '_makeAccountRepo');
+
+=item C<verificationQueue>
+
+The account-verification SQS publisher.
+
+=cut
+
+has verificationQueue => (is => 'rw', lazy => 1, builder => '_makeVerificationQueue');
 
 =item C<time>
 
@@ -246,6 +255,12 @@ sub _makeAccountRepo { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutin
 	my ($self) = @_;
 	my $backend = $self->config->get('accounts', 'backend', $Chleb::Account::Repository::BACKEND);
 	return Chleb::Account::Repository->new({ dic => $self, backend => $backend });
+}
+
+# Invoked by Moose as the lazy builder for the verificationQueue attribute.
+sub _makeVerificationQueue { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	return Chleb::Account::VerificationQueue->new({ dic => $self });
 }
 
 =item C<_makeTime()>

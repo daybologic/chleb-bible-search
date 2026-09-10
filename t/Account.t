@@ -87,6 +87,23 @@ sub create {
 	croak('noop signup called the account repository');
 }
 
+package FakeSQS;
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+use strict;
+use warnings;
+
+sub new {
+	my ($class) = @_;
+	return bless({}, $class);
+}
+
+sub SendMessage {
+	my ($self, %args) = @_;
+	$self->{message} = \%args;
+	return 1;
+}
+
 package AccountTests;
 ## no critic (Modules::RequireFilenameMatchesPackage)
 ## no critic (Modules::ProhibitMultiplePackages)
@@ -104,9 +121,9 @@ use Chleb::Account::Repository::Dynamo;
 use Chleb::Account::Repository::Memcached;
 use Chleb::Account::Role;
 use Chleb::Account::VerificationToken;
+use Chleb::Account::VerificationQueue;
 use Chleb::DI::MockLogger;
 use Chleb::Server::Moose;
-use Digest::SHA qw(sha256_hex);
 use JSON ();
 use Test::More 0.96;
 
@@ -168,9 +185,9 @@ sub testEmailSignupIsIdempotent {
 	return 0;
 }
 
-sub testVerificationTokenIsRandomHashedAndExpires {
+sub testVerificationTokenIsRandomAndExpires {
 	my ($self) = @_;
-	plan tests => 8;
+	plan tests => 12;
 
 	my $client = FakeAccountMemcached->new();
 	my $store = Chleb::Account::Repository::Memcached->new({
@@ -181,13 +198,18 @@ sub testVerificationTokenIsRandomHashedAndExpires {
 	my $secondToken = $store->createVerificationToken(123);
 
 	is($first->{account_id}, 123, 'verification token belongs to the account');
-	like($first->{value}, qr{\A[0-9a-f]{64}\z}x, 'verification token is a 64-character hexadecimal value');
-	like($first->{token_hash}, qr{\A[0-9a-f]{64}\z}x, 'stored token hash is a 64-character hexadecimal value');
-	is($first->{token_hash}, sha256_hex($first->{value}), 'stored token hash is derived from the raw token');
+	is($first->{token_id}, 1, 'verification token has a numeric ID');
+	like($first->{value}, qr{\A[A-Za-z0-9_-]{43}\z}x, 'verification token is URL-safe Base64');
 	isnt($first->{value}, $secondToken->{value}, 'verification tokens are random');
 	is($first->{expires_at} - $first->{created_at}, 24 * 60 * 60, 'verification token expires after 24 hours');
-	is($client->{ttl}->{ 'chleb-accounts:verification-token:' . $first->{token_hash} }, 24 * 60 * 60, 'verification token has a 24-hour cache lifetime');
-	is(JSON::decode_json($client->{data}->{ 'chleb-accounts:verification-token:' . $first->{token_hash} })->{account_id}, 123, 'stored verification token record contains the account ID');
+	is($client->{ttl}->{ 'chleb-accounts:verification-token:' . $first->{token_id} }, 24 * 60 * 60, 'verification token has a 24-hour cache lifetime');
+	my $stored = JSON::decode_json($client->{data}->{ 'chleb-accounts:verification-token:' . $first->{token_id} });
+	is($stored->{account_id}, 123, 'stored verification token record contains the account ID');
+	is($stored->{value}, $first->{value}, 'stored verification token record contains the token value');
+	is($store->loadVerificationToken($first->{token_id})->{value}, $first->{value}, 'verification token can be loaded by numeric ID');
+	ok($store->consumeVerificationToken($first->{token_id}, 123), 'verification token can be consumed by its account');
+	ok(defined($store->loadVerificationToken($first->{token_id})->{consumed_at}), 'consumed verification token records the consumption time');
+	ok(!$store->consumeVerificationToken($first->{token_id}, 123), 'verification token cannot be consumed twice');
 
 	return 0;
 }
@@ -251,6 +273,25 @@ sub testRepositoryCanSelectDynamoBackend {
 	my $repo = Chleb::Account::Repository->new({ dic => $self->sut->dic, backend => 'Dynamo' });
 	## no critic (Subroutines::ProtectPrivateSubs)
 	isa_ok($repo->__backend(), 'Chleb::Account::Repository::Dynamo', 'DynamoDB repository backend');
+
+	return 0;
+}
+
+sub testVerificationQueuePublishesOnlyAccountAndTokenIDs {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $client = FakeSQS->new();
+	my $queue = Chleb::Account::VerificationQueue->new({
+		client => $client,
+		dic => $self->sut->dic,
+	});
+	$queue->publish({ account_id => 123, token_id => 7 });
+
+	is($client->{message}->{QueueUrl}, 'https://sqs.eu-west-2.amazonaws.com/979393143841/chleb-account-verification-email', 'verification jobs use the configured queue');
+	my $body = JSON::decode_json($client->{message}->{MessageBody});
+	is_deeply($body, { account_id => 123, token_id => 7 }, 'verification jobs contain only account and token IDs');
+	ok(!exists($body->{value}) && !exists($body->{token}), 'verification jobs do not contain a token value');
 
 	return 0;
 }

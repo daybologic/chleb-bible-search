@@ -8,9 +8,9 @@ use warnings;
 use Carp qw(croak);
 
 use Chleb::Exception;
-use Digest::SHA qw(sha256_hex);
 use Fcntl qw(O_RDONLY);
 use HTTP::Status qw(:constants);
+use MIME::Base64 qw(encode_base64);
 use Readonly;
 
 Readonly our $LIFETIME => 24 * 60 * 60;
@@ -41,14 +41,14 @@ sub formatUtc {
 	return sprintf('%04d-%02d-%02dT%02d:%02d:%02d+0000', $year + 1900, $month + 1, $day, $hour, $minute, $secondValue);
 }
 
-=item C<generate($dic, $accountId)>
+=item C<generate($dic, $accountId, $tokenId)>
 
-Generate a 256-bit hexadecimal token and its persistable metadata.
+Generate a 256-bit URL-safe Base64 token and its persistable metadata.
 
 =cut
 
 sub generate {
-	my ($dic, $accountId) = @_;
+	my ($dic, $accountId, $tokenId) = @_;
 	my $createdAt = int($dic->time->get());
 	my $random = '';
 	my $opened = sysopen(my $randomHandle, '/dev/urandom', O_RDONLY);
@@ -63,10 +63,12 @@ sub generate {
 	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to obtain secure random data'))
 		unless (length($random) == $RANDOM_BYTES);
 
-	my $value = sha256_hex($random);
+	my $value = encode_base64($random, '');
+	$value =~ tr{+/}{-_};
+	$value =~ s{=+\z}{}x;
 	return {
 		account_id => int($accountId),
-		token_hash => sha256_hex($value),
+		token_id => int($tokenId),
 		value => $value,
 		created_at => $createdAt,
 		expires_at => $createdAt + $LIFETIME,

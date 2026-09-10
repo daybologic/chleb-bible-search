@@ -2700,7 +2700,10 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 	my $account = $self->dic->accountRepo->create(\%accountAttributes);
 	if ($account->{_created}) {
 		my $verificationToken = $self->dic->accountRepo->createVerificationToken($account->{id});
-		# TODO: Publish an account-verification email job containing the account ID and raw token to SQS.
+		$self->dic->verificationQueue->publish({
+			account_id => $account->{id},
+			token_id => $verificationToken->{token_id},
+		});
 	}
 	return {
 		data => {

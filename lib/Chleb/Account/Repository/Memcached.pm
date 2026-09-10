@@ -23,6 +23,8 @@ Readonly our $PREFIX => 'chleb-accounts';
 Readonly our $VERIFICATION_TOKEN_PREFIX => "$PREFIX:verification-token";
 Readonly my $PERMANENT_TTL => 0;
 Readonly my $NEXT_ID_KEY => "$PREFIX:next-id";
+Readonly my $NEXT_TOKEN_ID_KEY => "$PREFIX:verification-token-next-id";
+Readonly my $CONSUME_LOCK_TTL => 30;
 
 has client => (is => 'ro', init_arg => 'client', predicate => '__hasClient');
 has __clientObject => (is => 'rw', lazy => 1, builder => '__makeClient');
@@ -83,17 +85,60 @@ sub create {
 
 sub createVerificationToken {
 	my ($self, $accountId) = @_;
-	my $token = Chleb::Account::VerificationToken::generate($self->dic, $accountId);
+	my $added = $self->__call(add => $NEXT_TOKEN_ID_KEY, 0, $PERMANENT_TTL);
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to initialize verification token IDs'))
+		unless (defined($added));
+	my $tokenId = $self->__call(incr => $NEXT_TOKEN_ID_KEY);
+	if (!defined($tokenId) || $tokenId !~ m{ \A[0-9]+\z }x || int($tokenId) <= 0) {
+		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to allocate a verification token ID'));
+	}
+	my $token = Chleb::Account::VerificationToken::generate($self->dic, $accountId, $tokenId);
 	my $tokenRecord = {
+		token_id => $token->{token_id},
 		account_id => $token->{account_id},
-		token_hash => $token->{token_hash},
+		value => $token->{value},
 		created_at => $token->{created_at},
 		expires_at => $token->{expires_at},
 	};
-	my $stored = $self->__call(set => $self->__verificationTokenKey($token->{token_hash}), encode_json($tokenRecord), $Chleb::Account::VerificationToken::LIFETIME);
+	my $stored = $self->__call(set => $self->__verificationTokenKey($token->{token_id}), encode_json($tokenRecord), $Chleb::Account::VerificationToken::LIFETIME);
 	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to store the account verification token'))
 		unless ($stored);
 	return $token;
+}
+
+sub loadVerificationToken {
+	my ($self, $tokenId) = @_;
+	my $encoded = $self->__call(get => $self->__verificationTokenKey($tokenId));
+	return unless (defined($encoded));
+	my $tokenRecord;
+	my $evalOk; $evalOk = eval {
+		$tokenRecord = decode_json($encoded);
+		1;
+	} or $evalOk = 0;
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "Invalid verification token data for token '$tokenId': $EVAL_ERROR"))
+		unless ($evalOk && ref($tokenRecord) eq 'HASH');
+	return $tokenRecord;
+}
+
+sub consumeVerificationToken {
+	my ($self, $tokenId, $accountId) = @_;
+	my $tokenRecord = $self->loadVerificationToken($tokenId);
+	return unless ($tokenRecord && int($tokenRecord->{account_id}) == int($accountId));
+	return if (defined($tokenRecord->{consumed_at}));
+	return if (int($tokenRecord->{expires_at}) <= int($self->dic->time->get()));
+	my $lockKey = $self->__verificationTokenLockKey($tokenId);
+	my $locked = $self->__call(add => $lockKey, 1, $CONSUME_LOCK_TTL);
+	return unless ($locked);
+	$tokenRecord = $self->loadVerificationToken($tokenId);
+	if (!$tokenRecord || int($tokenRecord->{account_id}) != int($accountId) || defined($tokenRecord->{consumed_at}) || int($tokenRecord->{expires_at}) <= int($self->dic->time->get())) {
+		$self->__call(delete => $lockKey);
+		return;
+	}
+	$tokenRecord->{consumed_at} = int($self->dic->time->get());
+	my $stored = $self->__call(set => $self->__verificationTokenKey($tokenId), encode_json($tokenRecord), $Chleb::Account::VerificationToken::LIFETIME);
+	$self->__call(delete => $lockKey);
+	return $tokenRecord if ($stored);
+	return;
 }
 
 sub loadByEmail {
@@ -166,8 +211,13 @@ sub __key {
 }
 
 sub __verificationTokenKey {
-	my ($self, $tokenHash) = @_;
-	return "$VERIFICATION_TOKEN_PREFIX:$tokenHash";
+	my ($self, $tokenId) = @_;
+	return "$VERIFICATION_TOKEN_PREFIX:$tokenId";
+}
+
+sub __verificationTokenLockKey {
+	my ($self, $tokenId) = @_;
+	return "$VERIFICATION_TOKEN_PREFIX:lock:$tokenId";
 }
 
 sub __indexKey {
