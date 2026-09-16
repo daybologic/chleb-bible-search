@@ -27,7 +27,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 accounts:
-  backend: Memcached
+  backend: Dynamo
   aws:
     region: eu-west-2
   dynamodb:

@@ -115,7 +115,7 @@ sub loadVerificationToken {
 		ConsistentRead => 1,
 	);
 	return unless ($response && $response->Item);
-	return $self->__verificationTokenFromItem($response->Item);
+	return $self->__verificationTokenFromItem($response->Item->Map);
 }
 
 sub consumeVerificationToken {
@@ -138,7 +138,7 @@ sub consumeVerificationToken {
 	return if (!$evalOk && $EVAL_ERROR =~ m{ConditionalCheckFailedException}x);
 	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB verification token consumption failed: $EVAL_ERROR"))
 		unless ($evalOk && $response && $response->Attributes);
-	return $self->__verificationTokenFromItem($response->Attributes);
+	return $self->__verificationTokenFromItem($response->Attributes->Map);
 }
 
 sub load {
@@ -149,7 +149,7 @@ sub load {
 		ConsistentRead => 1,
 	);
 	return unless ($response && $response->Item);
-	return $self->__accountFromItem($response->Item);
+	return $self->__accountFromItem($response->Item->Map);
 }
 
 sub loadByEmail {
@@ -174,7 +174,7 @@ sub __allocateId {
 		ExpressionAttributeValues => { ':one' => { N => '1' } },
 		ReturnValues => 'UPDATED_NEW',
 	);
-	my $id = $response && $response->Attributes && $response->Attributes->{next_id}->{N};
+	my $id = $response && $response->Attributes && $response->Attributes->Map->{next_id}->N;
 	if (!defined($id) || $id !~ m{ \A[0-9]+\z }x || int($id) <= 0) {
 		croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to allocate an account ID'));
 	}
@@ -193,7 +193,7 @@ sub __allocateTokenId {
 		ExpressionAttributeValues => { ':one' => { N => '1' } },
 		ReturnValues => 'UPDATED_NEW',
 	);
-	my $id = $response && $response->Attributes && $response->Attributes->{next_id}->{N};
+	my $id = $response && $response->Attributes && $response->Attributes->Map->{next_id}->N;
 	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to allocate a verification token ID'))
 		if (!defined($id) || $id !~ m{ \A[0-9]+\z }x || int($id) <= 0);
 	return int($id);
@@ -207,7 +207,7 @@ sub __loadIndex {
 		ConsistentRead => 1,
 	);
 	return unless ($response && $response->Item);
-	my $id = $response->Item->{account_id}->{N};
+	my $id = $response->Item->Map->{account_id}->N;
 	return $self->load($id);
 }
 
@@ -230,14 +230,14 @@ sub __accountItem {
 sub __accountFromItem {
 	my ($self, $item) = @_;
 	return {
-		id => int($item->{id}->{N}),
-		created_at => $item->{created_at}->{S},
-		role => int($item->{role}->{N}),
-		title => $item->{title}->{S},
-		username => $item->{username}->{S},
-		email => $item->{email}->{S},
-		name => $item->{name}->{S},
-		status => $item->{status}->{S},
+		id => int($item->{id}->N),
+		created_at => $item->{created_at}->S,
+		role => int($item->{role}->N),
+		title => $item->{title}->S,
+		username => $item->{username}->S,
+		email => $item->{email}->S,
+		name => $item->{name}->S,
+		status => $item->{status}->S,
 	};
 }
 
@@ -252,12 +252,12 @@ sub __verificationTokenKey {
 sub __verificationTokenFromItem {
 	my ($self, $item) = @_;
 	return {
-		token_id => int($item->{token_id}->{N}),
-		account_id => int($item->{account_id}->{N}),
-		value => $item->{value}->{S},
-		created_at => int($item->{created_at}->{N}),
-		expires_at => int($item->{expires_at}->{N}),
-		consumed_at => (defined($item->{consumed_at}) ? int($item->{consumed_at}->{N}) : undef),
+		token_id => int($item->{token_id}->N),
+		account_id => int($item->{account_id}->N),
+		value => $item->{value}->S,
+		created_at => int($item->{created_at}->N),
+		expires_at => int($item->{expires_at}->N),
+		consumed_at => (defined($item->{consumed_at}) ? int($item->{consumed_at}->N) : undef),
 	};
 }
 
