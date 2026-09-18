@@ -9,6 +9,7 @@
 bin/bugs/4e03075-wholeword-boolean-swagger/run.sh
 bin/core/app.psgi
 bin/core/admin-create-user-account.sh
+bin/core/admin-set-account-password.sh
 bin/core/admin-sqs-create-queue.sh
 bin/core/account-verification-worker.pl
 bin/core/cache-inspect.pl
@@ -379,6 +380,7 @@ info/Makefile
 lib/Chleb.pm
 lib/Chleb/Args/Base.pm
 lib/Chleb/Account/Repository.pm
+lib/Chleb/Account/Password.pm
 lib/Chleb/Account/Role.pm
 lib/Chleb/Account/VerificationToken.pm
 lib/Chleb/Account/Repository/Dynamo.pm
@@ -446,6 +448,7 @@ t/Backend_getSentimentByOrdinal.t
 t/Backend_sharedCache_storable.t
 t/Backend_sourceSelection.t
 t/Account.t
+t/AccountPassword.t
 t/Base.t
 t/Bible_getBookByLongName.t
 t/Bible_getBookByShortName.t

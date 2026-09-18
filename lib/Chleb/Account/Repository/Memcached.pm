@@ -167,6 +167,22 @@ sub load {
 	return $account;
 }
 
+=head1 setPasswordHash
+
+Store a bcrypt password hash on an existing account and return the account.
+
+=cut
+
+sub setPasswordHash {
+	my ($self, $id, $passwordHash) = @_;
+	my $account = $self->load($id);
+	return unless ($account);
+	$account->{password_hash} = $passwordHash;
+	my $stored = $self->__call(set => $self->__key($id), encode_json($account), $PERMANENT_TTL);
+	return $account if ($stored);
+	return;
+}
+
 =head1 activate
 
 Mark a pending account as active and return the updated account.

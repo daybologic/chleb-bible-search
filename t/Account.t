@@ -272,6 +272,23 @@ sub testPendingAccountCanBeActivated {
 	return 0;
 }
 
+sub testAccountPasswordHashCanBeStored {
+	my ($self) = @_;
+	plan tests => 2;
+
+	my $store = Chleb::Account::Repository::Memcached->new({
+		client => FakeAccountMemcached->new(),
+		dic => $self->sut->dic,
+	});
+	my $created = $store->create({ title => 'Mr', username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
+	my $updated = $store->setPasswordHash($created->{id}, '$2a$12$stored-hash');
+
+	is($updated->{password_hash}, '$2a$12$stored-hash', 'password hash is returned after storage');
+	is($store->load($created->{id})->{password_hash}, '$2a$12$stored-hash', 'password hash is persisted');
+
+	return 0;
+}
+
 sub testUsernameConflictRaises409 {
 	my ($self) = @_;
 	plan tests => 2;

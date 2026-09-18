@@ -34,6 +34,11 @@ sub loadByUsername {
 	return $self->__backend->loadByUsername($username);
 }
 
+sub setPasswordHash {
+	my ($self, $accountId, $passwordHash) = @_;
+	return $self->__backend->setPasswordHash($accountId, $passwordHash);
+}
+
 sub createVerificationToken {
 	my ($self, $accountId) = @_;
 	return $self->__backend->createVerificationToken($accountId);

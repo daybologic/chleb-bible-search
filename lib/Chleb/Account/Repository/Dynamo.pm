@@ -152,6 +152,32 @@ sub load {
 	return $self->__accountFromItem($response->Item->Map);
 }
 
+=head1 setPasswordHash
+
+Store a bcrypt password hash on an existing account and return the account.
+
+=cut
+
+sub setPasswordHash {
+	my ($self, $id, $passwordHash) = @_;
+	my $response;
+	my $evalOk; $evalOk = eval {
+		$response = $self->__client->UpdateItem(
+			TableName => $self->table,
+			Key => $self->__key($id),
+			UpdateExpression => 'SET password_hash = :hash',
+			ExpressionAttributeValues => { ':hash' => { S => $passwordHash } },
+			ConditionExpression => 'attribute_exists(pk) AND attribute_exists(sk)',
+			ReturnValues => 'ALL_NEW',
+		);
+		1;
+	} or $evalOk = 0;
+	return if (!$evalOk && $EVAL_ERROR =~ m{ConditionalCheckFailedException}x);
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB password hash storage failed: $EVAL_ERROR"))
+		unless ($evalOk && $response && $response->Attributes);
+	return $self->__accountFromItem($response->Attributes->Map);
+}
+
 =head1 activate
 
 Atomically mark a pending account as active and return the updated account.
@@ -243,7 +269,7 @@ sub __loadIndex {
 
 sub __accountItem {
 	my ($self, $account) = @_;
-	return {
+	my $item = {
 		pk => { S => 'account#' . $account->{id} },
 		sk => { S => $ACCOUNT_SORT_KEY },
 		id => { N => q{} . $account->{id} },
@@ -255,6 +281,8 @@ sub __accountItem {
 		name => { S => $account->{name} },
 		status => { S => $account->{status} },
 	};
+	$item->{password_hash} = { S => $account->{password_hash} } if (defined($account->{password_hash}));
+	return $item;
 }
 
 sub __accountFromItem {
@@ -268,6 +296,7 @@ sub __accountFromItem {
 		email => $item->{email}->S,
 		name => $item->{name}->S,
 		status => $item->{status}->S,
+		password_hash => (defined($item->{password_hash}) ? $item->{password_hash}->S : undef),
 	};
 }
 
