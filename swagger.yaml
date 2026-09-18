@@ -181,6 +181,35 @@ paths:
           $ref: '#/components/responses/TestHttpError'
         '511':
           $ref: '#/components/responses/TestHttpError'
+  /1/accounts/{account_id}:
+    get:
+      summary: Get an account
+      operationId: getAccount
+      description: Get account details by numeric account ID. This endpoint is currently public.
+      security: [] # No security
+      parameters:
+        - in: path
+          name: account_id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Account details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDocument'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AccountDocument'
+        '400':
+          description: Bad request
+        '404':
+          description: Account not found
+        '500':
+          description: Internal Server Error
   /1/accounts/verify:
     get:
       summary: Verify an account

@@ -2722,6 +2722,21 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 	};
 }
 
+=head1 __accountGet($accountId)
+
+Load an account by numeric ID and return its JSON:API resource.
+
+=cut
+
+sub __accountGet { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self, $accountId) = @_;
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account ID must be a positive integer'))
+		unless (defined($accountId) && ref($accountId) eq '' && $accountId =~ m{\A[1-9][0-9]*\z}x);
+	my $account = $self->dic->accountRepo->load(int($accountId));
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, 'Account not found')) unless ($account);
+	return __accountResource($account);
+}
+
 =over
 
 =item C<__accountVerify($params)>

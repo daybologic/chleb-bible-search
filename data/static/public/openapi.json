@@ -1056,6 +1056,51 @@
         "summary": "Verify an account"
       }
     },
+    "/1/accounts/{account_id}": {
+      "get": {
+        "description": "Get account details by numeric account ID. This endpoint is currently public.",
+        "operationId": "getAccount",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "account_id",
+            "required": "1",
+            "schema": {
+              "minimum": "1",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDocument"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDocument"
+                }
+              }
+            },
+            "description": "Account details"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [],
+        "summary": "Get an account"
+      }
+    },
     "/1/info": {
       "get": {
         "description": "Get cachable information about translations, books, chapters, and verses available",

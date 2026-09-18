@@ -440,6 +440,25 @@ sub testAccountVerificationHelpers {
 	return 0;
 }
 
+sub testAccountGetReturnsPublicAccountResource {
+	my ($self) = @_;
+	plan tests => 4;
+
+	$self->sut->dic->accountRepo(FakeAccountRepository->new());
+	my $result = $self->sut->__accountGet('123');
+	is($result->{data}->{type}, 'account', 'account GET returns an account resource');
+	is($result->{data}->{id}, '123', 'account GET returns the requested account ID');
+	is($result->{data}->{attributes}->{username}, 'john.smith', 'account GET returns account attributes');
+
+	my $evalOk; $evalOk = eval {
+		$self->sut->__accountGet('not-an-account');
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'account GET rejects a malformed account ID');
+
+	return 0;
+}
+
 sub testSignupRejectsMissingAttribute {
 	my ($self) = @_;
 	plan tests => 1;

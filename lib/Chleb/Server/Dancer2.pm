@@ -1687,6 +1687,21 @@ sub __registerAccountRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSu
 		}
 		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $result);
 	};
+	get '/1/accounts/:account_id' => sub {
+		$server->logRequest();
+		my $dancerRequest = request();
+		my $accept;
+		my $result;
+		my $evalOk; $evalOk = eval {
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+			$result = $server->__accountGet(param('account_id'));
+			1;
+		} or $evalOk = 0;
+		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
+
+		status HTTP_OK;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $result);
+	};
 	post '/1/accounts/signup' => sub {
 		$server->logRequest();
 		my $dancerRequest = request();
