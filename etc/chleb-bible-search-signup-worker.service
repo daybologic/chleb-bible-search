@@ -1,0 +1,21 @@
+[Unit]
+Description=Chleb Bible Search account signup worker
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/daybologic/chleb-bible-search/blob/master/README.md
+
+[Service]
+Environment=PERL5LIB=/usr/share/chleb-bible-search/perl5
+EnvironmentFile=-/etc/default/chleb-bible-search
+ExecStart=/usr/share/chleb-bible-search/account-verification-worker.pl
+KillMode=process
+Restart=always
+RestartSec=5
+Type=exec
+Nice=15
+User=chleb
+Group=nogroup
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

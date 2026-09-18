@@ -97,6 +97,46 @@ The code packages use semantic release versions. The translation and thesaurus
 packages use independent `YYYYMMDD.N` data-release versions and are only
 updated when their source data or SQLite schema changes.
 
+### Optional account signup worker
+
+Account signup can publish verification jobs to Amazon SQS. The optional
+`chleb-bible-search-signup-worker.service` consumes those jobs and sends the
+verification email through the SMTP settings in `votd-mailer.yaml`.
+
+Configure the SQS queue and AWS region in `accounts.yaml`:
+
+```yaml
+accounts:
+  backend: Dynamo
+  aws:
+    region: eu-west-2
+  dynamodb:
+    table: chleb-accounts
+  sqs:
+    verification_queue_url: https://sqs.REGION.amazonaws.com/ACCOUNT_ID/chleb-account-verification-email
+```
+
+Configure the SMTP server in `votd-mailer.yaml`. For Gmail, use an app
+password rather than the normal account password. Keep that file readable only
+by root and the `chleb` service account.
+
+The worker needs AWS credentials supplied through the normal AWS credential
+provider chain. Its IAM role or user needs permission to receive and delete
+messages from the queue, read account and token records from DynamoDB, and
+mark verification tokens consumed.
+
+Enable it after installing the core package:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now chleb-bible-search-signup-worker.service
+sudo journalctl -u chleb-bible-search-signup-worker.service -f
+```
+
+The worker is optional; the main HTTP service does not depend on it. If it is
+not enabled, signup records and their SQS messages remain stored, but no
+verification email is sent.
+
 ### Web front-end (proxy).
 
 #### Apache

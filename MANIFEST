@@ -362,6 +362,7 @@ debian/source/format
 etc-defaults/main.yaml
 etc-local/main.yaml
 etc/chleb-bible-search.service
+etc/chleb-bible-search-signup-worker.service
 etc/contact.yaml
 etc/features.yaml
 etc/init.d/chleb-bible-search

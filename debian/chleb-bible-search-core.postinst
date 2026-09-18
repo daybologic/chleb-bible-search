@@ -72,6 +72,11 @@ chown $SERVER_USER \
 
 installJwtSecret "$@"
 
+if [ -f /etc/chleb-bible-search/votd-mailer.yaml ]; then
+	chown root:chleb /etc/chleb-bible-search/votd-mailer.yaml
+	chmod 0640 /etc/chleb-bible-search/votd-mailer.yaml
+fi
+
 echo 'clearing bible translation cache'
 find /var/cache/chleb-bible-search -mindepth 1 ! -type d -delete
 find /var/cache/chleb-bible-search -mindepth 1 -depth -type d -delete
