@@ -383,6 +383,7 @@ lib/Chleb/Account/VerificationToken.pm
 lib/Chleb/Account/Repository/Dynamo.pm
 lib/Chleb/Account/Repository/Memcached.pm
 lib/Chleb/Account/VerificationQueue.pm
+lib/Chleb/Workers/Signup.pm
 lib/Chleb/Bible.pm
 lib/Chleb/Bible/Backend.pm
 lib/Chleb/Bible/Base.pm
