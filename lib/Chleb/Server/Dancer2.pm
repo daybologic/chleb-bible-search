@@ -1717,6 +1717,28 @@ sub __registerAccountRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSu
 		status HTTP_OK;
 		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $result);
 	};
+	post '/1/accounts/verify-password' => sub {
+		$server->logRequest();
+		my $dancerRequest = request();
+		my $accept;
+		my $result;
+		my $evalOk; $evalOk = eval {
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+			my $payload;
+			my $jsonEvalOk; $jsonEvalOk = eval {
+				$payload = JSON::decode_json($dancerRequest->body() // '');
+				1;
+			} or $jsonEvalOk = 0;
+			croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Request body is not valid JSON'))
+				unless ($jsonEvalOk);
+			$result = $server->__accountPasswordVerify($payload);
+			1;
+		} or $evalOk = 0;
+		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
+
+		status HTTP_OK;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON, $result);
+	};
 	post '/1/accounts/signup' => sub {
 		$server->logRequest();
 		my $dancerRequest = request();

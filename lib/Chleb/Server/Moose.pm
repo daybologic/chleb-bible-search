@@ -51,6 +51,7 @@ Moose portion of HTTP server facility used by L<Chleb::Server::Dancer2>
 
 use Chleb;
 use Chleb::Bible::Search::Query;
+use Chleb::Account::Password;
 use Chleb::Account::Role;
 use Chleb::DI::Container;
 use Chleb::Exception;
@@ -2752,6 +2753,28 @@ sub __accountGetByUsername { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	my $account = $self->dic->accountRepo->loadByUsername($username);
 	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, 'Account not found')) unless ($account);
 	return __accountResource($account);
+}
+
+=head1 __accountPasswordVerify($payload)
+
+Verify an account password and return whether the credentials are valid.
+
+=cut
+
+sub __accountPasswordVerify { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self, $payload) = @_;
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account password verification payload must be a JSON object'))
+		unless (ref($payload) eq 'HASH');
+	my $accountId = $payload->{account_id};
+	my $password = $payload->{password};
+	my $validAccountId = defined($accountId) && ref($accountId) eq '' && $accountId =~ m{\A[1-9][0-9]*\z}x;
+	my $validPassword = defined($password) && ref($password) eq '' && length($password) > 0;
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account password verification requires account_id and password'))
+		unless ($validAccountId && $validPassword);
+
+	my $account = $self->dic->accountRepo->load(int($accountId));
+	my $valid = $account && Chleb::Account::Password::verify($password, $account->{password_hash});
+	return { valid => $valid ? JSON::true : JSON::false };
 }
 
 =over

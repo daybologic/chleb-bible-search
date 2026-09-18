@@ -280,6 +280,35 @@ paths:
           description: Verification token is invalid, expired, or already consumed
         '500':
           description: Internal Server Error
+  /1/accounts/verify-password:
+    post:
+      summary: Verify account credentials
+      operationId: postAccountPasswordVerification
+      description: Return whether an account ID and password match. This endpoint is currently public and returns only a validity result.
+      security: [] # No security
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountPasswordVerificationRequest'
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/AccountPasswordVerificationRequest'
+      responses:
+        '200':
+          description: Credential validity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountPasswordVerificationResponse'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AccountPasswordVerificationResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal Server Error
   /1/accounts/signup:
     post:
       summary: Create a pending account
@@ -1093,6 +1122,25 @@ components:
               type: boolean
               description: Validate the signup without allocating an ID or writing to the backend.
               example: true
+    AccountPasswordVerificationRequest:
+      type: object
+      required:
+        - account_id
+        - password
+      properties:
+        account_id:
+          type: integer
+          minimum: 1
+        password:
+          type: string
+          minLength: 1
+    AccountPasswordVerificationResponse:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
     AccountValidationDocument:
       type: object
       required:

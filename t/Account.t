@@ -56,8 +56,8 @@ use strict;
 use warnings;
 
 sub new {
-	my ($class) = @_;
-	return bless({}, $class);
+	my ($class, $args) = @_;
+	return bless({ password_hash => $args ? $args->{password_hash} : undef }, $class);
 }
 
 sub create {
@@ -81,6 +81,7 @@ sub loadVerificationToken {
 }
 
 sub load {
+	my ($self) = @_;
 	return {
 		id => 123,
 		created_at => '1970-01-01T00:00:00+0000',
@@ -90,6 +91,7 @@ sub load {
 		email => 'john.smith@example.com',
 		name => 'John Smith',
 		status => 'pending',
+		password_hash => $self->{password_hash},
 	};
 }
 
@@ -159,6 +161,7 @@ extends 'Test::Module::Runnable';
 use Chleb::Account::Repository;
 use Chleb::Account::Repository::Dynamo;
 use Chleb::Account::Repository::Memcached;
+use Chleb::Account::Password;
 use Chleb::Account::Role;
 use Chleb::Account::VerificationToken;
 use Chleb::Account::VerificationQueue;
@@ -497,6 +500,35 @@ sub testAccountGetByUsernameReturnsPublicAccountResource {
 		1;
 	} or $evalOk = 0;
 	is($evalOk, 0, 'username lookup rejects a missing username');
+
+	return 0;
+}
+
+sub testAccountPasswordVerificationReturnsOnlyValidity {
+	my ($self) = @_;
+	plan tests => 5;
+
+	my $passwordHash = Chleb::Account::Password::hash('correct horse battery staple');
+	$self->sut->dic->accountRepo(FakeAccountRepository->new({ password_hash => $passwordHash }));
+	my $valid = $self->sut->__accountPasswordVerify({ account_id => 123, password => 'correct horse battery staple' });
+	is(JSON::is_bool($valid->{valid}) ? $valid->{valid} : undef, JSON::true, 'correct account password is valid');
+
+	my $invalid = $self->sut->__accountPasswordVerify({ account_id => 123, password => 'wrong password' });
+	is(JSON::is_bool($invalid->{valid}) ? $invalid->{valid} : undef, JSON::false, 'incorrect account password is invalid');
+
+	my $evalOk; $evalOk = eval {
+		$self->sut->__accountPasswordVerify({ account_id => 'not-an-account', password => 'secret' });
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'password verification rejects malformed account IDs');
+
+	$evalOk = eval {
+		$self->sut->__accountPasswordVerify({ account_id => 123 });
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'password verification rejects missing passwords');
+
+	is_deeply([ sort keys %{ $valid } ], [ 'valid' ], 'password verification exposes only validity');
 
 	return 0;
 }
