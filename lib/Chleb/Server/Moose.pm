@@ -2774,6 +2774,12 @@ sub __accountPasswordVerify { ## no critic (Subroutines::ProhibitUnusedPrivateSu
 
 	my $account = $self->dic->accountRepo->load(int($accountId));
 	my $valid = $account && Chleb::Account::Password::verify($password, $account->{password_hash});
+	my $username = $account ? ($account->{username} // '<unknown>') : '<unknown>';
+	if ($valid) {
+		$self->dic->logger->info(sprintf("Account password verification succeeded for account ID %d username '%s'", int($accountId), $username));
+	} else {
+		$self->dic->logger->warn(sprintf("Account password verification failed for account ID %d username '%s'", int($accountId), $username));
+	}
 	return { valid => $valid ? JSON::true : JSON::false };
 }
 

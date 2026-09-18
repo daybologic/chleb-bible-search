@@ -506,15 +506,19 @@ sub testAccountGetByUsernameReturnsPublicAccountResource {
 
 sub testAccountPasswordVerificationReturnsOnlyValidity {
 	my ($self) = @_;
-	plan tests => 5;
+	plan tests => 9;
 
 	my $passwordHash = Chleb::Account::Password::hash('correct horse battery staple');
 	$self->sut->dic->accountRepo(FakeAccountRepository->new({ password_hash => $passwordHash }));
 	my $valid = $self->sut->__accountPasswordVerify({ account_id => 123, password => 'correct horse battery staple' });
 	is(JSON::is_bool($valid->{valid}) ? $valid->{valid} : undef, JSON::true, 'correct account password is valid');
+	$self->sut->dic->logger->isLogged(qr{password\s+verification\s+succeeded.*123.*john[.]smith}x);
+	$self->sut->dic->logger->isNotLogged(qr{correct horse battery staple}x);
+	$self->sut->dic->logger->isNotLogged(qr{\$2a\$12}x);
 
 	my $invalid = $self->sut->__accountPasswordVerify({ account_id => 123, password => 'wrong password' });
 	is(JSON::is_bool($invalid->{valid}) ? $invalid->{valid} : undef, JSON::false, 'incorrect account password is invalid');
+	$self->sut->dic->logger->isLogged(qr{password\s+verification\s+failed.*123.*john[.]smith}x);
 
 	my $evalOk; $evalOk = eval {
 		$self->sut->__accountPasswordVerify({ account_id => 'not-an-account', password => 'secret' });
