@@ -10,6 +10,8 @@ bin/bugs/4e03075-wholeword-boolean-swagger/run.sh
 bin/core/app.psgi
 bin/core/admin-create-user-account.sh
 bin/core/admin-set-account-password.sh
+lib/Chleb/Admin/SetPassword.pm
+t/AdminSetPassword.t
 bin/core/admin-sqs-create-queue.sh
 bin/core/account-verification-worker.pl
 bin/core/cache-inspect.pl
