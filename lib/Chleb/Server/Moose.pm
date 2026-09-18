@@ -2733,36 +2733,94 @@ and return the JSON:API account resource.
 
 =cut
 
-sub __accountVerify { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines, Subroutines::ProhibitExcessComplexity)
+
+sub __accountVerify { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $params) = @_;
-	my $accountId = $params->{account_id};
-	my $tokenId = $params->{token_id};
-	my $tokenValue = $params->{token};
-	my $validParameters = defined($accountId) && $accountId =~ m{\A[1-9][0-9]*\z}x
+	my ($accountId, $tokenId, $tokenValue) = __accountVerificationParams($params);
+	my $repository = $self->dic->accountRepo;
+	my ($token, $account) = __loadAccountVerification($repository, $accountId, $tokenId);
+	__validateAccountVerification($self, $accountId, $tokenValue, $token, $account);
+	$account = __activateVerifiedAccount($repository, $accountId, $tokenId);
+	return __accountResource($account);
+}
+
+=head1 __accountVerificationParams($params)
+
+Validate and extract the account verification query parameters.
+
+=cut
+
+sub __accountVerificationParams {
+	my ($params) = @_;
+	my $accountId = ref($params) eq 'HASH' ? $params->{account_id} : undef;
+	my $tokenId = ref($params) eq 'HASH' ? $params->{token_id} : undef;
+	my $tokenValue = ref($params) eq 'HASH' ? $params->{token} : undef;
+	my $valid = defined($accountId) && $accountId =~ m{\A[1-9][0-9]*\z}x
 		&& defined($tokenId) && $tokenId =~ m{\A[1-9][0-9]*\z}x
 		&& defined($tokenValue) && ref($tokenValue) eq '' && length($tokenValue) > 0;
 	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account verification requires account_id, token_id, and token'))
-		if (!$validParameters);
+		if (!$valid);
+	return (int($accountId), int($tokenId), $tokenValue);
+}
 
-	my $repository = $self->dic->accountRepo;
-	my $token = $repository->loadVerificationToken(int($tokenId));
-	my $account = $repository->load(int($accountId));
-	my $valid = $token && $account
-		&& int($token->{account_id}) == int($accountId)
-		&& int($account->{id}) == int($accountId)
-		&& !defined($token->{consumed_at})
-		&& int($token->{expires_at}) > int($self->dic->time->get())
-		&& __secureEqual($token->{value}, $tokenValue);
+=head1 __loadAccountVerification($repository, $accountId, $tokenId)
+
+Load the account and its verification token.
+
+=cut
+
+sub __loadAccountVerification {
+	my ($repository, $accountId, $tokenId) = @_;
+	return (
+		$repository->loadVerificationToken($tokenId),
+		$repository->load($accountId),
+	);
+}
+
+=head1 __validateAccountVerification($server, $accountId, $tokenValue, $token, $account)
+
+Reject a missing, mismatched, expired, or already consumed verification token.
+
+=cut
+
+sub __validateAccountVerification {
+	my ($server, $accountId, $tokenValue, $token, $account) = @_;
+	my $valid = $token && $account;
+	$valid &&= int($token->{account_id}) == $accountId;
+	$valid &&= int($account->{id}) == $accountId;
+	$valid &&= !defined($token->{consumed_at});
+	$valid &&= int($token->{expires_at}) > int($server->dic->time->get());
+	$valid &&= __secureEqual($token->{value}, $tokenValue);
 	croak(Chleb::Exception->raise(HTTP_GONE, 'The account verification link is invalid or has expired'))
 		if (!$valid);
+	return;
+}
 
-	my $consumed = $repository->consumeVerificationToken(int($tokenId), int($accountId));
+=head1 __activateVerifiedAccount($repository, $accountId, $tokenId)
+
+Consume the valid token and activate its account.
+
+=cut
+
+sub __activateVerifiedAccount {
+	my ($repository, $accountId, $tokenId) = @_;
+	my $consumed = $repository->consumeVerificationToken($tokenId, $accountId);
 	croak(Chleb::Exception->raise(HTTP_GONE, 'The account verification link is invalid or has expired'))
 		unless ($consumed);
-	$account = $repository->activate(int($accountId));
+	my $account = $repository->activate($accountId);
 	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to activate the account'))
 		unless ($account);
+	return $account;
+}
 
+=head1 __accountResource($account)
+
+Build the JSON:API representation of an account.
+
+=cut
+
+sub __accountResource {
+	my ($account) = @_;
 	return {
 		data => {
 			type => 'account',
