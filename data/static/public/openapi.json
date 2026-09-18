@@ -931,6 +931,51 @@
   },
   "openapi": "3.0.0",
   "paths": {
+    "/1/accounts": {
+      "get": {
+        "description": "Get account details by username. This endpoint is currently public.",
+        "operationId": "getAccountByUsername",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "username",
+            "required": "1",
+            "schema": {
+              "maxLength": "30",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDocument"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDocument"
+                }
+              }
+            },
+            "description": "Account details"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [],
+        "summary": "Get an account by username"
+      }
+    },
     "/1/accounts/signup": {
       "post": {
         "description": "Create a new account and return its allocated numeric account ID.",

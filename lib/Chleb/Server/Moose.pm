@@ -2730,9 +2730,26 @@ Load an account by numeric ID and return its JSON:API resource.
 
 sub __accountGet { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self, $accountId) = @_;
+	my $validAccountId = defined($accountId) && ref($accountId) eq '' && $accountId =~ m{\A[1-9][0-9]*\z}x;
 	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account ID must be a positive integer'))
-		unless (defined($accountId) && ref($accountId) eq '' && $accountId =~ m{\A[1-9][0-9]*\z}x);
+		if (!$validAccountId);
 	my $account = $self->dic->accountRepo->load(int($accountId));
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, 'Account not found')) unless ($account);
+	return __accountResource($account);
+}
+
+=head1 __accountGetByUsername($username)
+
+Load an account by username and return its JSON:API resource.
+
+=cut
+
+sub __accountGetByUsername { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self, $username) = @_;
+	my $validUsername = defined($username) && ref($username) eq '' && length($username) > 0;
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Username is required'))
+		if (!$validUsername);
+	my $account = $self->dic->accountRepo->loadByUsername($username);
 	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, 'Account not found')) unless ($account);
 	return __accountResource($account);
 }

@@ -93,6 +93,12 @@ sub load {
 	};
 }
 
+sub loadByUsername {
+	my ($self, $username) = @_;
+	return $self->load(123) if (lc($username // '') eq 'john.smith');
+	return;
+}
+
 sub consumeVerificationToken {
 	return { token_id => 7, account_id => 123 };
 }
@@ -455,6 +461,25 @@ sub testAccountGetReturnsPublicAccountResource {
 		1;
 	} or $evalOk = 0;
 	is($evalOk, 0, 'account GET rejects a malformed account ID');
+
+	return 0;
+}
+
+sub testAccountGetByUsernameReturnsPublicAccountResource {
+	my ($self) = @_;
+	plan tests => 4;
+
+	$self->sut->dic->accountRepo(FakeAccountRepository->new());
+	my $result = $self->sut->__accountGetByUsername('JOHN.SMITH');
+	is($result->{data}->{type}, 'account', 'username lookup returns an account resource');
+	is($result->{data}->{id}, '123', 'username lookup returns the account ID');
+	is($result->{data}->{attributes}->{username}, 'john.smith', 'username lookup preserves stored username casing');
+
+	my $evalOk; $evalOk = eval {
+		$self->sut->__accountGetByUsername(undef);
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'username lookup rejects a missing username');
 
 	return 0;
 }
