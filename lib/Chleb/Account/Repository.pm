@@ -24,6 +24,11 @@ sub create {
 	return $self->__backend->create($attributes);
 }
 
+sub load {
+	my ($self, $accountId) = @_;
+	return $self->__backend->load($accountId);
+}
+
 sub createVerificationToken {
 	my ($self, $accountId) = @_;
 	return $self->__backend->createVerificationToken($accountId);

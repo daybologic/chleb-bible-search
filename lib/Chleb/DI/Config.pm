@@ -61,6 +61,7 @@ Readonly my @SPLIT_CONFIG_FILE_NAMES => qw(
 	contact.yaml
 	features.yaml
 	tokens.yaml
+	votd-mailer.yaml
 );
 
 has __data => (is => 'ro', isa => 'HashRef', lazy => 1, builder => '__makeData');
