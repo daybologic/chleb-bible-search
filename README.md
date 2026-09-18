@@ -112,6 +112,8 @@ accounts:
     region: eu-west-2
   dynamodb:
     table: chleb-accounts
+  email:
+    verification_root_url: http://chleb-api.example.org
   sqs:
     verification_queue_url: https://sqs.REGION.amazonaws.com/ACCOUNT_ID/chleb-account-verification-email
 ```

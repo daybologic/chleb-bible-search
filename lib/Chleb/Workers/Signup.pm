@@ -83,7 +83,7 @@ sub __makeContext {
 	return {
 		account_repository => $repository,
 		mail_from => $config->get('mailing_list', 'list_info', {})->{from} // $smtpUser,
-		site_root => $config->get('mailing_list', 'site_info', {})->{root_url} // '',
+		site_root => $config->get('accounts', 'email', {})->{verification_root_url} // '',
 		smtp => {
 			host => $smtpHost,
 			password => $smtpPassword,
