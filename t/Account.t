@@ -402,6 +402,44 @@ sub testAccountVerificationActivatesAccount {
 	return 0;
 }
 
+sub testAccountVerificationHelpers {
+	my ($self) = @_;
+	plan tests => 12;
+
+	my $repository = FakeAccountRepository->new();
+	my ($accountId, $tokenId, $tokenValue) = Chleb::Server::Moose::__accountVerificationParams({
+		account_id => '123',
+		token_id => '7',
+		token => 'verification-token',
+	});
+	is($accountId, 123, 'verification parameters convert account ID to an integer');
+	is($tokenId, 7, 'verification parameters convert token ID to an integer');
+	is($tokenValue, 'verification-token', 'verification parameters preserve token value');
+
+	my ($token, $account) = Chleb::Server::Moose::__loadAccountVerification($repository, 123, 7);
+	is($token->{token_id}, 7, 'verification helper loads the token');
+	is($account->{id}, 123, 'verification helper loads the account');
+
+	is(Chleb::Server::Moose::__validateAccountVerification($self->sut, 123, 'verification-token', $token, $account), undef,
+		'valid verification data is accepted');
+	my $evalOk; $evalOk = eval {
+		Chleb::Server::Moose::__validateAccountVerification($self->sut, 123, 'wrong-token', $token, $account);
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'wrong verification token is rejected');
+
+	my $activated = Chleb::Server::Moose::__activateVerifiedAccount($repository, 123, 7);
+	is($activated->{status}, 'active', 'verification helper activates the account');
+
+	my $resource = Chleb::Server::Moose::__accountResource($activated);
+	is($resource->{data}->{type}, 'account', 'account resource has the account type');
+	is($resource->{data}->{id}, '123', 'account resource has the account ID');
+	is($resource->{data}->{attributes}->{status}, 'active', 'account resource reports active status');
+	is(Chleb::Server::Moose::__secureEqual('same', 'same'), 1, 'secure comparison accepts equal values');
+
+	return 0;
+}
+
 sub testSignupRejectsMissingAttribute {
 	my ($self) = @_;
 	plan tests => 1;
