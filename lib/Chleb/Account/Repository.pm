@@ -44,6 +44,17 @@ sub consumeVerificationToken {
 	return $self->__backend->consumeVerificationToken($tokenId, $accountId);
 }
 
+=head1 activate
+
+Activate an account after successful verification.
+
+=cut
+
+sub activate {
+	my ($self, $accountId) = @_;
+	return $self->__backend->activate($accountId);
+}
+
 sub __makeBackend { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my ($self) = @_;
 	my %backends = (

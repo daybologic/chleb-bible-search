@@ -117,7 +117,8 @@ sub __receive {
 
 =item C<__processMessage($context, $message)>
 
-Validate, deliver, consume, and acknowledge one account-signup message.
+Validate, deliver, and acknowledge one account-signup message.  The token is
+consumed by the verification endpoint after the recipient follows the link.
 
 =cut
 
@@ -144,11 +145,6 @@ sub __processMessage {
 	}
 
 	unless (__sendMail($context, $account, $token)) {
-		return;
-	}
-
-	unless ($context->{account_repository}->consumeVerificationToken($tokenId, $accountId)) {
-		warn("Unable to consume verification token $tokenId for account $accountId\n");
 		return;
 	}
 

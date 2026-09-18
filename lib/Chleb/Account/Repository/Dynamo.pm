@@ -152,6 +152,36 @@ sub load {
 	return $self->__accountFromItem($response->Item->Map);
 }
 
+=head1 activate
+
+Atomically mark a pending account as active and return the updated account.
+
+=cut
+
+sub activate {
+	my ($self, $id) = @_;
+	my $response;
+	my $evalOk; $evalOk = eval {
+		$response = $self->__client->UpdateItem(
+			TableName => $self->table,
+			Key => $self->__key($id),
+			UpdateExpression => 'SET #status = :active',
+			ConditionExpression => '#status = :pending',
+			ExpressionAttributeNames => { '#status' => 'status' },
+			ExpressionAttributeValues => {
+				':active' => { S => 'active' },
+				':pending' => { S => 'pending' },
+			},
+			ReturnValues => 'ALL_NEW',
+		);
+		1;
+	} or $evalOk = 0;
+	return if (!$evalOk && $EVAL_ERROR =~ m{ConditionalCheckFailedException}x);
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB account activation failed: $EVAL_ERROR"))
+		unless ($evalOk && $response && $response->Attributes);
+	return $self->__accountFromItem($response->Attributes->Map);
+}
+
 sub loadByEmail {
 	my ($self, $email) = @_;
 	return $self->__loadIndex('email', $email);

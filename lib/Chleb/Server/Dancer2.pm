@@ -1665,6 +1665,28 @@ Register account lifecycle routes.
 =cut
 
 sub __registerAccountRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	get '/1/accounts/verify' => sub {
+		$server->logRequest();
+		my $dancerRequest = request();
+		my $accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+		my $result;
+		my $evalOk; $evalOk = eval {
+			my $queryParams = $dancerRequest->params('query');
+			$result = $server->__accountVerify($queryParams);
+			1;
+		} or $evalOk = 0;
+		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
+
+		my $contentType = Chleb::Server::MediaType::acceptToContentType($accept, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
+		status HTTP_OK;
+		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) {
+			content_type $Chleb::Server::MediaType::CONTENT_TYPE_HTML;
+			return send_as html => fetchStaticPage('generic_head', { TITLE => 'Account verified - Chleb Bible Search' })
+				. '<p>Your Chleb Bible Search account has been verified.</p>'
+				. fetchStaticPage('generic_tail');
+		}
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON_API, $result);
+	};
 	post '/1/accounts/signup' => sub {
 		$server->logRequest();
 		my $dancerRequest = request();

@@ -2724,6 +2724,74 @@ sub __accountSignup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutine
 
 =over
 
+=item C<__accountVerify($params)>
+
+Validate an account verification link, consume its token, activate the account,
+and return the JSON:API account resource.
+
+=back
+
+=cut
+
+sub __accountVerify { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines, Subroutines::ProhibitExcessComplexity)
+	my ($self, $params) = @_;
+	my $accountId = $params->{account_id};
+	my $tokenId = $params->{token_id};
+	my $tokenValue = $params->{token};
+	my $validParameters = defined($accountId) && $accountId =~ m{\A[1-9][0-9]*\z}x
+		&& defined($tokenId) && $tokenId =~ m{\A[1-9][0-9]*\z}x
+		&& defined($tokenValue) && ref($tokenValue) eq '' && length($tokenValue) > 0;
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account verification requires account_id, token_id, and token'))
+		if (!$validParameters);
+
+	my $repository = $self->dic->accountRepo;
+	my $token = $repository->loadVerificationToken(int($tokenId));
+	my $account = $repository->load(int($accountId));
+	my $valid = $token && $account
+		&& int($token->{account_id}) == int($accountId)
+		&& int($account->{id}) == int($accountId)
+		&& !defined($token->{consumed_at})
+		&& int($token->{expires_at}) > int($self->dic->time->get())
+		&& __secureEqual($token->{value}, $tokenValue);
+	croak(Chleb::Exception->raise(HTTP_GONE, 'The account verification link is invalid or has expired'))
+		if (!$valid);
+
+	my $consumed = $repository->consumeVerificationToken(int($tokenId), int($accountId));
+	croak(Chleb::Exception->raise(HTTP_GONE, 'The account verification link is invalid or has expired'))
+		unless ($consumed);
+	$account = $repository->activate(int($accountId));
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to activate the account'))
+		unless ($account);
+
+	return {
+		data => {
+			type => 'account',
+			id => q{} . $account->{id},
+			attributes => {
+				created_at => $account->{created_at},
+				role => Chleb::Account::Role::name($account->{role}),
+				title => $account->{title},
+				username => $account->{username},
+				email => $account->{email},
+				name => $account->{name},
+				status => $account->{status},
+			},
+		},
+	};
+}
+
+sub __secureEqual {
+	my ($firstValue, $secondValue) = @_;
+	return 0 unless (defined($firstValue) && defined($secondValue) && length($firstValue) == length($secondValue));
+	my $difference = 0;
+	for (my $index = 0; $index < length($firstValue); $index++) {
+		$difference |= ord(substr($firstValue, $index, 1)) ^ ord(substr($secondValue, $index, 1));
+	}
+	return $difference == 0;
+}
+
+=over
+
 =item C<__damper>
 
 Instance of L<Chleb::Server::Dampen> that handles all rate-limiting logic.

@@ -78,7 +78,8 @@
               },
               "status": {
                 "enum": [
-                  "pending"
+                  "pending",
+                  "active"
                 ],
                 "type": "string"
               }
@@ -989,6 +990,70 @@
         },
         "security": [],
         "summary": "Create a pending account"
+      }
+    },
+    "/1/accounts/verify": {
+      "get": {
+        "description": "Verify a newly created account using the token from the verification email.",
+        "operationId": "getAccountVerification",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "account_id",
+            "required": "1",
+            "schema": {
+              "minimum": "1",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "token_id",
+            "required": "1",
+            "schema": {
+              "minimum": "1",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "token",
+            "required": "1",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDocument"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountDocument"
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Account verified"
+          },
+          "410": {
+            "description": "Verification token is invalid, expired, or already consumed"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [],
+        "summary": "Verify an account"
       }
     },
     "/1/info": {

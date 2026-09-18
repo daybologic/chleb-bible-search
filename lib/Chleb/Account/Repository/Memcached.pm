@@ -167,6 +167,24 @@ sub load {
 	return $account;
 }
 
+=head1 activate
+
+Mark a pending account as active and return the updated account.
+
+=cut
+
+sub activate {
+	my ($self, $id) = @_;
+	my $account = $self->load($id);
+	return unless ($account);
+	return $account if (($account->{status} // '') eq 'active');
+	return unless (($account->{status} // '') eq 'pending');
+	$account->{status} = 'active';
+	my $stored = $self->__call(set => $self->__key($id), encode_json($account), $PERMANENT_TTL);
+	return $account if ($stored);
+	return;
+}
+
 sub __call {
 	my ($self, $method, @args) = @_;
 	my $result;

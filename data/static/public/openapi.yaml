@@ -181,6 +181,47 @@ paths:
           $ref: '#/components/responses/TestHttpError'
         '511':
           $ref: '#/components/responses/TestHttpError'
+  /1/accounts/verify:
+    get:
+      summary: Verify an account
+      operationId: getAccountVerification
+      description: Verify a newly created account using the token from the verification email.
+      security: [] # No security
+      parameters:
+        - in: query
+          name: account_id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: token_id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Account verified
+          content:
+            text/html:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountDocument'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AccountDocument'
+        '410':
+          description: Verification token is invalid, expired, or already consumed
+        '500':
+          description: Internal Server Error
   /1/accounts/signup:
     post:
       summary: Create a pending account
@@ -1058,7 +1099,7 @@ components:
               pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+]0000$'
             status:
               type: string
-              enum: [pending]
+              enum: [pending, active]
           required:
             - created_at
             - role

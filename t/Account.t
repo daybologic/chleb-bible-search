@@ -71,6 +71,40 @@ sub create {
 	};
 }
 
+sub loadVerificationToken {
+	return {
+		token_id => 7,
+		account_id => 123,
+		value => 'verification-token',
+		expires_at => 4_102_444_800,
+	};
+}
+
+sub load {
+	return {
+		id => 123,
+		created_at => '1970-01-01T00:00:00+0000',
+		role => $Chleb::Account::Role::USER,
+		title => 'Mr',
+		username => 'john.smith',
+		email => 'john.smith@example.com',
+		name => 'John Smith',
+		status => 'pending',
+	};
+}
+
+sub consumeVerificationToken {
+	return { token_id => 7, account_id => 123 };
+}
+
+sub activate {
+	my ($self, $accountId) = @_;
+	return {
+		%{ $self->load($accountId) },
+		status => 'active',
+	};
+}
+
 package FakeNoopAccountRepository;
 ## no critic (Modules::RequireFilenameMatchesPackage)
 ## no critic (Modules::ProhibitMultiplePackages)
@@ -214,6 +248,24 @@ sub testVerificationTokenIsRandomAndExpires {
 	return 0;
 }
 
+sub testPendingAccountCanBeActivated {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $store = Chleb::Account::Repository::Memcached->new({
+		client => FakeAccountMemcached->new(),
+		dic => $self->sut->dic,
+	});
+	my $created = $store->create({ title => 'Mr', username => 'john.smith', email => 'john.smith@example.com', name => 'John Smith' });
+	my $activated = $store->activate($created->{id});
+
+	is($activated->{status}, 'active', 'pending account becomes active');
+	is($store->load($created->{id})->{status}, 'active', 'activated status is persisted');
+	is($store->activate($created->{id})->{status}, 'active', 'activating an active account is idempotent');
+
+	return 0;
+}
+
 sub testUsernameConflictRaises409 {
 	my ($self) = @_;
 	plan tests => 2;
@@ -329,6 +381,23 @@ sub testSignupReturnsJsonApiAccount {
 			},
 		},
 	}, 'signup response is JSON:API account data');
+
+	return 0;
+}
+
+sub testAccountVerificationActivatesAccount {
+	my ($self) = @_;
+	plan tests => 2;
+
+	$self->sut->dic->accountRepo(FakeAccountRepository->new());
+	my $result = $self->sut->__accountVerify({
+		account_id => 123,
+		token_id => 7,
+		token => 'verification-token',
+	});
+
+	is($result->{data}->{id}, '123', 'verification returns the account resource');
+	is($result->{data}->{attributes}->{status}, 'active', 'verification returns the active status');
 
 	return 0;
 }
