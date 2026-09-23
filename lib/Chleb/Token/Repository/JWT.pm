@@ -155,6 +155,9 @@ sub createAccountToken {
 		accountId => int($claims->{account_id}),
 		username  => $claims->{username},
 		role      => $claims->{role},
+		sessionVersion => int($claims->{session_version} // 1),
+		globalSessionVersion => int($claims->{global_session_version} // 1),
+		sessionStarted => int($claims->{session_started} // $self->dic->time->get()),
 		loggedIn  => 1,
 	});
 	$self->save($token);

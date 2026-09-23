@@ -25,6 +25,7 @@ Readonly our $VERIFICATION_TOKEN_PREFIX => "$PREFIX:verification-token";
 Readonly my $PERMANENT_TTL => 0;
 Readonly my $NEXT_ID_KEY => "$PREFIX:next-id";
 Readonly my $NEXT_TOKEN_ID_KEY => "$PREFIX:verification-token-next-id";
+Readonly my $GLOBAL_SESSION_VERSION_KEY => "$PREFIX:global-session-version";
 Readonly my $CONSUME_LOCK_TTL => 30;
 Readonly our $LOGIN_CHALLENGE_PREFIX => "$PREFIX:login-challenge";
 
@@ -71,6 +72,7 @@ sub create {
 		id => int($id),
 		created_at => Chleb::Account::VerificationToken::formatUtc($self->dic->time->get()),
 		role => $Chleb::Account::Role::USER,
+		session_version => 1,
 		%{ $attributes },
 		status => 'pending',
 	};
@@ -183,6 +185,50 @@ sub setPasswordHash {
 	my $stored = $self->__call(set => $self->__key($id), encode_json($account), $PERMANENT_TTL);
 	return $account if ($stored);
 	return;
+}
+
+=head1 bumpSessionVersion
+
+Increment the account session version, invalidating previously issued JWTs.
+
+=cut
+
+sub bumpSessionVersion {
+	my ($self, $id) = @_;
+	my $account = $self->load($id);
+	return unless ($account);
+	$account->{session_version} = int($account->{session_version} // 1) + 1;
+	my $stored = $self->__call(set => $self->__key($id), encode_json($account), $PERMANENT_TTL);
+	return $account if ($stored);
+	return;
+}
+
+=head1 loadGlobalSessionVersion
+
+Load the global session version, initializing it to one when necessary.
+
+=cut
+
+sub loadGlobalSessionVersion {
+	my ($self) = @_;
+	my $added = $self->__call(add => $GLOBAL_SESSION_VERSION_KEY, 1, $PERMANENT_TTL);
+	return unless (defined($added));
+	my $version = $self->__call(get => $GLOBAL_SESSION_VERSION_KEY);
+	return int($version // 1);
+}
+
+=head1 bumpGlobalSessionVersion
+
+Atomically increment the global session version, invalidating all account JWTs.
+
+=cut
+
+sub bumpGlobalSessionVersion {
+	my ($self) = @_;
+	my $added = $self->__call(add => $GLOBAL_SESSION_VERSION_KEY, 1, $PERMANENT_TTL);
+	return unless (defined($added));
+	my $version = $self->__call(incr => $GLOBAL_SESSION_VERSION_KEY);
+	return defined($version) ? int($version) : undef;
 }
 
 =head1 createLoginChallenge

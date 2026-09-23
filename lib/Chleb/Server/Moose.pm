@@ -2831,12 +2831,26 @@ sub __accountLogin { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines
 	__logAccountPasswordVerification($self, $account ? $account->{id} : 0, $account, $valid);
 	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'Invalid account credentials')) unless ($valid);
 
+	return __createAccountToken($self, $account, $self->dic->time->get());
+}
+
+=head1 __createAccountToken($account, $sessionStarted)
+
+Create the common authenticated JWT response for a newly authenticated or refreshed account.
+
+=cut
+
+sub __createAccountToken { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self, $account, $sessionStarted) = @_;
 	my $authenticationConfig = $self->dic->config->get('accounts', 'authentication', {});
-	my $ttl = int($authenticationConfig->{jwt_ttl} // 7 * 24 * 60 * 60);
+	my $ttl = int($authenticationConfig->{jwt_ttl} // 900);
 	my $token = $self->dic->tokenRepo->createAccountToken({
 		account_id => int($account->{id}),
 		username => $account->{username},
 		role => Chleb::Account::Role::name($account->{role}),
+		session_version => int($account->{session_version} // 1),
+		global_session_version => int($self->dic->accountRepo->loadGlobalSessionVersion()),
+		session_started => int($sessionStarted),
 	}, $ttl);
 	return {
 		access_token => $token->value,
@@ -2849,6 +2863,64 @@ sub __accountLogin { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines
 		},
 		_token => $token,
 	};
+}
+
+=head1 __accountRefreshToken()
+
+Issue a replacement JWT without a password while the absolute account session lifetime permits it.
+
+=cut
+
+sub __accountRefreshToken { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my $token = $self->__sessionToken;
+	my $authenticated = $self->__hasSessionToken && $token->loggedIn && defined($token->accountId);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'Authentication is required to refresh the account token'))
+		unless ($authenticated);
+	my $authenticationConfig = $self->dic->config->get('accounts', 'authentication', {});
+	my $absoluteTtl = int($authenticationConfig->{absolute_session_ttl} // 30 * 24 * 60 * 60);
+	my $sessionStarted = int($token->sessionStarted // $token->created);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The absolute account session lifetime has expired'))
+		if ($self->dic->time->get() >= $sessionStarted + $absoluteTtl);
+	my $account = $self->dic->accountRepo->load($token->accountId);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The account is no longer active'))
+		unless ($account && ($account->{status} // '') eq 'active');
+	return __createAccountToken($self, $account, $sessionStarted);
+}
+
+=head1 __accountInvalidateSessions()
+
+Increment the authenticated account's session version, invalidating its existing JWTs.
+
+=cut
+
+sub __accountInvalidateSessions { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my $token = $self->__sessionToken;
+	my $authenticated = $self->__hasSessionToken && $token->loggedIn && defined($token->accountId);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'Authentication is required to invalidate sessions'))
+		unless ($authenticated);
+	my $account = $self->dic->accountRepo->bumpSessionVersion($token->accountId);
+	croak(Chleb::Exception->raise(HTTP_NOT_FOUND, 'Account not found')) unless ($account);
+	return { invalidated => JSON::true };
+}
+
+=head1 __accountInvalidateAllSessions()
+
+Advance the global session version when an administrator requests global invalidation.
+
+=cut
+
+sub __accountInvalidateAllSessions { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my $token = $self->__sessionToken;
+	my $authenticated = $self->__hasSessionToken && $token->loggedIn && defined($token->accountId);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'Authentication is required to invalidate all sessions'))
+		unless ($authenticated);
+	croak(Chleb::Exception->raise(HTTP_FORBIDDEN, 'Only administrators may invalidate all sessions'))
+		unless ($token->role eq 'admin');
+	$self->dic->accountRepo->bumpGlobalSessionVersion();
+	return { invalidated => JSON::true };
 }
 
 =head1 __accountLoginUsername($payload)
@@ -3157,6 +3229,27 @@ sub __loadSessionToken {
 	return $sessionToken;
 }
 
+=head1 __validateAccountSessionVersion($sessionToken)
+
+Reject an account JWT whose session version no longer matches the account.
+
+=cut
+
+sub __validateAccountSessionVersion {
+	my ($self, $sessionToken) = @_;
+	return unless (defined($sessionToken->accountId));
+	my $account = $self->dic->accountRepo->load($sessionToken->accountId);
+	my $currentVersion = $account ? int($account->{session_version} // 1) : 0;
+	my $tokenVersion = int($sessionToken->sessionVersion // 0);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'The account session has been invalidated'))
+		unless ($account && $tokenVersion == $currentVersion);
+	my $currentGlobalVersion = int($self->dic->accountRepo->loadGlobalSessionVersion());
+	my $tokenGlobalVersion = int($sessionToken->globalSessionVersion // 0);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'All account sessions have been invalidated'))
+		unless ($tokenGlobalVersion == $currentGlobalVersion);
+	return;
+}
+
 =head1 __updateSessionTokenMetadata($args)
 
 Update metadata for cookie sessions while leaving stateless Bearer JWTs intact.
@@ -3211,6 +3304,7 @@ sub handleSessionToken {
 		? __createSessionToken($self, $tokenRepo, $ipAddress, $userAgent)
 		: __loadSessionToken($self, $tokenRepo, $cookieValue, $bearerValue);
 	return if (!$sessionToken);
+	__validateAccountSessionVersion($self, $sessionToken);
 	Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
 	$self->dic->logger->trace('session token found: ' . $sessionToken->toString());
 	if ($self->__damper->dampenChurn($ipAddress, $sessionToken->value)) {

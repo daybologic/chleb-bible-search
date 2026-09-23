@@ -39,6 +39,21 @@ sub setPasswordHash {
 	return $self->__backend->setPasswordHash($accountId, $passwordHash);
 }
 
+sub bumpSessionVersion {
+	my ($self, $accountId) = @_;
+	return $self->__backend->bumpSessionVersion($accountId);
+}
+
+sub loadGlobalSessionVersion {
+	my ($self) = @_;
+	return $self->__backend->loadGlobalSessionVersion();
+}
+
+sub bumpGlobalSessionVersion {
+	my ($self) = @_;
+	return $self->__backend->bumpGlobalSessionVersion();
+}
+
 sub createLoginChallenge {
 	my ($self, $username, $ttl) = @_;
 	return $self->__backend->createLoginChallenge($username, $ttl);

@@ -60,6 +60,8 @@ sub new {
 	return bless({
 		password_hash => $args ? $args->{password_hash} : undef,
 		status => $args ? $args->{status} : undef,
+		session_version => $args ? ($args->{session_version} // 1) : 1,
+		global_session_version => $args ? ($args->{global_session_version} // 1) : 1,
 	}, $class);
 }
 
@@ -70,6 +72,7 @@ sub create {
 		id => 123,
 		created_at => '1970-01-01T00:00:00+0000',
 		role => $Chleb::Account::Role::USER,
+		session_version => $self->{session_version},
 		status => $self->{status} // 'pending',
 	};
 }
@@ -95,6 +98,7 @@ sub load {
 		name => 'John Smith',
 		status => $self->{status} // 'pending',
 		password_hash => $self->{password_hash},
+		session_version => $self->{session_version},
 	};
 }
 
@@ -115,6 +119,24 @@ sub consumeLoginChallenge {
 	my ($self, $value, $username) = @_;
 	return { username => lc($username) } if ($value eq 'login-challenge');
 	return;
+}
+
+sub bumpSessionVersion {
+	my ($self, $accountId) = @_;
+	my $account = $self->load($accountId);
+	$account->{session_version}++;
+	$self->{session_version} = $account->{session_version};
+	return $account;
+}
+
+sub loadGlobalSessionVersion {
+	my ($self) = @_;
+	return $self->{global_session_version};
+}
+
+sub bumpGlobalSessionVersion {
+	my ($self) = @_;
+	return ++$self->{global_session_version};
 }
 
 sub consumeVerificationToken {
@@ -224,6 +246,21 @@ sub role {
 	return $self->{role};
 }
 
+sub sessionVersion {
+	my ($self) = @_;
+	return $self->{session_version};
+}
+
+sub sessionStarted {
+	my ($self) = @_;
+	return $self->{session_started};
+}
+
+sub globalSessionVersion {
+	my ($self) = @_;
+	return $self->{global_session_version};
+}
+
 package AccountTests;
 ## no critic (Modules::RequireFilenameMatchesPackage)
 ## no critic (Modules::ProhibitMultiplePackages)
@@ -258,7 +295,7 @@ sub setUp {
 
 sub testMemcachedCreatesPermanentSequentialAccounts {
 	my ($self) = @_;
-	plan tests => 15;
+	plan tests => 18;
 
 	my $client = FakeAccountMemcached->new();
 	my $store = Chleb::Account::Repository::Memcached->new({
@@ -274,6 +311,7 @@ sub testMemcachedCreatesPermanentSequentialAccounts {
 	is($first->{status}, 'pending', 'new account status is pending');
 	is($first->{created_at}, '1970-01-01T00:00:00+0000', 'new account creation time is stored in UTC');
 	is($first->{role}, $Chleb::Account::Role::USER, 'new account is stored with the user role');
+	is($first->{session_version}, 1, 'new account starts at session version one');
 	is($client->{ttl}->{ 'chleb-accounts:next-id' }, 0, 'account ID counter has permanent TTL');
 	is($client->{ttl}->{ 'chleb-accounts:account:1' }, 0, 'first account has permanent TTL');
 	is($client->{ttl}->{ 'chleb-accounts:account:2' }, 0, 'second account has permanent TTL');
@@ -285,6 +323,8 @@ sub testMemcachedCreatesPermanentSequentialAccounts {
 	is($loaded->{title}, 'Mr', 'stored title can be loaded');
 	is($loaded->{created_at}, '1970-01-01T00:00:00+0000', 'stored account creation time can be loaded');
 	is($loaded->{role}, $Chleb::Account::Role::USER, 'stored account role can be loaded');
+	is($store->bumpSessionVersion(1)->{session_version}, 2, 'account session version can be incremented');
+	is($store->load(1)->{session_version}, 2, 'incremented account session version is persisted');
 	is($Chleb::Account::Repository::Memcached::PREFIX, 'chleb-accounts', 'account prefix is fixed');
 
 	return 0;
@@ -398,10 +438,42 @@ sub testAccountLoginIssuesAuthenticatedToken {
 	});
 	is($result->{access_token}, 'signed-account-jwt', 'login returns the access token');
 	is($result->{token_type}, 'Bearer', 'login returns Bearer token type');
-	is($result->{expires_in}, 7 * 24 * 60 * 60, 'login returns the configured seven-day lifetime');
+	is($result->{expires_in}, 15 * 60, 'login returns the configured fifteen-minute lifetime');
 	is($result->{account}->{id}, '123', 'login returns the account ID');
 	is($result->{account}->{username}, 'john.smith', 'login preserves stored username casing');
 	is($result->{account}->{role}, 'user', 'login returns the account role');
+
+	return 0;
+}
+
+sub testAccountTokenCanRefreshWithinAbsoluteLifetime {
+	my ($self) = @_;
+	plan tests => 4;
+
+	$self->sut->dic->time->setMockedTime(1_000);
+	$self->sut->dic->accountRepo(FakeAccountRepository->new({ status => 'active' }));
+	$self->sut->dic->tokenRepo(FakeLoginTokenRepository->new());
+	$self->sut->__sessionToken(FakeAuthenticatedToken->new({
+		logged_in => 1,
+		account_id => 123,
+		role => 'user',
+		session_version => 1,
+		global_session_version => 1,
+		session_started => 900,
+	}));
+	my $result = $self->sut->__accountRefreshToken();
+	is($result->{expires_in}, 15 * 60, 'refresh returns the short JWT lifetime');
+	is($result->{account}->{id}, '123', 'refresh returns the account identity');
+
+	$self->sut->dic->time->setMockedTime(900 + 30 * 24 * 60 * 60);
+	my $evalOk; $evalOk = eval {
+		$self->sut->__accountRefreshToken();
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'refresh is rejected after the absolute session lifetime');
+
+	$self->sut->dic->time->setMockedTime(1_000);
+	is($self->sut->__sessionToken->sessionStarted, 900, 'refresh preserves the original session start time');
 
 	return 0;
 }
@@ -657,6 +729,75 @@ sub testAccountLookupAuthorization {
 		1;
 	} or $evalOk = 0;
 	is($evalOk, 0, 'anonymous requests may not look up an account');
+
+	return 0;
+}
+
+sub testAccountSessionVersionInvalidatesTokens {
+	my ($self) = @_;
+	plan tests => 3;
+
+	my $repository = FakeAccountRepository->new({ session_version => 1 });
+	$self->sut->dic->accountRepo($repository);
+	$self->sut->__sessionToken(FakeAuthenticatedToken->new({
+		logged_in => 1,
+		account_id => 123,
+		role => 'user',
+		session_version => 1,
+		global_session_version => 1,
+	}));
+	is($self->sut->__validateAccountSessionVersion($self->sut->__sessionToken), undef,
+		'current account session version is accepted');
+	my $result = $self->sut->__accountInvalidateSessions();
+	is(JSON::is_bool($result->{invalidated}) ? $result->{invalidated} : undef, JSON::true,
+		'session invalidation reports success');
+
+	my $evalOk; $evalOk = eval {
+		$self->sut->__validateAccountSessionVersion($self->sut->__sessionToken);
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'an older account session version is rejected');
+
+	return 0;
+}
+
+sub testAdminCanInvalidateAllAccountSessions {
+	my ($self) = @_;
+	plan tests => 4;
+
+	my $repository = FakeAccountRepository->new({ global_session_version => 1 });
+	$self->sut->dic->accountRepo($repository);
+	$self->sut->__sessionToken(FakeAuthenticatedToken->new({
+		logged_in => 1,
+		account_id => 123,
+		role => 'admin',
+		session_version => 1,
+		global_session_version => 1,
+	}));
+	is($self->sut->__validateAccountSessionVersion($self->sut->__sessionToken), undef,
+		'current global session version is accepted');
+	my $result = $self->sut->__accountInvalidateAllSessions();
+	is(JSON::is_bool($result->{invalidated}) ? $result->{invalidated} : undef, JSON::true,
+		'global session invalidation reports success');
+
+	my $evalOk; $evalOk = eval {
+		$self->sut->__validateAccountSessionVersion($self->sut->__sessionToken);
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'global invalidation rejects the previous administrator token');
+
+	$self->sut->__sessionToken(FakeAuthenticatedToken->new({
+		logged_in => 1,
+		account_id => 123,
+		role => 'user',
+		session_version => 1,
+		global_session_version => 2,
+	}));
+	$evalOk = eval {
+		$self->sut->__accountInvalidateAllSessions();
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'non-admin accounts cannot invalidate all sessions');
 
 	return 0;
 }

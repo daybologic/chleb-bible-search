@@ -91,6 +91,12 @@ has accountId => (is => 'ro', isa => 'Maybe[Int]', init_arg => 'accountId', defa
 
 has role => (is => 'ro', isa => 'Str', init_arg => 'role', default => '');
 
+has sessionVersion => (is => 'ro', isa => 'Maybe[Int]', init_arg => 'sessionVersion', default => undef);
+
+has globalSessionVersion => (is => 'ro', isa => 'Maybe[Int]', init_arg => 'globalSessionVersion', default => undef);
+
+has sessionStarted => (is => 'ro', isa => 'Maybe[Int]', init_arg => 'sessionStarted', default => undef);
+
 has dirty => (is => 'rw', isa => 'Bool', default => 0);
 
 has isNew => (is => 'rw', isa => 'Bool', default => 1);
@@ -187,6 +193,9 @@ sub TO_JWT {
 	if (defined($self->accountId)) {
 		$claims{sub} = q{} . $self->accountId;
 		$claims{account_id} = int($self->accountId);
+		$claims{session_version} = int($self->sessionVersion // 1);
+		$claims{global_session_version} = int($self->globalSessionVersion // 1);
+		$claims{session_started} = int($self->sessionStarted // $self->created);
 	}
 	$claims{role} = $self->role if (length($self->role) > 0);
 
@@ -206,6 +215,9 @@ sub fromJWTClaims {
 		now       => $claims->{iat},
 		accountId => $claims->{account_id} // $claims->{sub},
 		role      => $claims->{role} // '',
+		sessionVersion => (exists($claims->{session_version}) ? $claims->{session_version} : 1),
+		globalSessionVersion => (exists($claims->{global_session_version}) ? $claims->{global_session_version} : 1),
+		sessionStarted => (exists($claims->{session_started}) ? $claims->{session_started} : $claims->{iat}),
 		loggedIn  => $claims->{loggedIn} ? 1 : 0,
 		username  => $claims->{username} // '',
 	});

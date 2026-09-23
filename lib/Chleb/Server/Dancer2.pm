@@ -1658,6 +1658,48 @@ get '/1/info' => sub {
 	return;
 }
 
+=item C<__registerAccountSessionRoutes()>
+
+Register account session invalidation routes.
+
+=cut
+
+sub __registerAccountSessionRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	post '/1/accounts/sessions/invalidate' => sub {
+		$server->logRequest();
+		$server->handleSessionToken();
+		my $dancerRequest = request();
+		my $accept;
+		my $result;
+		my $evalOk; $evalOk = eval {
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+			$result = $server->__accountInvalidateSessions();
+			1;
+		} or $evalOk = 0;
+		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
+
+		status HTTP_OK;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON, $result);
+	};
+	post '/1/accounts/sessions/invalidate-all' => sub {
+		$server->logRequest();
+		$server->handleSessionToken();
+		my $dancerRequest = request();
+		my $accept;
+		my $result;
+		my $evalOk; $evalOk = eval {
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+			$result = $server->__accountInvalidateAllSessions();
+			1;
+		} or $evalOk = 0;
+		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
+
+		status HTTP_OK;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON, $result);
+	};
+	return;
+}
+
 =item C<__registerAccountRoutes()>
 
 Register account lifecycle routes.
@@ -1713,6 +1755,31 @@ sub __registerAccountLoginRoutes {
 			$server->__bearerTokenValue();
 			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 			$result = $server->__accountLogin(__decodeJsonBody($dancerRequest));
+			1;
+		} or $evalOk = 0;
+		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
+
+		my $token = delete($result->{_token});
+		my $secureCookie = (($dancerRequest->env->{'psgi.url_scheme'} // '') eq 'https') ? 1 : 0;
+		setCookie(
+			sessionToken => $token->value,
+			expires => $token->expires,
+			http_only => 1,
+			secure => $secureCookie,
+			same_site => 'Lax',
+		);
+		status HTTP_OK;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON, $result);
+	};
+	post '/1/accounts/token/refresh' => sub {
+		$server->logRequest();
+		$server->handleSessionToken();
+		my $dancerRequest = request();
+		my $accept;
+		my $result;
+		my $evalOk; $evalOk = eval {
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+			$result = $server->__accountRefreshToken();
 			1;
 		} or $evalOk = 0;
 		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
@@ -1849,6 +1916,7 @@ __registerLookupRoutes();
 __registerSearchRoutes();
 __registerStatusRoutes();
 __registerAccountLoginRoutes();
+__registerAccountSessionRoutes();
 __registerAccountRoutes();
 __registerNotFoundRoute();
 __registerErrorHooks();

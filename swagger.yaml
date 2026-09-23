@@ -249,6 +249,46 @@ paths:
           description: Account not found
         '500':
           description: Internal Server Error
+  /1/accounts/sessions/invalidate:
+    post:
+      summary: Invalidate account sessions
+      operationId: postAccountSessionInvalidation
+      description: Invalidate all existing JWTs for the authenticated account by advancing its account session version.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Account sessions invalidated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSessionInvalidationResponse'
+        '401':
+          description: Authentication is required
+        '404':
+          description: Account not found
+        '500':
+          description: Internal Server Error
+  /1/accounts/sessions/invalidate-all:
+    post:
+      summary: Invalidate all account sessions
+      operationId: postAllAccountSessionInvalidation
+      description: Invalidate every existing account JWT. This operation is restricted to administrators and accepts no account identifier.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: All account sessions invalidated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSessionInvalidationResponse'
+        '401':
+          description: Authentication is required
+        '403':
+          description: Only administrators may invalidate all sessions
+        '500':
+          description: Internal Server Error
   /1/accounts/verify:
     get:
       summary: Verify an account
@@ -377,6 +417,24 @@ paths:
           description: Bad request
         '401':
           description: Invalid credentials or login challenge
+        '500':
+          description: Internal Server Error
+  /1/accounts/token/refresh:
+    post:
+      summary: Refresh an account JWT
+      operationId: postAccountTokenRefresh
+      description: Replace a valid account JWT before it expires without requiring the password. The absolute account session lifetime is 30 days.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Replacement authenticated account token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLoginResponse'
+        '401':
+          description: The token is invalid, expired, or its absolute session lifetime has ended
         '500':
           description: Internal Server Error
   /1/accounts/signup:
@@ -1282,6 +1340,14 @@ components:
             role:
               type: string
               enum: [user, moderator, admin]
+    AccountSessionInvalidationResponse:
+      type: object
+      required:
+        - invalidated
+      properties:
+        invalidated:
+          type: boolean
+          enum: [true]
     AccountValidationDocument:
       type: object
       required:

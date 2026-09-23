@@ -33,7 +33,8 @@ accounts:
   dynamodb:
     table: chleb-accounts
   authentication:
-    jwt_ttl: 604800
+    jwt_ttl: 900
+    absolute_session_ttl: 2592000
     login_challenge_ttl: 60
   email:
     verification_root_url: http://chleb-api.example.org

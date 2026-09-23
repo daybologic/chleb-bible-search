@@ -24,6 +24,7 @@ Readonly my $ACCOUNT_SORT_KEY => 'account';
 Readonly my $COUNTER_PARTITION_KEY => 'counter';
 Readonly my $COUNTER_SORT_KEY => 'accounts';
 Readonly my $TOKEN_COUNTER_SORT_KEY => 'verification-tokens';
+Readonly my $GLOBAL_SESSION_SORT_KEY => 'global-sessions';
 
 has client => (is => 'ro', init_arg => 'client', predicate => '__hasClient');
 has table => (is => 'ro', isa => 'Str', lazy => 1, builder => '__makeTable');
@@ -39,6 +40,7 @@ sub create {
 		id => int($id),
 		created_at => Chleb::Account::VerificationToken::formatUtc($self->dic->time->get()),
 		role => $Chleb::Account::Role::USER,
+		session_version => 1,
 		%{ $attributes },
 		status => 'pending',
 	};
@@ -177,6 +179,80 @@ sub setPasswordHash {
 	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB password hash storage failed: $EVAL_ERROR"))
 		unless ($evalOk && $response && $response->Attributes);
 	return $self->__accountFromItem($response->Attributes->Map);
+}
+
+=head1 bumpSessionVersion
+
+Atomically increment the account session version, invalidating previously issued JWTs.
+
+=cut
+
+sub bumpSessionVersion {
+	my ($self, $id) = @_;
+	my $response;
+	my $evalOk; $evalOk = eval {
+		$response = $self->__client->UpdateItem(
+			TableName => $self->table,
+			Key => $self->__key($id),
+			UpdateExpression => 'SET session_version = if_not_exists(session_version, :initial) + :one',
+			ExpressionAttributeValues => {
+				':initial' => { N => '1' },
+				':one' => { N => '1' },
+			},
+			ConditionExpression => 'attribute_exists(pk) AND attribute_exists(sk)',
+			ReturnValues => 'ALL_NEW',
+		);
+		1;
+	} or $evalOk = 0;
+	return if (!$evalOk && $EVAL_ERROR =~ m{ConditionalCheckFailedException}x);
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB account session version update failed: $EVAL_ERROR"))
+		unless ($evalOk && $response && $response->Attributes);
+	return $self->__accountFromItem($response->Attributes->Map);
+}
+
+=head1 loadGlobalSessionVersion
+
+Load the global session version, defaulting to one before the first invalidation.
+
+=cut
+
+sub loadGlobalSessionVersion {
+	my ($self) = @_;
+	my $response = $self->__client->GetItem(
+		TableName => $self->table,
+		Key => { pk => { S => 'global' }, sk => { S => $GLOBAL_SESSION_SORT_KEY } },
+		ConsistentRead => 1,
+	);
+	return 1 unless ($response && $response->Item);
+	my $item = $response->Item->Map;
+	return int($item->{session_version}->N // 1);
+}
+
+=head1 bumpGlobalSessionVersion
+
+Atomically increment the global session version, invalidating all account JWTs.
+
+=cut
+
+sub bumpGlobalSessionVersion {
+	my ($self) = @_;
+	my $response;
+	my $evalOk; $evalOk = eval {
+		$response = $self->__client->UpdateItem(
+			TableName => $self->table,
+			Key => { pk => { S => 'global' }, sk => { S => $GLOBAL_SESSION_SORT_KEY } },
+			UpdateExpression => 'SET session_version = if_not_exists(session_version, :initial) + :one',
+			ExpressionAttributeValues => {
+				':initial' => { N => '1' },
+				':one' => { N => '1' },
+			},
+			ReturnValues => 'ALL_NEW',
+		);
+		1;
+	} or $evalOk = 0;
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB global session version update failed: $EVAL_ERROR"))
+		unless ($evalOk && $response && $response->Attributes);
+	return int($response->Attributes->Map->{session_version}->N);
 }
 
 =head1 createLoginChallenge
@@ -347,6 +423,7 @@ sub __accountItem {
 		email => { S => $account->{email} },
 		name => { S => $account->{name} },
 		status => { S => $account->{status} },
+		session_version => { N => q{} . int($account->{session_version} // 1) },
 	};
 	$item->{password_hash} = { S => $account->{password_hash} } if (defined($account->{password_hash}));
 	return $item;
@@ -363,6 +440,7 @@ sub __accountFromItem {
 		email => $item->{email}->S,
 		name => $item->{name}->S,
 		status => $item->{status}->S,
+		session_version => (defined($item->{session_version}) ? int($item->{session_version}->N) : 1),
 		password_hash => (defined($item->{password_hash}) ? $item->{password_hash}->S : undef),
 	};
 }

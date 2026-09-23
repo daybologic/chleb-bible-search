@@ -350,6 +350,20 @@
         ],
         "type": "object"
       },
+      "AccountSessionInvalidationResponse": {
+        "properties": {
+          "invalidated": {
+            "enum": [
+              "1"
+            ],
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "invalidated"
+        ],
+        "type": "object"
+      },
       "AccountSignupDocument": {
         "properties": {
           "data": {
@@ -1215,6 +1229,72 @@
         "summary": "Create a login challenge"
       }
     },
+    "/1/accounts/sessions/invalidate": {
+      "post": {
+        "description": "Invalidate all existing JWTs for the authenticated account by advancing its account session version.",
+        "operationId": "postAccountSessionInvalidation",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSessionInvalidationResponse"
+                }
+              }
+            },
+            "description": "Account sessions invalidated"
+          },
+          "401": {
+            "description": "Authentication is required"
+          },
+          "404": {
+            "description": "Account not found"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Invalidate account sessions"
+      }
+    },
+    "/1/accounts/sessions/invalidate-all": {
+      "post": {
+        "description": "Invalidate every existing account JWT. This operation is restricted to administrators and accepts no account identifier.",
+        "operationId": "postAllAccountSessionInvalidation",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountSessionInvalidationResponse"
+                }
+              }
+            },
+            "description": "All account sessions invalidated"
+          },
+          "401": {
+            "description": "Authentication is required"
+          },
+          "403": {
+            "description": "Only administrators may invalidate all sessions"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Invalidate all account sessions"
+      }
+    },
     "/1/accounts/signup": {
       "post": {
         "description": "Create a new account and return its allocated numeric account ID.",
@@ -1274,6 +1354,36 @@
         },
         "security": [],
         "summary": "Create a pending account"
+      }
+    },
+    "/1/accounts/token/refresh": {
+      "post": {
+        "description": "Replace a valid account JWT before it expires without requiring the password. The absolute account session lifetime is 30 days.",
+        "operationId": "postAccountTokenRefresh",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountLoginResponse"
+                }
+              }
+            },
+            "description": "Replacement authenticated account token"
+          },
+          "401": {
+            "description": "The token is invalid, expired, or its absolute session lifetime has ended"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Refresh an account JWT"
       }
     },
     "/1/accounts/verify": {

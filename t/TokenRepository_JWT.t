@@ -139,13 +139,16 @@ sub testSaveLoad {
 
 sub testAuthenticatedAccountClaims {
 	my ($self) = @_;
-	plan tests => 8;
+	plan tests => 12;
 
 	my $now = $self->dic->time->get();
 	my $token = $self->sut->createAccountToken({
 		account_id => 123,
 		username => 'John.Smith',
 		role => 'admin',
+		session_version => 4,
+		global_session_version => 9,
+		session_started => $now - 100,
 	}, 7 * 24 * 60 * 60);
 	my (undef, $encodedPayload) = split(m/\./, $token->value, 3);
 	my $payload = JSON::PP->new->decode(decode_base64url($encodedPayload));
@@ -153,11 +156,15 @@ sub testAuthenticatedAccountClaims {
 	is($payload->{account_id}, 123, 'authenticated JWT contains the account ID claim');
 	is($payload->{username}, 'John.Smith', 'authenticated JWT preserves username casing');
 	is($payload->{role}, 'admin', 'authenticated JWT contains the account role');
+	is($payload->{session_version}, 4, 'authenticated JWT contains the session version');
+	is($payload->{global_session_version}, 9, 'authenticated JWT contains the global session version');
+	is($payload->{session_started}, $now - 100, 'authenticated JWT preserves the absolute session start time');
 	is($payload->{loggedIn}, JSON::true, 'authenticated JWT marks the token logged in');
 	is($payload->{exp}, $now + 7 * 24 * 60 * 60, 'authenticated JWT uses the requested lifetime');
 	my $loaded = $self->sut->load($token->value);
 	is($loaded->accountId, 123, 'loaded JWT restores the account ID');
 	is($loaded->role, 'admin', 'loaded JWT restores the account role');
+	is($loaded->sessionVersion, 4, 'loaded JWT restores the session version');
 
 	return EXIT_SUCCESS;
 }
