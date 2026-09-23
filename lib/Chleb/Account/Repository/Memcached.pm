@@ -11,6 +11,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
+use Chleb::Account::LoginChallenge;
 use Chleb::Account::Role;
 use Chleb::Account::VerificationToken;
 use Digest::SHA qw(sha1_hex);
@@ -25,6 +26,7 @@ Readonly my $PERMANENT_TTL => 0;
 Readonly my $NEXT_ID_KEY => "$PREFIX:next-id";
 Readonly my $NEXT_TOKEN_ID_KEY => "$PREFIX:verification-token-next-id";
 Readonly my $CONSUME_LOCK_TTL => 30;
+Readonly our $LOGIN_CHALLENGE_PREFIX => "$PREFIX:login-challenge";
 
 has client => (is => 'ro', init_arg => 'client', predicate => '__hasClient');
 has __clientObject => (is => 'rw', lazy => 1, builder => '__makeClient');
@@ -183,6 +185,61 @@ sub setPasswordHash {
 	return;
 }
 
+=head1 createLoginChallenge
+
+Store a short-lived login challenge for a normalized username.
+
+=cut
+
+sub createLoginChallenge {
+	my ($self, $username, $ttl) = @_;
+	my $challenge = Chleb::Account::LoginChallenge::generate($self->dic, $username, $ttl);
+	my $challengeRecord = {
+		username => $challenge->{username},
+		created_at => $challenge->{created_at},
+		expires_at => $challenge->{expires_at},
+	};
+	my $stored = $self->__call(set => $self->__loginChallengeKey($challenge->{digest}), encode_json($challengeRecord), int($ttl));
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, 'Unable to store the account login challenge'))
+		unless ($stored);
+	return $challenge;
+}
+
+=head1 consumeLoginChallenge
+
+Atomically consume a login challenge for a normalized username.
+
+=cut
+
+sub consumeLoginChallenge {
+	my ($self, $value, $username) = @_;
+	my $digest = Chleb::Account::LoginChallenge::digest($value);
+	my $lockKey = $self->__loginChallengeLockKey($digest);
+	my $locked = $self->__call(add => $lockKey, 1, $CONSUME_LOCK_TTL);
+	return unless ($locked);
+	my $encoded = $self->__call(get => $self->__loginChallengeKey($digest));
+	my $challengeRecord;
+	my $evalOk; $evalOk = eval {
+		$challengeRecord = decode_json($encoded) if (defined($encoded));
+		1;
+	} or $evalOk = 0;
+	unless ($evalOk && ref($challengeRecord) eq 'HASH') {
+		$self->__call(delete => $lockKey);
+		return;
+	}
+	unless (lc($challengeRecord->{username} // '') eq lc($username // '')) {
+		$self->__call(delete => $lockKey);
+		return;
+	}
+	if (int($self->dic->time->get()) >= int($challengeRecord->{expires_at} // 0)) {
+		$self->__call(delete => $lockKey);
+		return;
+	}
+	$self->__call(delete => $self->__loginChallengeKey($digest));
+	$self->__call(delete => $lockKey);
+	return $challengeRecord;
+}
+
 =head1 activate
 
 Mark a pending account as active and return the updated account.
@@ -252,6 +309,16 @@ sub __verificationTokenKey {
 sub __verificationTokenLockKey {
 	my ($self, $tokenId) = @_;
 	return "$VERIFICATION_TOKEN_PREFIX:lock:$tokenId";
+}
+
+sub __loginChallengeKey {
+	my ($self, $digest) = @_;
+	return "$LOGIN_CHALLENGE_PREFIX:$digest";
+}
+
+sub __loginChallengeLockKey {
+	my ($self, $digest) = @_;
+	return "$LOGIN_CHALLENGE_PREFIX:lock:$digest";
 }
 
 sub __indexKey {

@@ -32,6 +32,9 @@ accounts:
     region: eu-west-2
   dynamodb:
     table: chleb-accounts
+  authentication:
+    jwt_ttl: 604800
+    login_challenge_ttl: 60
   email:
     verification_root_url: http://chleb-api.example.org
   sqs:

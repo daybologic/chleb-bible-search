@@ -138,6 +138,29 @@ sub create {
 	return $token;
 }
 
+=item C<createAccountToken($claims, $ttl)>
+
+Create and sign an authenticated account JWT with the supplied account claims
+and lifetime.
+
+=cut
+
+sub createAccountToken {
+	my ($self, $claims, $ttl) = @_;
+	my $token = Chleb::Token->new({
+		dic       => $self->dic,
+		ttl       => int($ttl),
+		_repo     => $self->repo,
+		_source   => $self,
+		accountId => int($claims->{account_id}),
+		username  => $claims->{username},
+		role      => $claims->{role},
+		loggedIn  => 1,
+	});
+	$self->save($token);
+	return $token;
+}
+
 =item C<load($value)>
 
 Verifies and decodes a JWT string or C<Dancer2::Core::Cookie>, rebuilds the

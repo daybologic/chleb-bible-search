@@ -223,6 +223,133 @@
         ],
         "type": "object"
       },
+      "AccountLoginChallengeRequest": {
+        "properties": {
+          "username": {
+            "maxLength": "30",
+            "pattern": "^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "type": "object"
+      },
+      "AccountLoginChallengeResponse": {
+        "properties": {
+          "challenge": {
+            "type": "string"
+          },
+          "expires_at": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "challenge",
+          "expires_at"
+        ],
+        "type": "object"
+      },
+      "AccountLoginRequest": {
+        "properties": {
+          "challenge": {
+            "minLength": "1",
+            "type": "string"
+          },
+          "password": {
+            "minLength": "1",
+            "type": "string"
+          },
+          "username": {
+            "maxLength": "30",
+            "pattern": "^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "password",
+          "challenge"
+        ],
+        "type": "object"
+      },
+      "AccountLoginResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string"
+          },
+          "account": {
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "role": {
+                "enum": [
+                  "user",
+                  "moderator",
+                  "admin"
+                ],
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "username",
+              "role"
+            ],
+            "type": "object"
+          },
+          "expires_in": {
+            "example": "604800",
+            "type": "integer"
+          },
+          "token_type": {
+            "enum": [
+              "Bearer"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "account"
+        ],
+        "type": "object"
+      },
+      "AccountPasswordVerificationRequest": {
+        "properties": {
+          "account_id": {
+            "minimum": "1",
+            "type": "integer"
+          },
+          "password": {
+            "minLength": "1",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id",
+          "password"
+        ],
+        "type": "object"
+      },
+      "AccountPasswordVerificationResponse": {
+        "properties": {
+          "valid": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid"
+        ],
+        "type": "object"
+      },
       "AccountSignupDocument": {
         "properties": {
           "data": {
@@ -918,6 +1045,13 @@
         },
         "type": "object"
       }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      }
     }
   },
   "info": {
@@ -933,7 +1067,7 @@
   "paths": {
     "/1/accounts": {
       "get": {
-        "description": "Get account details by username. This endpoint is currently public.",
+        "description": "Get account details by username. Authentication is required. Administrators may look up any account; other users may look up only their own account.",
         "operationId": "getAccountByUsername",
         "parameters": [
           {
@@ -965,6 +1099,12 @@
           "400": {
             "description": "Bad request"
           },
+          "401": {
+            "description": "Authentication is required"
+          },
+          "403": {
+            "description": "The authenticated user may only look up their own account"
+          },
           "404": {
             "description": "Account not found"
           },
@@ -972,8 +1112,107 @@
             "description": "Internal Server Error"
           }
         },
-        "security": [],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get an account by username"
+      }
+    },
+    "/1/accounts/login": {
+      "post": {
+        "description": "Consume a login challenge and issue a seven-day JWT for an active account.",
+        "operationId": "postAccountLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountLoginRequest"
+              }
+            },
+            "application/vnd.api+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountLoginRequest"
+              }
+            }
+          },
+          "required": "1"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountLoginResponse"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountLoginResponse"
+                }
+              }
+            },
+            "description": "Authenticated account and Bearer token"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Invalid credentials or login challenge"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [],
+        "summary": "Log into an account"
+      }
+    },
+    "/1/accounts/login/challenge": {
+      "post": {
+        "description": "Create a short-lived, single-use challenge for username-based account login.",
+        "operationId": "postAccountLoginChallenge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountLoginChallengeRequest"
+              }
+            },
+            "application/vnd.api+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountLoginChallengeRequest"
+              }
+            }
+          },
+          "required": "1"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountLoginChallengeResponse"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountLoginChallengeResponse"
+                }
+              }
+            },
+            "description": "Login challenge"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [],
+        "summary": "Create a login challenge"
       }
     },
     "/1/accounts/signup": {
@@ -1101,9 +1340,55 @@
         "summary": "Verify an account"
       }
     },
+    "/1/accounts/verify-password": {
+      "post": {
+        "description": "Return whether an account ID and password match. This endpoint is currently public and returns only a validity result.",
+        "operationId": "postAccountPasswordVerification",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountPasswordVerificationRequest"
+              }
+            },
+            "application/vnd.api+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountPasswordVerificationRequest"
+              }
+            }
+          },
+          "required": "1"
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountPasswordVerificationResponse"
+                }
+              },
+              "application/vnd.api+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountPasswordVerificationResponse"
+                }
+              }
+            },
+            "description": "Credential validity"
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [],
+        "summary": "Verify account credentials"
+      }
+    },
     "/1/accounts/{account_id}": {
       "get": {
-        "description": "Get account details by numeric account ID. This endpoint is currently public.",
+        "description": "Get account details by numeric account ID. Authentication is required. Administrators may look up any account; other users may look up only their own account.",
         "operationId": "getAccount",
         "parameters": [
           {
@@ -1135,6 +1420,12 @@
           "400": {
             "description": "Bad request"
           },
+          "401": {
+            "description": "Authentication is required"
+          },
+          "403": {
+            "description": "The authenticated user may only look up their own account"
+          },
           "404": {
             "description": "Account not found"
           },
@@ -1142,7 +1433,11 @@
             "description": "Internal Server Error"
           }
         },
-        "security": [],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "summary": "Get an account"
       }
     },

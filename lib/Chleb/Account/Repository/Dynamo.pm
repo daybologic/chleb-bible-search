@@ -11,6 +11,7 @@ use Moose;
 extends 'Chleb::Bible::Base';
 
 use Chleb::Exception;
+use Chleb::Account::LoginChallenge;
 use Chleb::Account::Role;
 use Chleb::Account::VerificationToken;
 use Digest::SHA qw(sha1_hex);
@@ -176,6 +177,72 @@ sub setPasswordHash {
 	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB password hash storage failed: $EVAL_ERROR"))
 		unless ($evalOk && $response && $response->Attributes);
 	return $self->__accountFromItem($response->Attributes->Map);
+}
+
+=head1 createLoginChallenge
+
+Store a short-lived login challenge for a normalized username.
+
+=cut
+
+sub createLoginChallenge {
+	my ($self, $username, $ttl) = @_;
+	my $challenge = Chleb::Account::LoginChallenge::generate($self->dic, $username, $ttl);
+	my $evalOk; $evalOk = eval {
+		$self->__client->PutItem(
+			TableName => $self->table,
+			Item => {
+				pk => { S => 'login-challenge#' . $challenge->{digest} },
+				sk => { S => 'challenge' },
+				username => { S => $challenge->{username} },
+				created_at => { N => q{} . $challenge->{created_at} },
+				expires_at => { N => q{} . $challenge->{expires_at} },
+			},
+			ConditionExpression => 'attribute_not_exists(pk)',
+		);
+		1;
+	} or $evalOk = 0;
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB login challenge storage failed: $EVAL_ERROR"))
+		unless ($evalOk);
+	return $challenge;
+}
+
+=head1 consumeLoginChallenge
+
+Atomically consume a login challenge for a normalized username.
+
+=cut
+
+sub consumeLoginChallenge {
+	my ($self, $value, $username) = @_;
+	my $digest = Chleb::Account::LoginChallenge::digest($value);
+	my $response;
+	my $evalOk; $evalOk = eval {
+		$response = $self->__client->DeleteItem(
+			TableName => $self->table,
+			Key => {
+				pk => { S => 'login-challenge#' . $digest },
+				sk => { S => 'challenge' },
+			},
+			ConditionExpression => 'username = :username AND expires_at > :now',
+			ExpressionAttributeValues => {
+				':username' => { S => lc($username // '') },
+				':now' => { N => q{} . int($self->dic->time->get()) },
+			},
+			ReturnValues => 'ALL_OLD',
+		);
+		1;
+	} or $evalOk = 0;
+	return if (!$evalOk && $EVAL_ERROR =~ m{ConditionalCheckFailedException}x);
+	croak(Chleb::Exception->raise(HTTP_INTERNAL_SERVER_ERROR, "DynamoDB login challenge consumption failed: $EVAL_ERROR"))
+		unless ($evalOk);
+	return unless ($response && $response->Attributes);
+	my $item = $response->Attributes->Map;
+	return {
+		username => $item->{username}->S,
+		created_at => int($item->{created_at}->N),
+		expires_at => int($item->{expires_at}->N),
+	};
 }
 
 =head1 activate

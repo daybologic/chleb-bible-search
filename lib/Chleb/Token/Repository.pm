@@ -109,6 +109,11 @@ sub save {
 	return;
 }
 
+sub createAccountToken {
+	my ($self, $claims, $ttl) = @_;
+	return $self->repo('JWT')->createAccountToken($claims, $ttl);
+}
+
 sub __backends {
 	my ($self, $welp) = @_;
 

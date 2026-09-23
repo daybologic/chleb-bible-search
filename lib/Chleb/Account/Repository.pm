@@ -39,6 +39,16 @@ sub setPasswordHash {
 	return $self->__backend->setPasswordHash($accountId, $passwordHash);
 }
 
+sub createLoginChallenge {
+	my ($self, $username, $ttl) = @_;
+	return $self->__backend->createLoginChallenge($username, $ttl);
+}
+
+sub consumeLoginChallenge {
+	my ($self, $value, $username) = @_;
+	return $self->__backend->consumeLoginChallenge($value, $username);
+}
+
 sub createVerificationToken {
 	my ($self, $accountId) = @_;
 	return $self->__backend->createVerificationToken($accountId);

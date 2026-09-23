@@ -2635,6 +2635,7 @@ sub __removeUptime {
 }
 
 has __loggedUsingSessionToken => (is => 'rw', isa => 'Bool', default => 0);
+has __sessionToken => (is => 'rw', predicate => '__hasSessionToken');
 
 =over
 
@@ -2755,6 +2756,23 @@ sub __accountGetByUsername { ## no critic (Subroutines::ProhibitUnusedPrivateSub
 	return __accountResource($account);
 }
 
+=head1 __authorizeAccountLookup($accountId)
+
+Require an authenticated account token and restrict non-admins to their own account.
+
+=cut
+
+sub __authorizeAccountLookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self, $accountId) = @_;
+	my $token = $self->__sessionToken;
+	my $authenticated = $self->__hasSessionToken && $token->loggedIn && defined($token->accountId);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'Authentication is required to look up account details'))
+		unless ($authenticated);
+	return if ($token->role eq 'admin');
+	return if (int($token->accountId) == int($accountId));
+	croak(Chleb::Exception->raise(HTTP_FORBIDDEN, 'You are not authorized to look up this account'));
+}
+
 =head1 __accountPasswordVerify($payload)
 
 Verify an account password and return whether the credentials are valid.
@@ -2774,13 +2792,135 @@ sub __accountPasswordVerify { ## no critic (Subroutines::ProhibitUnusedPrivateSu
 
 	my $account = $self->dic->accountRepo->load(int($accountId));
 	my $valid = $account && Chleb::Account::Password::verify($password, $account->{password_hash});
-	my $username = $account ? ($account->{username} // '<unknown>') : '<unknown>';
-	if ($valid) {
-		$self->dic->logger->info(sprintf("Account password verification succeeded for account ID %d username '%s'", int($accountId), $username));
-	} else {
-		$self->dic->logger->warn(sprintf("Account password verification failed for account ID %d username '%s'", int($accountId), $username));
-	}
+	__logAccountPasswordVerification($self, int($accountId), $account, $valid);
 	return { valid => $valid ? JSON::true : JSON::false };
+}
+
+=head1 __accountLoginChallenge($payload)
+
+Create a short-lived, one-time login challenge for a username.
+
+=cut
+
+sub __accountLoginChallenge { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self, $payload) = @_;
+	my $username = __accountLoginUsername($payload);
+	my $ttl = $self->dic->config->get('accounts', 'authentication', {})->{login_challenge_ttl} // 60;
+	my $challenge = $self->dic->accountRepo->createLoginChallenge($username, int($ttl));
+	return {
+		challenge => $challenge->{value},
+		expires_at => int($challenge->{expires_at}),
+	};
+}
+
+=head1 __accountLogin($payload)
+
+Consume a login challenge, authenticate an active account, and issue an
+authenticated JWT.
+
+=cut
+
+sub __accountLogin { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self, $payload) = @_;
+	my ($username, $password, $challengeValue) = __accountLoginParams($payload);
+	my $challenge = $self->dic->accountRepo->consumeLoginChallenge($challengeValue, $username);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'Invalid account credentials')) unless ($challenge);
+	my $account = $self->dic->accountRepo->loadByUsername($username);
+	my $valid = $account && ($account->{status} // '') eq 'active'
+		&& Chleb::Account::Password::verify($password, $account->{password_hash});
+	__logAccountPasswordVerification($self, $account ? $account->{id} : 0, $account, $valid);
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'Invalid account credentials')) unless ($valid);
+
+	my $authenticationConfig = $self->dic->config->get('accounts', 'authentication', {});
+	my $ttl = int($authenticationConfig->{jwt_ttl} // 7 * 24 * 60 * 60);
+	my $token = $self->dic->tokenRepo->createAccountToken({
+		account_id => int($account->{id}),
+		username => $account->{username},
+		role => Chleb::Account::Role::name($account->{role}),
+	}, $ttl);
+	return {
+		access_token => $token->value,
+		token_type => 'Bearer',
+		expires_in => $ttl,
+		account => {
+			id => q{} . $account->{id},
+			username => $account->{username},
+			role => Chleb::Account::Role::name($account->{role}),
+		},
+		_token => $token,
+	};
+}
+
+=head1 __accountLoginUsername($payload)
+
+Validate and return the username in an account authentication payload.
+
+=cut
+
+sub __accountLoginUsername {
+	my ($payload) = @_;
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account login payload must be a JSON object'))
+		unless (ref($payload) eq 'HASH');
+	my $username = $payload->{username};
+	my $valid = defined($username) && ref($username) eq '' && length($username) > 0
+		&& $username =~ $Chleb::Utils::ACCOUNT_USERNAME_PATTERN
+		&& length($username) <= $Chleb::Utils::ACCOUNT_USERNAME_MAX_LENGTH;
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account username is invalid')) unless ($valid);
+	return $username;
+}
+
+=head1 __accountLoginParams($payload)
+
+Validate and extract username, password, and challenge from a login payload.
+
+=cut
+
+sub __accountLoginParams {
+	my ($payload) = @_;
+	my $username = __accountLoginUsername($payload);
+	my $password = $payload->{password};
+	my $challenge = $payload->{challenge};
+	my $validPassword = defined($password) && ref($password) eq '' && length($password) > 0;
+	my $validChallenge = defined($challenge) && ref($challenge) eq '' && length($challenge) > 0;
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Account login requires password and challenge'))
+		unless ($validPassword && $validChallenge);
+	return ($username, $password, $challenge);
+}
+
+=head1 __logAccountPasswordVerification($server, $accountId, $account, $valid)
+
+Log account password verification without logging credentials or password hashes.
+
+=cut
+
+sub __logAccountPasswordVerification {
+	my ($server, $accountId, $account, $valid) = @_;
+	my $username = $account ? ($account->{username} // '<unknown>') : '<unknown>';
+	my $message = sprintf("Account password verification %s for account ID %d username '%s'",
+		$valid ? 'succeeded' : 'failed', int($accountId), $username);
+	$valid ? $server->dic->logger->info($message) : $server->dic->logger->warn($message);
+	return;
+}
+
+=head1 __bearerTokenValue()
+
+Validate the request authentication transports and return a Bearer token value
+when one was supplied.
+
+=cut
+
+sub __bearerTokenValue {
+	my ($self) = @_;
+	my $request = Chleb::Server::Dancer2::getRequest();
+	my $cookie = Chleb::Server::Dancer2::getCookie('sessionToken');
+	my $authorization = $request->header('Authorization') // '';
+	return if (length($authorization) == 0);
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Do not send both a session cookie and a Bearer token'))
+		if ($cookie);
+	if ($authorization =~ m{\ABearer\s+(\S+)\z}ix) {
+		return $1;
+	}
+	croak(Chleb::Exception->raise(HTTP_UNAUTHORIZED, 'Authorization must contain a Bearer token'));
 }
 
 =over
@@ -2953,108 +3093,143 @@ sub __userAgentChanged {
 	return (length($previous) > 0 && $previous ne $current);
 }
 
+=head1 __createSessionToken($tokenRepo, $ipAddress, $userAgent)
+
+Create and persist an anonymous session token for a request without credentials.
+
+=cut
+
+sub __createSessionToken {
+	my ($self, $tokenRepo, $ipAddress, $userAgent) = @_;
+	if ($self->__damper->dampen($ipAddress)) {
+		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
+			HTTP_TOO_MANY_REQUESTS,
+			'Slow down, or respect the sessionToken cookie',
+			{ retryAfterSeconds => 1 },
+		));
+	}
+	my $sessionToken = $tokenRepo->create();
+	Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
+	$sessionToken->ipAddress($ipAddress);
+	$sessionToken->userAgent($userAgent);
+	my $evalOk; $evalOk = eval {
+		$tokenRepo->save($sessionToken);
+		1;
+	} or $evalOk = 0;
+	if (my $exception = $EVAL_ERROR) {
+		Chleb::Server::Dancer2::handleException($exception);
+	}
+	$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
+	Chleb::Server::Dancer2::setCookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
+	$self->__sessionToken($sessionToken);
+	return $sessionToken;
+}
+
+=head1 __loadSessionToken($tokenRepo, $cookieValue, $bearerValue)
+
+Load a session token from either the configured cookie repository or JWT backend.
+
+=cut
+
+sub __loadSessionToken {
+	my ($self, $tokenRepo, $cookieValue, $bearerValue) = @_;
+	my $sessionToken;
+	if (defined($bearerValue)) {
+		$self->dic->logger->trace('Got a Bearer token from client');
+		my $evalOk; $evalOk = eval {
+			$sessionToken = $tokenRepo->repo('JWT')->load($bearerValue);
+			1;
+		} or $evalOk = 0;
+		if (my $exception = $EVAL_ERROR) {
+			Chleb::Server::Dancer2::handleException($exception);
+		}
+	} else {
+		$self->dic->logger->trace("Got session token '$cookieValue' from client");
+		my $evalOk; $evalOk = eval {
+			$sessionToken = $tokenRepo->load($cookieValue);
+			1;
+		} or $evalOk = 0;
+		if (my $exception = $EVAL_ERROR) {
+			Chleb::Server::Dancer2::handleException($exception);
+		}
+	}
+	$self->__sessionToken($sessionToken);
+	return $sessionToken;
+}
+
+=head1 __updateSessionTokenMetadata($args)
+
+Update metadata for cookie sessions while leaving stateless Bearer JWTs intact.
+
+=cut
+
+sub __updateSessionTokenMetadata {
+	my ($self, $args) = @_;
+	my $tokenRepo = $args->{tokenRepo};
+	my $sessionToken = $args->{sessionToken};
+	my $bearerValue = $args->{bearerValue};
+	my $ipAddress = $args->{ipAddress};
+	my $userAgent = $args->{userAgent};
+	return if (defined($bearerValue));
+	if ($sessionToken->ipAddress ne $ipAddress) {
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed IP address from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->ipAddress, $ipAddress));
+		$sessionToken->ipAddress($ipAddress);
+	}
+	if (__userAgentChanged($sessionToken->userAgent, $userAgent)) {
+		$self->dic->logger->info(sprintf('Token %s (%s) the client changed user agent from %s to %s',
+		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->userAgent, $userAgent));
+		$sessionToken->userAgent($userAgent);
+	}
+	if ($sessionToken->dirty) {
+		my $evalOk; $evalOk = eval {
+			$tokenRepo->save($sessionToken);
+			1;
+		} or $evalOk = 0;
+		if (my $exception = $EVAL_ERROR) {
+			Chleb::Server::Dancer2::handleException($exception);
+		}
+	}
+	return;
+}
+
 sub handleSessionToken {
 	my ($self) = @_;
-
 	my $supportSessions = $self->dic->config->get('features', 'sessions', 'false', 1);
-
 	unless ($self->__loggedUsingSessionToken) {
 		$self->dic->logger->debug('session cookie support ' . ($supportSessions ? 'on' : 'off'));
 		$self->__loggedUsingSessionToken(1);
 	}
-
 	return unless ($supportSessions);
-
 	my $request = Chleb::Server::Dancer2::getRequest();
 	my $ipAddress = $request->address() // '';
 	my $userAgent = $request->agent() // '';
-
 	my $tokenRepo = $self->dic->tokenRepo;
-	my $sessionToken = Chleb::Server::Dancer2::getCookie('sessionToken');
-
-	if (!$sessionToken) {
-		if ($self->__damper->dampen($ipAddress)) {
-			Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
-				HTTP_TOO_MANY_REQUESTS,
-				'Slow down, or respect the sessionToken cookie', # TODO: Make a web page explaining this & link to it
-				{ retryAfterSeconds => 1 },
-			));
-		}
-
-		$sessionToken = $tokenRepo->create();
-		Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
-
-		$sessionToken->ipAddress($ipAddress);
-		$sessionToken->userAgent($userAgent);
-
-		my $evalOk2; $evalOk2 = eval {
-			$tokenRepo->save($sessionToken); # save via all configured backends
-			1;
-		} or $evalOk2 = 0;
-		if (my $exception = $EVAL_ERROR) {
-			Chleb::Server::Dancer2::handleException($exception);
-		}
-
-		$self->dic->logger->trace("No session token, created a new one: " . $sessionToken->toString());
-		Chleb::Server::Dancer2::setCookie(sessionToken => $sessionToken->value, expires => $sessionToken->expires);
-
-		return;
-	}
-
-	$self->dic->logger->trace("Got session token '$sessionToken' from client");
-	my $evalOk3; $evalOk3 = eval {
-		$sessionToken = $tokenRepo->load($sessionToken);
-		1;
-	} or $evalOk3 = 0;
-	if (my $exception = $EVAL_ERROR) {
-		Chleb::Server::Dancer2::handleException($exception);
-	}
-
+	my $cookieValue = Chleb::Server::Dancer2::getCookie('sessionToken');
+	my $bearerValue = $self->__bearerTokenValue();
+	my $sessionToken = (!$cookieValue && !defined($bearerValue))
+		? __createSessionToken($self, $tokenRepo, $ipAddress, $userAgent)
+		: __loadSessionToken($self, $tokenRepo, $cookieValue, $bearerValue);
+	return if (!$sessionToken);
 	Log::Log4perl::MDC->put(session => $sessionToken->shortValue);
 	$self->dic->logger->trace('session token found: ' . $sessionToken->toString());
-
 	if ($self->__damper->dampenChurn($ipAddress, $sessionToken->value)) {
 		my $retryAfterSeconds = $self->dic->config->get('rate_limit', 'session_churn_window_seconds', 300);
-		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
-			HTTP_TOO_MANY_REQUESTS,
-			'Too many session tokens from this IP address',
-			{ retryAfterSeconds => $retryAfterSeconds },
-		));
+		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(HTTP_TOO_MANY_REQUESTS,
+			'Too many session tokens from this IP address', { retryAfterSeconds => $retryAfterSeconds }));
 	}
-
 	if ($self->__damper->dampenSession($sessionToken)) {
 		my $retryAfterSeconds = $self->dic->config->get('rate_limit', 'session_window_seconds', 60);
-		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(
-			HTTP_TOO_MANY_REQUESTS,
-			'Request rate exceeded for this session',
-			{ retryAfterSeconds => $retryAfterSeconds },
-		));
+		Chleb::Server::Dancer2::handleException(Chleb::Exception->raise(HTTP_TOO_MANY_REQUESTS,
+			'Request rate exceeded for this session', { retryAfterSeconds => $retryAfterSeconds }));
 	}
-
-	if ($sessionToken->ipAddress ne $ipAddress) {
-		$self->dic->logger->info(sprintf('Token %s (%s) the client changed IP address from %s to %s',
-		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->ipAddress, $ipAddress));
-
-		$sessionToken->ipAddress($ipAddress);
-	}
-
-	if (__userAgentChanged($sessionToken->userAgent, $userAgent)) {
-		$self->dic->logger->info(sprintf('Token %s (%s) the client changed user agent from %s to %s',
-		    $sessionToken->shortValue, $sessionToken->source->toString(), $sessionToken->userAgent, $userAgent));
-
-		$sessionToken->userAgent($userAgent);
-	}
-
-	if ($sessionToken->dirty) {
-		my $evalOk4; $evalOk4 = eval {
-			$tokenRepo->save($sessionToken); # save via all configured backends
-			1;
-		} or $evalOk4 = 0;
-		if (my $exception = $EVAL_ERROR) {
-			Chleb::Server::Dancer2::handleException($exception);
-		}
-	}
-
+	__updateSessionTokenMetadata($self, {
+		tokenRepo => $tokenRepo,
+		sessionToken => $sessionToken,
+		bearerValue => $bearerValue,
+		ipAddress => $ipAddress,
+		userAgent => $userAgent,
+	});
 	return;
 }
 

@@ -137,6 +137,31 @@ sub testSaveLoad {
 	return EXIT_SUCCESS;
 }
 
+sub testAuthenticatedAccountClaims {
+	my ($self) = @_;
+	plan tests => 8;
+
+	my $now = $self->dic->time->get();
+	my $token = $self->sut->createAccountToken({
+		account_id => 123,
+		username => 'John.Smith',
+		role => 'admin',
+	}, 7 * 24 * 60 * 60);
+	my (undef, $encodedPayload) = split(m/\./, $token->value, 3);
+	my $payload = JSON::PP->new->decode(decode_base64url($encodedPayload));
+	is($payload->{sub}, '123', 'authenticated JWT contains the standard subject claim');
+	is($payload->{account_id}, 123, 'authenticated JWT contains the account ID claim');
+	is($payload->{username}, 'John.Smith', 'authenticated JWT preserves username casing');
+	is($payload->{role}, 'admin', 'authenticated JWT contains the account role');
+	is($payload->{loggedIn}, JSON::true, 'authenticated JWT marks the token logged in');
+	is($payload->{exp}, $now + 7 * 24 * 60 * 60, 'authenticated JWT uses the requested lifetime');
+	my $loaded = $self->sut->load($token->value);
+	is($loaded->accountId, 123, 'loaded JWT restores the account ID');
+	is($loaded->role, 'admin', 'loaded JWT restores the account role');
+
+	return EXIT_SUCCESS;
+}
+
 sub testLoadTampered {
 	my ($self) = @_;
 	plan tests => 1;

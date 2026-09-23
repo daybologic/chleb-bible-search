@@ -11,6 +11,7 @@ bin/core/app.psgi
 bin/core/admin-create-user-account.sh
 bin/core/admin-set-account-password.sh
 bin/core/account-verify-password.sh
+bin/core/account-login.sh
 lib/Chleb/Admin/SetPassword.pm
 t/AdminSetPassword.t
 bin/core/admin-sqs-create-queue.sh
@@ -384,6 +385,7 @@ lib/Chleb.pm
 lib/Chleb/Args/Base.pm
 lib/Chleb/Account/Repository.pm
 lib/Chleb/Account/Password.pm
+lib/Chleb/Account/LoginChallenge.pm
 lib/Chleb/Account/Role.pm
 lib/Chleb/Account/VerificationToken.pm
 lib/Chleb/Account/Repository/Dynamo.pm

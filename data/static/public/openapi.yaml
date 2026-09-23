@@ -185,8 +185,9 @@ paths:
     get:
       summary: Get an account by username
       operationId: getAccountByUsername
-      description: Get account details by username. This endpoint is currently public.
-      security: [] # No security
+      description: Get account details by username. Authentication is required. Administrators may look up any account; other users may look up only their own account.
+      security:
+        - bearerAuth: []
       parameters:
         - in: query
           name: username
@@ -206,6 +207,10 @@ paths:
                 $ref: '#/components/schemas/AccountDocument'
         '400':
           description: Bad request
+        '401':
+          description: Authentication is required
+        '403':
+          description: The authenticated user may only look up their own account
         '404':
           description: Account not found
         '500':
@@ -214,8 +219,9 @@ paths:
     get:
       summary: Get an account
       operationId: getAccount
-      description: Get account details by numeric account ID. This endpoint is currently public.
-      security: [] # No security
+      description: Get account details by numeric account ID. Authentication is required. Administrators may look up any account; other users may look up only their own account.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: account_id
@@ -235,6 +241,10 @@ paths:
                 $ref: '#/components/schemas/AccountDocument'
         '400':
           description: Bad request
+        '401':
+          description: Authentication is required
+        '403':
+          description: The authenticated user may only look up their own account
         '404':
           description: Account not found
         '500':
@@ -278,6 +288,95 @@ paths:
                 $ref: '#/components/schemas/AccountDocument'
         '410':
           description: Verification token is invalid, expired, or already consumed
+        '500':
+          description: Internal Server Error
+  /1/accounts/verify-password:
+    post:
+      summary: Verify account credentials
+      operationId: postAccountPasswordVerification
+      description: Return whether an account ID and password match. This endpoint is currently public and returns only a validity result.
+      security: [] # No security
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountPasswordVerificationRequest'
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/AccountPasswordVerificationRequest'
+      responses:
+        '200':
+          description: Credential validity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountPasswordVerificationResponse'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AccountPasswordVerificationResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal Server Error
+  /1/accounts/login/challenge:
+    post:
+      summary: Create a login challenge
+      operationId: postAccountLoginChallenge
+      description: Create a short-lived, single-use challenge for username-based account login.
+      security: [] # No security
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountLoginChallengeRequest'
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/AccountLoginChallengeRequest'
+      responses:
+        '200':
+          description: Login challenge
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLoginChallengeResponse'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AccountLoginChallengeResponse'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal Server Error
+  /1/accounts/login:
+    post:
+      summary: Log into an account
+      operationId: postAccountLogin
+      description: Consume a login challenge and issue a seven-day JWT for an active account.
+      security: [] # No security
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountLoginRequest'
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/AccountLoginRequest'
+      responses:
+        '200':
+          description: Authenticated account and Bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountLoginResponse'
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AccountLoginResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Invalid credentials or login challenge
         '500':
           description: Internal Server Error
   /1/accounts/signup:
@@ -1003,6 +1102,11 @@ paths:
         '504':
           description: Gateway Timeout
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   responses:
     TestHttpError:
       description: Deliberate registered HTTP error response. Status-specific protocol headers are included where applicable.
@@ -1093,6 +1197,91 @@ components:
               type: boolean
               description: Validate the signup without allocating an ID or writing to the backend.
               example: true
+    AccountPasswordVerificationRequest:
+      type: object
+      required:
+        - account_id
+        - password
+      properties:
+        account_id:
+          type: integer
+          minimum: 1
+        password:
+          type: string
+          minLength: 1
+    AccountPasswordVerificationResponse:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+    AccountLoginChallengeRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          maxLength: 30
+          pattern: '^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$'
+    AccountLoginChallengeResponse:
+      type: object
+      required:
+        - challenge
+        - expires_at
+      properties:
+        challenge:
+          type: string
+        expires_at:
+          type: integer
+    AccountLoginRequest:
+      type: object
+      required:
+        - username
+        - password
+        - challenge
+      properties:
+        username:
+          type: string
+          maxLength: 30
+          pattern: '^[A-Za-z0-9]+([._-][A-Za-z0-9]+)*$'
+        password:
+          type: string
+          minLength: 1
+        challenge:
+          type: string
+          minLength: 1
+    AccountLoginResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+        - account
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          enum: [Bearer]
+        expires_in:
+          type: integer
+          example: 604800
+        account:
+          type: object
+          required:
+            - id
+            - username
+            - role
+          properties:
+            id:
+              type: string
+            username:
+              type: string
+            role:
+              type: string
+              enum: [user, moderator, admin]
     AccountValidationDocument:
       type: object
       required:

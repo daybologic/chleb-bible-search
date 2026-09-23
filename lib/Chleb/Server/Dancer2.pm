@@ -1664,15 +1664,85 @@ Register account lifecycle routes.
 
 =cut
 
+=item C<__decodeJsonBody($dancerRequest)>
+
+Decode a request body as JSON or raise a bad-request exception.
+
+=cut
+
+sub __decodeJsonBody {
+	my ($dancerRequest) = @_;
+	my $payload;
+	my $jsonEvalOk; $jsonEvalOk = eval {
+		$payload = JSON::decode_json($dancerRequest->body() // '');
+		1;
+	} or $jsonEvalOk = 0;
+	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'Request body is not valid JSON')) unless ($jsonEvalOk);
+	return $payload;
+}
+
+=item C<__registerAccountLoginRoutes()>
+
+Register the account challenge and login routes.
+
+=cut
+
+sub __registerAccountLoginRoutes {
+	post '/1/accounts/login/challenge' => sub {
+		$server->logRequest();
+		my $dancerRequest = request();
+		my $accept;
+		my $result;
+		my $evalOk; $evalOk = eval {
+			$server->__bearerTokenValue();
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+			$result = $server->__accountLoginChallenge(__decodeJsonBody($dancerRequest));
+			1;
+		} or $evalOk = 0;
+		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
+
+		status HTTP_OK;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON, $result);
+	};
+	post '/1/accounts/login' => sub {
+		$server->logRequest();
+		my $dancerRequest = request();
+		my $accept;
+		my $result;
+		my $evalOk; $evalOk = eval {
+			$server->__bearerTokenValue();
+			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
+			$result = $server->__accountLogin(__decodeJsonBody($dancerRequest));
+			1;
+		} or $evalOk = 0;
+		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
+
+		my $token = delete($result->{_token});
+		my $secureCookie = (($dancerRequest->env->{'psgi.url_scheme'} // '') eq 'https') ? 1 : 0;
+		setCookie(
+			sessionToken => $token->value,
+			expires => $token->expires,
+			http_only => 1,
+			secure => $secureCookie,
+			same_site => 'Lax',
+		);
+		status HTTP_OK;
+		return __sendStructuredResponse($accept, $Chleb::Server::MediaType::CONTENT_TYPE_JSON, $result);
+	};
+	return;
+}
+
 sub __registerAccountRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	get '/1/accounts' => sub {
 		$server->logRequest();
+		$server->handleSessionToken();
 		my $dancerRequest = request();
 		my $accept;
 		my $result;
 		my $evalOk; $evalOk = eval {
 			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 			$result = $server->__accountGetByUsername(getParam('username'));
+			$server->__authorizeAccountLookup($result->{data}->{id});
 			1;
 		} or $evalOk = 0;
 		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
@@ -1704,12 +1774,14 @@ sub __registerAccountRoutes { ## no critic (Subroutines::ProhibitUnusedPrivateSu
 	};
 	get '/1/accounts/:account_id' => sub {
 		$server->logRequest();
+		$server->handleSessionToken();
 		my $dancerRequest = request();
 		my $accept;
 		my $result;
 		my $evalOk; $evalOk = eval {
 			$accept = Chleb::Server::MediaType->parseAcceptHeader($dancerRequest->header('Accept'));
 			$result = $server->__accountGet(param('account_id'));
+			$server->__authorizeAccountLookup($result->{data}->{id});
 			1;
 		} or $evalOk = 0;
 		return handleException($EVAL_ERROR) if (my $exception = $EVAL_ERROR);
@@ -1776,6 +1848,7 @@ __registerVerseRoutes();
 __registerLookupRoutes();
 __registerSearchRoutes();
 __registerStatusRoutes();
+__registerAccountLoginRoutes();
 __registerAccountRoutes();
 __registerNotFoundRoute();
 __registerErrorHooks();

@@ -57,7 +57,10 @@ use warnings;
 
 sub new {
 	my ($class, $args) = @_;
-	return bless({ password_hash => $args ? $args->{password_hash} : undef }, $class);
+	return bless({
+		password_hash => $args ? $args->{password_hash} : undef,
+		status => $args ? $args->{status} : undef,
+	}, $class);
 }
 
 sub create {
@@ -67,7 +70,7 @@ sub create {
 		id => 123,
 		created_at => '1970-01-01T00:00:00+0000',
 		role => $Chleb::Account::Role::USER,
-		status => 'pending',
+		status => $self->{status} // 'pending',
 	};
 }
 
@@ -90,7 +93,7 @@ sub load {
 		username => 'john.smith',
 		email => 'john.smith@example.com',
 		name => 'John Smith',
-		status => 'pending',
+		status => $self->{status} // 'pending',
 		password_hash => $self->{password_hash},
 	};
 }
@@ -98,6 +101,19 @@ sub load {
 sub loadByUsername {
 	my ($self, $username) = @_;
 	return $self->load(123) if (lc($username // '') eq 'john.smith');
+	return;
+}
+
+sub createLoginChallenge {
+	return {
+		value => 'login-challenge',
+		expires_at => 1_060,
+	};
+}
+
+sub consumeLoginChallenge {
+	my ($self, $value, $username) = @_;
+	return { username => lc($username) } if ($value eq 'login-challenge');
 	return;
 }
 
@@ -146,6 +162,68 @@ sub SendMessage {
 	return 1;
 }
 
+package FakeLoginToken;
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+use strict;
+use warnings;
+
+sub new {
+	my ($class) = @_;
+	return bless({ value => 'signed-account-jwt', expires => 1_604_800 }, $class);
+}
+
+sub value {
+	my ($self) = @_;
+	return $self->{value};
+}
+
+sub expires {
+	my ($self) = @_;
+	return $self->{expires};
+}
+
+package FakeLoginTokenRepository;
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+use strict;
+use warnings;
+
+sub new {
+	my ($class) = @_;
+	return bless({}, $class);
+}
+
+sub createAccountToken {
+	return FakeLoginToken->new();
+}
+
+package FakeAuthenticatedToken;
+## no critic (Modules::RequireFilenameMatchesPackage)
+## no critic (Modules::ProhibitMultiplePackages)
+use strict;
+use warnings;
+
+sub new {
+	my ($class, $args) = @_;
+	return bless($args, $class);
+}
+
+sub loggedIn {
+	my ($self) = @_;
+	return $self->{logged_in};
+}
+
+sub accountId {
+	my ($self) = @_;
+	return $self->{account_id};
+}
+
+sub role {
+	my ($self) = @_;
+	return $self->{role};
+}
+
 package AccountTests;
 ## no critic (Modules::RequireFilenameMatchesPackage)
 ## no critic (Modules::ProhibitMultiplePackages)
@@ -162,6 +240,7 @@ use Chleb::Account::Repository;
 use Chleb::Account::Repository::Dynamo;
 use Chleb::Account::Repository::Memcached;
 use Chleb::Account::Password;
+use Chleb::Account::LoginChallenge;
 use Chleb::Account::Role;
 use Chleb::Account::VerificationToken;
 use Chleb::Account::VerificationQueue;
@@ -271,6 +350,58 @@ sub testPendingAccountCanBeActivated {
 	is($activated->{status}, 'active', 'pending account becomes active');
 	is($store->load($created->{id})->{status}, 'active', 'activated status is persisted');
 	is($store->activate($created->{id})->{status}, 'active', 'activating an active account is idempotent');
+
+	return 0;
+}
+
+sub testLoginChallengeIsShortLivedAndSingleUse {
+	my ($self) = @_;
+	plan tests => 8;
+
+	my $client = FakeAccountMemcached->new();
+	my $store = Chleb::Account::Repository::Memcached->new({
+		client => $client,
+		dic => $self->sut->dic,
+	});
+	$self->sut->dic->time->setMockedTime(1_000);
+	my $challenge = $store->createLoginChallenge('John.Smith', 60);
+	like($challenge->{value}, qr{\A[A-Za-z0-9_-]{43}\z}x, 'login challenge is URL-safe Base64');
+	is($challenge->{username}, 'john.smith', 'login challenge username is normalized');
+	is($challenge->{expires_at} - $challenge->{created_at}, 60, 'login challenge uses requested lifetime');
+	my $key = 'chleb-accounts:login-challenge:' . Chleb::Account::LoginChallenge::digest($challenge->{value});
+	ok(index($client->{data}->{$key}, $challenge->{value}) < 0, 'stored login challenge does not contain its raw value');
+	ok(!$store->consumeLoginChallenge($challenge->{value}, 'other.user'), 'wrong username cannot consume login challenge');
+	ok($store->consumeLoginChallenge($challenge->{value}, 'JOHN.SMITH'), 'matching username consumes login challenge');
+	ok(!$store->consumeLoginChallenge($challenge->{value}, 'john.smith'), 'login challenge cannot be reused');
+	my $expired = $store->createLoginChallenge('john.smith', 60);
+	$self->sut->dic->time->setMockedTime(1_061);
+	ok(!$store->consumeLoginChallenge($expired->{value}, 'john.smith'), 'expired login challenge cannot be consumed');
+
+	return 0;
+}
+
+sub testAccountLoginIssuesAuthenticatedToken {
+	my ($self) = @_;
+	plan tests => 7;
+
+	$self->sut->dic->accountRepo(FakeAccountRepository->new({
+		password_hash => Chleb::Account::Password::hash('correct horse battery staple'),
+		status => 'active',
+	}));
+	$self->sut->dic->tokenRepo(FakeLoginTokenRepository->new());
+	my $challenge = $self->sut->__accountLoginChallenge({ username => 'JOHN.SMITH' });
+	is($challenge->{challenge}, 'login-challenge', 'login challenge is returned');
+	my $result = $self->sut->__accountLogin({
+		username => 'JOHN.SMITH',
+		password => 'correct horse battery staple',
+		challenge => $challenge->{challenge},
+	});
+	is($result->{access_token}, 'signed-account-jwt', 'login returns the access token');
+	is($result->{token_type}, 'Bearer', 'login returns Bearer token type');
+	is($result->{expires_in}, 7 * 24 * 60 * 60, 'login returns the configured seven-day lifetime');
+	is($result->{account}->{id}, '123', 'login returns the account ID');
+	is($result->{account}->{username}, 'john.smith', 'login preserves stored username casing');
+	is($result->{account}->{role}, 'user', 'login returns the account role');
 
 	return 0;
 }
@@ -500,6 +631,32 @@ sub testAccountGetByUsernameReturnsPublicAccountResource {
 		1;
 	} or $evalOk = 0;
 	is($evalOk, 0, 'username lookup rejects a missing username');
+
+	return 0;
+}
+
+sub testAccountLookupAuthorization {
+	my ($self) = @_;
+	plan tests => 4;
+
+	$self->sut->__sessionToken(FakeAuthenticatedToken->new({ logged_in => 1, account_id => 1, role => 'user' }));
+	is($self->sut->__authorizeAccountLookup(1), undef, 'users may look up their own account');
+
+	my $evalOk; $evalOk = eval {
+		$self->sut->__authorizeAccountLookup(2);
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'users may not look up another account');
+
+	$self->sut->__sessionToken(FakeAuthenticatedToken->new({ logged_in => 1, account_id => 1, role => 'admin' }));
+	is($self->sut->__authorizeAccountLookup(2), undef, 'admins may look up another account');
+
+	$self->sut->__sessionToken(FakeAuthenticatedToken->new({ logged_in => 0, account_id => undef, role => '' }));
+	$evalOk = eval {
+		$self->sut->__authorizeAccountLookup(1);
+		1;
+	} or $evalOk = 0;
+	is($evalOk, 0, 'anonymous requests may not look up an account');
 
 	return 0;
 }

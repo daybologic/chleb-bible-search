@@ -87,6 +87,10 @@ has userAgent => (is => 'rw', isa => 'Str', default => '', trigger => \&__markDi
 
 has username => (is => 'ro', isa => 'Str', default => '');
 
+has accountId => (is => 'ro', isa => 'Maybe[Int]', init_arg => 'accountId', default => undef);
+
+has role => (is => 'ro', isa => 'Str', init_arg => 'role', default => '');
+
 has dirty => (is => 'rw', isa => 'Bool', default => 0);
 
 has isNew => (is => 'rw', isa => 'Bool', default => 1);
@@ -180,6 +184,11 @@ sub TO_JWT {
 	} @{ TO_JSON() };
 	$claims{iat} = delete($claims{created});
 	$claims{exp} = delete($claims{expires});
+	if (defined($self->accountId)) {
+		$claims{sub} = q{} . $self->accountId;
+		$claims{account_id} = int($self->accountId);
+	}
+	$claims{role} = $self->role if (length($self->role) > 0);
 
 	return \%claims;
 }
@@ -195,6 +204,10 @@ sub fromJWTClaims {
 		expires   => $claims->{exp},
 		ipAddress => $claims->{ipAddress} // '',
 		now       => $claims->{iat},
+		accountId => $claims->{account_id} // $claims->{sub},
+		role      => $claims->{role} // '',
+		loggedIn  => $claims->{loggedIn} ? 1 : 0,
+		username  => $claims->{username} // '',
 	});
 }
 
