@@ -24,6 +24,7 @@ bin/core/votd-mailer.sh
 bin/core/yaml2json.pl
 bin/demo/john.pl
 bin/demo/search.pl
+bin/demo/server-account-get.sh
 bin/demo/server-info.sh
 bin/demo/server-lookup.sh
 bin/demo/server-ping.sh
