@@ -50,6 +50,7 @@ Moose portion of HTTP server facility used by L<Chleb::Server::Dancer2>
 =cut
 
 use Chleb;
+use Chleb::Cache::Shared;
 use Chleb::Bible::Search::Query;
 use Chleb::DI::Container;
 use Chleb::Exception;
@@ -65,6 +66,7 @@ use JSON;
 use Log::Log4perl::MDC;
 use List::Util qw(shuffle);
 use Readonly;
+use Scalar::Util qw(blessed);
 use Sys::Hostname;
 use Text::LevenshteinXS qw(distance);
 use Time::Duration;
@@ -85,6 +87,22 @@ Readonly my $FUNCTION_LOOKUP => 3;
 
 Readonly my $UPTIME_FILE_PATH => '/var/run/chleb-bible-search/startup.txt';
 Readonly my $NS_VERSION => 'c0207fa6-6560-11f0-acec-43cf13408627';
+
+=head1 PRIVATE ATTRIBUTES
+
+=over
+
+=item C<__htmlCache>
+
+The process-local filesystem cache used for deterministic HTML fragments.
+
+=cut
+
+has __htmlCache => (is => 'ro', isa => 'Chleb::Cache::Shared', lazy => 1, builder => '__makeHtmlCache');
+
+=back
+
+=cut
 
 =head1 METHODS
 
@@ -209,6 +227,76 @@ sub __library {
 	my ($self) = @_;
 	$self->{__library} ||= Chleb->new();
 	return $self->{__library};
+}
+
+=item C<__makeHtmlCache()>
+
+Build the shared filesystem cache used by deterministic HTML responses.  The
+backend cache directory is selected by the first available Bible backend, so
+HTML entries live alongside the existing backend entries.
+
+=cut
+
+sub __makeHtmlCache { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+	my ($self) = @_;
+	my ($bible) = $self->__library->getBibles({ translations => ['all'] });
+	return Chleb::Cache::Shared->new({
+		root => join('/', $bible->__backend->cacheDir, 'shared'),
+		logger => $self->dic->logger,
+		version => (defined($Chleb::Generated::Info::BUILD_CHANGESET)
+			&& length($Chleb::Generated::Info::BUILD_CHANGESET) > 0
+			? $Chleb::Generated::Info::BUILD_CHANGESET
+			: 'development'),
+	});
+}
+
+=item C<__htmlCacheKey($kind, $params)>
+
+Create a stable key from an HTML response kind and its request parameters.
+
+=cut
+
+sub __htmlCacheKey {
+	my ($self, $kind, $params) = @_;
+	my %keyParams;
+	foreach my $name (sort keys(%{ $params || {} })) {
+		my $value = $params->{$name};
+		if (ref($value) eq 'ARRAY') {
+			$value = [ map {
+				(blessed($_) && $_->can('original')) ? $_->original
+					: (blessed($_) ? "$_" : $_)
+			} @$value ];
+		} elsif (ref($value)) {
+			$value = $value->original if (blessed($value) && $value->can('original'));
+			$value = "$value" if (blessed($value));
+			next if (ref($value));
+		}
+		$keyParams{$name} = $value;
+	}
+	my $encoded = JSON->new->canonical(1)->encode(\%keyParams);
+	return $kind . "\0" . $encoded;
+}
+
+=item C<__htmlCacheGet($kind, $params)>
+
+Return a cached HTML response for the supplied request identity.
+
+=cut
+
+sub __htmlCacheGet {
+	my ($self, $kind, $params) = @_;
+	return $self->__htmlCache->get('html', $self->__htmlCacheKey($kind, $params));
+}
+
+=item C<__htmlCacheSet($kind, $params, $html)>
+
+Store a rendered deterministic HTML response in the shared filesystem cache.
+
+=cut
+
+sub __htmlCacheSet {
+	my ($self, $kind, $params, $html) = @_;
+	return $self->__htmlCache->set('html', $self->__htmlCacheKey($kind, $params), $html);
 }
 
 =item C<__warmBackendVerse($args)>
@@ -500,6 +588,11 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 	my $startTiming = Time::HiRes::time();
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
+	my $htmlCacheable = ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML && !$params->{form});
+	if ($htmlCacheable) {
+		my $cached = $self->__htmlCacheGet('lookup', $params);
+		return $cached if (defined($cached));
+	}
 
 	my @verse = $self->__library->fetch($params->{book}, $params->{chapter}, $params->{verse}, $params);
 	my $verseToJsonApiCache = { };
@@ -544,8 +637,10 @@ sub __lookup { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 
 		return \@json;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP,
+		my $html = $self->__verseToHtml(\@verse, \@json, $FUNCTION_LOOKUP,
 			{ forceContinuation => (($params->{verse} // '') =~ $Chleb::Utils::VERSE_RANGE_PATTERN ? 1 : 0) });
+		$self->__htmlCacheSet('lookup', $params, $html);
+		return $html;
 	}
 
 	croak(Chleb::Exception->raise(
@@ -708,13 +803,18 @@ sub __addVotdDateLinks {
 }
 
 # Called by the Dancer2 routing layer.
-sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines, Subroutines::ProhibitExcessComplexity)
 	my ($self, $params) = @_;
 
 	my $version = $params->{version} || 1;
 	my $redirect = $params->{redirect} // 0;
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $CONTENT_TYPE_DEFAULT);
+	my $htmlCacheable = ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML && !$params->{form});
+	if ($htmlCacheable) {
+		my $cached = $self->__htmlCacheGet('votd', $params);
+		return $cached if (defined($cached));
+	}
 
 	croak(Chleb::Exception->raise(HTTP_BAD_REQUEST, 'votd redirect is only supported on version 1'))
 	    if ($redirect && $version > 1);
@@ -758,7 +858,9 @@ sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		}
 
 		if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-			return $self->__votdToHtml($verse, \@json, $params);
+			my $html = $self->__votdToHtml($verse, \@json, $params);
+			$self->__htmlCacheSet('votd', $params, $html);
+			return $html;
 		} else {
 			croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, "Only $Chleb::Server::MediaType::CONTENT_TYPE_HTML is supported"));
 		}
@@ -774,7 +876,9 @@ sub __votd { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	__addVotdDateLinks($self, $version, $params, $json->{links});
 
 	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return $self->__votdToHtml($verse, [$json], $params);
+		my $html = $self->__votdToHtml($verse, [$json], $params);
+		$self->__htmlCacheSet('votd', $params, $html);
+		return $html;
 	}
 
 	if (__isJsonContentType($contentType)) {
@@ -1057,7 +1161,7 @@ The text the user is searching for (critereon).
 =cut
 
 # Called by the Dancer2 routing layer.
-sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
+sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines, Subroutines::ProhibitExcessComplexity)
 	my ($self, $search) = @_;
 
 	my $limit = __searchLimit($search->{limit});
@@ -1068,6 +1172,11 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my $wholeword = Chleb::Utils::boolean('wholeword', $search->{wholeword}, 0);
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($search->{accept}, $CONTENT_TYPE_DEFAULT);
+	my $htmlCacheable = ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML && !$search->{form});
+	if ($htmlCacheable) {
+		my $cached = $self->__htmlCacheGet('search', $search);
+		return ($cached->{html}, $cached->{hash}) if (ref($cached) eq 'HASH' && defined($cached->{html}));
+	}
 
 	my @translations = @{ $search->{translations} || [] };
 	if (grep { $_ eq 'all' } @translations) {
@@ -1215,6 +1324,7 @@ sub __search { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 		return (\%hash, \%hash);
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
 		my $html = __searchResultsToHtml(\%hash, { includeHome => !$search->{form} });
+		$self->__htmlCacheSet('search', $search, { html => $html, hash => \%hash });
 		return ($html, \%hash);
 	}
 
@@ -1398,6 +1508,10 @@ sub __info { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	my $startTiming = Time::HiRes::time();
 
 	my $contentType = Chleb::Server::MediaType::acceptToContentType($params->{accept}, $Chleb::Server::MediaType::CONTENT_TYPE_HTML);
+	if ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) {
+		my $cached = $self->__htmlCacheGet('info', $params);
+		return $cached if (defined($cached));
+	}
 
 	my $info = $self->__library->info();
 	my %hash = __makeJsonApi();
@@ -1479,7 +1593,9 @@ sub __info { ## no critic (Subroutines::ProhibitUnusedPrivateSubroutines)
 	if (__isJsonContentType($contentType)) {
 		return \%hash;
 	} elsif ($contentType eq $Chleb::Server::MediaType::CONTENT_TYPE_HTML) { # text/html
-		return __infoToHtml(\%hash);
+		my $html = __infoToHtml(\%hash);
+		$self->__htmlCacheSet('info', $params, $html);
+		return $html;
 	}
 
 	croak(Chleb::Exception->raise(HTTP_NOT_ACCEPTABLE, 'Not acceptable here'));
